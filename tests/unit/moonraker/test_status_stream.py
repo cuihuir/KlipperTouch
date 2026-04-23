@@ -5,6 +5,7 @@ from klippertouch.domain.printer import PrinterStatus
 from klippertouch.moonraker.client import MoonrakerClient
 from klippertouch.moonraker.status_stream import (
     build_temperature_subscription_message,
+    build_websocket_request,
     status_from_websocket_message,
 )
 
@@ -26,6 +27,21 @@ def test_build_temperature_subscription_message_uses_read_only_objects_method() 
         },
         "id": 1,
     }
+
+
+def test_build_websocket_request_includes_optional_api_key() -> None:
+    client = MoonrakerClient(
+        PrinterConfig(
+            name="p",
+            moonraker_host="host",
+            moonraker_api_key="secret",
+        )
+    )
+
+    request = build_websocket_request(client)
+
+    assert request.url().toString() == "ws://host:7125/websocket"
+    assert bytes(request.rawHeader("x-api-key")).decode() == "secret"
 
 
 def test_status_from_websocket_message_applies_notification_temperature_delta() -> None:

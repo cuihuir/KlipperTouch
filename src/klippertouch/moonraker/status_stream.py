@@ -2,6 +2,7 @@ import json
 from typing import Any
 
 from PySide6.QtCore import QObject, QUrl, Slot
+from PySide6.QtNetwork import QNetworkRequest
 from PySide6.QtWebSockets import QWebSocket
 
 from klippertouch.domain.printer import PrinterStatus
@@ -10,6 +11,13 @@ from klippertouch.qt_models.status_model import StatusModel
 
 SUBSCRIPTION_ID = 1
 TEMPERATURE_FIELDS = ["temperature", "target"]
+
+
+def build_websocket_request(client: MoonrakerClient) -> QNetworkRequest:
+    request = QNetworkRequest(QUrl(client.websocket_endpoint))
+    if client.config.moonraker_api_key:
+        request.setRawHeader(b"x-api-key", client.config.moonraker_api_key.encode())
+    return request
 
 
 def build_temperature_subscription_message(
@@ -83,7 +91,7 @@ class MoonrakerStatusStream(QObject):
     def start(self) -> None:
         if not self._status.temperature_devices:
             return
-        self._socket.open(QUrl(self._client.websocket_endpoint))
+        self._socket.open(build_websocket_request(self._client))
 
     @Slot()
     def _send_subscription(self) -> None:
