@@ -225,7 +225,17 @@ def _temperature_devices_from_status(
         device = _temperature_device_from_object(name, values)
         if device is not None:
             devices.append(device)
-    return tuple(devices)
+    return tuple(sorted(devices, key=_temperature_device_sort_key))
+
+
+def _temperature_device_sort_key(device: TemperatureDeviceStatus) -> tuple[int, str]:
+    if device.name == "extruder":
+        return (0, device.name)
+    if device.name.startswith("extruder"):
+        return (1, device.name)
+    if device.name == "heater_bed":
+        return (2, device.name)
+    return (3, device.display_name)
 
 
 def _temperature_device_from_object(

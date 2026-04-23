@@ -44,9 +44,9 @@ def test_printer_status_derives_read_only_temperature_devices_from_objects() -> 
         printer_info={"state": "ready", "hostname": "orangepi3b", "software_version": "v0.13.0"},
         objects={
             "objects": [
-                "extruder",
-                "heater_bed",
                 "temperature_sensor raspberry_pi",
+                "heater_bed",
+                "extruder",
                 "controller_fan 驱动",
             ]
         },

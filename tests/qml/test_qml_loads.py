@@ -249,6 +249,8 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "Path" in qml
     assert "model: root.temperatureModel" in qml
     assert "Temperatures" in qml
+    assert "required property var temperature" in qml
+    assert "required property var target" in qml
     assert 'typeof target === "undefined" || target === null' in qml
     assert 'typeof temperature === "undefined" || temperature === null' in qml
     assert "root.filamentLabel()" in qml

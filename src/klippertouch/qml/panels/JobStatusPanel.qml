@@ -189,8 +189,8 @@ Item {
 
                         delegate: Rectangle {
                             required property string displayName
-                            required property real temperature
-                            required property real target
+                            required property var temperature
+                            required property var target
 
                             width: Math.max(150, Math.round(root.metrics.fontSize * 10.8))
                             height: parent ? parent.height : Math.max(34, root.metrics.fontSize * 2.3)
