@@ -21,7 +21,7 @@ def main() -> int:
         return 0
 
     if args.debug:
-        print("Debug logging enabled")
+        print("Debug logging enabled", flush=True)
     return run_app(sys.argv)
 
 

@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 from PySide6.QtCore import QUrl
@@ -17,3 +18,11 @@ def run_app(argv: list[str] | None = None) -> int:
     if not engine.rootObjects():
         return 1
     return app.exec()
+
+
+def main(argv: list[str] | None = None) -> int:
+    return run_app(argv or sys.argv)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
