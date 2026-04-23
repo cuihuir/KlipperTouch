@@ -42,6 +42,17 @@ ApplicationWindow {
         currentPanel = panelStack[panelStack.length - 1]
     }
 
+    function componentForPanel(panelName) {
+        switch (panelName) {
+        case "main":
+            return mainMenuComponent
+        case "temperature":
+            return temperatureComponent
+        default:
+            return placeholderComponent
+        }
+    }
+
     Metrics {
         id: appMetrics
         viewportWidth: window.width
@@ -62,7 +73,7 @@ ApplicationWindow {
 
         Loader {
             anchors.fill: parent
-            sourceComponent: window.currentPanel === "main" ? mainMenuComponent : placeholderComponent
+            sourceComponent: window.componentForPanel(window.currentPanel)
         }
 
         Component {
@@ -82,6 +93,15 @@ ApplicationWindow {
                 metrics: appMetrics
                 title: window.panelTitles[window.currentPanel]
                 iconName: window.panelIcons[window.currentPanel]
+            }
+        }
+
+        Component {
+            id: temperatureComponent
+
+            TemperaturePanel {
+                metrics: appMetrics
+                temperatureModel: window.temperatureBridgeModel
             }
         }
     }

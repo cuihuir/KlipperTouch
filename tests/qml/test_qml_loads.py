@@ -165,6 +165,7 @@ def test_responsive_layout_components_exist() -> None:
         qml_dir / "models" / "MainMenuModel.qml",
         qml_dir / "models" / "TemperatureDeviceModel.qml",
         qml_dir / "panels" / "PlaceholderPanel.qml",
+        qml_dir / "panels" / "TemperaturePanel.qml",
     ]
 
     missing = [path for path in expected if not path.exists()]
@@ -288,8 +289,9 @@ def test_temperature_summary_uses_klipperscreen_device_icons_and_theme() -> None
     assert 'ListElement { deviceName: "Pi"; iconName: "heat-up"; temperature: "44" }' in qml
     assert "TemperatureDeviceModel {" in component_qml
     assert "id: fallbackTemperatureModel" in component_qml
+    assert 'typeof icon === "undefined" ? iconName : icon' in component_qml
+    assert 'typeof displayName === "undefined" ? deviceName : displayName' in component_qml
     assert "model: root.activeTemperatureModel" in component_qml
-    assert "source: Theme.iconSource(iconName)" in component_qml
     assert "color: Theme.text" in component_qml
     assert "color: Theme.mutedText" in component_qml
     assert "ListElement { deviceName:" not in component_qml
@@ -313,6 +315,39 @@ def test_temperature_model_is_passed_from_app_to_shell_and_main_panel() -> None:
     assert "temperatureModel: root.temperatureModel" in panel_qml
 
 
+def test_temperature_panel_is_read_only_and_responsive() -> None:
+    qml = Path("src/klippertouch/qml/panels/TemperaturePanel.qml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "required property var metrics" in qml
+    assert "property var temperatureModel: null" in qml
+    assert "TemperatureSummary {" in qml
+    assert "FakeTemperatureGraph {" in qml
+    assert "model: root.activeTemperatureModel" in qml
+    assert 'typeof icon === "undefined" ? iconName : icon' in qml
+    assert 'typeof displayName === "undefined" ? deviceName : displayName' in qml
+    assert 'typeof target === "undefined" || target === null' in qml
+    assert 'typeof temperature === "undefined" || temperature === null' in qml
+    assert "root.metrics.portrait" in qml
+    assert "readonly" in qml
+    assert "printer.gcode.script" not in qml
+    assert "sendTextMessage" not in qml
+
+
+def test_main_routes_temperature_to_read_only_temperature_panel() -> None:
+    main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
+
+    assert "function componentForPanel(panelName)" in main_qml
+    assert 'case "main":' in main_qml
+    assert 'case "temperature":' in main_qml
+    assert "return temperatureComponent" in main_qml
+    assert "return placeholderComponent" in main_qml
+    assert "sourceComponent: window.componentForPanel(window.currentPanel)" in main_qml
+    assert "TemperaturePanel {" in main_qml
+    assert "temperatureModel: window.temperatureBridgeModel" in main_qml
+
+
 def test_main_uses_responsive_base_shell_and_main_panel() -> None:
     main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
 
@@ -323,8 +358,7 @@ def test_main_uses_responsive_base_shell_and_main_panel() -> None:
     assert 'property var panelTitles: ({"main": "Home"' in main_qml
     assert "panelTitle: window.panelTitles[window.currentPanel]" in main_qml
     assert (
-        'sourceComponent: window.currentPanel === "main" '
-        "? mainMenuComponent : placeholderComponent"
+        "sourceComponent: window.componentForPanel(window.currentPanel)"
     ) in main_qml
 
 

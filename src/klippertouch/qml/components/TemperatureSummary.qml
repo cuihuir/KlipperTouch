@@ -44,12 +44,15 @@ Item {
             model: root.activeTemperatureModel
 
             Row {
+                property string resolvedIcon: typeof icon === "undefined" ? iconName : icon
+                property string resolvedName: typeof displayName === "undefined" ? deviceName : displayName
+
                 width: devices.width
                 height: Math.max(22, Math.round(root.metrics.fontSize * 1.85))
                 spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.35))
 
                 Image {
-                    source: Theme.iconSource(iconName)
+                    source: Theme.iconSource(parent.resolvedIcon)
                     width: Math.max(18, Math.round(root.metrics.fontSize * 1.35))
                     height: width
                     anchors.verticalCenter: parent.verticalCenter
@@ -60,7 +63,7 @@ Item {
 
                 Label {
                     color: Theme.text
-                    text: typeof displayName === "undefined" ? deviceName : displayName
+                    text: parent.resolvedName
                     width: parent.width * 0.68 - parent.spacing - Math.max(18, Math.round(root.metrics.fontSize * 1.35))
                     elide: Text.ElideRight
                     verticalAlignment: Text.AlignVCenter
