@@ -8,6 +8,7 @@ def test_parse_args_defaults_to_read_only() -> None:
     assert args.read_only is True
     assert args.config is None
     assert args.debug is False
+    assert args.probe is False
 
 
 def test_parse_args_accepts_config_and_debug() -> None:
