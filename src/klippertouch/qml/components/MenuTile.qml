@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import "../Theme.js" as Theme
 
 Rectangle {
     id: root
@@ -8,7 +9,7 @@ Rectangle {
     required property color accent
     property real fontSize: 16
 
-    color: "#090909"
+    color: Theme.buttonsBg
     border.color: root.accent
     border.width: Math.max(2, Math.round(root.fontSize * 0.12))
     radius: Math.round(root.fontSize)
@@ -23,7 +24,7 @@ Rectangle {
 
             width: parent.width
             height: parent.height - labelText.height - accentBar.height - parent.spacing * 2
-            source: "../assets/material-dark/images/" + root.iconText + ".svg"
+            source: Theme.iconSource(root.iconText)
             fillMode: Image.PreserveAspectFit
             sourceSize.width: tileIconSize
             sourceSize.height: tileIconSize
@@ -32,7 +33,7 @@ Rectangle {
         Label {
             id: labelText
             width: parent.width
-            color: "#edf4f4"
+            color: Theme.text
             text: root.label
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight

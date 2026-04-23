@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import "../Theme.js" as Theme
 
 Rectangle {
     id: root
@@ -11,7 +12,7 @@ Rectangle {
     property string clockText: Qt.formatTime(new Date(), "hh:mm")
     property real fontSize: 16
 
-    color: "#1f252b"
+    color: Theme.titleBarBg
 
     Row {
         anchors.fill: parent
@@ -20,7 +21,7 @@ Rectangle {
 
         Label {
             id: heaterStrip
-            color: "white"
+            color: Theme.text
             text: "♨ 21°   ▥ 25°   Pi: " + root.objectCount
             font.pixelSize: Math.max(10, Math.round(root.fontSize * 0.8))
             verticalAlignment: Text.AlignVCenter
@@ -31,7 +32,7 @@ Rectangle {
 
         Label {
             id: titleLabel
-            color: "white"
+            color: Theme.text
             text: root.printerName + " | " + root.panelTitle
             font.pixelSize: Math.max(11, Math.round(root.fontSize * 0.9))
             horizontalAlignment: Text.AlignHCenter
@@ -43,7 +44,7 @@ Rectangle {
 
         Label {
             id: clockLabel
-            color: "#d8dee9"
+            color: Theme.mutedText
             text: root.clockText
             font.pixelSize: Math.max(10, Math.round(root.fontSize * 0.8))
             horizontalAlignment: Text.AlignRight

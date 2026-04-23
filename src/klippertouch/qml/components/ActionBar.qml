@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import "../Theme.js" as Theme
 
 Rectangle {
     id: root
@@ -8,11 +9,7 @@ Rectangle {
     property var buttonIcons: ["back", "main", "settings", "emergency"]
     property int spacingSize: Math.max(4, Math.round((vertical ? width : height) * 0.06))
 
-    color: "#2b3138"
-
-    function iconSource(iconName) {
-        return "../assets/material-dark/images/" + iconName + ".svg"
-    }
+    color: Theme.actionBarBg
 
     Grid {
         id: buttonGrid
@@ -36,10 +33,10 @@ Rectangle {
                 width: buttonGrid.cellWidth
                 padding: Math.max(4, Math.round(Math.min(width, height) * 0.18))
 
-                icon.source: root.iconSource(modelData)
+                icon.source: Theme.iconSource(modelData)
                 icon.width: actionIconSize
                 icon.height: actionIconSize
-                icon.color: "#e2e2e2"
+                icon.color: Theme.text
             }
         }
     }

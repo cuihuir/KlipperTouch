@@ -26,7 +26,7 @@ def test_action_bar_uses_klipperscreen_icon_names() -> None:
     qml = Path("src/klippertouch/qml/components/ActionBar.qml").read_text(encoding="utf-8")
 
     assert 'property var buttonIcons: ["back", "main", "settings", "emergency"]' in qml
-    assert 'source: root.iconSource(modelData)' in qml
+    assert "icon.source: Theme.iconSource(modelData)" in qml
     assert 'text: ""' in qml
 
 
@@ -55,6 +55,35 @@ def test_material_dark_svg_assets_are_vendored() -> None:
     }
 
     assert {path.name for path in images.glob("*.svg")} == expected
+
+
+def test_qml_theme_library_centralizes_material_dark_tokens() -> None:
+    theme = Path("src/klippertouch/qml/Theme.js").read_text(encoding="utf-8")
+
+    assert ".pragma library" in theme
+    assert 'var bg = "#121212"' in theme
+    assert 'var buttonsBg = "#090909"' in theme
+    assert 'var titleBarBg = "#1f252b"' in theme
+    assert 'var actionBarBg = "#2b3138"' in theme
+    assert "function iconSource(iconName)" in theme
+    assert 'return Qt.resolvedUrl("assets/material-dark/images/" + iconName + ".svg")' in theme
+
+
+def test_core_qml_components_use_shared_theme_library() -> None:
+    files = [
+        Path("src/klippertouch/qml/components/ActionBar.qml"),
+        Path("src/klippertouch/qml/components/BaseShell.qml"),
+        Path("src/klippertouch/qml/components/MenuTile.qml"),
+        Path("src/klippertouch/qml/components/StatusBar.qml"),
+    ]
+
+    for path in files:
+        qml = path.read_text(encoding="utf-8")
+        assert 'import "../Theme.js" as Theme' in qml or 'import "Theme.js" as Theme' in qml
+
+    assert 'color: Theme.bg' in files[1].read_text(encoding="utf-8")
+    assert 'color: Theme.buttonsBg' in files[2].read_text(encoding="utf-8")
+    assert 'color: Theme.titleBarBg' in files[3].read_text(encoding="utf-8")
 
 
 def test_status_bar_matches_klipperscreen_titlebar_structure() -> None:
@@ -131,10 +160,10 @@ def test_main_menu_uses_klipperscreen_default_top_level_items() -> None:
 def test_menu_tile_uses_material_dark_button_and_svg_icon() -> None:
     qml = Path("src/klippertouch/qml/components/MenuTile.qml").read_text(encoding="utf-8")
 
-    assert 'color: "#090909"' in qml
+    assert "color: Theme.buttonsBg" in qml
     assert "border.color: root.accent" in qml
     assert "radius: Math.round(root.fontSize)" in qml
-    assert 'source: "../assets/material-dark/images/" + root.iconText + ".svg"' in qml
+    assert "source: Theme.iconSource(root.iconText)" in qml
 
 
 def test_main_uses_responsive_base_shell_and_main_panel() -> None:

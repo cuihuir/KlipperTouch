@@ -1,4 +1,5 @@
 import QtQuick
+import "../Theme.js" as Theme
 
 Rectangle {
     id: root
@@ -9,7 +10,7 @@ Rectangle {
     property string panelTitle: "Home"
     default property alias panelContent: contentLayer.data
 
-    color: "#071112"
+    color: Theme.bg
 
     ActionBar {
         id: actionBar
