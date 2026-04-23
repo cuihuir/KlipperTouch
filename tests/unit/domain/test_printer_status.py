@@ -192,3 +192,20 @@ def test_printer_status_applies_read_only_toolhead_update() -> None:
     assert updated.position_z == 33.0
     assert updated.position_e == 44.0
     assert updated.homed_axes == "xy"
+
+
+def test_printer_status_exposes_primary_extruder_temperatures() -> None:
+    status = PrinterStatus.from_probe(
+        server_info={"moonraker_version": "v0.10.0", "klippy_state": "ready"},
+        printer_info={"state": "ready", "hostname": "orangepi3b", "software_version": "v0.13.0"},
+        objects={"objects": ["heater_bed", "extruder"]},
+        object_status={
+            "status": {
+                "heater_bed": {"temperature": 26.7, "target": 60.0},
+                "extruder": {"temperature": 212.4, "target": 215.0},
+            }
+        },
+    )
+
+    assert status.primary_extruder_temperature == 212.4
+    assert status.primary_extruder_target == 215.0

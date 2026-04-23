@@ -86,6 +86,23 @@ class PrinterStatus:
     def temperature_device_count(self) -> int:
         return len(self.temperature_devices)
 
+    @property
+    def primary_extruder_temperature(self) -> float:
+        return _optional_float(self._primary_extruder_device().temperature) or 0.0
+
+    @property
+    def primary_extruder_target(self) -> float:
+        return _optional_float(self._primary_extruder_device().target) or 0.0
+
+    def _primary_extruder_device(self) -> TemperatureDeviceStatus:
+        for device in self.temperature_devices:
+            if device.name == "extruder":
+                return device
+        for device in self.temperature_devices:
+            if device.name.startswith("extruder"):
+                return device
+        return TemperatureDeviceStatus(name="extruder", display_name="Extruder", icon="extruder")
+
     @classmethod
     def from_probe(
         cls,

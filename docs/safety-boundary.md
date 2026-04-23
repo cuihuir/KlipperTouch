@@ -10,6 +10,7 @@ Read-only live panels:
 - `Temperature`: displays heater and sensor temperatures from Moonraker startup reads and WebSocket status updates.
 - `Print`: displays the G-code file list and read-only job status from Moonraker file manager reads and WebSocket status updates.
 - `Move`: displays read-only toolhead position and homed axes while keeping all movement controls locked.
+- `Extrude`: displays read-only nozzle temperature, target, and E position while keeping extrusion controls locked.
 - `More`: displays printer and Moonraker/Klipper version information.
 
 Locked visual skeleton panels:

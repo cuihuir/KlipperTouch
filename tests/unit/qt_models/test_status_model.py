@@ -1,6 +1,6 @@
 from PySide6.QtCore import Qt
 
-from klippertouch.domain.printer import PrinterStatus
+from klippertouch.domain.printer import PrinterStatus, TemperatureDeviceStatus
 from klippertouch.qt_models.status_model import StatusModel, TemperatureDeviceListModel
 
 
@@ -12,6 +12,15 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
         klipper_version="v0.13.0",
         moonraker_version="v0.10.0",
         objects=("extruder", "heater_bed"),
+        temperature_devices=(
+            TemperatureDeviceStatus(
+                name="extruder",
+                display_name="Extruder",
+                icon="extruder",
+                temperature=212.4,
+                target=215.0,
+            ),
+        ),
         print_state="printing",
         print_filename="cube.gcode",
         print_progress=25.0,
@@ -31,7 +40,7 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
     assert model.hostname == "orangepi3b"
     assert model.klippyState == "ready"
     assert model.objectCount == 2
-    assert model.temperatureDeviceCount == 2
+    assert model.temperatureDeviceCount == 1
     assert model.printState == "printing"
     assert model.printFilename == "cube.gcode"
     assert model.printProgress == 25.0
@@ -43,6 +52,8 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
     assert model.positionZ == 3.3
     assert model.positionE == 4.4
     assert model.homedAxes == "xy"
+    assert model.extruderTemperature == 212.4
+    assert model.extruderTarget == 215.0
 
 
 def test_status_model_can_notify_temperature_device_model(qtbot) -> None:

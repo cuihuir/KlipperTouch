@@ -29,6 +29,8 @@ ApplicationWindow {
     property real positionZ: bridgeModel ? bridgeModel.positionZ : 0
     property real positionE: bridgeModel ? bridgeModel.positionE : 0
     property string homedAxes: bridgeModel ? bridgeModel.homedAxes : ""
+    property real extruderTemperature: bridgeModel ? bridgeModel.extruderTemperature : 0
+    property real extruderTarget: bridgeModel ? bridgeModel.extruderTarget : 0
     property string currentPanel: "main"
     property var panelStack: ["main"]
     property var panelTitles: ({"main": "Home", "move": "Move", "temperature": "Temperature", "extrude": "Extrude", "more": "More", "print": "Print"})
@@ -173,6 +175,9 @@ ApplicationWindow {
 
             ExtrudePanel {
                 metrics: appMetrics
+                extruderTemperature: window.extruderTemperature
+                extruderTarget: window.extruderTarget
+                positionE: window.positionE
             }
         }
     }

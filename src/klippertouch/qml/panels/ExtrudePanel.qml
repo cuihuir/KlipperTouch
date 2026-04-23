@@ -10,6 +10,9 @@ Item {
     property var speeds: ["1", "2", "5", "25"]
     property real actionFraction: 0.42
     property real settingsFraction: 0.58
+    property real extruderTemperature: 0
+    property real extruderTarget: 0
+    property real positionE: 0
 
     GridLayout {
         anchors.fill: parent
@@ -47,6 +50,45 @@ Item {
                     color: Theme.mutedText
                     text: "Extrusion locked"
                     font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Math.max(92, Math.round(root.metrics.fontSize * 6.4))
+                    color: "#101617"
+                    border.color: "#263233"
+                    border.width: 1
+                    radius: Math.round(root.metrics.fontSize * 0.32)
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: root.metrics.gap
+                        spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.32))
+
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.text
+                            text: "Nozzle " + root.extruderTemperature.toFixed(1) + "° / " + root.extruderTarget.toFixed(1) + "°"
+                            elide: Text.ElideRight
+                            font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.mutedText
+                            text: "E position " + root.positionE.toFixed(2) + " mm"
+                            elide: Text.ElideRight
+                            font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.86))
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.mutedText
+                            text: "Read-only extrusion status"
+                            elide: Text.ElideRight
+                            font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                        }
+                    }
                 }
 
                 GridLayout {

@@ -208,6 +208,26 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert "printer.gcode.script" not in qml
 
 
+def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> None:
+    qml = Path("src/klippertouch/qml/panels/ExtrudePanel.qml").read_text(encoding="utf-8")
+
+    assert "property real extruderTemperature" in qml
+    assert "property real extruderTarget" in qml
+    assert "property real positionE" in qml
+    assert "root.extruderTemperature.toFixed(1)" in qml
+    assert "root.extruderTarget.toFixed(1)" in qml
+    assert "root.positionE.toFixed(2)" in qml
+    assert "MouseArea" not in qml
+    assert "printer.gcode.script" not in qml
+
+    main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
+
+    assert "property real extruderTemperature:" in main_qml
+    assert "property real extruderTarget:" in main_qml
+    assert "extruderTemperature: window.extruderTemperature" in main_qml
+    assert "extruderTarget: window.extruderTarget" in main_qml
+
+
 def test_main_menu_matches_klipperscreen_split_and_autogrid_contract() -> None:
     qml = Path("src/klippertouch/qml/panels/MainMenuPanel.qml").read_text(encoding="utf-8")
 

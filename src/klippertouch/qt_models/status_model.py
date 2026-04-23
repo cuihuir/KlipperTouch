@@ -153,3 +153,11 @@ class StatusModel(QObject):
     @Property(str, notify=statusChanged)
     def homedAxes(self) -> str:
         return self._status.homed_axes
+
+    @Property(float, notify=statusChanged)
+    def extruderTemperature(self) -> float:
+        return self._status.primary_extruder_temperature
+
+    @Property(float, notify=statusChanged)
+    def extruderTarget(self) -> float:
+        return self._status.primary_extruder_target
