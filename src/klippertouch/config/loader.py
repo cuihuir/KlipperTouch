@@ -5,7 +5,7 @@ from klippertouch.config.models import AppSettings, PrinterConfig
 
 
 def load_config(path: Path) -> AppSettings:
-    parser = ConfigParser()
+    parser = ConfigParser(interpolation=None)
     if path.exists():
         parser.read(path, encoding="utf-8")
 
