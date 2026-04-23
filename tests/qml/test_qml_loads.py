@@ -26,6 +26,7 @@ def test_action_bar_uses_klipperscreen_icon_names() -> None:
     qml = Path("src/klippertouch/qml/components/ActionBar.qml").read_text(encoding="utf-8")
 
     assert 'property var buttonIcons: ["back", "main", "settings", "emergency"]' in qml
+    assert 'property var buttonActions: ["back", "home", "menu", "stop"]' in qml
     assert "source: Theme.iconSource(modelData)" in qml
     assert "Button {" not in qml
 
@@ -33,11 +34,13 @@ def test_action_bar_uses_klipperscreen_icon_names() -> None:
 def test_action_bar_uses_material_dark_icon_tiles() -> None:
     qml = Path("src/klippertouch/qml/components/ActionBar.qml").read_text(encoding="utf-8")
 
+    assert "signal actionRequested(string actionName)" in qml
     assert "id: iconButton" in qml
     assert "color: Theme.buttonsBg" in qml
     assert "radius: Math.round(Math.min(width, height) * 0.18)" in qml
     assert "border.color: Theme.actionBarBg" in qml
     assert "anchors.centerIn: parent" in qml
+    assert "onClicked: root.actionRequested(root.buttonActions[index])" in qml
 
 
 def test_action_bar_buttons_fill_available_axis() -> None:
@@ -232,6 +235,27 @@ def test_main_menu_requests_safe_local_panels() -> None:
     assert "onPanelRequested: function(panelName) { window.showPanel(panelName) }" in main_qml
     assert "printer.gcode.script" not in qml
     assert "printer.gcode.script" not in main_qml
+
+
+def test_action_bar_requests_safe_local_navigation() -> None:
+    shell_qml = Path("src/klippertouch/qml/components/BaseShell.qml").read_text(encoding="utf-8")
+    main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
+
+    assert "signal backRequested()" in shell_qml
+    assert "signal homeRequested()" in shell_qml
+    assert "signal menuRequested()" in shell_qml
+    assert "onActionRequested:" in shell_qml
+    assert "case \"back\":" in shell_qml
+    assert "case \"home\":" in shell_qml
+    assert "case \"menu\":" in shell_qml
+    assert "case \"stop\":" in shell_qml
+    assert "break" in shell_qml
+    assert "function goBack()" in main_qml
+    assert "onBackRequested: window.goBack()" in main_qml
+    assert "onHomeRequested: window.goHome()" in main_qml
+    assert 'onMenuRequested: window.showPanel("more")' in main_qml
+    assert "emergency" not in main_qml.lower()
+    assert "printer.gcode.script" not in shell_qml
 
 
 def test_temperature_summary_uses_klipperscreen_device_icons_and_theme() -> None:

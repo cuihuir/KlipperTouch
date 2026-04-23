@@ -6,7 +6,9 @@ Rectangle {
     property bool vertical: true
     property var buttonLabels: ["Back", "Home", "Menu", "Stop"]
     property var buttonIcons: ["back", "main", "settings", "emergency"]
+    property var buttonActions: ["back", "home", "menu", "stop"]
     property int spacingSize: Math.max(4, Math.round((vertical ? width : height) * 0.06))
+    signal actionRequested(string actionName)
 
     color: Theme.actionBarBg
 
@@ -44,6 +46,10 @@ Rectangle {
                     sourceSize.height: height
                 }
 
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: root.actionRequested(root.buttonActions[index])
+                }
             }
         }
     }

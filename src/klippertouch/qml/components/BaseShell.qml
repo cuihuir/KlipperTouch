@@ -10,6 +10,9 @@ Rectangle {
     property var temperatureModel: null
     property string panelTitle: "Home"
     default property alias panelContent: contentLayer.data
+    signal backRequested()
+    signal homeRequested()
+    signal menuRequested()
 
     color: Theme.bg
 
@@ -21,6 +24,21 @@ Rectangle {
         anchors.left: parent.left
         anchors.top: root.metrics.portrait ? undefined : parent.top
         anchors.bottom: root.metrics.portrait ? parent.bottom : undefined
+        onActionRequested: function(actionName) {
+            switch (actionName) {
+            case "back":
+                root.backRequested()
+                break
+            case "home":
+                root.homeRequested()
+                break
+            case "menu":
+                root.menuRequested()
+                break
+            case "stop":
+                break
+            }
+        }
     }
 
     StatusBar {

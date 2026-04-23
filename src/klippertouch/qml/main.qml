@@ -29,6 +29,10 @@ ApplicationWindow {
         currentPanel = "main"
     }
 
+    function goBack() {
+        currentPanel = "main"
+    }
+
     Metrics {
         id: appMetrics
         viewportWidth: window.width
@@ -43,6 +47,9 @@ ApplicationWindow {
         objectCount: window.objectCount
         temperatureModel: window.temperatureBridgeModel
         panelTitle: window.panelTitles[window.currentPanel]
+        onBackRequested: window.goBack()
+        onHomeRequested: window.goHome()
+        onMenuRequested: window.showPanel("more")
 
         Loader {
             anchors.fill: parent
