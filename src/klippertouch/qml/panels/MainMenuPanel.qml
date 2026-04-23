@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import "../components"
+import "../models"
 
 Item {
     id: root
@@ -17,13 +18,8 @@ Item {
         return index === menuModel.count - 1 && menuModel.count % 2 === 1
     }
 
-    ListModel {
+    MainMenuModel {
         id: menuModel
-        ListElement { tileLabel: "Move"; tileIcon: "move"; tileAccent: "#d46900" }
-        ListElement { tileLabel: "Temperature"; tileIcon: "heat-up"; tileAccent: "#ed3c63" }
-        ListElement { tileLabel: "Extrude"; tileIcon: "extrude"; tileAccent: "#849900" }
-        ListElement { tileLabel: "More"; tileIcon: "settings"; tileAccent: "#007db4" }
-        ListElement { tileLabel: "Print"; tileIcon: "printer"; tileAccent: "#d46900" }
     }
 
     TemperatureSummary {

@@ -134,6 +134,7 @@ def test_responsive_layout_components_exist() -> None:
         qml_dir / "components" / "MenuTile.qml",
         qml_dir / "components" / "TemperatureSummary.qml",
         qml_dir / "components" / "FakeTemperatureGraph.qml",
+        qml_dir / "models" / "MainMenuModel.qml",
     ]
 
     missing = [path for path in expected if not path.exists()]
@@ -157,7 +158,10 @@ def test_main_menu_matches_klipperscreen_split_and_autogrid_contract() -> None:
 
 
 def test_main_menu_uses_klipperscreen_default_top_level_items() -> None:
-    qml = Path("src/klippertouch/qml/panels/MainMenuPanel.qml").read_text(encoding="utf-8")
+    qml = Path("src/klippertouch/qml/models/MainMenuModel.qml").read_text(encoding="utf-8")
+    panel_qml = Path("src/klippertouch/qml/panels/MainMenuPanel.qml").read_text(
+        encoding="utf-8"
+    )
 
     assert 'ListElement { tileLabel: "Move"; tileIcon: "move"; tileAccent: "#d46900" }' in qml
     assert (
@@ -167,6 +171,9 @@ def test_main_menu_uses_klipperscreen_default_top_level_items() -> None:
     assert 'ListElement { tileLabel: "Extrude"; tileIcon: "extrude"; tileAccent: "#849900" }' in qml
     assert 'ListElement { tileLabel: "More"; tileIcon: "settings"; tileAccent: "#007db4" }' in qml
     assert 'ListElement { tileLabel: "Print"; tileIcon: "printer"; tileAccent: "#d46900" }' in qml
+    assert 'import "../models"' in panel_qml
+    assert "MainMenuModel {" in panel_qml
+    assert "ListElement { tileLabel:" not in panel_qml
 
 
 def test_menu_tile_uses_material_dark_button_and_svg_icon() -> None:
