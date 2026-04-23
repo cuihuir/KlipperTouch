@@ -12,3 +12,13 @@ def test_printer_status_from_probe_payloads() -> None:
     assert status.klippy_state == "ready"
     assert status.object_count == 3
     assert "controller_fan 驱动" in status.objects
+
+
+def test_printer_status_copies_mutable_objects() -> None:
+    object_names = ["extruder"]
+    status = PrinterStatus(objects=object_names)  # type: ignore[arg-type]
+
+    object_names.append("heater_bed")
+
+    assert status.objects == ("extruder",)
+    assert status.object_count == 1

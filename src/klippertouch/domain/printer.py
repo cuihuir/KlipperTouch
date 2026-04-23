@@ -10,6 +10,9 @@ class PrinterStatus:
     moonraker_version: str = "unknown"
     objects: tuple[str, ...] = ()
 
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "objects", tuple(str(item) for item in self.objects))
+
     @property
     def object_count(self) -> int:
         return len(self.objects)
