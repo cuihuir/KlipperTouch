@@ -12,3 +12,10 @@ def test_app_main_delegates_to_run_app(monkeypatch) -> None:
 
     assert app.main(["klippertouch"]) == 0
     assert calls == [["klippertouch"]]
+
+
+def test_app_registers_temperature_device_model_context() -> None:
+    source = app.Path(app.__file__).read_text(encoding="utf-8")
+
+    assert "TemperatureDeviceListModel" in source
+    assert 'setContextProperty("temperatureDeviceModel", temperature_device_model)' in source
