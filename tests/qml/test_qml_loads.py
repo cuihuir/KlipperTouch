@@ -45,7 +45,9 @@ def test_material_dark_svg_assets_are_vendored() -> None:
     images = Path("src/klippertouch/qml/assets/material-dark/images")
     expected = {
         "back.svg",
+        "bed.svg",
         "emergency.svg",
+        "extruder.svg",
         "extrude.svg",
         "heat-up.svg",
         "main.svg",
@@ -164,6 +166,20 @@ def test_menu_tile_uses_material_dark_button_and_svg_icon() -> None:
     assert "border.color: root.accent" in qml
     assert "radius: Math.round(root.fontSize)" in qml
     assert "source: Theme.iconSource(root.iconText)" in qml
+
+
+def test_temperature_summary_uses_klipperscreen_device_icons_and_theme() -> None:
+    qml = Path("src/klippertouch/qml/components/TemperatureSummary.qml").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'import "../Theme.js" as Theme' in qml
+    assert 'ListElement { deviceName: "Extruder"; iconName: "extruder"; temperature: "21" }' in qml
+    assert 'ListElement { deviceName: "Heater bed"; iconName: "bed"; temperature: "25" }' in qml
+    assert 'ListElement { deviceName: "Pi"; iconName: "heat-up"; temperature: "44" }' in qml
+    assert "source: Theme.iconSource(iconName)" in qml
+    assert "color: Theme.text" in qml
+    assert "color: Theme.mutedText" in qml
 
 
 def test_main_uses_responsive_base_shell_and_main_panel() -> None:

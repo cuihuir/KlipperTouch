@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import "../Theme.js" as Theme
 
 Item {
     id: root
@@ -17,12 +18,12 @@ Item {
             width: parent.width
             height: Math.max(18, Math.round(root.metrics.fontSize * 1.45))
             Label {
-                color: "#edf4f4"
+                color: Theme.mutedText
                 text: ""
                 width: parent.width * 0.68
             }
             Label {
-                color: "#edf4f4"
+                color: Theme.mutedText
                 text: "Temp (°C)"
                 width: parent.width * 0.32
                 horizontalAlignment: Text.AlignRight
@@ -32,24 +33,36 @@ Item {
 
         Repeater {
             model: ListModel {
-                ListElement { deviceName: "▣ Extruder"; temperature: "21" }
-                ListElement { deviceName: "▥ Heater bed"; temperature: "25" }
-                ListElement { deviceName: "▯ Pi"; temperature: "44" }
+                ListElement { deviceName: "Extruder"; iconName: "extruder"; temperature: "21" }
+                ListElement { deviceName: "Heater bed"; iconName: "bed"; temperature: "25" }
+                ListElement { deviceName: "Pi"; iconName: "heat-up"; temperature: "44" }
             }
 
             Row {
                 width: devices.width
                 height: Math.max(22, Math.round(root.metrics.fontSize * 1.85))
+                spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.35))
+
+                Image {
+                    source: Theme.iconSource(iconName)
+                    width: Math.max(18, Math.round(root.metrics.fontSize * 1.35))
+                    height: width
+                    anchors.verticalCenter: parent.verticalCenter
+                    fillMode: Image.PreserveAspectFit
+                    sourceSize.width: width
+                    sourceSize.height: height
+                }
+
                 Label {
-                    color: "#edf4f4"
+                    color: Theme.text
                     text: deviceName
-                    width: parent.width * 0.68
+                    width: parent.width * 0.68 - parent.spacing - Math.max(18, Math.round(root.metrics.fontSize * 1.35))
                     elide: Text.ElideRight
                     verticalAlignment: Text.AlignVCenter
                     font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.95))
                 }
                 Label {
-                    color: "#edf4f4"
+                    color: Theme.text
                     text: temperature
                     width: parent.width * 0.32
                     horizontalAlignment: Text.AlignRight
