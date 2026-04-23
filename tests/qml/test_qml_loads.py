@@ -76,6 +76,21 @@ def test_responsive_layout_components_exist() -> None:
     assert missing == []
 
 
+def test_main_menu_matches_klipperscreen_split_and_autogrid_contract() -> None:
+    qml = Path("src/klippertouch/qml/panels/MainMenuPanel.qml").read_text(encoding="utf-8")
+
+    assert "property int virtualRows: 5" in qml
+    assert "property int temperatureRows: 3" in qml
+    assert "property int menuRows: 2" in qml
+    assert "property int landscapeMenuRows: 3" in qml
+    assert "property real landscapeTemperatureFraction: 0.5" in qml
+    assert "width: root.metrics.portrait" in qml
+    assert "height: root.metrics.portrait ? root.temperaturePanelHeight" in qml
+    assert "columns: root.metrics.portrait ? 3 : 2" in qml
+    assert "rows: root.metrics.portrait ? root.menuRows : root.landscapeMenuRows" in qml
+    assert "Layout.columnSpan: root.shouldExpandLastTile(index) ? 2 : 1" in qml
+
+
 def test_main_uses_responsive_base_shell_and_main_panel() -> None:
     main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
 
