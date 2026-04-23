@@ -29,105 +29,125 @@ Item {
         border.width: 1
         radius: Math.round(root.metrics.fontSize * 0.45)
 
-        ColumnLayout {
+        GridLayout {
+            id: bodyLayout
             anchors.fill: parent
             anchors.margins: root.metrics.gap
-            spacing: root.metrics.gap
+            columns: root.metrics.portrait ? 1 : 2
+            rowSpacing: root.metrics.gap
+            columnSpacing: root.metrics.gap
 
-            RowLayout {
+            ColumnLayout {
                 Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.preferredWidth: root.metrics.portrait ? parent.width : parent.width * 0.52
+                Layout.alignment: Qt.AlignTop
                 spacing: root.metrics.gap
 
-                Label {
+                RowLayout {
                     Layout.fillWidth: true
-                    color: Theme.text
-                    text: "Printer information"
-                    font.bold: true
-                    font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.15))
-                }
+                    spacing: root.metrics.gap
 
-                Label {
-                    color: Theme.mutedText
-                    text: "readonly"
-                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
-                }
-            }
-
-            GridLayout {
-                Layout.fillWidth: true
-                Layout.preferredHeight: Math.max(160, Math.round(root.metrics.fontSize * 11))
-                columns: root.metrics.portrait ? 1 : 2
-                rowSpacing: root.metrics.gap
-                columnSpacing: root.metrics.gap
-
-                Repeater {
-                    model: root.rows
-
-                    Rectangle {
+                    Label {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: Math.max(58, Math.round(root.metrics.fontSize * 4.1))
-                        color: "#101617"
-                        border.color: "#263233"
-                        border.width: 1
-                        radius: Math.round(root.metrics.fontSize * 0.32)
+                        color: Theme.text
+                        text: "Printer information"
+                        font.bold: true
+                        font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.15))
+                    }
 
-                        ColumnLayout {
-                            anchors.fill: parent
-                            anchors.margins: root.metrics.gap
-                            spacing: 0
+                    Label {
+                        color: Theme.mutedText
+                        text: "readonly"
+                        font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
+                    }
+                }
 
-                            Label {
-                                Layout.fillWidth: true
-                                color: Theme.mutedText
-                                text: modelData.label
-                                elide: Text.ElideRight
-                                font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
-                            }
+                GridLayout {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    columns: root.metrics.portrait ? 1 : 2
+                    rowSpacing: root.metrics.gap
+                    columnSpacing: root.metrics.gap
 
-                            Label {
-                                Layout.fillWidth: true
-                                color: Theme.text
-                                text: modelData.value
-                                elide: Text.ElideMiddle
-                                font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 1.02))
+                    Repeater {
+                        model: root.rows
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: Math.max(52, Math.round(root.metrics.fontSize * 3.6))
+                            color: "#101617"
+                            border.color: "#263233"
+                            border.width: 1
+                            radius: Math.round(root.metrics.fontSize * 0.32)
+
+                            ColumnLayout {
+                                anchors.fill: parent
+                                anchors.margins: root.metrics.gap
+                                spacing: 0
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    color: Theme.mutedText
+                                    text: modelData.label
+                                    elide: Text.ElideRight
+                                    font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                                }
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    color: Theme.text
+                                    text: modelData.value
+                                    elide: Text.ElideMiddle
+                                    font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 1.02))
+                                }
                             }
                         }
                     }
                 }
             }
 
-            Label {
-                Layout.fillWidth: true
-                color: Theme.text
-                text: "Moonraker objects"
-                font.bold: true
-                font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
-            }
-
-            ListView {
+            ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                clip: true
-                spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.28))
-                model: root.objectNames
+                Layout.preferredWidth: root.metrics.portrait ? parent.width : parent.width * 0.48
+                Layout.alignment: Qt.AlignTop
+                spacing: root.metrics.gap
 
-                delegate: Rectangle {
-                    width: ListView.view.width
-                    height: Math.max(34, Math.round(root.metrics.fontSize * 2.45))
-                    color: "#101617"
-                    border.color: "#263233"
-                    border.width: 1
-                    radius: Math.round(root.metrics.fontSize * 0.26)
+                Label {
+                    Layout.fillWidth: true
+                    color: Theme.text
+                    text: "Moonraker objects"
+                    font.bold: true
+                    font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
+                }
 
-                    Label {
-                        anchors.fill: parent
-                        anchors.leftMargin: root.metrics.gap
-                        anchors.rightMargin: root.metrics.gap
-                        color: Theme.mutedText
-                        text: modelData
-                        elide: Text.ElideMiddle
-                        verticalAlignment: Text.AlignVCenter
-                        font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                ListView {
+                    id: objectList
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.28))
+                    model: root.objectNames
+
+                    delegate: Rectangle {
+                        width: objectList.width
+                        height: Math.max(34, Math.round(root.metrics.fontSize * 2.45))
+                        color: "#101617"
+                        border.color: "#263233"
+                        border.width: 1
+                        radius: Math.round(root.metrics.fontSize * 0.26)
+
+                        Label {
+                            anchors.fill: parent
+                            anchors.leftMargin: root.metrics.gap
+                            anchors.rightMargin: root.metrics.gap
+                            color: Theme.mutedText
+                            text: modelData
+                            elide: Text.ElideMiddle
+                            verticalAlignment: Text.AlignVCenter
+                            font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                        }
                     }
                 }
             }

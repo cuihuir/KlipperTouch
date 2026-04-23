@@ -236,6 +236,14 @@ def test_info_panel_exposes_read_only_object_list() -> None:
     assert "model: root.objectNames" in qml
     assert "text: modelData" in qml
     assert "clip: true" in qml
+    assert "id: bodyLayout" in qml
+    assert "columns: root.metrics.portrait ? 1 : 2" in qml
+    assert "id: objectList" in qml
+    assert (
+        "Layout.preferredWidth: root.metrics.portrait ? parent.width : parent.width * 0.48"
+        in qml
+    )
+    assert "Layout.alignment: Qt.AlignTop" in qml
 
     main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
 
