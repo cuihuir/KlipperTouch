@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls
 import "../Theme.js" as Theme
 
 Rectangle {
@@ -24,19 +23,27 @@ Rectangle {
         Repeater {
             model: root.buttonIcons
 
-            Button {
+            Rectangle {
+                id: iconButton
                 property int actionIconSize: Math.round(Math.min(width, height) * 0.58)
 
-                enabled: false
-                text: ""
                 height: buttonGrid.cellHeight
                 width: buttonGrid.cellWidth
-                padding: Math.max(4, Math.round(Math.min(width, height) * 0.18))
+                color: Theme.buttonsBg
+                radius: Math.round(Math.min(width, height) * 0.18)
+                border.color: Theme.actionBarBg
+                border.width: Math.max(1, Math.round(Math.min(width, height) * 0.035))
 
-                icon.source: Theme.iconSource(modelData)
-                icon.width: actionIconSize
-                icon.height: actionIconSize
-                icon.color: Theme.text
+                Image {
+                    anchors.centerIn: parent
+                    source: Theme.iconSource(modelData)
+                    width: iconButton.actionIconSize
+                    height: iconButton.actionIconSize
+                    fillMode: Image.PreserveAspectFit
+                    sourceSize.width: width
+                    sourceSize.height: height
+                }
+
             }
         }
     }

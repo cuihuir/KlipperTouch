@@ -26,8 +26,18 @@ def test_action_bar_uses_klipperscreen_icon_names() -> None:
     qml = Path("src/klippertouch/qml/components/ActionBar.qml").read_text(encoding="utf-8")
 
     assert 'property var buttonIcons: ["back", "main", "settings", "emergency"]' in qml
-    assert "icon.source: Theme.iconSource(modelData)" in qml
-    assert 'text: ""' in qml
+    assert "source: Theme.iconSource(modelData)" in qml
+    assert "Button {" not in qml
+
+
+def test_action_bar_uses_material_dark_icon_tiles() -> None:
+    qml = Path("src/klippertouch/qml/components/ActionBar.qml").read_text(encoding="utf-8")
+
+    assert "id: iconButton" in qml
+    assert "color: Theme.buttonsBg" in qml
+    assert "radius: Math.round(Math.min(width, height) * 0.18)" in qml
+    assert "border.color: Theme.actionBarBg" in qml
+    assert "anchors.centerIn: parent" in qml
 
 
 def test_action_bar_buttons_fill_available_axis() -> None:
