@@ -18,4 +18,5 @@ def test_app_registers_temperature_device_model_context() -> None:
     source = app.Path(app.__file__).read_text(encoding="utf-8")
 
     assert "TemperatureDeviceListModel" in source
+    assert "status_model = StatusModel(temperature_device_model=temperature_device_model)" in source
     assert 'setContextProperty("temperatureDeviceModel", temperature_device_model)' in source

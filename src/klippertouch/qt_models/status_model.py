@@ -72,12 +72,18 @@ class TemperatureDeviceListModel(QAbstractListModel):
 class StatusModel(QObject):
     statusChanged = Signal()
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        temperature_device_model: TemperatureDeviceListModel | None = None,
+    ) -> None:
         super().__init__()
         self._status = PrinterStatus()
+        self._temperature_device_model = temperature_device_model
 
     def set_status(self, status: PrinterStatus) -> None:
         self._status = status
+        if self._temperature_device_model is not None:
+            self._temperature_device_model.set_status(status)
         self.statusChanged.emit()
 
     @Property(str, notify=statusChanged)

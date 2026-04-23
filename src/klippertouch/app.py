@@ -11,8 +11,8 @@ from klippertouch.qt_models.status_model import StatusModel, TemperatureDeviceLi
 def run_app(argv: list[str] | None = None) -> int:
     app = QApplication(argv or [])
     engine = QQmlApplicationEngine()
-    status_model = StatusModel()
     temperature_device_model = TemperatureDeviceListModel()
+    status_model = StatusModel(temperature_device_model=temperature_device_model)
     engine.rootContext().setContextProperty("statusModel", status_model)
     engine.rootContext().setContextProperty("temperatureDeviceModel", temperature_device_model)
     qml_path = Path(__file__).parent / "qml" / "main.qml"

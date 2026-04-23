@@ -23,6 +23,18 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
     assert model.temperatureDeviceCount == 2
 
 
+def test_status_model_can_notify_temperature_device_model(qtbot) -> None:
+    temperature_model = TemperatureDeviceListModel()
+    model = StatusModel(temperature_device_model=temperature_model)
+    status = PrinterStatus(objects=("extruder", "heater_bed"))
+
+    with qtbot.waitSignal(temperature_model.modelReset, timeout=1000):
+        model.set_status(status)
+
+    assert model.temperatureDeviceCount == 2
+    assert temperature_model.rowCount() == 2
+
+
 def test_temperature_device_list_model_exposes_qml_roles(qtbot) -> None:
     model = TemperatureDeviceListModel()
     status = PrinterStatus(objects=("extruder", "heater_bed"))
