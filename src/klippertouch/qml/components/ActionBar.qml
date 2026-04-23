@@ -3,22 +3,25 @@ import QtQuick.Controls
 
 Rectangle {
     id: root
-    width: 92
+    property bool vertical: true
+    property int buttonExtent: Math.max(44, Math.round((vertical ? width : height) * 0.62))
+
     color: "#2b3138"
 
-    Column {
+    Flow {
         anchors.fill: parent
         anchors.margins: 10
         spacing: 10
+        flow: root.vertical ? Flow.TopToBottom : Flow.LeftToRight
 
         Repeater {
-            model: ["Back", "Home", "Status", "Files", "Temp", "Move"]
+            model: ["Back", "Home", "Menu", "Stop"]
 
             Button {
                 enabled: false
                 text: modelData
-                height: 52
-                width: parent.width
+                height: root.buttonExtent
+                width: root.vertical ? parent.width : root.buttonExtent * 1.45
             }
         }
     }
