@@ -33,6 +33,13 @@ Item {
         return minutes + "m"
     }
 
+    function remainingLabel() {
+        if (root.totalDuration <= 0 || root.printDuration <= 0) {
+            return "-"
+        }
+        return root.durationLabel(Math.max(0, root.totalDuration - root.printDuration))
+    }
+
     function filamentLabel() {
         return (root.filamentUsed / 1000).toFixed(1) + " m"
     }
@@ -142,7 +149,7 @@ Item {
 
                         Label {
                             color: Theme.mutedText
-                            text: root.durationLabel(root.printDuration) + " elapsed"
+                            text: root.remainingLabel() + " remaining"
                             horizontalAlignment: Text.AlignRight
                             font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
                         }
@@ -159,6 +166,7 @@ Item {
                 cellHeight: Math.max(60, Math.round(root.metrics.fontSize * 4.25))
                 model: [
                     {"label": "Elapsed", "value": root.durationLabel(root.printDuration)},
+                    {"label": "Remaining", "value": root.remainingLabel()},
                     {"label": "Total", "value": root.durationLabel(root.totalDuration)},
                     {"label": "Layer", "value": root.layerLabel()},
                     {"label": "Filament used", "value": root.filamentLabel()},

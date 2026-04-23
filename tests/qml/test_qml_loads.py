@@ -233,6 +233,8 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "property real maxVelocity" in qml
     assert "root.filamentLabel()" in qml
     assert "root.layerLabel()" in qml
+    assert "function remainingLabel" in qml
+    assert "Remaining" in qml
     assert "root.percentLabel(root.speedFactor)" in qml
     assert "root.zOffsetLabel()" in qml
     assert "fileModel" not in qml

@@ -13,7 +13,8 @@ from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuick import QQuickWindow  # noqa: F401
 
-from klippertouch.app import create_gcode_file_model
+from klippertouch.app import create_gcode_file_model, create_status_models
+from klippertouch.domain.printer import PrinterStatus, TemperatureDeviceStatus
 
 DEFAULT_SIZES = ("800x480", "1024x600", "480x800")
 DEFAULT_PANELS = ("main", "print", "job_status", "temperature", "move", "extrude", "more")
@@ -31,6 +32,48 @@ SAMPLE_FILES = (
         "permissions": "rw",
     },
 )
+SAMPLE_STATUS = {
+    "hostname": "orangepi3b",
+    "objects": (
+        "extruder",
+        "heater_bed",
+        "print_stats",
+        "display_status",
+        "toolhead",
+        "gcode_move",
+    ),
+    "temperature_devices": (
+        TemperatureDeviceStatus(
+            name="extruder",
+            display_name="Extruder",
+            icon="extruder",
+            temperature=211.8,
+            target=215.0,
+        ),
+        TemperatureDeviceStatus(
+            name="heater_bed",
+            display_name="Heater Bed",
+            icon="bed",
+            temperature=58.4,
+            target=60.0,
+        ),
+    ),
+    "print_state": "printing",
+    "print_filename": "OrcaCube_PLA_27m41s.gcode",
+    "print_progress": 42.0,
+    "print_message": "Printing",
+    "print_duration": 1035.0,
+    "total_duration": 1661.0,
+    "filament_used": 1856.0,
+    "current_layer": 12,
+    "total_layers": 36,
+    "requested_speed": 125.0,
+    "speed_factor": 100.0,
+    "extrude_factor": 96.0,
+    "z_offset": -0.02,
+    "max_accel": 3000.0,
+    "max_velocity": 250.0,
+}
 
 
 def parse_size(value: str) -> tuple[int, int]:
@@ -53,6 +96,7 @@ def capture(
     sizes: tuple[tuple[int, int], ...],
     panels: tuple[str, ...],
     sample_files: bool = False,
+    sample_status: bool = False,
 ) -> list[Path]:
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     app = QGuiApplication.instance() or QGuiApplication([])
@@ -65,6 +109,16 @@ def capture(
                 file_model = create_gcode_file_model(list(SAMPLE_FILES))
                 engine.rootContext().setContextProperty("gcodeFileModel", file_model)
                 engine.gcode_file_model = file_model  # type: ignore[attr-defined]
+            if sample_status:
+                status = PrinterStatus(**SAMPLE_STATUS)
+                status_model, temperature_model = create_status_models(status)
+                engine.rootContext().setContextProperty("statusModel", status_model)
+                engine.rootContext().setContextProperty(
+                    "temperatureDeviceModel",
+                    temperature_model,
+                )
+                engine.status_model = status_model  # type: ignore[attr-defined]
+                engine.temperature_model = temperature_model  # type: ignore[attr-defined]
             engine.load(QUrl.fromLocalFile(str(qml_path.resolve())))
             roots = engine.rootObjects()
             if not roots:
@@ -115,6 +169,11 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Inject sample G-Code files into the QML context before capturing.",
     )
+    parser.add_argument(
+        "--sample-status",
+        action="store_true",
+        help="Inject sample printer/job status into the QML context before capturing.",
+    )
     args = parser.parse_args(argv)
 
     captured = capture(
@@ -123,6 +182,7 @@ def main(argv: list[str] | None = None) -> int:
         sizes=tuple(args.sizes),
         panels=tuple(args.panels),
         sample_files=args.sample_files,
+        sample_status=args.sample_status,
     )
     for path in captured:
         print(path)

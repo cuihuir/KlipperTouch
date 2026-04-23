@@ -15,6 +15,12 @@ def test_screenshot_tool_captures_common_panels_and_sizes() -> None:
     assert "QT_QPA_PLATFORM" in source
     assert "artifacts/screenshots" in source
     assert "--sample-files" in source
+    assert "--sample-status" in source
     assert "create_gcode_file_model" in source
+    assert "create_status_models" in source
+    assert "SAMPLE_STATUS" in source
+    assert '"hostname": "orangepi3b"' in source
+    assert '"print_state": "printing"' in source
     assert "setContextProperty(\"gcodeFileModel\"" in source
+    assert "setContextProperty(\"statusModel\"" in source
     assert "OrcaCube_PLA_27m41s.gcode" in source
