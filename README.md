@@ -19,9 +19,7 @@ The skeleton is grounded in the maintained implementation blueprint based on Kli
 ## Development Commands
 
 ```bash
-uv venv
-source .venv/bin/activate
-uv pip install -e ".[dev]"
+UV_INDEX_URL=https://pypi.org/simple uv sync --locked --extra dev
 UV_INDEX_URL=https://pypi.org/simple uv run --locked --extra dev pytest
 UV_INDEX_URL=https://pypi.org/simple uv run --locked --extra dev ruff check src tests
 UV_INDEX_URL=https://pypi.org/simple uv run --locked --extra dev mypy src/klippertouch
