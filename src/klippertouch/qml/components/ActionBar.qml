@@ -4,24 +4,29 @@ import QtQuick.Controls
 Rectangle {
     id: root
     property bool vertical: true
-    property int buttonExtent: Math.max(44, Math.round((vertical ? width : height) * 0.62))
+    property var buttonLabels: ["Back", "Home", "Menu", "Stop"]
+    property int spacingSize: Math.max(4, Math.round((vertical ? width : height) * 0.06))
 
     color: "#2b3138"
 
-    Flow {
+    Grid {
+        id: buttonGrid
         anchors.fill: parent
-        anchors.margins: 10
-        spacing: 10
-        flow: root.vertical ? Flow.TopToBottom : Flow.LeftToRight
+        anchors.margins: root.spacingSize
+        spacing: root.spacingSize
+        rows: root.vertical ? root.buttonLabels.length : 1
+        columns: root.vertical ? 1 : root.buttonLabels.length
+        property real cellWidth: (width - spacing * Math.max(0, columns - 1)) / columns
+        property real cellHeight: (height - spacing * Math.max(0, rows - 1)) / rows
 
         Repeater {
-            model: ["Back", "Home", "Menu", "Stop"]
+            model: root.buttonLabels
 
             Button {
                 enabled: false
                 text: modelData
-                height: root.buttonExtent
-                width: root.vertical ? parent.width : root.buttonExtent * 1.45
+                height: buttonGrid.cellHeight
+                width: buttonGrid.cellWidth
             }
         }
     }

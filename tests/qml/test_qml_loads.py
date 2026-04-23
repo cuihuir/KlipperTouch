@@ -15,11 +15,22 @@ def test_main_qml_loads(qapp) -> None:
 
 def test_action_bar_has_at_most_four_shell_buttons() -> None:
     qml = Path("src/klippertouch/qml/components/ActionBar.qml").read_text(encoding="utf-8")
-    marker = "model:"
+    marker = "property var buttonLabels:"
     model_line = next(line for line in qml.splitlines() if marker in line)
     model = ast.literal_eval(model_line.split(marker, maxsplit=1)[1].strip())
 
     assert len(model) <= 4
+
+
+def test_action_bar_buttons_fill_available_axis() -> None:
+    qml = Path("src/klippertouch/qml/components/ActionBar.qml").read_text(encoding="utf-8")
+
+    assert "Flow {" not in qml
+    assert "Grid {" in qml
+    assert "rows: root.vertical ? root.buttonLabels.length : 1" in qml
+    assert "columns: root.vertical ? 1 : root.buttonLabels.length" in qml
+    assert "height: buttonGrid.cellHeight" in qml
+    assert "width: buttonGrid.cellWidth" in qml
 
 
 def test_shell_has_responsive_orientation_hooks() -> None:
