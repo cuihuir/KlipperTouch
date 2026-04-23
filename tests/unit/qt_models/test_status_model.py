@@ -9,7 +9,7 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
         klippy_state="ready",
         klipper_version="v0.13.0",
         moonraker_version="v0.10.0",
-        objects=("extruder",),
+        objects=("extruder", "heater_bed"),
     )
 
     with qtbot.waitSignal(model.statusChanged, timeout=1000):
@@ -17,4 +17,5 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
 
     assert model.hostname == "orangepi3b"
     assert model.klippyState == "ready"
-    assert model.objectCount == 1
+    assert model.objectCount == 2
+    assert model.temperatureDeviceCount == 2
