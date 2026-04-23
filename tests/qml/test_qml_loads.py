@@ -47,9 +47,11 @@ def test_action_bar_buttons_fill_available_axis() -> None:
     qml = Path("src/klippertouch/qml/components/ActionBar.qml").read_text(encoding="utf-8")
 
     assert "Flow {" not in qml
-    assert "Grid {" in qml
-    assert "rows: root.vertical ? root.buttonLabels.length : 1" in qml
-    assert "columns: root.vertical ? 1 : root.buttonLabels.length" in qml
+    assert "Grid {" not in qml
+    assert "id: buttonGrid" in qml
+    assert "property int buttonCount: 4" in qml
+    assert "x: root.vertical ? 0 : index * (buttonGrid.cellWidth + buttonGrid.spacing)" in qml
+    assert "y: root.vertical ? index * (buttonGrid.cellHeight + buttonGrid.spacing) : 0" in qml
     assert "height: buttonGrid.cellHeight" in qml
     assert "width: buttonGrid.cellWidth" in qml
 
@@ -435,6 +437,10 @@ def test_extrude_panel_is_locked_and_responsive() -> None:
     assert "required property var metrics" in qml
     assert "property var distances" in qml
     assert "property var speeds" in qml
+    assert "property real actionFraction: 0.42" in qml
+    assert "property real settingsFraction: 0.58" in qml
+    assert "Layout.preferredWidth: root.metrics.portrait" in qml
+    assert "Layout.minimumWidth: 0" in qml
     assert "Extrusion locked" in qml
     assert "root.metrics.portrait" in qml
     assert "Repeater {" in qml

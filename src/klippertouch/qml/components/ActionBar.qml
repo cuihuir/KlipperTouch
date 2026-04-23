@@ -7,20 +7,23 @@ Rectangle {
     property var buttonLabels: ["Back", "Home", "Menu", "Stop"]
     property var buttonIcons: ["back", "main", "settings", "emergency"]
     property var buttonActions: ["back", "home", "menu", "stop"]
+    property int buttonCount: 4
     property int spacingSize: Math.max(4, Math.round((vertical ? width : height) * 0.06))
     signal actionRequested(string actionName)
 
     color: Theme.actionBarBg
 
-    Grid {
+    Item {
         id: buttonGrid
         anchors.fill: parent
         anchors.margins: root.spacingSize
-        spacing: root.spacingSize
-        rows: root.vertical ? root.buttonLabels.length : 1
-        columns: root.vertical ? 1 : root.buttonLabels.length
-        property real cellWidth: (width - spacing * Math.max(0, columns - 1)) / columns
-        property real cellHeight: (height - spacing * Math.max(0, rows - 1)) / rows
+        property real spacing: root.spacingSize
+        property real cellWidth: root.vertical
+            ? width
+            : (width - spacing * Math.max(0, root.buttonCount - 1)) / root.buttonCount
+        property real cellHeight: root.vertical
+            ? (height - spacing * Math.max(0, root.buttonCount - 1)) / root.buttonCount
+            : height
 
         Repeater {
             model: root.buttonIcons
@@ -29,6 +32,8 @@ Rectangle {
                 id: iconButton
                 property int actionIconSize: Math.round(Math.min(width, height) * 0.58)
 
+                x: root.vertical ? 0 : index * (buttonGrid.cellWidth + buttonGrid.spacing)
+                y: root.vertical ? index * (buttonGrid.cellHeight + buttonGrid.spacing) : 0
                 height: buttonGrid.cellHeight
                 width: buttonGrid.cellWidth
                 color: Theme.buttonsBg

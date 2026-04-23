@@ -8,6 +8,8 @@ Item {
     required property var metrics
     property var distances: ["5", "10", "15", "25"]
     property var speeds: ["1", "2", "5", "25"]
+    property real actionFraction: 0.42
+    property real settingsFraction: 0.58
 
     GridLayout {
         anchors.fill: parent
@@ -20,6 +22,8 @@ Item {
         Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.preferredWidth: root.metrics.portrait ? parent.width : parent.width * root.actionFraction
+            Layout.minimumWidth: 0
             color: Theme.buttonsBg
             border.color: "#465456"
             border.width: 1
@@ -80,6 +84,8 @@ Item {
         GridLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.preferredWidth: root.metrics.portrait ? parent.width : parent.width * root.settingsFraction
+            Layout.minimumWidth: 0
             columns: 2
             rowSpacing: root.metrics.gap
             columnSpacing: root.metrics.gap
@@ -87,6 +93,7 @@ Item {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                Layout.minimumWidth: 0
                 color: Theme.buttonsBg
                 border.color: "#465456"
                 border.width: 1
@@ -122,6 +129,7 @@ Item {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                Layout.minimumWidth: 0
                 color: Theme.buttonsBg
                 border.color: "#465456"
                 border.width: 1
