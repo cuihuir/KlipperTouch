@@ -1,0 +1,9 @@
+[main]
+default_printer = MyPrinter
+
+[printer MyPrinter]
+moonraker_host = 127.0.0.1
+moonraker_port = 7125
+moonraker_path =
+moonraker_ssl = false
+moonraker_api_key =
