@@ -40,6 +40,7 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
     assert model.hostname == "orangepi3b"
     assert model.klippyState == "ready"
     assert model.objectCount == 2
+    assert model.objectNames == ["extruder", "heater_bed"]
     assert model.temperatureDeviceCount == 1
     assert model.printState == "printing"
     assert model.printFilename == "cube.gcode"

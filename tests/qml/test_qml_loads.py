@@ -228,6 +228,21 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "extruderTarget: window.extruderTarget" in main_qml
 
 
+def test_info_panel_exposes_read_only_object_list() -> None:
+    qml = Path("src/klippertouch/qml/panels/InfoPanel.qml").read_text(encoding="utf-8")
+
+    assert "property var objectNames" in qml
+    assert "ListView" in qml
+    assert "model: root.objectNames" in qml
+    assert "text: modelData" in qml
+    assert "clip: true" in qml
+
+    main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
+
+    assert "property var objectNames:" in main_qml
+    assert "objectNames: window.objectNames" in main_qml
+
+
 def test_main_menu_matches_klipperscreen_split_and_autogrid_contract() -> None:
     qml = Path("src/klippertouch/qml/panels/MainMenuPanel.qml").read_text(encoding="utf-8")
 

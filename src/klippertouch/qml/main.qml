@@ -18,6 +18,7 @@ ApplicationWindow {
     property string klipperVersion: bridgeModel ? bridgeModel.klipperVersion : "unknown"
     property string moonrakerVersion: bridgeModel ? bridgeModel.moonrakerVersion : "unknown"
     property int objectCount: bridgeModel ? bridgeModel.objectCount : 0
+    property var objectNames: bridgeModel ? bridgeModel.objectNames : []
     property string printState: bridgeModel ? bridgeModel.printState : "standby"
     property string printFilename: bridgeModel ? bridgeModel.printFilename : ""
     property real printProgress: bridgeModel ? bridgeModel.printProgress : 0
@@ -154,6 +155,7 @@ ApplicationWindow {
                 klipperVersion: window.klipperVersion
                 moonrakerVersion: window.moonrakerVersion
                 objectCount: window.objectCount
+                objectNames: window.objectNames
             }
         }
 

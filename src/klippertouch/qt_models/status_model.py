@@ -106,6 +106,10 @@ class StatusModel(QObject):
     def objectCount(self) -> int:
         return self._status.object_count
 
+    @Property(list, notify=statusChanged)
+    def objectNames(self) -> list[str]:
+        return list(self._status.objects)
+
     @Property(int, notify=statusChanged)
     def temperatureDeviceCount(self) -> int:
         return self._status.temperature_device_count
