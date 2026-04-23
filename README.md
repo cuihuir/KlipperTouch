@@ -14,6 +14,7 @@ The skeleton is grounded in the maintained implementation blueprint based on Kli
 - [Research-first design spec](docs/superpowers/specs/2026-04-23-klippertouch-research-first-design.md)
 - [KlipperScreen architecture map](docs/research/klipperscreen-architecture.md)
 - [Printer read-only probe](docs/research/printer-readonly-probe-2026-04-23.md)
+- [Runtime safety boundary](docs/safety-boundary.md)
 - [Roadmap](docs/roadmap.md)
 
 ## Development Commands
