@@ -16,21 +16,30 @@ ApplicationWindow {
     property string klippyState: bridgeModel ? bridgeModel.klippyState : "disconnected"
     property int objectCount: bridgeModel ? bridgeModel.objectCount : 0
     property string currentPanel: "main"
+    property var panelStack: ["main"]
     property var panelTitles: ({"main": "Home", "move": "Move", "temperature": "Temperature", "extrude": "Extrude", "more": "More", "print": "Print"})
     property var panelIcons: ({"main": "main", "move": "move", "temperature": "heat-up", "extrude": "extrude", "more": "settings", "print": "printer"})
 
     function showPanel(panelName) {
-        if (panelTitles[panelName] !== undefined) {
+        if (panelTitles[panelName] !== undefined && panelStack[panelStack.length - 1] !== panelName) {
+            var nextStack = panelStack.slice()
+            nextStack.push(panelName)
+            panelStack = nextStack
             currentPanel = panelName
         }
     }
 
     function goHome() {
+        panelStack = ["main"]
         currentPanel = "main"
     }
 
     function goBack() {
-        currentPanel = "main"
+        if (panelStack.length > 1) {
+            var nextStack = panelStack.slice(0, panelStack.length - 1)
+            panelStack = nextStack
+        }
+        currentPanel = panelStack[panelStack.length - 1]
     }
 
     Metrics {

@@ -237,6 +237,19 @@ def test_main_menu_requests_safe_local_panels() -> None:
     assert "printer.gcode.script" not in main_qml
 
 
+def test_main_maintains_safe_local_panel_navigation_stack() -> None:
+    main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
+
+    assert 'property var panelStack: ["main"]' in main_qml
+    assert "panelStack[panelStack.length - 1] !== panelName" in main_qml
+    assert "var nextStack = panelStack.slice()" in main_qml
+    assert "nextStack.push(panelName)" in main_qml
+    assert "panelStack = nextStack" in main_qml
+    assert 'panelStack = ["main"]' in main_qml
+    assert "panelStack.slice(0, panelStack.length - 1)" in main_qml
+    assert "currentPanel = panelStack[panelStack.length - 1]" in main_qml
+
+
 def test_action_bar_requests_safe_local_navigation() -> None:
     shell_qml = Path("src/klippertouch/qml/components/BaseShell.qml").read_text(encoding="utf-8")
     main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
