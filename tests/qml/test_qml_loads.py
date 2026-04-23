@@ -231,6 +231,11 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "property real zOffset" in qml
     assert "property real maxAccel" in qml
     assert "property real maxVelocity" in qml
+    assert "property var temperatureModel: null" in qml
+    assert "model: root.temperatureModel" in qml
+    assert "Temperatures" in qml
+    assert 'typeof target === "undefined" || target === null' in qml
+    assert 'typeof temperature === "undefined" || temperature === null' in qml
     assert "root.filamentLabel()" in qml
     assert "root.layerLabel()" in qml
     assert "function remainingLabel" in qml
@@ -501,6 +506,7 @@ def test_main_keeps_files_and_job_status_as_separate_routes() -> None:
     assert "zOffset: window.zOffset" in main_qml
     assert "maxAccel: window.maxAccel" in main_qml
     assert "maxVelocity: window.maxVelocity" in main_qml
+    assert "temperatureModel: window.temperatureBridgeModel" in main_qml
     assert "function isJobActive()" in main_qml
     assert "function syncJobStatusPanel()" in main_qml
     assert "onPrintStateChanged: window.syncJobStatusPanel()" in main_qml

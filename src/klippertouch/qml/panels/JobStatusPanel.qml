@@ -21,6 +21,7 @@ Item {
     property real zOffset: 0
     property real maxAccel: 0
     property real maxVelocity: 0
+    property var temperatureModel: null
 
     function durationLabel(seconds) {
         var safeSeconds = Math.max(0, Math.round(seconds))
@@ -152,6 +153,78 @@ Item {
                             text: root.remainingLabel() + " remaining"
                             horizontalAlignment: Text.AlignRight
                             font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: Math.max(58, Math.round(root.metrics.fontSize * 4.1))
+                visible: root.temperatureModel && root.temperatureModel.rowCount() > 0
+                color: "#101617"
+                border.color: "#263233"
+                border.width: 1
+                radius: Math.round(root.metrics.fontSize * 0.32)
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.margins: root.metrics.gap
+                    spacing: root.metrics.gap
+
+                    Label {
+                        color: Theme.mutedText
+                        text: "Temperatures"
+                        font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                    }
+
+                    ListView {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        orientation: ListView.Horizontal
+                        clip: true
+                        spacing: root.metrics.gap
+                        model: root.temperatureModel
+
+                        delegate: Rectangle {
+                            required property string displayName
+                            required property real temperature
+                            required property real target
+
+                            width: Math.max(150, Math.round(root.metrics.fontSize * 10.8))
+                            height: parent ? parent.height : Math.max(34, root.metrics.fontSize * 2.3)
+                            color: "#0b1112"
+                            border.color: "#263233"
+                            border.width: 1
+                            radius: Math.round(root.metrics.fontSize * 0.25)
+
+                            ColumnLayout {
+                                anchors.fill: parent
+                                anchors.margins: Math.max(5, Math.round(root.metrics.fontSize * 0.35))
+                                spacing: 0
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    color: Theme.mutedText
+                                    text: displayName
+                                    elide: Text.ElideRight
+                                    font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                                }
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    color: Theme.text
+                                    text: (typeof temperature === "undefined" || temperature === null
+                                        ? "--"
+                                        : Math.round(temperature) + "°")
+                                        + " / "
+                                        + (typeof target === "undefined" || target === null
+                                            ? "--"
+                                            : Math.round(target) + "°")
+                                    elide: Text.ElideRight
+                                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.92))
+                                }
+                            }
                         }
                     }
                 }
