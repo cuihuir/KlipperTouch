@@ -63,3 +63,20 @@ def test_printer_status_derives_read_only_temperature_devices_from_objects() -> 
         "heat-up",
     )
     assert status.temperature_device_count == 3
+
+
+def test_printer_status_populates_temperature_values_from_status_query() -> None:
+    status = PrinterStatus.from_probe(
+        server_info={"moonraker_version": "v0.10.0", "klippy_state": "ready"},
+        printer_info={"state": "ready", "hostname": "orangepi3b", "software_version": "v0.13.0"},
+        objects={"objects": ["extruder", "heater_bed"]},
+        object_status={
+            "status": {
+                "extruder": {"temperature": 24.3, "target": 0.0},
+                "heater_bed": {"temperature": 26.7, "target": 60.0},
+            }
+        },
+    )
+
+    assert tuple(device.temperature for device in status.temperature_devices) == (24.3, 26.7)
+    assert tuple(device.target for device in status.temperature_devices) == (0.0, 60.0)

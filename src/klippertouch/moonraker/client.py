@@ -18,7 +18,12 @@ class MoonrakerClient:
         path = f"/{normalized_path}" if normalized_path else ""
         return f"{proto}://{self.config.moonraker_host}:{self.config.moonraker_port}{path}"
 
-    def get(self, endpoint: str, timeout: float = 4.0) -> dict[str, Any]:
+    def get(
+        self,
+        endpoint: str,
+        timeout: float = 4.0,
+        params: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
         self.policy.validate_http("GET", endpoint)
         headers = (
             {"x-api-key": self.config.moonraker_api_key} if self.config.moonraker_api_key else {}
@@ -26,6 +31,7 @@ class MoonrakerClient:
         response = requests.get(
             f"{self.endpoint}/{endpoint.strip('/')}",
             headers=headers,
+            params=params,
             timeout=timeout,
         )
         response.raise_for_status()
@@ -41,3 +47,7 @@ class MoonrakerClient:
 
     def get_objects_list(self) -> dict[str, Any]:
         return self.get("printer/objects/list")
+
+    def get_printer_objects_query(self, objects: tuple[str, ...] = ()) -> dict[str, Any]:
+        params = {name: "temperature,target" for name in objects} if objects else None
+        return self.get("printer/objects/query", params=params)

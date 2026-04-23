@@ -53,29 +53,80 @@ class PrinterStatus:
         server_info: dict[str, Any],
         printer_info: dict[str, Any],
         objects: dict[str, Any],
+        object_status: dict[str, Any] | None = None,
     ) -> "PrinterStatus":
+        object_names = tuple(str(item) for item in objects.get("objects", ()))
         return cls(
             hostname=str(printer_info.get("hostname", "unknown")),
             klippy_state=str(server_info.get("klippy_state", printer_info.get("state", "unknown"))),
             klipper_version=str(printer_info.get("software_version", "unknown")),
             moonraker_version=str(server_info.get("moonraker_version", "unknown")),
-            objects=tuple(str(item) for item in objects.get("objects", ())),
+            objects=object_names,
+            temperature_devices=_temperature_devices_from_status(object_names, object_status or {}),
         )
 
 
-def _temperature_device_from_object(name: str) -> TemperatureDeviceStatus | None:
+def _temperature_devices_from_status(
+    object_names: tuple[str, ...],
+    object_status: dict[str, Any],
+) -> tuple[TemperatureDeviceStatus, ...]:
+    status = object_status.get("status", {})
+    if not isinstance(status, dict):
+        status = {}
+
+    devices: list[TemperatureDeviceStatus] = []
+    for name in object_names:
+        values = status.get(name, {})
+        if not isinstance(values, dict):
+            values = {}
+        device = _temperature_device_from_object(name, values)
+        if device is not None:
+            devices.append(device)
+    return tuple(devices)
+
+
+def _temperature_device_from_object(
+    name: str,
+    values: dict[str, Any] | None = None,
+) -> TemperatureDeviceStatus | None:
+    values = values or {}
+    temperature = _optional_float(values.get("temperature"))
+    target = _optional_float(values.get("target"))
     if name == "extruder" or name.startswith("extruder"):
         return TemperatureDeviceStatus(
             name=name,
             display_name=_prettify_name(name),
             icon="extruder",
+            temperature=temperature,
+            target=target,
         )
     if name == "heater_bed":
-        return TemperatureDeviceStatus(name=name, display_name="Heater Bed", icon="bed")
+        return TemperatureDeviceStatus(
+            name=name,
+            display_name="Heater Bed",
+            icon="bed",
+            temperature=temperature,
+            target=target,
+        )
     if name.startswith(("heater_generic ", "temperature_sensor ", "temperature_fan ")):
-        return TemperatureDeviceStatus(name=name, display_name=_prettify_name(name), icon="heat-up")
+        return TemperatureDeviceStatus(
+            name=name,
+            display_name=_prettify_name(name),
+            icon="heat-up",
+            temperature=temperature,
+            target=target,
+        )
     return None
 
 
 def _prettify_name(name: str) -> str:
     return name.replace("_", " ").replace("  ", " ").title()
+
+
+def _optional_float(value: Any) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
