@@ -52,20 +52,16 @@ Item {
                 height: Math.max(22, Math.round(root.metrics.fontSize * 1.85))
                 spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.35))
 
-                Image {
-                    source: Theme.iconSource(parent.resolvedIcon)
-                    width: Math.max(18, Math.round(root.metrics.fontSize * 1.35))
-                    height: width
+                TemperatureIcon {
+                    iconName: parent.resolvedIcon
+                    iconSize: Math.max(22, Math.round(root.metrics.fontSize * 1.55))
                     anchors.verticalCenter: parent.verticalCenter
-                    fillMode: Image.PreserveAspectFit
-                    sourceSize.width: width
-                    sourceSize.height: height
                 }
 
                 Label {
                     color: Theme.text
                     text: parent.resolvedName
-                    width: parent.width * 0.68 - parent.spacing - Math.max(18, Math.round(root.metrics.fontSize * 1.35))
+                    width: parent.width * 0.68 - parent.spacing - Math.max(22, Math.round(root.metrics.fontSize * 1.55))
                     elide: Text.ElideRight
                     verticalAlignment: Text.AlignVCenter
                     font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.95))

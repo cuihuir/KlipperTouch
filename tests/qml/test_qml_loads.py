@@ -116,8 +116,9 @@ def test_status_bar_matches_klipperscreen_titlebar_structure() -> None:
     assert "TemperatureDeviceModel {" in qml
     assert "id: fallbackTemperatureModel" in qml
     assert 'typeof icon === "undefined" ? iconName : icon' in qml
-    assert "source: Theme.iconSource(parent.resolvedIcon)" in qml
-    assert 'text: temperature + "°"' in qml
+    assert "TemperatureIcon {" in qml
+    assert "iconName: parent.resolvedIcon" in qml
+    assert 'typeof temperature === "undefined" || temperature === null' in qml
     assert "model: root.activeTemperatureModel" in qml
     assert "id: titleLabel" in qml
     assert "id: clockLabel" in qml
@@ -166,6 +167,7 @@ def test_responsive_layout_components_exist() -> None:
         qml_dir / "components" / "BaseShell.qml",
         qml_dir / "panels" / "MainMenuPanel.qml",
         qml_dir / "components" / "MenuTile.qml",
+        qml_dir / "components" / "TemperatureIcon.qml",
         qml_dir / "components" / "TemperatureSummary.qml",
         qml_dir / "components" / "FakeTemperatureGraph.qml",
         qml_dir / "models" / "MainMenuModel.qml",
@@ -439,6 +441,8 @@ def test_temperature_summary_uses_klipperscreen_device_icons_and_theme() -> None
     assert 'typeof icon === "undefined" ? iconName : icon' in component_qml
     assert 'typeof displayName === "undefined" ? deviceName : displayName' in component_qml
     assert 'typeof temperature === "undefined" || temperature === null' in component_qml
+    assert "TemperatureIcon {" in component_qml
+    assert "iconName: parent.resolvedIcon" in component_qml
     assert "model: root.activeTemperatureModel" in component_qml
     assert "color: Theme.text" in component_qml
     assert "color: Theme.mutedText" in component_qml
@@ -478,6 +482,8 @@ def test_temperature_panel_is_read_only_and_responsive() -> None:
     assert "Layout.minimumWidth: 0" in qml
     assert "Layout.minimumHeight: 0" in qml
     assert 'typeof icon === "undefined" ? iconName : icon' in qml
+    assert "TemperatureIcon {" in qml
+    assert "iconName: resolvedIcon" in qml
     assert 'typeof displayName === "undefined" ? deviceName : displayName' in qml
     assert 'typeof target === "undefined" || target === null' in qml
     assert 'typeof temperature === "undefined" || temperature === null' in qml

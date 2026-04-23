@@ -44,19 +44,18 @@ Rectangle {
                     height: heaterStrip.height
                     spacing: Math.max(2, Math.round(root.fontSize * 0.25))
 
-                    Image {
-                        source: Theme.iconSource(parent.resolvedIcon)
-                        width: Math.max(12, Math.round(root.fontSize * 0.95))
-                        height: width
+                    TemperatureIcon {
+                        iconName: parent.resolvedIcon
+                        iconSize: Math.max(14, Math.round(root.fontSize * 1.05))
+                        compact: true
                         anchors.verticalCenter: parent.verticalCenter
-                        fillMode: Image.PreserveAspectFit
-                        sourceSize.width: width
-                        sourceSize.height: height
                     }
 
                     Label {
                         color: Theme.text
-                        text: temperature + "°"
+                        text: typeof temperature === "undefined" || temperature === null
+                            ? "--"
+                            : Math.round(temperature) + "°"
                         font.pixelSize: Math.max(10, Math.round(root.fontSize * 0.8))
                         verticalAlignment: Text.AlignVCenter
                         height: parent.height

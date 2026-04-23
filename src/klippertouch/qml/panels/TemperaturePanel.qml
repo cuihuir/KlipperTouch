@@ -102,13 +102,11 @@ Item {
                             anchors.rightMargin: root.metrics.gap
                             spacing: root.metrics.gap
 
-                            Image {
-                                source: Theme.iconSource(resolvedIcon)
-                                Layout.preferredWidth: Math.max(22, Math.round(root.metrics.fontSize * 1.5))
-                                Layout.preferredHeight: Layout.preferredWidth
-                                fillMode: Image.PreserveAspectFit
-                                sourceSize.width: Layout.preferredWidth
-                                sourceSize.height: Layout.preferredHeight
+                            TemperatureIcon {
+                                iconName: resolvedIcon
+                                iconSize: Math.max(28, Math.round(root.metrics.fontSize * 1.9))
+                                Layout.preferredWidth: iconSize
+                                Layout.preferredHeight: iconSize
                             }
 
                             Label {
