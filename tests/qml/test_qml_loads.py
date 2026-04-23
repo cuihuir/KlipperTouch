@@ -169,7 +169,8 @@ def test_responsive_layout_components_exist() -> None:
         qml_dir / "models" / "TemperatureDeviceModel.qml",
         qml_dir / "panels" / "PlaceholderPanel.qml",
         qml_dir / "panels" / "TemperaturePanel.qml",
-        qml_dir / "panels" / "PrintPanel.qml",
+        qml_dir / "panels" / "FilesPanel.qml",
+        qml_dir / "panels" / "JobStatusPanel.qml",
         qml_dir / "panels" / "InfoPanel.qml",
         qml_dir / "panels" / "MovePanel.qml",
         qml_dir / "panels" / "ExtrudePanel.qml",
@@ -180,8 +181,22 @@ def test_responsive_layout_components_exist() -> None:
     assert missing == []
 
 
-def test_print_panel_exposes_read_only_job_status_without_controls() -> None:
-    qml = Path("src/klippertouch/qml/panels/PrintPanel.qml").read_text(encoding="utf-8")
+def test_files_panel_is_only_read_only_file_management() -> None:
+    qml = Path("src/klippertouch/qml/panels/FilesPanel.qml").read_text(encoding="utf-8")
+
+    assert "property var fileModel" in qml
+    assert "G-Code files" in qml
+    assert "property string printState" not in qml
+    assert "property string printFilename" not in qml
+    assert "property real printProgress" not in qml
+    assert "ProgressBar" not in qml
+    assert "Start" not in qml
+    assert "Pause" not in qml
+    assert "Cancel" not in qml
+
+
+def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
+    qml = Path("src/klippertouch/qml/panels/JobStatusPanel.qml").read_text(encoding="utf-8")
 
     assert "property string printState" in qml
     assert "property string printFilename" in qml
@@ -189,9 +204,12 @@ def test_print_panel_exposes_read_only_job_status_without_controls() -> None:
     assert "property string printMessage" in qml
     assert "ProgressBar" in qml
     assert "root.printProgress / 100" in qml
+    assert "fileModel" not in qml
     assert "Start" not in qml
     assert "Pause" not in qml
     assert "Cancel" not in qml
+    assert "printer.print." not in qml
+    assert "printer.gcode.script" not in qml
 
 
 def test_move_panel_exposes_read_only_position_without_controls() -> None:
@@ -429,8 +447,27 @@ def test_main_routes_temperature_to_read_only_temperature_panel() -> None:
     assert "temperatureModel: window.temperatureBridgeModel" in main_qml
 
 
-def test_print_panel_is_read_only_and_responsive() -> None:
-    qml = Path("src/klippertouch/qml/panels/PrintPanel.qml").read_text(encoding="utf-8")
+def test_main_keeps_files_and_job_status_as_separate_routes() -> None:
+    main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
+
+    assert '"job_status": "Job Status"' in main_qml
+    assert 'case "print":' in main_qml
+    assert "return filesComponent" in main_qml
+    assert 'case "job_status":' in main_qml
+    assert "return jobStatusComponent" in main_qml
+    assert "FilesPanel {" in main_qml
+    assert "JobStatusPanel {" in main_qml
+    assert "fileModel: window.gcodeFileBridgeModel" in main_qml
+    assert "function isJobActive()" in main_qml
+    assert "function syncJobStatusPanel()" in main_qml
+    assert "onPrintStateChanged: window.syncJobStatusPanel()" in main_qml
+    assert "Component.onCompleted: window.syncJobStatusPanel()" in main_qml
+    assert 'window.currentPanel = "job_status"' in main_qml
+    assert "PrintPanel {" not in main_qml
+
+
+def test_files_panel_is_read_only_and_responsive() -> None:
+    qml = Path("src/klippertouch/qml/panels/FilesPanel.qml").read_text(encoding="utf-8")
 
     assert "required property var metrics" in qml
     assert "property var fileModel: null" in qml
@@ -444,7 +481,7 @@ def test_print_panel_is_read_only_and_responsive() -> None:
     assert "printer.gcode.script" not in qml
 
 
-def test_main_routes_print_to_read_only_print_panel() -> None:
+def test_main_routes_print_to_read_only_files_panel() -> None:
     main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
 
     assert (
@@ -452,8 +489,8 @@ def test_main_routes_print_to_read_only_print_panel() -> None:
         "? null : gcodeFileModel"
     ) in main_qml
     assert 'case "print":' in main_qml
-    assert "return printComponent" in main_qml
-    assert "PrintPanel {" in main_qml
+    assert "return filesComponent" in main_qml
+    assert "FilesPanel {" in main_qml
     assert "fileModel: window.gcodeFileBridgeModel" in main_qml
 
 

@@ -34,8 +34,23 @@ ApplicationWindow {
     property real extruderTarget: bridgeModel ? bridgeModel.extruderTarget : 0
     property string currentPanel: "main"
     property var panelStack: ["main"]
-    property var panelTitles: ({"main": "Home", "move": "Move", "temperature": "Temperature", "extrude": "Extrude", "more": "More", "print": "Print"})
-    property var panelIcons: ({"main": "main", "move": "move", "temperature": "heat-up", "extrude": "extrude", "more": "settings", "print": "printer"})
+    property var panelTitles: ({"main": "Home", "move": "Move", "temperature": "Temperature", "extrude": "Extrude", "more": "More", "print": "Print", "job_status": "Job Status"})
+    property var panelIcons: ({"main": "main", "move": "move", "temperature": "heat-up", "extrude": "extrude", "more": "settings", "print": "printer", "job_status": "printer"})
+
+    function isJobActive() {
+        return window.printState === "printing" || window.printState === "paused"
+    }
+
+    function syncJobStatusPanel() {
+        if (window.isJobActive()) {
+            if (window.currentPanel !== "job_status") {
+                window.panelStack = ["job_status"]
+                window.currentPanel = "job_status"
+            }
+        } else if (window.currentPanel === "job_status") {
+            window.goHome()
+        }
+    }
 
     function showPanel(panelName) {
         if (panelTitles[panelName] !== undefined && panelStack[panelStack.length - 1] !== panelName) {
@@ -66,7 +81,9 @@ ApplicationWindow {
         case "temperature":
             return temperatureComponent
         case "print":
-            return printComponent
+            return filesComponent
+        case "job_status":
+            return jobStatusComponent
         case "more":
             return infoComponent
         case "move":
@@ -83,6 +100,9 @@ ApplicationWindow {
         viewportWidth: window.width
         viewportHeight: window.height
     }
+
+    onPrintStateChanged: window.syncJobStatusPanel()
+    Component.onCompleted: window.syncJobStatusPanel()
 
     BaseShell {
         anchors.fill: parent
@@ -131,11 +151,19 @@ ApplicationWindow {
         }
 
         Component {
-            id: printComponent
+            id: filesComponent
 
-            PrintPanel {
+            FilesPanel {
                 metrics: appMetrics
                 fileModel: window.gcodeFileBridgeModel
+            }
+        }
+
+        Component {
+            id: jobStatusComponent
+
+            JobStatusPanel {
+                metrics: appMetrics
                 printState: window.printState
                 printFilename: window.printFilename
                 printProgress: window.printProgress
