@@ -39,6 +39,7 @@ def main() -> int:
         initial_status=initial_status,
         initial_files=initial_files,
         status_stream_client=client,
+        file_refresh_client=client,
     )
 
 

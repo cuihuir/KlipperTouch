@@ -8,6 +8,7 @@ from PySide6.QtWidgets import QApplication
 from klippertouch.domain.gcode_files import files_from_moonraker
 from klippertouch.domain.printer import PrinterStatus
 from klippertouch.moonraker.client import MoonrakerClient
+from klippertouch.moonraker.file_refresh import GCodeFileRefresh
 from klippertouch.moonraker.status_stream import MoonrakerStatusStream
 from klippertouch.qt_models.gcode_file_model import GCodeFileListModel
 from klippertouch.qt_models.status_model import StatusModel, TemperatureDeviceListModel
@@ -37,6 +38,7 @@ def run_app(
     initial_status: PrinterStatus | None = None,
     initial_files: list[dict[str, object]] | None = None,
     status_stream_client: MoonrakerClient | None = None,
+    file_refresh_client: MoonrakerClient | None = None,
 ) -> int:
     app = QApplication(argv or [])
     engine = QQmlApplicationEngine()
@@ -53,6 +55,10 @@ def run_app(
         status_stream = MoonrakerStatusStream(status_stream_client, status_model, initial_status)
         status_stream.start()
         engine.status_stream = status_stream  # type: ignore[attr-defined]
+    if file_refresh_client is not None:
+        file_refresh = GCodeFileRefresh(file_refresh_client, gcode_file_model)
+        file_refresh.start()
+        engine.gcode_file_refresh = file_refresh  # type: ignore[attr-defined]
     return app.exec()
 
 
