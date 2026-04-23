@@ -20,6 +20,8 @@ Exit criteria:
 
 ## Phase 2: Clean PySide6/QML Skeleton
 
+Status: implemented skeleton
+
 Scope:
 
 - Create Python package structure.
@@ -34,6 +36,8 @@ Safety:
 - Read-only mode remains default.
 
 ## Phase 3: Read-Only Moonraker Integration
+
+Status: ready for read-only integration expansion
 
 Scope:
 

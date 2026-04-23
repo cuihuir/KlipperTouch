@@ -18,6 +18,20 @@ This repository is in the research-first phase. The project is intentionally not
 - [Printer read-only probe](docs/research/printer-readonly-probe-2026-04-23.md)
 - [Roadmap](docs/roadmap.md)
 
+## Development Commands
+
+```bash
+uv venv
+source .venv/bin/activate
+uv pip install -e ".[dev]"
+pytest
+ruff check src tests
+mypy src/klippertouch
+python -m klippertouch --probe
+```
+
+Real-printer probes are read-only. Do not enable command execution without a separate reviewed plan.
+
 ## Safety Boundary
 
 Until an implementation plan explicitly changes this boundary, real-printer validation is read-only only. Do not send movement, homing, heating, extrusion, print-control, restart, firmware-restart, power, or emergency-stop commands from this project.
@@ -25,4 +39,3 @@ Until an implementation plan explicitly changes this boundary, real-printer vali
 ## License
 
 GPL-3.0-or-later. See [LICENSE](LICENSE).
-
