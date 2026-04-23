@@ -7,6 +7,7 @@ class CommandPolicy:
         self.read_only = read_only
         self.allowed_gets = {
             "server/info",
+            "server/files/list",
             "printer/info",
             "printer/objects/list",
             "printer/objects/query",

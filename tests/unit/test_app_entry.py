@@ -23,6 +23,13 @@ def test_app_registers_temperature_device_model_context() -> None:
     assert 'setContextProperty("temperatureDeviceModel", temperature_device_model)' in source
 
 
+def test_app_registers_gcode_file_model_context() -> None:
+    source = app.Path(app.__file__).read_text(encoding="utf-8")
+
+    assert "GCodeFileListModel" in source
+    assert 'setContextProperty("gcodeFileModel", gcode_file_model)' in source
+
+
 def test_create_status_models_applies_initial_status(qtbot) -> None:
     status = PrinterStatus(objects=("extruder", "heater_bed"))
 
@@ -30,6 +37,21 @@ def test_create_status_models_applies_initial_status(qtbot) -> None:
 
     assert status_model.temperatureDeviceCount == 2
     assert temperature_model.rowCount() == 2
+
+
+def test_create_gcode_file_model_applies_initial_files(qtbot) -> None:
+    file_model = app.create_gcode_file_model(
+        [
+            {
+                "path": "calibration/cube.gcode",
+                "modified": 1710000000.5,
+                "size": 2048,
+                "permissions": "rw",
+            }
+        ]
+    )
+
+    assert file_model.rowCount() == 1
 
 
 def test_run_app_wires_optional_read_only_status_stream() -> None:

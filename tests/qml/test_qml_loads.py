@@ -166,6 +166,7 @@ def test_responsive_layout_components_exist() -> None:
         qml_dir / "models" / "TemperatureDeviceModel.qml",
         qml_dir / "panels" / "PlaceholderPanel.qml",
         qml_dir / "panels" / "TemperaturePanel.qml",
+        qml_dir / "panels" / "PrintPanel.qml",
     ]
 
     missing = [path for path in expected if not path.exists()]
@@ -346,6 +347,34 @@ def test_main_routes_temperature_to_read_only_temperature_panel() -> None:
     assert "sourceComponent: window.componentForPanel(window.currentPanel)" in main_qml
     assert "TemperaturePanel {" in main_qml
     assert "temperatureModel: window.temperatureBridgeModel" in main_qml
+
+
+def test_print_panel_is_read_only_and_responsive() -> None:
+    qml = Path("src/klippertouch/qml/panels/PrintPanel.qml").read_text(encoding="utf-8")
+
+    assert "required property var metrics" in qml
+    assert "property var fileModel: null" in qml
+    assert "model: root.activeFileModel" in qml
+    assert "readonly" in qml
+    assert "displayName" in qml
+    assert "sizeLabel" in qml
+    assert "root.metrics.portrait" in qml
+    assert "MouseArea" not in qml
+    assert "printer.print.start" not in qml
+    assert "printer.gcode.script" not in qml
+
+
+def test_main_routes_print_to_read_only_print_panel() -> None:
+    main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
+
+    assert (
+        'property var gcodeFileBridgeModel: typeof gcodeFileModel === "undefined" '
+        "? null : gcodeFileModel"
+    ) in main_qml
+    assert 'case "print":' in main_qml
+    assert "return printComponent" in main_qml
+    assert "PrintPanel {" in main_qml
+    assert "fileModel: window.gcodeFileBridgeModel" in main_qml
 
 
 def test_main_uses_responsive_base_shell_and_main_panel() -> None:

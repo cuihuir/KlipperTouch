@@ -58,3 +58,9 @@ class MoonrakerClient:
     def get_printer_objects_query(self, objects: tuple[str, ...] = ()) -> dict[str, Any]:
         params = {name: "temperature,target" for name in objects} if objects else None
         return self.get("printer/objects/query", params=params)
+
+    def get_gcode_file_list(self) -> list[dict[str, Any]]:
+        result = self.get("server/files/list", params={"root": "gcodes"})
+        if isinstance(result, list):
+            return [item for item in result if isinstance(item, dict)]
+        return []

@@ -5,9 +5,11 @@ from PySide6.QtCore import QUrl
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtWidgets import QApplication
 
+from klippertouch.domain.gcode_files import files_from_moonraker
 from klippertouch.domain.printer import PrinterStatus
 from klippertouch.moonraker.client import MoonrakerClient
 from klippertouch.moonraker.status_stream import MoonrakerStatusStream
+from klippertouch.qt_models.gcode_file_model import GCodeFileListModel
 from klippertouch.qt_models.status_model import StatusModel, TemperatureDeviceListModel
 
 
@@ -21,16 +23,28 @@ def create_status_models(
     return status_model, temperature_device_model
 
 
+def create_gcode_file_model(
+    initial_files: list[dict[str, object]] | None = None,
+) -> GCodeFileListModel:
+    model = GCodeFileListModel()
+    if initial_files is not None:
+        model.set_files(files_from_moonraker(initial_files))
+    return model
+
+
 def run_app(
     argv: list[str] | None = None,
     initial_status: PrinterStatus | None = None,
+    initial_files: list[dict[str, object]] | None = None,
     status_stream_client: MoonrakerClient | None = None,
 ) -> int:
     app = QApplication(argv or [])
     engine = QQmlApplicationEngine()
     status_model, temperature_device_model = create_status_models(initial_status)
+    gcode_file_model = create_gcode_file_model(initial_files)
     engine.rootContext().setContextProperty("statusModel", status_model)
     engine.rootContext().setContextProperty("temperatureDeviceModel", temperature_device_model)
+    engine.rootContext().setContextProperty("gcodeFileModel", gcode_file_model)
     qml_path = Path(__file__).parent / "qml" / "main.qml"
     engine.load(QUrl.fromLocalFile(str(qml_path)))
     if not engine.rootObjects():

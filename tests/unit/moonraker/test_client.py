@@ -119,3 +119,33 @@ def test_client_gets_printer_objects_query(monkeypatch) -> None:
         "extruder": "temperature,target",
         "heater_bed": "temperature,target",
     }
+
+
+def test_client_gets_gcode_file_list(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            pass
+
+        def json(self) -> dict[str, object]:
+            return {"result": [{"path": "cube.gcode", "size": 1234}]}
+
+    def fake_get(
+        url: str,
+        *,
+        headers: dict[str, str],
+        params: dict[str, str] | None,
+        timeout: float,
+    ) -> FakeResponse:
+        captured["url"] = url
+        captured["params"] = params
+        return FakeResponse()
+
+    monkeypatch.setattr("klippertouch.moonraker.client.requests.get", fake_get)
+
+    client = MoonrakerClient(PrinterConfig(name="p", moonraker_host="host"))
+
+    assert client.get_gcode_file_list() == [{"path": "cube.gcode", "size": 1234}]
+    assert captured["url"] == "http://host:7125/server/files/list"
+    assert captured["params"] == {"root": "gcodes"}

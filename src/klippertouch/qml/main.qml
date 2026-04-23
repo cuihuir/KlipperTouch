@@ -12,6 +12,7 @@ ApplicationWindow {
 
     property var bridgeModel: typeof statusModel === "undefined" ? null : statusModel
     property var temperatureBridgeModel: typeof temperatureDeviceModel === "undefined" ? null : temperatureDeviceModel
+    property var gcodeFileBridgeModel: typeof gcodeFileModel === "undefined" ? null : gcodeFileModel
     property string hostname: bridgeModel ? bridgeModel.hostname : "offline"
     property string klippyState: bridgeModel ? bridgeModel.klippyState : "disconnected"
     property int objectCount: bridgeModel ? bridgeModel.objectCount : 0
@@ -48,6 +49,8 @@ ApplicationWindow {
             return mainMenuComponent
         case "temperature":
             return temperatureComponent
+        case "print":
+            return printComponent
         default:
             return placeholderComponent
         }
@@ -102,6 +105,15 @@ ApplicationWindow {
             TemperaturePanel {
                 metrics: appMetrics
                 temperatureModel: window.temperatureBridgeModel
+            }
+        }
+
+        Component {
+            id: printComponent
+
+            PrintPanel {
+                metrics: appMetrics
+                fileModel: window.gcodeFileBridgeModel
             }
         }
     }

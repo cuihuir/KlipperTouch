@@ -23,4 +23,6 @@ def test_main_attempts_read_only_status_before_gui() -> None:
     assert "initial_status = None" in source
     assert "client = MoonrakerClient(printer)" in source
     assert "initial_status = build_status_from_client(client)" in source
+    assert "initial_files = client.get_gcode_file_list()" in source
     assert "status_stream_client=client" in source
+    assert "initial_files=initial_files" in source
