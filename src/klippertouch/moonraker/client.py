@@ -18,6 +18,13 @@ class MoonrakerClient:
         path = f"/{normalized_path}" if normalized_path else ""
         return f"{proto}://{self.config.moonraker_host}:{self.config.moonraker_port}{path}"
 
+    @property
+    def websocket_endpoint(self) -> str:
+        proto = "wss" if self.config.moonraker_ssl else "ws"
+        normalized_path = self.config.moonraker_path.strip("/")
+        path = f"/{normalized_path}" if normalized_path else ""
+        return f"{proto}://{self.config.moonraker_host}:{self.config.moonraker_port}{path}/websocket"
+
     def get(
         self,
         endpoint: str,

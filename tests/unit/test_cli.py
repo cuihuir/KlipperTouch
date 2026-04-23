@@ -21,5 +21,6 @@ def test_main_attempts_read_only_status_before_gui() -> None:
     source = Path("src/klippertouch/__main__.py").read_text(encoding="utf-8")
 
     assert "initial_status = None" in source
-    assert "initial_status = build_status_from_client(MoonrakerClient(printer))" in source
-    assert "return run_app(sys.argv, initial_status=initial_status)" in source
+    assert "client = MoonrakerClient(printer)" in source
+    assert "initial_status = build_status_from_client(client)" in source
+    assert "status_stream_client=client" in source

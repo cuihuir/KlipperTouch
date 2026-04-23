@@ -5,6 +5,7 @@ from klippertouch.moonraker.client import MoonrakerClient
 def test_client_builds_plain_http_endpoint() -> None:
     client = MoonrakerClient(PrinterConfig(name="p", moonraker_host="host", moonraker_port=7125))
     assert client.endpoint == "http://host:7125"
+    assert client.websocket_endpoint == "ws://host:7125/websocket"
 
 
 def test_client_builds_path_and_ssl_endpoint() -> None:
@@ -18,6 +19,7 @@ def test_client_builds_path_and_ssl_endpoint() -> None:
         )
     )
     assert client.endpoint == "https://host:7130/printer"
+    assert client.websocket_endpoint == "wss://host:7130/printer/websocket"
 
 
 def test_client_normalizes_surrounding_endpoint_path_slashes() -> None:

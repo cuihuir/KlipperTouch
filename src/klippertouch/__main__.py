@@ -24,13 +24,15 @@ def main() -> int:
         print("Debug logging enabled", flush=True)
 
     initial_status = None
+    client = None
     try:
         printer = settings.printers[settings.default_printer]
-        initial_status = build_status_from_client(MoonrakerClient(printer))
+        client = MoonrakerClient(printer)
+        initial_status = build_status_from_client(client)
     except Exception as exc:
         if args.debug:
             print(f"Read-only startup probe failed: {exc}", flush=True)
-    return run_app(sys.argv, initial_status=initial_status)
+    return run_app(sys.argv, initial_status=initial_status, status_stream_client=client)
 
 
 if __name__ == "__main__":

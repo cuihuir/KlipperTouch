@@ -65,6 +65,32 @@ class PrinterStatus:
             temperature_devices=_temperature_devices_from_status(object_names, object_status or {}),
         )
 
+    def with_temperature_status_update(self, status_update: dict[str, Any]) -> "PrinterStatus":
+        previous_values = {
+            device.name: {"temperature": device.temperature, "target": device.target}
+            for device in self.temperature_devices
+        }
+        for name, values in status_update.items():
+            if not isinstance(values, dict):
+                continue
+            previous = previous_values.setdefault(str(name), {})
+            if "temperature" in values:
+                previous["temperature"] = values["temperature"]
+            if "target" in values:
+                previous["target"] = values["target"]
+
+        return PrinterStatus(
+            hostname=self.hostname,
+            klippy_state=self.klippy_state,
+            klipper_version=self.klipper_version,
+            moonraker_version=self.moonraker_version,
+            objects=self.objects,
+            temperature_devices=_temperature_devices_from_status(
+                self.objects,
+                {"status": previous_values},
+            ),
+        )
+
 
 def _temperature_devices_from_status(
     object_names: tuple[str, ...],

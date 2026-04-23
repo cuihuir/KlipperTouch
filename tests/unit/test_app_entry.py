@@ -30,3 +30,12 @@ def test_create_status_models_applies_initial_status(qtbot) -> None:
 
     assert status_model.temperatureDeviceCount == 2
     assert temperature_model.rowCount() == 2
+
+
+def test_run_app_wires_optional_read_only_status_stream() -> None:
+    source = app.Path(app.__file__).read_text(encoding="utf-8")
+
+    assert "MoonrakerStatusStream" in source
+    assert "status_stream_client" in source
+    assert "status_stream.start()" in source
+    assert "engine.status_stream = status_stream" in source

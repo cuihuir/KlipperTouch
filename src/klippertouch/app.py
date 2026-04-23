@@ -6,6 +6,8 @@ from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtWidgets import QApplication
 
 from klippertouch.domain.printer import PrinterStatus
+from klippertouch.moonraker.client import MoonrakerClient
+from klippertouch.moonraker.status_stream import MoonrakerStatusStream
 from klippertouch.qt_models.status_model import StatusModel, TemperatureDeviceListModel
 
 
@@ -22,6 +24,7 @@ def create_status_models(
 def run_app(
     argv: list[str] | None = None,
     initial_status: PrinterStatus | None = None,
+    status_stream_client: MoonrakerClient | None = None,
 ) -> int:
     app = QApplication(argv or [])
     engine = QQmlApplicationEngine()
@@ -32,6 +35,10 @@ def run_app(
     engine.load(QUrl.fromLocalFile(str(qml_path)))
     if not engine.rootObjects():
         return 1
+    if initial_status is not None and status_stream_client is not None:
+        status_stream = MoonrakerStatusStream(status_stream_client, status_model, initial_status)
+        status_stream.start()
+        engine.status_stream = status_stream  # type: ignore[attr-defined]
     return app.exec()
 
 
