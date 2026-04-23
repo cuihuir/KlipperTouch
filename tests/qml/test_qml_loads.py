@@ -161,6 +161,7 @@ def test_responsive_layout_components_exist() -> None:
         qml_dir / "components" / "FakeTemperatureGraph.qml",
         qml_dir / "models" / "MainMenuModel.qml",
         qml_dir / "models" / "TemperatureDeviceModel.qml",
+        qml_dir / "panels" / "PlaceholderPanel.qml",
     ]
 
     missing = [path for path in expected if not path.exists()]
@@ -257,8 +258,25 @@ def test_main_uses_responsive_base_shell_and_main_panel() -> None:
     main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
 
     assert "BaseShell {" in main_qml
-    assert "MainMenuPanel {" in main_qml
+    assert "Loader {" in main_qml
     assert "Metrics {" in main_qml
+    assert 'property string currentPanel: "main"' in main_qml
+    assert 'property var panelTitles: ({"main": "Home"' in main_qml
+    assert "panelTitle: window.panelTitles[window.currentPanel]" in main_qml
+    assert (
+        'sourceComponent: window.currentPanel === "main" '
+        "? mainMenuComponent : placeholderComponent"
+    ) in main_qml
+
+
+def test_placeholder_panel_supports_safe_empty_pages() -> None:
+    qml = Path("src/klippertouch/qml/panels/PlaceholderPanel.qml").read_text(encoding="utf-8")
+
+    assert "required property var metrics" in qml
+    assert "required property string title" in qml
+    assert "required property string iconName" in qml
+    assert "No printer commands are enabled on this screen yet." in qml
+    assert "Theme.iconSource(root.iconName)" in qml
 
 
 @pytest.mark.parametrize(("width", "height"), [(800, 480), (1024, 600), (480, 800)])

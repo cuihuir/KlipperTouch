@@ -15,25 +15,47 @@ ApplicationWindow {
     property string hostname: bridgeModel ? bridgeModel.hostname : "offline"
     property string klippyState: bridgeModel ? bridgeModel.klippyState : "disconnected"
     property int objectCount: bridgeModel ? bridgeModel.objectCount : 0
+    property string currentPanel: "main"
+    property var panelTitles: ({"main": "Home", "move": "Move", "temperature": "Temperature", "extrude": "Extrude", "more": "More", "print": "Print"})
+    property var panelIcons: ({"main": "main", "move": "move", "temperature": "heat-up", "extrude": "extrude", "more": "settings", "print": "printer"})
 
     Metrics {
-        id: metrics
+        id: appMetrics
         viewportWidth: window.width
         viewportHeight: window.height
     }
 
     BaseShell {
         anchors.fill: parent
-        metrics: metrics
+        metrics: appMetrics
         hostname: window.hostname
         state: window.klippyState
         objectCount: window.objectCount
         temperatureModel: window.temperatureBridgeModel
+        panelTitle: window.panelTitles[window.currentPanel]
 
-        MainMenuPanel {
+        Loader {
             anchors.fill: parent
-            metrics: metrics
-            temperatureModel: window.temperatureBridgeModel
+            sourceComponent: window.currentPanel === "main" ? mainMenuComponent : placeholderComponent
+        }
+
+        Component {
+            id: mainMenuComponent
+
+            MainMenuPanel {
+                metrics: appMetrics
+                temperatureModel: window.temperatureBridgeModel
+            }
+        }
+
+        Component {
+            id: placeholderComponent
+
+            PlaceholderPanel {
+                metrics: appMetrics
+                title: window.panelTitles[window.currentPanel]
+                iconName: window.panelIcons[window.currentPanel]
+            }
         }
     }
 }
