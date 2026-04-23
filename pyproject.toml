@@ -28,6 +28,7 @@ klippertouch = "klippertouch.__main__:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/klippertouch"]
+artifacts = ["src/klippertouch/qml/**/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
