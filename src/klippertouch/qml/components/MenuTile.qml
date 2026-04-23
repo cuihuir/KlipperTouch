@@ -8,22 +8,25 @@ Rectangle {
     required property color accent
     property real fontSize: 16
 
-    color: "transparent"
-    border.width: 0
+    color: "#090909"
+    border.color: root.accent
+    border.width: Math.max(2, Math.round(root.fontSize * 0.12))
+    radius: Math.round(root.fontSize)
 
     Column {
         anchors.fill: parent
-        anchors.margins: Math.max(2, Math.round(root.fontSize * 0.25))
+        anchors.margins: Math.max(8, Math.round(root.fontSize * 0.55))
         spacing: Math.max(2, Math.round(root.fontSize * 0.2))
 
-        Label {
+        Image {
+            property int tileIconSize: Math.round(root.fontSize * 4.2)
+
             width: parent.width
             height: parent.height - labelText.height - accentBar.height - parent.spacing * 2
-            color: "#edf4f4"
-            text: root.iconText
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            font.pixelSize: Math.max(28, Math.round(root.fontSize * 3.1))
+            source: "../assets/material-dark/images/" + root.iconText + ".svg"
+            fillMode: Image.PreserveAspectFit
+            sourceSize.width: tileIconSize
+            sourceSize.height: tileIconSize
         }
 
         Label {
@@ -41,6 +44,7 @@ Rectangle {
             width: parent.width
             height: Math.max(4, Math.round(root.fontSize * 0.35))
             color: root.accent
+            radius: height / 2
         }
     }
 }

@@ -22,6 +22,14 @@ def test_action_bar_has_at_most_four_shell_buttons() -> None:
     assert len(model) <= 4
 
 
+def test_action_bar_uses_klipperscreen_icon_names() -> None:
+    qml = Path("src/klippertouch/qml/components/ActionBar.qml").read_text(encoding="utf-8")
+
+    assert 'property var buttonIcons: ["back", "main", "settings", "emergency"]' in qml
+    assert 'source: root.iconSource(modelData)' in qml
+    assert 'text: ""' in qml
+
+
 def test_action_bar_buttons_fill_available_axis() -> None:
     qml = Path("src/klippertouch/qml/components/ActionBar.qml").read_text(encoding="utf-8")
 
@@ -31,6 +39,22 @@ def test_action_bar_buttons_fill_available_axis() -> None:
     assert "columns: root.vertical ? 1 : root.buttonLabels.length" in qml
     assert "height: buttonGrid.cellHeight" in qml
     assert "width: buttonGrid.cellWidth" in qml
+
+
+def test_material_dark_svg_assets_are_vendored() -> None:
+    images = Path("src/klippertouch/qml/assets/material-dark/images")
+    expected = {
+        "back.svg",
+        "emergency.svg",
+        "extrude.svg",
+        "heat-up.svg",
+        "main.svg",
+        "move.svg",
+        "printer.svg",
+        "settings.svg",
+    }
+
+    assert {path.name for path in images.glob("*.svg")} == expected
 
 
 def test_status_bar_matches_klipperscreen_titlebar_structure() -> None:
@@ -89,6 +113,28 @@ def test_main_menu_matches_klipperscreen_split_and_autogrid_contract() -> None:
     assert "columns: root.metrics.portrait ? 3 : 2" in qml
     assert "rows: root.metrics.portrait ? root.menuRows : root.landscapeMenuRows" in qml
     assert "Layout.columnSpan: root.shouldExpandLastTile(index) ? 2 : 1" in qml
+
+
+def test_main_menu_uses_klipperscreen_default_top_level_items() -> None:
+    qml = Path("src/klippertouch/qml/panels/MainMenuPanel.qml").read_text(encoding="utf-8")
+
+    assert 'ListElement { tileLabel: "Move"; tileIcon: "move"; tileAccent: "#d46900" }' in qml
+    assert (
+        'ListElement { tileLabel: "Temperature"; tileIcon: "heat-up"; '
+        'tileAccent: "#ed3c63" }'
+    ) in qml
+    assert 'ListElement { tileLabel: "Extrude"; tileIcon: "extrude"; tileAccent: "#849900" }' in qml
+    assert 'ListElement { tileLabel: "More"; tileIcon: "settings"; tileAccent: "#007db4" }' in qml
+    assert 'ListElement { tileLabel: "Print"; tileIcon: "printer"; tileAccent: "#d46900" }' in qml
+
+
+def test_menu_tile_uses_material_dark_button_and_svg_icon() -> None:
+    qml = Path("src/klippertouch/qml/components/MenuTile.qml").read_text(encoding="utf-8")
+
+    assert 'color: "#090909"' in qml
+    assert "border.color: root.accent" in qml
+    assert "radius: Math.round(root.fontSize)" in qml
+    assert 'source: "../assets/material-dark/images/" + root.iconText + ".svg"' in qml
 
 
 def test_main_uses_responsive_base_shell_and_main_panel() -> None:

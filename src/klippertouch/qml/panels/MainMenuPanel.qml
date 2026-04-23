@@ -19,11 +19,11 @@ Item {
 
     ListModel {
         id: menuModel
-        ListElement { tileLabel: "Homing"; tileIcon: "⌂"; tileAccent: "#f26722" }
-        ListElement { tileLabel: "Temperature"; tileIcon: "♨"; tileAccent: "#c8009f" }
-        ListElement { tileLabel: "Actions"; tileIcon: "✥"; tileAccent: "#00a889" }
-        ListElement { tileLabel: "Configuration"; tileIcon: "⚙"; tileAccent: "#6bdc19" }
-        ListElement { tileLabel: "Print"; tileIcon: "▣"; tileAccent: "#f26722" }
+        ListElement { tileLabel: "Move"; tileIcon: "move"; tileAccent: "#d46900" }
+        ListElement { tileLabel: "Temperature"; tileIcon: "heat-up"; tileAccent: "#ed3c63" }
+        ListElement { tileLabel: "Extrude"; tileIcon: "extrude"; tileAccent: "#849900" }
+        ListElement { tileLabel: "More"; tileIcon: "settings"; tileAccent: "#007db4" }
+        ListElement { tileLabel: "Print"; tileIcon: "printer"; tileAccent: "#d46900" }
     }
 
     TemperatureSummary {
