@@ -12,11 +12,15 @@ Rectangle {
     property string panelTitle: "Home"
     property string clockText: Qt.formatTime(new Date(), "hh:mm")
     property real fontSize: 16
+    property var temperatureModel: null
+    property var activeTemperatureModel: temperatureModel && temperatureModel.rowCount() > 0
+        ? temperatureModel
+        : fallbackTemperatureModel
 
     color: Theme.titleBarBg
 
     TemperatureDeviceModel {
-        id: titlebarHeaters
+        id: fallbackTemperatureModel
     }
 
     Row {
@@ -32,7 +36,7 @@ Rectangle {
             clip: true
 
             Repeater {
-                model: titlebarHeaters
+                model: root.activeTemperatureModel
 
                 Row {
                     height: heaterStrip.height

@@ -6,6 +6,7 @@ import "../models"
 Item {
     id: root
     required property var metrics
+    property var temperatureModel: null
     property int virtualRows: 5
     property int temperatureRows: 3
     property int menuRows: 2
@@ -25,6 +26,7 @@ Item {
     TemperatureSummary {
         id: temperatureSummary
         metrics: root.metrics
+        temperatureModel: root.temperatureModel
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.margins: root.metrics.margin

@@ -6,6 +6,14 @@ import "../models"
 Item {
     id: root
     required property var metrics
+    property var temperatureModel: null
+    property var activeTemperatureModel: temperatureModel && temperatureModel.rowCount() > 0
+        ? temperatureModel
+        : fallbackTemperatureModel
+
+    TemperatureDeviceModel {
+        id: fallbackTemperatureModel
+    }
 
     Column {
         id: devices
@@ -32,12 +40,8 @@ Item {
             }
         }
 
-        TemperatureDeviceModel {
-            id: temperatureDeviceModel
-        }
-
         Repeater {
-            model: temperatureDeviceModel
+            model: root.activeTemperatureModel
 
             Row {
                 width: devices.width
@@ -56,7 +60,7 @@ Item {
 
                 Label {
                     color: Theme.text
-                    text: deviceName
+                    text: typeof displayName === "undefined" ? deviceName : displayName
                     width: parent.width * 0.68 - parent.spacing - Math.max(18, Math.round(root.metrics.fontSize * 1.35))
                     elide: Text.ElideRight
                     verticalAlignment: Text.AlignVCenter

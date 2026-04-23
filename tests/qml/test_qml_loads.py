@@ -102,13 +102,17 @@ def test_status_bar_matches_klipperscreen_titlebar_structure() -> None:
     qml = Path("src/klippertouch/qml/components/StatusBar.qml").read_text(encoding="utf-8")
 
     assert 'import "../models"' in qml
+    assert "property var temperatureModel: null" in qml
+    assert "property var activeTemperatureModel:" in qml
     assert "property string printerName" in qml
     assert "property string panelTitle" in qml
     assert "property string clockText" in qml
     assert "id: heaterStrip" in qml
     assert "TemperatureDeviceModel {" in qml
+    assert "id: fallbackTemperatureModel" in qml
     assert "source: Theme.iconSource(iconName)" in qml
     assert 'text: temperature + "°"' in qml
+    assert "model: root.activeTemperatureModel" in qml
     assert "id: titleLabel" in qml
     assert "id: clockLabel" in qml
     assert 'text: root.printerName + " | " + root.panelTitle' in qml
@@ -217,14 +221,36 @@ def test_temperature_summary_uses_klipperscreen_device_icons_and_theme() -> None
 
     assert 'import "../Theme.js" as Theme' in component_qml
     assert 'import "../models"' in component_qml
+    assert "property var temperatureModel: null" in component_qml
+    assert "property var activeTemperatureModel:" in component_qml
     assert 'ListElement { deviceName: "Extruder"; iconName: "extruder"; temperature: "21" }' in qml
     assert 'ListElement { deviceName: "Heater bed"; iconName: "bed"; temperature: "25" }' in qml
     assert 'ListElement { deviceName: "Pi"; iconName: "heat-up"; temperature: "44" }' in qml
     assert "TemperatureDeviceModel {" in component_qml
+    assert "id: fallbackTemperatureModel" in component_qml
+    assert "model: root.activeTemperatureModel" in component_qml
     assert "source: Theme.iconSource(iconName)" in component_qml
     assert "color: Theme.text" in component_qml
     assert "color: Theme.mutedText" in component_qml
     assert "ListElement { deviceName:" not in component_qml
+
+
+def test_temperature_model_is_passed_from_app_to_shell_and_main_panel() -> None:
+    main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
+    shell_qml = Path("src/klippertouch/qml/components/BaseShell.qml").read_text(encoding="utf-8")
+    panel_qml = Path("src/klippertouch/qml/panels/MainMenuPanel.qml").read_text(
+        encoding="utf-8"
+    )
+
+    assert (
+        'property var temperatureBridgeModel: typeof temperatureDeviceModel === "undefined" '
+        "? null : temperatureDeviceModel"
+    ) in main_qml
+    assert "temperatureModel: window.temperatureBridgeModel" in main_qml
+    assert "property var temperatureModel: null" in shell_qml
+    assert "temperatureModel: root.temperatureModel" in shell_qml
+    assert "property var temperatureModel: null" in panel_qml
+    assert "temperatureModel: root.temperatureModel" in panel_qml
 
 
 def test_main_uses_responsive_base_shell_and_main_panel() -> None:

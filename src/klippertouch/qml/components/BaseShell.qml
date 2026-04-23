@@ -7,6 +7,7 @@ Rectangle {
     required property string hostname
     required property string state
     required property int objectCount
+    property var temperatureModel: null
     property string panelTitle: "Home"
     default property alias panelContent: contentLayer.data
 
@@ -34,6 +35,7 @@ Rectangle {
         objectCount: root.objectCount
         printerName: root.hostname
         panelTitle: root.panelTitle
+        temperatureModel: root.temperatureModel
     }
 
     Item {
