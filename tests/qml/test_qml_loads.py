@@ -167,6 +167,7 @@ def test_responsive_layout_components_exist() -> None:
         qml_dir / "panels" / "PlaceholderPanel.qml",
         qml_dir / "panels" / "TemperaturePanel.qml",
         qml_dir / "panels" / "PrintPanel.qml",
+        qml_dir / "panels" / "InfoPanel.qml",
     ]
 
     missing = [path for path in expected if not path.exists()]
@@ -375,6 +376,40 @@ def test_main_routes_print_to_read_only_print_panel() -> None:
     assert "return printComponent" in main_qml
     assert "PrintPanel {" in main_qml
     assert "fileModel: window.gcodeFileBridgeModel" in main_qml
+
+
+def test_info_panel_is_read_only_and_responsive() -> None:
+    qml = Path("src/klippertouch/qml/panels/InfoPanel.qml").read_text(encoding="utf-8")
+
+    assert "required property var metrics" in qml
+    assert "property string hostname" in qml
+    assert "property string klippyState" in qml
+    assert "property string klipperVersion" in qml
+    assert "property string moonrakerVersion" in qml
+    assert "property int objectCount" in qml
+    assert "readonly" in qml
+    assert "root.metrics.portrait" in qml
+    assert "Repeater {" in qml
+    assert "printer.gcode.script" not in qml
+    assert "MouseArea" not in qml
+
+
+def test_main_routes_more_to_read_only_info_panel() -> None:
+    main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
+
+    assert 'property string klipperVersion: bridgeModel ? bridgeModel.klipperVersion' in main_qml
+    assert (
+        "property string moonrakerVersion: bridgeModel ? bridgeModel.moonrakerVersion"
+        in main_qml
+    )
+    assert 'case "more":' in main_qml
+    assert "return infoComponent" in main_qml
+    assert "InfoPanel {" in main_qml
+    assert "hostname: window.hostname" in main_qml
+    assert "klippyState: window.klippyState" in main_qml
+    assert "klipperVersion: window.klipperVersion" in main_qml
+    assert "moonrakerVersion: window.moonrakerVersion" in main_qml
+    assert "objectCount: window.objectCount" in main_qml
 
 
 def test_main_uses_responsive_base_shell_and_main_panel() -> None:

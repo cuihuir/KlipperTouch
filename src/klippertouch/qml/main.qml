@@ -15,6 +15,8 @@ ApplicationWindow {
     property var gcodeFileBridgeModel: typeof gcodeFileModel === "undefined" ? null : gcodeFileModel
     property string hostname: bridgeModel ? bridgeModel.hostname : "offline"
     property string klippyState: bridgeModel ? bridgeModel.klippyState : "disconnected"
+    property string klipperVersion: bridgeModel ? bridgeModel.klipperVersion : "unknown"
+    property string moonrakerVersion: bridgeModel ? bridgeModel.moonrakerVersion : "unknown"
     property int objectCount: bridgeModel ? bridgeModel.objectCount : 0
     property string currentPanel: "main"
     property var panelStack: ["main"]
@@ -51,6 +53,8 @@ ApplicationWindow {
             return temperatureComponent
         case "print":
             return printComponent
+        case "more":
+            return infoComponent
         default:
             return placeholderComponent
         }
@@ -114,6 +118,19 @@ ApplicationWindow {
             PrintPanel {
                 metrics: appMetrics
                 fileModel: window.gcodeFileBridgeModel
+            }
+        }
+
+        Component {
+            id: infoComponent
+
+            InfoPanel {
+                metrics: appMetrics
+                hostname: window.hostname
+                klippyState: window.klippyState
+                klipperVersion: window.klipperVersion
+                moonrakerVersion: window.moonrakerVersion
+                objectCount: window.objectCount
             }
         }
     }
