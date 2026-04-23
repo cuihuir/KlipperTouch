@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from klippertouch.__main__ import resolve_config_path
 from klippertouch.cli import parse_args
 
 
@@ -27,3 +28,25 @@ def test_main_attempts_read_only_status_before_gui() -> None:
     assert "status_stream_client=client" in source
     assert "file_refresh_client=client" in source
     assert "initial_files=initial_files" in source
+
+
+def test_resolve_config_path_prefers_explicit_path(tmp_path: Path) -> None:
+    explicit = tmp_path / "custom.conf"
+
+    assert resolve_config_path(explicit) == explicit
+
+
+def test_resolve_config_path_prefers_local_config(monkeypatch, tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    project = tmp_path / "project"
+    config = project / "config" / "KlipperTouch.conf"
+    config.parent.mkdir(parents=True)
+    config.write_text("[main]\n", encoding="utf-8")
+    home_config = home / ".config" / "KlipperTouch" / "KlipperTouch.conf"
+    home_config.parent.mkdir(parents=True)
+    home_config.write_text("[main]\n", encoding="utf-8")
+    project.mkdir(exist_ok=True)
+    monkeypatch.chdir(project)
+    monkeypatch.setattr(Path, "home", lambda: home)
+
+    assert resolve_config_path(None) == config

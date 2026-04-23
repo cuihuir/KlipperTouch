@@ -19,6 +19,7 @@ build/
 artifacts/
 
 # Runtime data should stay outside the repository
+config/KlipperTouch.conf
 printer_data/
 logs/
 *.log

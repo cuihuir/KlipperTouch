@@ -9,9 +9,25 @@ from klippertouch.moonraker.client import MoonrakerClient
 from klippertouch.probe import build_status_from_client, status_to_dict
 
 
+def resolve_config_path(explicit_path: Path | None = None) -> Path:
+    if explicit_path is not None:
+        return explicit_path
+
+    candidates = (
+        Path.cwd() / "config" / "KlipperTouch.conf",
+        Path.cwd() / "KlipperTouch.conf",
+        Path.home() / "printer_data" / "config" / "KlipperTouch.conf",
+        Path.home() / ".config" / "KlipperTouch" / "KlipperTouch.conf",
+    )
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return candidates[0]
+
+
 def main() -> int:
     args = parse_args()
-    config_path = args.config or Path.home() / "printer_data" / "config" / "KlipperTouch.conf"
+    config_path = resolve_config_path(args.config)
     settings = load_config(config_path)
 
     if args.probe:

@@ -20,6 +20,7 @@ class GCodeFileRefresh(QObject):
         self._timer.timeout.connect(self.refresh_once)
 
     def start(self) -> None:
+        self.refresh_once()
         self._timer.start()
 
     @Slot()

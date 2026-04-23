@@ -47,6 +47,23 @@ def test_file_refresh_updates_model_and_keeps_existing_files_on_failure(qtbot) -
 
     assert model.rowCount() == 1
 
+
+def test_file_refresh_start_refreshes_immediately(qtbot) -> None:
+    class FakeClient(MoonrakerClient):
+        def __init__(self) -> None:
+            super().__init__(PrinterConfig(name="p", moonraker_host="host"))
+
+        def get_gcode_file_list(self) -> list[dict[str, object]]:
+            return [{"path": "cube.gcode", "size": 2048, "permissions": "rw"}]
+
+    model = GCodeFileListModel()
+    refresh = GCodeFileRefresh(FakeClient(), model)
+
+    with qtbot.waitSignal(model.modelReset, timeout=1000):
+        refresh.start()
+
+    assert model.rowCount() == 1
+
     refresh._client.fail = True
     refresh.refresh_once()
 
