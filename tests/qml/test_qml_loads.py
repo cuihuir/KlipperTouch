@@ -101,13 +101,34 @@ def test_core_qml_components_use_shared_theme_library() -> None:
 def test_status_bar_matches_klipperscreen_titlebar_structure() -> None:
     qml = Path("src/klippertouch/qml/components/StatusBar.qml").read_text(encoding="utf-8")
 
+    assert 'import "../models"' in qml
     assert "property string printerName" in qml
     assert "property string panelTitle" in qml
     assert "property string clockText" in qml
     assert "id: heaterStrip" in qml
+    assert "TemperatureDeviceModel {" in qml
+    assert "source: Theme.iconSource(iconName)" in qml
+    assert 'text: temperature + "°"' in qml
     assert "id: titleLabel" in qml
     assert "id: clockLabel" in qml
     assert 'text: root.printerName + " | " + root.panelTitle' in qml
+    assert "♨" not in qml
+    assert "▥" not in qml
+
+
+def test_fake_temperature_graph_matches_heater_graph_structure() -> None:
+    qml = Path("src/klippertouch/qml/components/FakeTemperatureGraph.qml").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'import "../Theme.js" as Theme' in qml
+    assert "id: horizontalGrid" in qml
+    assert "id: verticalGrid" in qml
+    assert "id: targetSegments" in qml
+    assert "id: graphCanvas" in qml
+    assert "onPaint:" in qml
+    assert "drawSeries(ctx, extruderSeries, Theme.color2)" in qml
+    assert "drawSeries(ctx, bedSeries, Theme.color1)" in qml
 
 
 def test_shell_has_responsive_orientation_hooks() -> None:

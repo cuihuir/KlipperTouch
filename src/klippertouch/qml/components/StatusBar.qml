@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import "../Theme.js" as Theme
+import "../models"
 
 Rectangle {
     id: root
@@ -14,20 +15,48 @@ Rectangle {
 
     color: Theme.titleBarBg
 
+    TemperatureDeviceModel {
+        id: titlebarHeaters
+    }
+
     Row {
         anchors.fill: parent
         anchors.margins: Math.max(4, Math.round(root.fontSize * 0.45))
         spacing: Math.max(8, Math.round(root.fontSize * 0.9))
 
-        Label {
+        Row {
             id: heaterStrip
-            color: Theme.text
-            text: "♨ 21°   ▥ 25°   Pi: " + root.objectCount
-            font.pixelSize: Math.max(10, Math.round(root.fontSize * 0.8))
-            verticalAlignment: Text.AlignVCenter
             width: parent.width * 0.35
             height: parent.height
-            elide: Text.ElideRight
+            spacing: Math.max(6, Math.round(root.fontSize * 0.5))
+            clip: true
+
+            Repeater {
+                model: titlebarHeaters
+
+                Row {
+                    height: heaterStrip.height
+                    spacing: Math.max(2, Math.round(root.fontSize * 0.25))
+
+                    Image {
+                        source: Theme.iconSource(iconName)
+                        width: Math.max(12, Math.round(root.fontSize * 0.95))
+                        height: width
+                        anchors.verticalCenter: parent.verticalCenter
+                        fillMode: Image.PreserveAspectFit
+                        sourceSize.width: width
+                        sourceSize.height: height
+                    }
+
+                    Label {
+                        color: Theme.text
+                        text: temperature + "°"
+                        font.pixelSize: Math.max(10, Math.round(root.fontSize * 0.8))
+                        verticalAlignment: Text.AlignVCenter
+                        height: parent.height
+                    }
+                }
+            }
         }
 
         Label {
