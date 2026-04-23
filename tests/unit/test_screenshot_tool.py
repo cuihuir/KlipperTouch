@@ -14,3 +14,7 @@ def test_screenshot_tool_captures_common_panels_and_sizes() -> None:
     assert "root.grabWindow()" in source
     assert "QT_QPA_PLATFORM" in source
     assert "artifacts/screenshots" in source
+    assert "--sample-files" in source
+    assert "create_gcode_file_model" in source
+    assert "setContextProperty(\"gcodeFileModel\"" in source
+    assert "OrcaCube_PLA_27m41s.gcode" in source

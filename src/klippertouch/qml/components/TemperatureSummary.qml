@@ -72,7 +72,9 @@ Item {
                 }
                 Label {
                     color: Theme.text
-                    text: temperature
+                    text: typeof temperature === "undefined" || temperature === null
+                        ? "--"
+                        : Math.round(temperature) + "°"
                     width: parent.width * 0.32
                     horizontalAlignment: Text.AlignRight
                     verticalAlignment: Text.AlignVCenter

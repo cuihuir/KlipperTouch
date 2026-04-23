@@ -22,6 +22,9 @@ def test_main_attempts_read_only_status_before_gui() -> None:
     source = Path("src/klippertouch/__main__.py").read_text(encoding="utf-8")
 
     assert "initial_status = None" in source
+    assert "Config path:" in source
+    assert "Moonraker endpoint:" in source
+    assert "Initial G-Code files:" in source
     assert "client = MoonrakerClient(printer)" in source
     assert "initial_status = build_status_from_client(client)" in source
     assert "initial_files = client.get_gcode_file_list()" in source

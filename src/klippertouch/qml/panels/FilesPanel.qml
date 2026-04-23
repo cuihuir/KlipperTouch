@@ -134,7 +134,7 @@ Item {
 
                     Label {
                         color: Theme.mutedText
-                        text: root.loading ? "Loading files..." : fileList.count + " files"
+                        text: root.loading ? "Loading files..." : fileList.count + " items"
                         horizontalAlignment: Text.AlignRight
                         font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.8))
                     }

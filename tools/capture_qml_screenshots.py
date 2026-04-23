@@ -13,8 +13,24 @@ from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuick import QQuickWindow  # noqa: F401
 
+from klippertouch.app import create_gcode_file_model
+
 DEFAULT_SIZES = ("800x480", "1024x600", "480x800")
 DEFAULT_PANELS = ("main", "print", "job_status", "temperature", "move", "extrude", "more")
+SAMPLE_FILES = (
+    {
+        "path": "OrcaCube_PLA_27m41s.gcode",
+        "modified": 1776411420,
+        "size": 2_516_582,
+        "permissions": "rw",
+    },
+    {
+        "path": "calibration/flow/flow_cube.gcode",
+        "modified": 1776411180,
+        "size": 984_132,
+        "permissions": "rw",
+    },
+)
 
 
 def parse_size(value: str) -> tuple[int, int]:
@@ -36,6 +52,7 @@ def capture(
     output_dir: Path,
     sizes: tuple[tuple[int, int], ...],
     panels: tuple[str, ...],
+    sample_files: bool = False,
 ) -> list[Path]:
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     app = QGuiApplication.instance() or QGuiApplication([])
@@ -44,6 +61,10 @@ def capture(
     for width, height in sizes:
         for panel in panels:
             engine = QQmlApplicationEngine()
+            if sample_files:
+                file_model = create_gcode_file_model(list(SAMPLE_FILES))
+                engine.rootContext().setContextProperty("gcodeFileModel", file_model)
+                engine.gcode_file_model = file_model  # type: ignore[attr-defined]
             engine.load(QUrl.fromLocalFile(str(qml_path.resolve())))
             roots = engine.rootObjects()
             if not roots:
@@ -89,6 +110,11 @@ def main(argv: list[str] | None = None) -> int:
         default=DEFAULT_PANELS,
         help="Panel route names to capture.",
     )
+    parser.add_argument(
+        "--sample-files",
+        action="store_true",
+        help="Inject sample G-Code files into the QML context before capturing.",
+    )
     args = parser.parse_args(argv)
 
     captured = capture(
@@ -96,6 +122,7 @@ def main(argv: list[str] | None = None) -> int:
         output_dir=args.output,
         sizes=tuple(args.sizes),
         panels=tuple(args.panels),
+        sample_files=args.sample_files,
     )
     for path in captured:
         print(path)

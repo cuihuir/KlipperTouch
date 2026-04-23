@@ -195,6 +195,7 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "function currentPathLabel" in qml
     assert "function emptyTitle" in qml
     assert "Current folder is empty" in qml
+    assert 'fileList.count + " items"' in qml
     assert "activeFileModel.breadcrumbs" in qml
     assert "text: modelData" in qml
     assert "required property bool isDirectory" in qml
@@ -418,6 +419,7 @@ def test_temperature_summary_uses_klipperscreen_device_icons_and_theme() -> None
     assert "id: fallbackTemperatureModel" in component_qml
     assert 'typeof icon === "undefined" ? iconName : icon' in component_qml
     assert 'typeof displayName === "undefined" ? deviceName : displayName' in component_qml
+    assert 'typeof temperature === "undefined" || temperature === null' in component_qml
     assert "model: root.activeTemperatureModel" in component_qml
     assert "color: Theme.text" in component_qml
     assert "color: Theme.mutedText" in component_qml
