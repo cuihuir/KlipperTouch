@@ -7,6 +7,7 @@ Item {
     id: root
     required property var metrics
     property var temperatureModel: null
+    signal panelRequested(string panelName)
     property int virtualRows: 5
     property int temperatureRows: 3
     property int menuRows: 2
@@ -57,6 +58,7 @@ Item {
                 required property string tileLabel
                 required property string tileIcon
                 required property color tileAccent
+                required property string panelName
 
                 label: tileLabel
                 iconText: tileIcon
@@ -66,6 +68,7 @@ Item {
                 Layout.fillHeight: true
                 Layout.columnSpan: root.shouldExpandLastTile(index) ? 2 : 1
                 Layout.minimumHeight: Math.max(72, Math.round(root.metrics.fontSize * 5.8))
+                onActivated: root.panelRequested(panelName)
             }
         }
     }

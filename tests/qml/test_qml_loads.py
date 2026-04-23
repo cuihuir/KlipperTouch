@@ -190,14 +190,19 @@ def test_main_menu_uses_klipperscreen_default_top_level_items() -> None:
         encoding="utf-8"
     )
 
-    assert 'ListElement { tileLabel: "Move"; tileIcon: "move"; tileAccent: "#d46900" }' in qml
+    assert 'tileLabel: "Move"; tileIcon: "move"; tileAccent: "#d46900"' in qml
     assert (
-        'ListElement { tileLabel: "Temperature"; tileIcon: "heat-up"; '
-        'tileAccent: "#ed3c63" }'
+        'tileLabel: "Temperature"; tileIcon: "heat-up"; '
+        'tileAccent: "#ed3c63"'
     ) in qml
-    assert 'ListElement { tileLabel: "Extrude"; tileIcon: "extrude"; tileAccent: "#849900" }' in qml
-    assert 'ListElement { tileLabel: "More"; tileIcon: "settings"; tileAccent: "#007db4" }' in qml
-    assert 'ListElement { tileLabel: "Print"; tileIcon: "printer"; tileAccent: "#d46900" }' in qml
+    assert 'tileLabel: "Extrude"; tileIcon: "extrude"; tileAccent: "#849900"' in qml
+    assert 'tileLabel: "More"; tileIcon: "settings"; tileAccent: "#007db4"' in qml
+    assert 'tileLabel: "Print"; tileIcon: "printer"; tileAccent: "#d46900"' in qml
+    assert 'panelName: "move"' in qml
+    assert 'panelName: "temperature"' in qml
+    assert 'panelName: "extrude"' in qml
+    assert 'panelName: "more"' in qml
+    assert 'panelName: "print"' in qml
     assert 'import "../models"' in panel_qml
     assert "MainMenuModel {" in panel_qml
     assert "ListElement { tileLabel:" not in panel_qml
@@ -206,10 +211,27 @@ def test_main_menu_uses_klipperscreen_default_top_level_items() -> None:
 def test_menu_tile_uses_material_dark_button_and_svg_icon() -> None:
     qml = Path("src/klippertouch/qml/components/MenuTile.qml").read_text(encoding="utf-8")
 
+    assert "signal activated()" in qml
+    assert "MouseArea {" in qml
+    assert "onClicked: root.activated()" in qml
     assert "color: Theme.buttonsBg" in qml
     assert "border.color: root.accent" in qml
     assert "radius: Math.round(root.fontSize)" in qml
     assert "source: Theme.iconSource(root.iconText)" in qml
+
+
+def test_main_menu_requests_safe_local_panels() -> None:
+    qml = Path("src/klippertouch/qml/panels/MainMenuPanel.qml").read_text(encoding="utf-8")
+    main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
+
+    assert "signal panelRequested(string panelName)" in qml
+    assert "required property string panelName" in qml
+    assert "onActivated: root.panelRequested(panelName)" in qml
+    assert "function showPanel(panelName)" in main_qml
+    assert "currentPanel = panelName" in main_qml
+    assert "onPanelRequested: function(panelName) { window.showPanel(panelName) }" in main_qml
+    assert "printer.gcode.script" not in qml
+    assert "printer.gcode.script" not in main_qml
 
 
 def test_temperature_summary_uses_klipperscreen_device_icons_and_theme() -> None:

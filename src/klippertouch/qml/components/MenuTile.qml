@@ -8,11 +8,17 @@ Rectangle {
     required property string iconText
     required property color accent
     property real fontSize: 16
+    signal activated()
 
     color: Theme.buttonsBg
     border.color: root.accent
     border.width: Math.max(2, Math.round(root.fontSize * 0.12))
     radius: Math.round(root.fontSize)
+
+    MouseArea {
+        anchors.fill: parent
+        onClicked: root.activated()
+    }
 
     Column {
         anchors.fill: parent

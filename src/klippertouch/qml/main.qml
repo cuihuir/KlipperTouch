@@ -19,6 +19,16 @@ ApplicationWindow {
     property var panelTitles: ({"main": "Home", "move": "Move", "temperature": "Temperature", "extrude": "Extrude", "more": "More", "print": "Print"})
     property var panelIcons: ({"main": "main", "move": "move", "temperature": "heat-up", "extrude": "extrude", "more": "settings", "print": "printer"})
 
+    function showPanel(panelName) {
+        if (panelTitles[panelName] !== undefined) {
+            currentPanel = panelName
+        }
+    }
+
+    function goHome() {
+        currentPanel = "main"
+    }
+
     Metrics {
         id: appMetrics
         viewportWidth: window.width
@@ -45,6 +55,7 @@ ApplicationWindow {
             MainMenuPanel {
                 metrics: appMetrics
                 temperatureModel: window.temperatureBridgeModel
+                onPanelRequested: function(panelName) { window.showPanel(panelName) }
             }
         }
 
