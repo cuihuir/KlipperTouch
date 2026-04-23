@@ -9,6 +9,7 @@ Read-only live panels:
 
 - `Temperature`: displays heater and sensor temperatures from Moonraker startup reads and WebSocket status updates.
 - `Print`: displays the G-code file list and read-only job status from Moonraker file manager reads and WebSocket status updates.
+- `Move`: displays read-only toolhead position and homed axes while keeping all movement controls locked.
 - `More`: displays printer and Moonraker/Klipper version information.
 
 Locked visual skeleton panels:
@@ -38,8 +39,9 @@ JSON-RPC methods currently allowed by the read-only policy:
 - `printer.objects.subscribe`
 
 The WebSocket stream only subscribes to temperature/target fields for discovered temperature
-devices and read-only print status fields from `print_stats`, `display_status`, and
-`virtual_sdcard`. Reconnects repeat the same read-only subscription.
+devices, read-only print status fields from `print_stats`, `display_status`, and
+`virtual_sdcard`, and read-only position fields from `toolhead` and `gcode_move`.
+Reconnects repeat the same read-only subscription.
 
 ## Explicitly Forbidden Until Reviewed
 

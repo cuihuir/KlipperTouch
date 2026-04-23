@@ -73,4 +73,8 @@ def _query_fields_for_object(name: str) -> str:
         return "progress,message"
     if name == "virtual_sdcard":
         return "progress,is_active,file_path"
+    if name == "toolhead":
+        return "position,homed_axes"
+    if name == "gcode_move":
+        return "gcode_position"
     return "temperature,target"

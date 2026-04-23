@@ -18,6 +18,11 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
         print_message="Printing",
         print_duration=10.5,
         total_duration=12.0,
+        position_x=1.1,
+        position_y=2.2,
+        position_z=3.3,
+        position_e=4.4,
+        homed_axes="xy",
     )
 
     with qtbot.waitSignal(model.statusChanged, timeout=1000):
@@ -33,6 +38,11 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
     assert model.printMessage == "Printing"
     assert model.printDuration == 10.5
     assert model.totalDuration == 12.0
+    assert model.positionX == 1.1
+    assert model.positionY == 2.2
+    assert model.positionZ == 3.3
+    assert model.positionE == 4.4
+    assert model.homedAxes == "xy"
 
 
 def test_status_model_can_notify_temperature_device_model(qtbot) -> None:

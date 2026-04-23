@@ -155,3 +155,40 @@ def test_printer_status_applies_read_only_print_update() -> None:
     assert updated.print_filename == "part.gcode"
     assert updated.print_progress == 62.5
     assert updated.print_message == "Paused"
+
+
+def test_printer_status_populates_read_only_toolhead_position() -> None:
+    status = PrinterStatus.from_probe(
+        server_info={"moonraker_version": "v0.10.0", "klippy_state": "ready"},
+        printer_info={"state": "ready", "hostname": "orangepi3b", "software_version": "v0.13.0"},
+        objects={"objects": ["toolhead", "gcode_move"]},
+        object_status={
+            "status": {
+                "toolhead": {"homed_axes": "xyz", "position": [1.0, 2.0, 3.0, 4.0]},
+                "gcode_move": {"gcode_position": [10.1, 20.2, 30.3, 40.4]},
+            }
+        },
+    )
+
+    assert status.position_x == 10.1
+    assert status.position_y == 20.2
+    assert status.position_z == 30.3
+    assert status.position_e == 40.4
+    assert status.homed_axes == "xyz"
+
+
+def test_printer_status_applies_read_only_toolhead_update() -> None:
+    status = PrinterStatus(objects=("toolhead", "gcode_move"), position_x=1.0)
+
+    updated = status.with_status_update(
+        {
+            "toolhead": {"homed_axes": "xy"},
+            "gcode_move": {"gcode_position": [11.0, 22.0, 33.0, 44.0]},
+        }
+    )
+
+    assert updated.position_x == 11.0
+    assert updated.position_y == 22.0
+    assert updated.position_z == 33.0
+    assert updated.position_e == 44.0
+    assert updated.homed_axes == "xy"

@@ -13,7 +13,15 @@ from klippertouch.moonraker.status_stream import (
 
 def test_build_temperature_subscription_message_uses_read_only_objects_method() -> None:
     status = PrinterStatus(
-        objects=("extruder", "heater_bed", "fan", "print_stats", "display_status")
+        objects=(
+            "extruder",
+            "heater_bed",
+            "fan",
+            "print_stats",
+            "display_status",
+            "toolhead",
+            "gcode_move",
+        )
     )
     client = MoonrakerClient(PrinterConfig(name="p", moonraker_host="host"))
 
@@ -28,6 +36,8 @@ def test_build_temperature_subscription_message_uses_read_only_objects_method() 
                 "heater_bed": ["temperature", "target"],
                 "print_stats": ["state", "filename", "print_duration", "total_duration"],
                 "display_status": ["progress", "message"],
+                "toolhead": ["position", "homed_axes"],
+                "gcode_move": ["gcode_position"],
             }
         },
         "id": 1,
@@ -91,7 +101,9 @@ def test_status_from_websocket_message_applies_notification_temperature_delta() 
 
 
 def test_status_from_websocket_message_applies_subscription_snapshot() -> None:
-    status = PrinterStatus(objects=("extruder", "heater_bed", "print_stats", "display_status"))
+    status = PrinterStatus(
+        objects=("extruder", "heater_bed", "print_stats", "display_status", "gcode_move")
+    )
     message = json.dumps(
         {
             "jsonrpc": "2.0",
@@ -101,6 +113,7 @@ def test_status_from_websocket_message_applies_subscription_snapshot() -> None:
                     "heater_bed": {"temperature": 26.7, "target": 60.0},
                     "print_stats": {"state": "printing", "filename": "cube.gcode"},
                     "display_status": {"progress": 0.25},
+                    "gcode_move": {"gcode_position": [1.1, 2.2, 3.3, 4.4]},
                 }
             },
             "id": 1,
@@ -115,6 +128,10 @@ def test_status_from_websocket_message_applies_subscription_snapshot() -> None:
     assert updated.print_state == "printing"
     assert updated.print_filename == "cube.gcode"
     assert updated.print_progress == 25.0
+    assert updated.position_x == 1.1
+    assert updated.position_y == 2.2
+    assert updated.position_z == 3.3
+    assert updated.position_e == 4.4
 
 
 def test_status_from_websocket_message_ignores_unrelated_messages() -> None:

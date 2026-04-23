@@ -11,6 +11,14 @@ class PrintStatusFields(TypedDict, total=False):
     total_duration: float
 
 
+class ToolheadStatusFields(TypedDict, total=False):
+    position_x: float
+    position_y: float
+    position_z: float
+    position_e: float
+    homed_axes: str
+
+
 @dataclass(frozen=True)
 class TemperatureDeviceStatus:
     name: str
@@ -39,6 +47,11 @@ class PrinterStatus:
     print_message: str = ""
     print_duration: float = 0.0
     total_duration: float = 0.0
+    position_x: float = 0.0
+    position_y: float = 0.0
+    position_z: float = 0.0
+    position_e: float = 0.0
+    homed_axes: str = ""
 
     def __post_init__(self) -> None:
         objects = tuple(str(item) for item in self.objects)
@@ -59,6 +72,11 @@ class PrinterStatus:
         object.__setattr__(self, "print_progress", _clamped_percent(self.print_progress))
         object.__setattr__(self, "print_duration", _optional_float(self.print_duration) or 0.0)
         object.__setattr__(self, "total_duration", _optional_float(self.total_duration) or 0.0)
+        object.__setattr__(self, "position_x", _optional_float(self.position_x) or 0.0)
+        object.__setattr__(self, "position_y", _optional_float(self.position_y) or 0.0)
+        object.__setattr__(self, "position_z", _optional_float(self.position_z) or 0.0)
+        object.__setattr__(self, "position_e", _optional_float(self.position_e) or 0.0)
+        object.__setattr__(self, "homed_axes", str(self.homed_axes or ""))
 
     @property
     def object_count(self) -> int:
@@ -85,6 +103,7 @@ class PrinterStatus:
             objects=object_names,
             temperature_devices=_temperature_devices_from_status(object_names, object_status or {}),
             **_print_fields_from_status(object_status or {}),
+            **_toolhead_fields_from_status(object_status or {}),
         )
 
     def with_temperature_status_update(self, status_update: dict[str, Any]) -> "PrinterStatus":
@@ -113,6 +132,14 @@ class PrinterStatus:
             "total_duration": self.total_duration,
         }
         print_fields.update(_print_fields_from_status({"status": status_update}))
+        toolhead_fields: ToolheadStatusFields = {
+            "position_x": self.position_x,
+            "position_y": self.position_y,
+            "position_z": self.position_z,
+            "position_e": self.position_e,
+            "homed_axes": self.homed_axes,
+        }
+        toolhead_fields.update(_toolhead_fields_from_status({"status": status_update}))
 
         return PrinterStatus(
             hostname=self.hostname,
@@ -125,6 +152,7 @@ class PrinterStatus:
                 {"status": previous_values},
             ),
             **print_fields,
+            **toolhead_fields,
         )
 
 
@@ -228,6 +256,33 @@ def _progress_to_percent(value: Any) -> float:
     if 0.0 <= number <= 1.0:
         return round(number * 100.0, 1)
     return _clamped_percent(number)
+
+
+def _toolhead_fields_from_status(object_status: dict[str, Any]) -> ToolheadStatusFields:
+    status = object_status.get("status", {})
+    if not isinstance(status, dict):
+        status = {}
+
+    toolhead = status.get("toolhead", {})
+    if not isinstance(toolhead, dict):
+        toolhead = {}
+    gcode_move = status.get("gcode_move", {})
+    if not isinstance(gcode_move, dict):
+        gcode_move = {}
+
+    position = gcode_move.get("gcode_position")
+    if not isinstance(position, list | tuple):
+        position = toolhead.get("position")
+
+    fields = ToolheadStatusFields()
+    if isinstance(position, list | tuple) and len(position) >= 4:
+        fields["position_x"] = _optional_float(position[0]) or 0.0
+        fields["position_y"] = _optional_float(position[1]) or 0.0
+        fields["position_z"] = _optional_float(position[2]) or 0.0
+        fields["position_e"] = _optional_float(position[3]) or 0.0
+    if "homed_axes" in toolhead:
+        fields["homed_axes"] = str(toolhead["homed_axes"])
+    return fields
 
 
 def _clamped_percent(value: Any) -> float:

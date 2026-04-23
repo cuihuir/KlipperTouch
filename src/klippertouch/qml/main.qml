@@ -24,6 +24,11 @@ ApplicationWindow {
     property string printMessage: bridgeModel ? bridgeModel.printMessage : ""
     property real printDuration: bridgeModel ? bridgeModel.printDuration : 0
     property real totalDuration: bridgeModel ? bridgeModel.totalDuration : 0
+    property real positionX: bridgeModel ? bridgeModel.positionX : 0
+    property real positionY: bridgeModel ? bridgeModel.positionY : 0
+    property real positionZ: bridgeModel ? bridgeModel.positionZ : 0
+    property real positionE: bridgeModel ? bridgeModel.positionE : 0
+    property string homedAxes: bridgeModel ? bridgeModel.homedAxes : ""
     property string currentPanel: "main"
     property var panelStack: ["main"]
     property var panelTitles: ({"main": "Home", "move": "Move", "temperature": "Temperature", "extrude": "Extrude", "more": "More", "print": "Print"})
@@ -155,6 +160,11 @@ ApplicationWindow {
 
             MovePanel {
                 metrics: appMetrics
+                positionX: window.positionX
+                positionY: window.positionY
+                positionZ: window.positionZ
+                positionE: window.positionE
+                homedAxes: window.homedAxes
             }
         }
 

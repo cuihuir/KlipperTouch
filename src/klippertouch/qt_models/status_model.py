@@ -133,3 +133,23 @@ class StatusModel(QObject):
     @Property(float, notify=statusChanged)
     def totalDuration(self) -> float:
         return self._status.total_duration
+
+    @Property(float, notify=statusChanged)
+    def positionX(self) -> float:
+        return self._status.position_x
+
+    @Property(float, notify=statusChanged)
+    def positionY(self) -> float:
+        return self._status.position_y
+
+    @Property(float, notify=statusChanged)
+    def positionZ(self) -> float:
+        return self._status.position_z
+
+    @Property(float, notify=statusChanged)
+    def positionE(self) -> float:
+        return self._status.position_e
+
+    @Property(str, notify=statusChanged)
+    def homedAxes(self) -> str:
+        return self._status.homed_axes

@@ -194,6 +194,20 @@ def test_print_panel_exposes_read_only_job_status_without_controls() -> None:
     assert "Cancel" not in qml
 
 
+def test_move_panel_exposes_read_only_position_without_controls() -> None:
+    qml = Path("src/klippertouch/qml/panels/MovePanel.qml").read_text(encoding="utf-8")
+
+    assert "property real positionX" in qml
+    assert "property real positionY" in qml
+    assert "property real positionZ" in qml
+    assert "property real positionE" in qml
+    assert "property string homedAxes" in qml
+    assert "root.positionX.toFixed(2)" in qml
+    assert "root.homedAxes.length > 0" in qml
+    assert "MouseArea" not in qml
+    assert "printer.gcode.script" not in qml
+
+
 def test_main_menu_matches_klipperscreen_split_and_autogrid_contract() -> None:
     qml = Path("src/klippertouch/qml/panels/MainMenuPanel.qml").read_text(encoding="utf-8")
 

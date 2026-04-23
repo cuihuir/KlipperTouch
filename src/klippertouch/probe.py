@@ -10,6 +10,7 @@ TEMPERATURE_OBJECT_PREFIXES = (
     "temperature_fan ",
 )
 PRINT_STATUS_OBJECTS = ("print_stats", "display_status", "virtual_sdcard")
+TOOLHEAD_STATUS_OBJECTS = ("toolhead", "gcode_move")
 
 
 class ReadOnlyProbeClient(Protocol):
@@ -58,4 +59,5 @@ def _temperature_object_names(object_names: tuple[str, ...]) -> tuple[str, ...]:
 def _read_only_status_object_names(object_names: tuple[str, ...]) -> tuple[str, ...]:
     wanted = set(_temperature_object_names(object_names))
     wanted.update(name for name in PRINT_STATUS_OBJECTS if name in object_names)
+    wanted.update(name for name in TOOLHEAD_STATUS_OBJECTS if name in object_names)
     return tuple(name for name in object_names if name in wanted)

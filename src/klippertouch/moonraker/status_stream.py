@@ -16,6 +16,10 @@ PRINT_STATUS_FIELDS = {
     "display_status": ["progress", "message"],
     "virtual_sdcard": ["progress", "is_active", "file_path"],
 }
+TOOLHEAD_STATUS_FIELDS = {
+    "toolhead": ["position", "homed_axes"],
+    "gcode_move": ["gcode_position"],
+}
 
 
 def build_websocket_request(client: MoonrakerClient) -> QNetworkRequest:
@@ -127,7 +131,7 @@ def _subscription_objects(status: PrinterStatus) -> dict[str, list[str]]:
     objects.update(
         {
             name: fields
-            for name, fields in PRINT_STATUS_FIELDS.items()
+            for name, fields in (PRINT_STATUS_FIELDS | TOOLHEAD_STATUS_FIELDS).items()
             if name in status.objects
         }
     )
