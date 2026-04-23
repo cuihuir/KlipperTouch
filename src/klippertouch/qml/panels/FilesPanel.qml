@@ -28,6 +28,17 @@ Item {
         return root.activeFileModel && root.activeFileModel.sortKey === sortKey
     }
 
+    function isChipEnabled(sortKey) {
+        return sortKey !== "up" || (root.activeFileModel && root.activeFileModel.canGoUp)
+    }
+
+    function chipText(label, sortKey) {
+        if (sortKey === "up") {
+            return label
+        }
+        return root.isSortActive(sortKey) ? label + "  v" : label
+    }
+
     function goUp() {
         if (root.activeFileModel) {
             root.activeFileModel.goUp()
@@ -38,6 +49,16 @@ Item {
         if (isDirectory && root.activeFileModel) {
             root.activeFileModel.setCurrentPath(path)
         }
+    }
+
+    function emptyTitle() {
+        if (root.loading) {
+            return "Loading files..."
+        }
+        if (root.activeFileModel && root.activeFileModel.currentPath.length > 0) {
+            return "Current folder is empty"
+        }
+        return "No G-Code files found"
     }
 
     Rectangle {
@@ -95,12 +116,20 @@ Item {
                         font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.8))
                     }
 
-                    Label {
+                    Flow {
                         Layout.fillWidth: true
-                        color: Theme.text
-                        text: root.currentPathLabel()
-                        elide: Text.ElideMiddle
-                        font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
+                        spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.25))
+
+                        Repeater {
+                            model: root.activeFileModel ? root.activeFileModel.breadcrumbs : [root.rootPath]
+
+                            Label {
+                                color: Theme.text
+                                text: modelData
+                                elide: Text.ElideRight
+                                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
+                            }
+                        }
                     }
 
                     Label {
@@ -129,6 +158,7 @@ Item {
                         width: chipText.implicitWidth + root.metrics.gap * 1.6
                         height: Math.max(30, Math.round(root.metrics.fontSize * 2.2))
                         color: root.isSortActive(modelData.sortKey) ? "#1b2b2e" : "#101617"
+                        opacity: root.isChipEnabled(modelData.sortKey) ? 1.0 : 0.45
                         border.color: "#263233"
                         border.width: 1
                         radius: Math.round(root.metrics.fontSize * 0.32)
@@ -137,12 +167,13 @@ Item {
                             id: chipText
                             anchors.centerIn: parent
                             color: Theme.mutedText
-                            text: modelData.label
+                            text: root.chipText(modelData.label, modelData.sortKey)
                             font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.8))
                         }
 
                         MouseArea {
                             anchors.fill: parent
+                            enabled: root.isChipEnabled(modelData.sortKey)
                             onClicked: modelData.sortKey === "up" ? root.goUp() : root.setSort(modelData.sortKey)
                         }
                     }
@@ -283,7 +314,7 @@ Item {
                     Label {
                         Layout.fillWidth: true
                         color: Theme.text
-                        text: root.loading ? "Loading files..." : "No G-Code files found"
+                        text: root.emptyTitle()
                         horizontalAlignment: Text.AlignHCenter
                         font.bold: true
                         font.pixelSize: Math.max(15, Math.round(root.metrics.fontSize * 1.05))

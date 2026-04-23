@@ -193,8 +193,13 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "No G-Code files found" in qml
     assert "Loading files..." in qml
     assert "function currentPathLabel" in qml
+    assert "function emptyTitle" in qml
+    assert "Current folder is empty" in qml
+    assert "activeFileModel.breadcrumbs" in qml
+    assert "text: modelData" in qml
     assert "required property bool isDirectory" in qml
     assert "required property string modifiedLabel" in qml
+    assert "activeFileModel.canGoUp" in qml
     assert "activeFileModel.setCurrentPath(path)" in qml
     assert "activeFileModel.setSortKey(sortKey)" in qml
     assert "activeFileModel.goUp()" in qml

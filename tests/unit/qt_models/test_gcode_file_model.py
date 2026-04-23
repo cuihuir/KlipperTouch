@@ -51,6 +51,7 @@ def test_gcode_file_list_model_exposes_directory_entries_and_sorting(qtbot) -> N
 
     roles = {bytes(value).decode(): key for key, value in model.roleNames().items()}
     assert model.currentPath == ""
+    assert model.canGoUp is False
     assert model.rowCount() == 2
     assert model.data(model.index(0, 0), roles["isDirectory"]) is True
     assert model.data(model.index(0, 0), roles["displayName"]) == "calibration"
@@ -59,6 +60,8 @@ def test_gcode_file_list_model_exposes_directory_entries_and_sorting(qtbot) -> N
         model.setCurrentPath("calibration")
 
     assert model.currentPath == "calibration"
+    assert model.breadcrumbs == ["gcodes", "calibration"]
+    assert model.canGoUp is True
     assert model.rowCount() == 1
     assert model.data(model.index(0, 0), roles["displayName"]) == "flow.gcode"
 
@@ -71,3 +74,5 @@ def test_gcode_file_list_model_exposes_directory_entries_and_sorting(qtbot) -> N
         model.goUp()
 
     assert model.currentPath == ""
+    assert model.breadcrumbs == ["gcodes"]
+    assert model.canGoUp is False

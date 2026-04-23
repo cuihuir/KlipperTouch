@@ -55,6 +55,14 @@ class GCodeFileListModel(QAbstractListModel):
     def sortKey(self) -> str:
         return self._sort_key
 
+    @Property(bool, notify=currentPathChanged)
+    def canGoUp(self) -> bool:
+        return bool(self._current_path)
+
+    @Property(list, notify=currentPathChanged)
+    def breadcrumbs(self) -> list[str]:
+        return ["gcodes", *[part for part in self._current_path.split("/") if part]]
+
     @Slot(str)
     def setCurrentPath(self, path: str) -> None:  # noqa: N802
         if path == self._current_path:
