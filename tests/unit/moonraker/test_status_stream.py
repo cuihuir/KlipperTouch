@@ -34,7 +34,14 @@ def test_build_temperature_subscription_message_uses_read_only_objects_method() 
             "objects": {
                 "extruder": ["temperature", "target"],
                 "heater_bed": ["temperature", "target"],
-                "print_stats": ["state", "filename", "print_duration", "total_duration"],
+                "print_stats": [
+                    "state",
+                    "filename",
+                    "print_duration",
+                    "total_duration",
+                    "filament_used",
+                    "info",
+                ],
                 "display_status": ["progress", "message"],
                 "toolhead": ["position", "homed_axes"],
                 "gcode_move": ["gcode_position"],
@@ -111,7 +118,12 @@ def test_status_from_websocket_message_applies_subscription_snapshot() -> None:
                 "status": {
                     "extruder": {"temperature": 24.3, "target": 0.0},
                     "heater_bed": {"temperature": 26.7, "target": 60.0},
-                    "print_stats": {"state": "printing", "filename": "cube.gcode"},
+                    "print_stats": {
+                        "state": "printing",
+                        "filename": "cube.gcode",
+                        "filament_used": 3456.7,
+                        "info": {"current_layer": 5, "total_layer": 30},
+                    },
                     "display_status": {"progress": 0.25},
                     "gcode_move": {"gcode_position": [1.1, 2.2, 3.3, 4.4]},
                 }
@@ -128,6 +140,9 @@ def test_status_from_websocket_message_applies_subscription_snapshot() -> None:
     assert updated.print_state == "printing"
     assert updated.print_filename == "cube.gcode"
     assert updated.print_progress == 25.0
+    assert updated.filament_used == 3456.7
+    assert updated.current_layer == 5
+    assert updated.total_layers == 30
     assert updated.position_x == 1.1
     assert updated.position_y == 2.2
     assert updated.position_z == 3.3

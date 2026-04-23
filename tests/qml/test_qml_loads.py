@@ -204,6 +204,11 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "property string printMessage" in qml
     assert "ProgressBar" in qml
     assert "root.printProgress / 100" in qml
+    assert "property real filamentUsed" in qml
+    assert "property int currentLayer" in qml
+    assert "property int totalLayers" in qml
+    assert "root.filamentLabel()" in qml
+    assert "root.layerLabel()" in qml
     assert "fileModel" not in qml
     assert "Start" not in qml
     assert "Pause" not in qml
@@ -458,6 +463,9 @@ def test_main_keeps_files_and_job_status_as_separate_routes() -> None:
     assert "FilesPanel {" in main_qml
     assert "JobStatusPanel {" in main_qml
     assert "fileModel: window.gcodeFileBridgeModel" in main_qml
+    assert "filamentUsed: window.filamentUsed" in main_qml
+    assert "currentLayer: window.currentLayer" in main_qml
+    assert "totalLayers: window.totalLayers" in main_qml
     assert "function isJobActive()" in main_qml
     assert "function syncJobStatusPanel()" in main_qml
     assert "onPrintStateChanged: window.syncJobStatusPanel()" in main_qml

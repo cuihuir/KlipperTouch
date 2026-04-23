@@ -12,7 +12,14 @@ from klippertouch.qt_models.status_model import StatusModel
 SUBSCRIPTION_ID = 1
 TEMPERATURE_FIELDS = ["temperature", "target"]
 PRINT_STATUS_FIELDS = {
-    "print_stats": ["state", "filename", "print_duration", "total_duration"],
+    "print_stats": [
+        "state",
+        "filename",
+        "print_duration",
+        "total_duration",
+        "filament_used",
+        "info",
+    ],
     "display_status": ["progress", "message"],
     "virtual_sdcard": ["progress", "is_active", "file_path"],
 }

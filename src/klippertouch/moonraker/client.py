@@ -68,7 +68,7 @@ class MoonrakerClient:
 
 def _query_fields_for_object(name: str) -> str:
     if name == "print_stats":
-        return "state,filename,print_duration,total_duration"
+        return "state,filename,print_duration,total_duration,filament_used,info"
     if name == "display_status":
         return "progress,message"
     if name == "virtual_sdcard":

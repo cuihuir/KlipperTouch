@@ -9,6 +9,9 @@ class PrintStatusFields(TypedDict, total=False):
     print_message: str
     print_duration: float
     total_duration: float
+    filament_used: float
+    current_layer: int
+    total_layers: int
 
 
 class ToolheadStatusFields(TypedDict, total=False):
@@ -47,6 +50,9 @@ class PrinterStatus:
     print_message: str = ""
     print_duration: float = 0.0
     total_duration: float = 0.0
+    filament_used: float = 0.0
+    current_layer: int = 0
+    total_layers: int = 0
     position_x: float = 0.0
     position_y: float = 0.0
     position_z: float = 0.0
@@ -72,6 +78,9 @@ class PrinterStatus:
         object.__setattr__(self, "print_progress", _clamped_percent(self.print_progress))
         object.__setattr__(self, "print_duration", _optional_float(self.print_duration) or 0.0)
         object.__setattr__(self, "total_duration", _optional_float(self.total_duration) or 0.0)
+        object.__setattr__(self, "filament_used", _optional_float(self.filament_used) or 0.0)
+        object.__setattr__(self, "current_layer", _optional_int(self.current_layer))
+        object.__setattr__(self, "total_layers", _optional_int(self.total_layers))
         object.__setattr__(self, "position_x", _optional_float(self.position_x) or 0.0)
         object.__setattr__(self, "position_y", _optional_float(self.position_y) or 0.0)
         object.__setattr__(self, "position_z", _optional_float(self.position_z) or 0.0)
@@ -147,6 +156,9 @@ class PrinterStatus:
             "print_message": self.print_message,
             "print_duration": self.print_duration,
             "total_duration": self.total_duration,
+            "filament_used": self.filament_used,
+            "current_layer": self.current_layer,
+            "total_layers": self.total_layers,
         }
         print_fields.update(_print_fields_from_status({"status": status_update}))
         toolhead_fields: ToolheadStatusFields = {
@@ -263,6 +275,14 @@ def _print_fields_from_status(object_status: dict[str, Any]) -> PrintStatusField
         fields["print_duration"] = _optional_float(print_stats["print_duration"]) or 0.0
     if "total_duration" in print_stats:
         fields["total_duration"] = _optional_float(print_stats["total_duration"]) or 0.0
+    if "filament_used" in print_stats:
+        fields["filament_used"] = _optional_float(print_stats["filament_used"]) or 0.0
+    info = print_stats.get("info", {})
+    if isinstance(info, dict):
+        if "current_layer" in info:
+            fields["current_layer"] = _optional_int(info["current_layer"])
+        if "total_layer" in info:
+            fields["total_layers"] = _optional_int(info["total_layer"])
     return fields
 
 
@@ -316,3 +336,10 @@ def _optional_float(value: Any) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def _optional_int(value: Any) -> int:
+    number = _optional_float(value)
+    if number is None:
+        return 0
+    return max(0, int(number))

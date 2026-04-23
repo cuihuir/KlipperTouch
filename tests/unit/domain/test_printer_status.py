@@ -120,6 +120,8 @@ def test_printer_status_populates_read_only_job_state_from_status_query() -> Non
                     "filename": "calibration_cube.gcode",
                     "print_duration": 42.5,
                     "total_duration": 51.0,
+                    "filament_used": 1234.5,
+                    "info": {"current_layer": 3, "total_layer": 12},
                 },
                 "display_status": {"progress": 0.375, "message": "Printing"},
                 "virtual_sdcard": {"progress": 0.4, "is_active": True},
@@ -133,6 +135,9 @@ def test_printer_status_populates_read_only_job_state_from_status_query() -> Non
     assert status.print_message == "Printing"
     assert status.print_duration == 42.5
     assert status.total_duration == 51.0
+    assert status.filament_used == 1234.5
+    assert status.current_layer == 3
+    assert status.total_layers == 12
 
 
 def test_printer_status_applies_read_only_print_update() -> None:
@@ -145,7 +150,12 @@ def test_printer_status_applies_read_only_print_update() -> None:
 
     updated = status.with_status_update(
         {
-            "print_stats": {"state": "paused", "filename": "part.gcode"},
+            "print_stats": {
+                "state": "paused",
+                "filename": "part.gcode",
+                "filament_used": 2345.6,
+                "info": {"current_layer": 4, "total_layer": 20},
+            },
             "virtual_sdcard": {"progress": 0.625, "is_active": True},
             "display_status": {"message": "Paused"},
         }
@@ -155,6 +165,9 @@ def test_printer_status_applies_read_only_print_update() -> None:
     assert updated.print_filename == "part.gcode"
     assert updated.print_progress == 62.5
     assert updated.print_message == "Paused"
+    assert updated.filament_used == 2345.6
+    assert updated.current_layer == 4
+    assert updated.total_layers == 20
 
 
 def test_printer_status_populates_read_only_toolhead_position() -> None:

@@ -25,6 +25,9 @@ ApplicationWindow {
     property string printMessage: bridgeModel ? bridgeModel.printMessage : ""
     property real printDuration: bridgeModel ? bridgeModel.printDuration : 0
     property real totalDuration: bridgeModel ? bridgeModel.totalDuration : 0
+    property real filamentUsed: bridgeModel ? bridgeModel.filamentUsed : 0
+    property int currentLayer: bridgeModel ? bridgeModel.currentLayer : 0
+    property int totalLayers: bridgeModel ? bridgeModel.totalLayers : 0
     property real positionX: bridgeModel ? bridgeModel.positionX : 0
     property real positionY: bridgeModel ? bridgeModel.positionY : 0
     property real positionZ: bridgeModel ? bridgeModel.positionZ : 0
@@ -170,6 +173,9 @@ ApplicationWindow {
                 printMessage: window.printMessage
                 printDuration: window.printDuration
                 totalDuration: window.totalDuration
+                filamentUsed: window.filamentUsed
+                currentLayer: window.currentLayer
+                totalLayers: window.totalLayers
             }
         }
 

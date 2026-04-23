@@ -12,6 +12,9 @@ Item {
     property string printMessage: ""
     property real printDuration: 0
     property real totalDuration: 0
+    property real filamentUsed: 0
+    property int currentLayer: 0
+    property int totalLayers: 0
 
     function durationLabel(seconds) {
         var safeSeconds = Math.max(0, Math.round(seconds))
@@ -22,6 +25,20 @@ Item {
             return hours + "h " + minutes + "m"
         }
         return minutes + "m"
+    }
+
+    function filamentLabel() {
+        return (root.filamentUsed / 1000).toFixed(1) + " m"
+    }
+
+    function layerLabel() {
+        if (root.totalLayers > 0) {
+            return root.currentLayer + " / " + root.totalLayers
+        }
+        if (root.currentLayer > 0) {
+            return String(root.currentLayer)
+        }
+        return "-"
     }
 
     Rectangle {
@@ -116,6 +133,8 @@ Item {
                     model: [
                         {"label": "Elapsed", "value": root.durationLabel(root.printDuration)},
                         {"label": "Total", "value": root.durationLabel(root.totalDuration)},
+                        {"label": "Layer", "value": root.layerLabel()},
+                        {"label": "Filament used", "value": root.filamentLabel()},
                         {"label": "State", "value": root.printState},
                         {"label": "Mode", "value": "readonly"}
                     ]

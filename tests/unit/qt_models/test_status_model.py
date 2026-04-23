@@ -27,6 +27,9 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
         print_message="Printing",
         print_duration=10.5,
         total_duration=12.0,
+        filament_used=1234.5,
+        current_layer=3,
+        total_layers=12,
         position_x=1.1,
         position_y=2.2,
         position_z=3.3,
@@ -48,6 +51,9 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
     assert model.printMessage == "Printing"
     assert model.printDuration == 10.5
     assert model.totalDuration == 12.0
+    assert model.filamentUsed == 1234.5
+    assert model.currentLayer == 3
+    assert model.totalLayers == 12
     assert model.positionX == 1.1
     assert model.positionY == 2.2
     assert model.positionZ == 3.3

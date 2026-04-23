@@ -139,6 +139,18 @@ class StatusModel(QObject):
         return self._status.total_duration
 
     @Property(float, notify=statusChanged)
+    def filamentUsed(self) -> float:
+        return self._status.filament_used
+
+    @Property(int, notify=statusChanged)
+    def currentLayer(self) -> int:
+        return self._status.current_layer
+
+    @Property(int, notify=statusChanged)
+    def totalLayers(self) -> int:
+        return self._status.total_layers
+
+    @Property(float, notify=statusChanged)
     def positionX(self) -> float:
         return self._status.position_x
 
