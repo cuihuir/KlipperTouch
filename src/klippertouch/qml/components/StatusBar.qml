@@ -39,11 +39,13 @@ Rectangle {
                 model: root.activeTemperatureModel
 
                 Row {
+                    property string resolvedIcon: typeof icon === "undefined" ? iconName : icon
+
                     height: heaterStrip.height
                     spacing: Math.max(2, Math.round(root.fontSize * 0.25))
 
                     Image {
-                        source: Theme.iconSource(iconName)
+                        source: Theme.iconSource(parent.resolvedIcon)
                         width: Math.max(12, Math.round(root.fontSize * 0.95))
                         height: width
                         anchors.verticalCenter: parent.verticalCenter

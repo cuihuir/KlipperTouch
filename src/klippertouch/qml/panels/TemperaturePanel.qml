@@ -30,6 +30,8 @@ Item {
             Layout.fillHeight: true
             Layout.preferredWidth: root.metrics.portrait ? parent.width : parent.width * 0.45
             Layout.preferredHeight: root.metrics.portrait ? parent.height * 0.45 : parent.height
+            Layout.minimumWidth: 0
+            Layout.minimumHeight: 0
             color: Theme.buttonsBg
             border.color: "#465456"
             border.width: 1
@@ -146,23 +148,14 @@ Item {
             Layout.fillHeight: true
             Layout.preferredWidth: root.metrics.portrait ? parent.width : parent.width * 0.55
             Layout.preferredHeight: root.metrics.portrait ? parent.height * 0.55 : parent.height
-
-            TemperatureSummary {
-                id: compactSummary
-                metrics: root.metrics
-                temperatureModel: root.temperatureModel
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                height: Math.round(parent.height * (root.metrics.portrait ? 0.32 : 0.38))
-            }
+            Layout.minimumWidth: 0
+            Layout.minimumHeight: 0
 
             FakeTemperatureGraph {
                 anchors.left: parent.left
                 anchors.right: parent.right
-                anchors.top: compactSummary.bottom
+                anchors.top: parent.top
                 anchors.bottom: parent.bottom
-                anchors.topMargin: root.metrics.gap
                 fontSize: root.metrics.fontSize
             }
         }

@@ -22,6 +22,7 @@ Item {
         anchors.top: parent.top
         height: Math.round(parent.height * (root.metrics.portrait ? 0.55 : 0.52))
         spacing: root.metrics.gap
+        clip: true
 
         Row {
             width: parent.width

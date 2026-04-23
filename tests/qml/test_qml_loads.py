@@ -115,7 +115,8 @@ def test_status_bar_matches_klipperscreen_titlebar_structure() -> None:
     assert "id: heaterStrip" in qml
     assert "TemperatureDeviceModel {" in qml
     assert "id: fallbackTemperatureModel" in qml
-    assert "source: Theme.iconSource(iconName)" in qml
+    assert 'typeof icon === "undefined" ? iconName : icon' in qml
+    assert "source: Theme.iconSource(parent.resolvedIcon)" in qml
     assert 'text: temperature + "°"' in qml
     assert "model: root.activeTemperatureModel" in qml
     assert "id: titleLabel" in qml
@@ -290,6 +291,7 @@ def test_temperature_summary_uses_klipperscreen_device_icons_and_theme() -> None
     assert 'import "../models"' in component_qml
     assert "property var temperatureModel: null" in component_qml
     assert "property var activeTemperatureModel:" in component_qml
+    assert "clip: true" in component_qml
     assert 'ListElement { deviceName: "Extruder"; iconName: "extruder"; temperature: "21" }' in qml
     assert 'ListElement { deviceName: "Heater bed"; iconName: "bed"; temperature: "25" }' in qml
     assert 'ListElement { deviceName: "Pi"; iconName: "heat-up"; temperature: "44" }' in qml
@@ -328,9 +330,11 @@ def test_temperature_panel_is_read_only_and_responsive() -> None:
 
     assert "required property var metrics" in qml
     assert "property var temperatureModel: null" in qml
-    assert "TemperatureSummary {" in qml
+    assert "TemperatureSummary {" not in qml
     assert "FakeTemperatureGraph {" in qml
     assert "model: root.activeTemperatureModel" in qml
+    assert "Layout.minimumWidth: 0" in qml
+    assert "Layout.minimumHeight: 0" in qml
     assert 'typeof icon === "undefined" ? iconName : icon' in qml
     assert 'typeof displayName === "undefined" ? deviceName : displayName' in qml
     assert 'typeof target === "undefined" || target === null' in qml
