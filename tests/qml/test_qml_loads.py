@@ -168,6 +168,8 @@ def test_responsive_layout_components_exist() -> None:
         qml_dir / "panels" / "TemperaturePanel.qml",
         qml_dir / "panels" / "PrintPanel.qml",
         qml_dir / "panels" / "InfoPanel.qml",
+        qml_dir / "panels" / "MovePanel.qml",
+        qml_dir / "panels" / "ExtrudePanel.qml",
     ]
 
     missing = [path for path in expected if not path.exists()]
@@ -410,6 +412,47 @@ def test_main_routes_more_to_read_only_info_panel() -> None:
     assert "klipperVersion: window.klipperVersion" in main_qml
     assert "moonrakerVersion: window.moonrakerVersion" in main_qml
     assert "objectCount: window.objectCount" in main_qml
+
+
+def test_move_panel_is_locked_and_responsive() -> None:
+    qml = Path("src/klippertouch/qml/panels/MovePanel.qml").read_text(encoding="utf-8")
+
+    assert "required property var metrics" in qml
+    assert "property var axes" in qml
+    assert "property var distances" in qml
+    assert "Controls locked" in qml
+    assert "root.metrics.portrait" in qml
+    assert "Repeater {" in qml
+    assert "MouseArea" not in qml
+    assert "printer.gcode.script" not in qml
+    assert "G1" not in qml
+    assert "G28" not in qml
+
+
+def test_extrude_panel_is_locked_and_responsive() -> None:
+    qml = Path("src/klippertouch/qml/panels/ExtrudePanel.qml").read_text(encoding="utf-8")
+
+    assert "required property var metrics" in qml
+    assert "property var distances" in qml
+    assert "property var speeds" in qml
+    assert "Extrusion locked" in qml
+    assert "root.metrics.portrait" in qml
+    assert "Repeater {" in qml
+    assert "MouseArea" not in qml
+    assert "printer.gcode.script" not in qml
+    assert "M83" not in qml
+    assert "G1" not in qml
+
+
+def test_main_routes_move_and_extrude_to_locked_panels() -> None:
+    main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
+
+    assert 'case "move":' in main_qml
+    assert "return moveComponent" in main_qml
+    assert 'case "extrude":' in main_qml
+    assert "return extrudeComponent" in main_qml
+    assert "MovePanel {" in main_qml
+    assert "ExtrudePanel {" in main_qml
 
 
 def test_main_uses_responsive_base_shell_and_main_panel() -> None:

@@ -55,6 +55,10 @@ ApplicationWindow {
             return printComponent
         case "more":
             return infoComponent
+        case "move":
+            return moveComponent
+        case "extrude":
+            return extrudeComponent
         default:
             return placeholderComponent
         }
@@ -131,6 +135,22 @@ ApplicationWindow {
                 klipperVersion: window.klipperVersion
                 moonrakerVersion: window.moonrakerVersion
                 objectCount: window.objectCount
+            }
+        }
+
+        Component {
+            id: moveComponent
+
+            MovePanel {
+                metrics: appMetrics
+            }
+        }
+
+        Component {
+            id: extrudeComponent
+
+            ExtrudePanel {
+                metrics: appMetrics
             }
         }
     }
