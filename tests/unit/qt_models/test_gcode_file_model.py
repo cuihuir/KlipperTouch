@@ -8,7 +8,7 @@ def test_gcode_file_list_model_exposes_qml_roles(qtbot) -> None:
     model = GCodeFileListModel()
     files = (
         GCodeFile(
-            path="calibration/cube.gcode",
+            path="cube.gcode",
             display_name="cube.gcode",
             modified=1710000000.5,
             size=2048,
@@ -29,7 +29,45 @@ def test_gcode_file_list_model_exposes_qml_roles(qtbot) -> None:
         "sizeLabel": Qt.ItemDataRole.UserRole + 3,
         "modified": Qt.ItemDataRole.UserRole + 4,
         "permissions": Qt.ItemDataRole.UserRole + 5,
+        "isDirectory": Qt.ItemDataRole.UserRole + 6,
+        "modifiedLabel": Qt.ItemDataRole.UserRole + 7,
     }
-    assert model.data(first_index, roles["path"]) == "calibration/cube.gcode"
+    assert model.data(first_index, roles["path"]) == "cube.gcode"
     assert model.data(first_index, roles["displayName"]) == "cube.gcode"
     assert model.data(first_index, roles["sizeLabel"]) == "2.0 KB"
+    assert model.data(first_index, roles["isDirectory"]) is False
+    assert model.data(first_index, roles["modifiedLabel"]) == "2024-03-09 16:00"
+
+
+def test_gcode_file_list_model_exposes_directory_entries_and_sorting(qtbot) -> None:
+    model = GCodeFileListModel()
+    files = (
+        GCodeFile(path="cube.gcode", display_name="cube.gcode", modified=2, size=200),
+        GCodeFile(path="calibration/flow.gcode", display_name="flow.gcode", modified=3, size=100),
+    )
+
+    with qtbot.waitSignal(model.modelReset, timeout=1000):
+        model.set_files(files)
+
+    roles = {bytes(value).decode(): key for key, value in model.roleNames().items()}
+    assert model.currentPath == ""
+    assert model.rowCount() == 2
+    assert model.data(model.index(0, 0), roles["isDirectory"]) is True
+    assert model.data(model.index(0, 0), roles["displayName"]) == "calibration"
+
+    with qtbot.waitSignal(model.currentPathChanged, timeout=1000):
+        model.setCurrentPath("calibration")
+
+    assert model.currentPath == "calibration"
+    assert model.rowCount() == 1
+    assert model.data(model.index(0, 0), roles["displayName"]) == "flow.gcode"
+
+    with qtbot.waitSignal(model.sortKeyChanged, timeout=1000):
+        model.setSortKey("size")
+
+    assert model.sortKey == "size"
+
+    with qtbot.waitSignal(model.currentPathChanged, timeout=1000):
+        model.goUp()
+
+    assert model.currentPath == ""

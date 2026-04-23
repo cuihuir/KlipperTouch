@@ -192,7 +192,12 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "Sort: Size" in qml
     assert "No G-Code files found" in qml
     assert "Loading files..." in qml
-    assert "function modifiedLabel" in qml
+    assert "function currentPathLabel" in qml
+    assert "required property bool isDirectory" in qml
+    assert "required property string modifiedLabel" in qml
+    assert "activeFileModel.setCurrentPath(path)" in qml
+    assert "activeFileModel.setSortKey(sortKey)" in qml
+    assert "activeFileModel.goUp()" in qml
     assert "property string printState" not in qml
     assert "property string printFilename" not in qml
     assert "property real printProgress" not in qml
@@ -505,7 +510,8 @@ def test_files_panel_is_read_only_and_responsive() -> None:
     assert "displayName" in qml
     assert "sizeLabel" in qml
     assert "root.metrics.portrait" in qml
-    assert "MouseArea" not in qml
+    assert "MouseArea" in qml
+    assert "activeFileModel.setCurrentPath(path)" in qml
     assert "printer.print.start" not in qml
     assert "printer.gcode.script" not in qml
 

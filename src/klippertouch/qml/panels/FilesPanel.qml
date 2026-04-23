@@ -11,11 +11,33 @@ Item {
     property string rootPath: "gcodes"
     property bool loading: false
 
-    function modifiedLabel(value) {
-        if (value <= 0) {
-            return "-"
+    function currentPathLabel() {
+        if (root.activeFileModel && root.activeFileModel.currentPath.length > 0) {
+            return "/" + root.rootPath + "/" + root.activeFileModel.currentPath
         }
-        return new Date(value * 1000).toLocaleString(Qt.locale(), "yyyy-MM-dd hh:mm")
+        return "/" + root.rootPath
+    }
+
+    function setSort(sortKey) {
+        if (root.activeFileModel) {
+            root.activeFileModel.setSortKey(sortKey)
+        }
+    }
+
+    function isSortActive(sortKey) {
+        return root.activeFileModel && root.activeFileModel.sortKey === sortKey
+    }
+
+    function goUp() {
+        if (root.activeFileModel) {
+            root.activeFileModel.goUp()
+        }
+    }
+
+    function enterPath(path, isDirectory) {
+        if (isDirectory && root.activeFileModel) {
+            root.activeFileModel.setCurrentPath(path)
+        }
     }
 
     Rectangle {
@@ -76,7 +98,7 @@ Item {
                     Label {
                         Layout.fillWidth: true
                         color: Theme.text
-                        text: "/" + root.rootPath
+                        text: root.currentPathLabel()
                         elide: Text.ElideMiddle
                         font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
                     }
@@ -97,16 +119,16 @@ Item {
 
                 Repeater {
                     model: [
-                        "Sort: Name  v",
-                        "Sort: Date",
-                        "Sort: Size",
-                        "Refresh: auto"
+                        {"label": "Sort: Name", "sortKey": "name"},
+                        {"label": "Sort: Date", "sortKey": "date"},
+                        {"label": "Sort: Size", "sortKey": "size"},
+                        {"label": "Up", "sortKey": "up"}
                     ]
 
                     Rectangle {
                         width: chipText.implicitWidth + root.metrics.gap * 1.6
                         height: Math.max(30, Math.round(root.metrics.fontSize * 2.2))
-                        color: modelData.indexOf("Name") >= 0 ? "#1b2b2e" : "#101617"
+                        color: root.isSortActive(modelData.sortKey) ? "#1b2b2e" : "#101617"
                         border.color: "#263233"
                         border.width: 1
                         radius: Math.round(root.metrics.fontSize * 0.32)
@@ -115,8 +137,13 @@ Item {
                             id: chipText
                             anchors.centerIn: parent
                             color: Theme.mutedText
-                            text: modelData
+                            text: modelData.label
                             font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.8))
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: modelData.sortKey === "up" ? root.goUp() : root.setSort(modelData.sortKey)
                         }
                     }
                 }
@@ -173,6 +200,8 @@ Item {
                     required property string displayName
                     required property string sizeLabel
                     required property real modified
+                    required property bool isDirectory
+                    required property string modifiedLabel
                     required property string permissions
 
                     width: fileList.width
@@ -193,7 +222,7 @@ Item {
                         Label {
                             Layout.fillWidth: true
                             color: Theme.text
-                            text: displayName
+                            text: isDirectory ? "Folder  " + displayName : displayName
                             elide: Text.ElideMiddle
                             font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize))
                         }
@@ -204,7 +233,7 @@ Item {
                                 : Math.max(72, Math.round(root.metrics.fontSize * 5.2))
                             color: Theme.mutedText
                             text: root.metrics.portrait
-                                ? path + " | " + sizeLabel + " | " + root.modifiedLabel(modified)
+                                ? path + " | " + sizeLabel + " | " + modifiedLabel
                                 : sizeLabel
                             elide: Text.ElideMiddle
                             horizontalAlignment: root.metrics.portrait ? Text.AlignLeft : Text.AlignRight
@@ -215,7 +244,7 @@ Item {
                             Layout.preferredWidth: Math.max(112, Math.round(root.metrics.fontSize * 8.2))
                             visible: !root.metrics.portrait
                             color: Theme.mutedText
-                            text: root.modifiedLabel(modified)
+                            text: modifiedLabel
                             horizontalAlignment: Text.AlignRight
                             font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
                         }
@@ -228,6 +257,11 @@ Item {
                             horizontalAlignment: Text.AlignRight
                             font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
                         }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: root.enterPath(path, isDirectory)
                     }
                 }
             }
