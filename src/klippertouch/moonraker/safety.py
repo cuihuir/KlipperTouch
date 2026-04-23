@@ -11,15 +11,11 @@ class CommandPolicy:
             "printer/objects/list",
             "printer/objects/query",
         }
-        self.blocked_jsonrpc_prefixes = (
-            "printer.gcode.",
-            "printer.print.",
-            "printer.emergency_stop",
-            "printer.restart",
-            "printer.firmware_restart",
-            "machine.device_power.",
-            "machine.services.",
-        )
+        self.allowed_jsonrpc_methods = {
+            "printer.objects.query",
+            "printer.objects.subscribe",
+            "server.info",
+        }
 
     def validate_http(self, method: str, endpoint: str) -> None:
         normalized = endpoint.strip("/")
@@ -33,5 +29,5 @@ class CommandPolicy:
     def validate_jsonrpc(self, method: str) -> None:
         if not self.read_only:
             return
-        if method.startswith(self.blocked_jsonrpc_prefixes):
+        if method not in self.allowed_jsonrpc_methods:
             raise UnsafeCommandError(f"Blocked JSON-RPC method in read-only mode: {method}")

@@ -14,7 +14,8 @@ class MoonrakerClient:
     @property
     def endpoint(self) -> str:
         proto = "https" if self.config.moonraker_ssl else "http"
-        path = f"/{self.config.moonraker_path}" if self.config.moonraker_path else ""
+        normalized_path = self.config.moonraker_path.strip("/")
+        path = f"/{normalized_path}" if normalized_path else ""
         return f"{proto}://{self.config.moonraker_host}:{self.config.moonraker_port}{path}"
 
     def get(self, endpoint: str, timeout: float = 4.0) -> dict[str, Any]:
