@@ -21,6 +21,7 @@ EMPTY_INDEX = QModelIndex()
 class GCodeFileListModel(QAbstractListModel):
     currentPathChanged = Signal()
     sortKeyChanged = Signal()
+    filterTextChanged = Signal()
 
     PATH_ROLE = int(Qt.ItemDataRole.UserRole) + 1
     DISPLAY_NAME_ROLE = int(Qt.ItemDataRole.UserRole) + 2
@@ -36,6 +37,7 @@ class GCodeFileListModel(QAbstractListModel):
         self._entries: tuple[GCodeFileEntry, ...] = ()
         self._current_path = ""
         self._sort_key = "name"
+        self._filter_text = ""
 
     def set_files(self, files: tuple[GCodeFile, ...]) -> None:
         self.beginResetModel()
@@ -44,6 +46,7 @@ class GCodeFileListModel(QAbstractListModel):
             self._files,
             directory=self._current_path,
             sort_key=self._sort_key,
+            filter_text=self._filter_text,
         )
         self.endResetModel()
 
@@ -54,6 +57,10 @@ class GCodeFileListModel(QAbstractListModel):
     @Property(str, notify=sortKeyChanged)
     def sortKey(self) -> str:
         return self._sort_key
+
+    @Property(str, notify=filterTextChanged)
+    def filterText(self) -> str:
+        return self._filter_text
 
     @Property(bool, notify=currentPathChanged)
     def canGoUp(self) -> bool:
@@ -79,6 +86,25 @@ class GCodeFileListModel(QAbstractListModel):
         self._reset_entries()
         self.sortKeyChanged.emit()
 
+    @Slot(str)
+    def setFilterText(self, filter_text: str) -> None:  # noqa: N802
+        normalized = filter_text.strip()
+        if normalized == self._filter_text:
+            return
+        self._filter_text = normalized
+        self._reset_entries()
+        self.filterTextChanged.emit()
+
+    @Slot(int)
+    def setBreadcrumbIndex(self, index: int) -> None:  # noqa: N802
+        if index <= 0:
+            self.setCurrentPath("")
+            return
+        parts = [part for part in self._current_path.split("/") if part]
+        if index > len(parts):
+            return
+        self.setCurrentPath("/".join(parts[:index]))
+
     @Slot()
     def goUp(self) -> None:  # noqa: N802
         if not self._current_path:
@@ -92,8 +118,33 @@ class GCodeFileListModel(QAbstractListModel):
             self._files,
             directory=self._current_path,
             sort_key=self._sort_key,
+            filter_text=self._filter_text,
         )
         self.endResetModel()
+
+    @Slot(str, result=str)
+    def fileSizeLabelFor(self, filename: str) -> str:  # noqa: N802
+        file = self._file_for_name(filename)
+        return file.size_label if file is not None else "-"
+
+    @Slot(str, result=str)
+    def fileModifiedLabelFor(self, filename: str) -> str:  # noqa: N802
+        file = self._file_for_name(filename)
+        return file.modified_label if file is not None else "-"
+
+    @Slot(str, result=str)
+    def filePathFor(self, filename: str) -> str:  # noqa: N802
+        file = self._file_for_name(filename)
+        return file.path if file is not None else ""
+
+    def _file_for_name(self, filename: str) -> GCodeFile | None:
+        clean = filename.strip().strip("/")
+        if not clean:
+            return None
+        for file in self._files:
+            if file.path == clean or file.display_name == clean:
+                return file
+        return None
 
     def rowCount(  # noqa: N802
         self,

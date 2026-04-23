@@ -76,3 +76,61 @@ def test_gcode_file_list_model_exposes_directory_entries_and_sorting(qtbot) -> N
     assert model.currentPath == ""
     assert model.breadcrumbs == ["gcodes"]
     assert model.canGoUp is False
+
+
+def test_gcode_file_list_model_filters_entries_and_navigates_breadcrumbs(qtbot) -> None:
+    model = GCodeFileListModel()
+    files = (
+        GCodeFile(path="cube.gcode", display_name="cube.gcode", modified=2, size=200),
+        GCodeFile(path="calibration/flow.gcode", display_name="flow.gcode", modified=3, size=100),
+        GCodeFile(path="calibration/pa/line.gcode", display_name="line.gcode", size=100),
+    )
+
+    model.set_files(files)
+    roles = {bytes(value).decode(): key for key, value in model.roleNames().items()}
+
+    with qtbot.waitSignal(model.filterTextChanged, timeout=1000):
+        model.setFilterText("cube")
+
+    assert model.filterText == "cube"
+    assert model.rowCount() == 1
+    assert model.data(model.index(0, 0), roles["displayName"]) == "cube.gcode"
+
+    with qtbot.waitSignal(model.filterTextChanged, timeout=1000):
+        model.setFilterText("")
+    with qtbot.waitSignal(model.currentPathChanged, timeout=1000):
+        model.setCurrentPath("calibration/pa")
+
+    assert model.breadcrumbs == ["gcodes", "calibration", "pa"]
+
+    with qtbot.waitSignal(model.currentPathChanged, timeout=1000):
+        model.setBreadcrumbIndex(1)
+
+    assert model.currentPath == "calibration"
+    assert model.breadcrumbs == ["gcodes", "calibration"]
+
+    with qtbot.waitSignal(model.currentPathChanged, timeout=1000):
+        model.setBreadcrumbIndex(0)
+
+    assert model.currentPath == ""
+
+
+def test_gcode_file_list_model_returns_metadata_for_print_filename() -> None:
+    model = GCodeFileListModel()
+    model.set_files(
+        (
+            GCodeFile(
+                path="calibration/cube.gcode",
+                display_name="cube.gcode",
+                modified=1710000000.5,
+                size=2048,
+                permissions="rw",
+            ),
+        )
+    )
+
+    assert model.fileSizeLabelFor("calibration/cube.gcode") == "2.0 KB"
+    assert model.fileSizeLabelFor("cube.gcode") == "2.0 KB"
+    assert model.fileModifiedLabelFor("cube.gcode") == "2024-03-09 16:00"
+    assert model.filePathFor("cube.gcode") == "calibration/cube.gcode"
+    assert model.fileSizeLabelFor("missing.gcode") == "-"

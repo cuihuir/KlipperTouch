@@ -189,6 +189,7 @@ ApplicationWindow {
                 maxAccel: window.maxAccel
                 maxVelocity: window.maxVelocity
                 temperatureModel: window.temperatureBridgeModel
+                fileModel: window.gcodeFileBridgeModel
             }
         }
 

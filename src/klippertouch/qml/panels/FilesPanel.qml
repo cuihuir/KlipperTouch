@@ -123,11 +123,28 @@ Item {
                         Repeater {
                             model: root.activeFileModel ? root.activeFileModel.breadcrumbs : [root.rootPath]
 
-                            Label {
-                                color: Theme.text
-                                text: modelData
-                                elide: Text.ElideRight
-                                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
+                            Rectangle {
+                                width: breadcrumbText.implicitWidth + Math.max(10, root.metrics.gap)
+                                height: Math.max(24, Math.round(root.metrics.fontSize * 1.75))
+                                color: index === 0 ? "#1b2b2e" : "#101617"
+                                border.color: "#263233"
+                                border.width: 1
+                                radius: Math.round(root.metrics.fontSize * 0.22)
+
+                                Label {
+                                    id: breadcrumbText
+                                    anchors.centerIn: parent
+                                    color: Theme.text
+                                    text: modelData
+                                    elide: Text.ElideRight
+                                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    enabled: root.activeFileModel !== null
+                                    onClicked: root.activeFileModel.setBreadcrumbIndex(index)
+                                }
                             }
                         }
                     }
@@ -178,6 +195,22 @@ Item {
                         }
                     }
                 }
+            }
+
+            TextField {
+                Layout.fillWidth: true
+                Layout.preferredHeight: Math.max(34, Math.round(root.metrics.fontSize * 2.45))
+                placeholderText: "Search files"
+                color: Theme.text
+                placeholderTextColor: Theme.mutedText
+                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
+                background: Rectangle {
+                    color: "#101617"
+                    border.color: "#263233"
+                    border.width: 1
+                    radius: Math.round(root.metrics.fontSize * 0.32)
+                }
+                onTextChanged: if (root.activeFileModel) root.activeFileModel.setFilterText(text)
             }
 
             RowLayout {

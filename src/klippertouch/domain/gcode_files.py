@@ -110,8 +110,10 @@ def browser_entries_for_directory(
     files: tuple[GCodeFile, ...],
     directory: str = "",
     sort_key: str = "name",
+    filter_text: str = "",
 ) -> tuple[GCodeFileEntry, ...]:
     current = _normalize_directory(directory)
+    normalized_filter = filter_text.strip().casefold()
     directories: dict[str, GCodeFileEntry] = {}
     direct_files: list[GCodeFile] = []
 
@@ -123,8 +125,15 @@ def browser_entries_for_directory(
             continue
         remaining = parts[len(current_parts) :]
         if len(remaining) == 1:
-            direct_files.append(file)
+            if _matches_filter(file.path, file.display_name, normalized_filter):
+                direct_files.append(file)
         elif remaining:
+            if normalized_filter and not _matches_filter(
+                file.path,
+                remaining[0],
+                normalized_filter,
+            ):
+                continue
             child_path = str(PurePosixPath(current, remaining[0])) if current else remaining[0]
             directories[child_path] = GCodeFileEntry.directory(child_path)
 
@@ -135,6 +144,12 @@ def browser_entries_for_directory(
         GCodeFileEntry.file(file) for file in _sorted_files(direct_files, sort_key)
     )
     return sorted_directories + sorted_files
+
+
+def _matches_filter(path: str, display_name: str, filter_text: str) -> bool:
+    if not filter_text:
+        return True
+    return filter_text in path.casefold() or filter_text in display_name.casefold()
 
 
 def _sorted_files(files: list[GCodeFile], sort_key: str) -> list[GCodeFile]:

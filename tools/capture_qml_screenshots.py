@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import html
 import os
 import sys
 from pathlib import Path
@@ -74,6 +75,28 @@ SAMPLE_STATUS = {
     "max_accel": 3000.0,
     "max_velocity": 250.0,
 }
+SAMPLE_HISTORY = ((205.0, 56.0), (208.0, 57.0), (211.8, 58.4))
+
+
+def make_sample_status(extruder_temperature: float, bed_temperature: float) -> PrinterStatus:
+    status = dict(SAMPLE_STATUS)
+    status["temperature_devices"] = (
+        TemperatureDeviceStatus(
+            name="extruder",
+            display_name="Extruder",
+            icon="extruder",
+            temperature=extruder_temperature,
+            target=215.0,
+        ),
+        TemperatureDeviceStatus(
+            name="heater_bed",
+            display_name="Heater Bed",
+            icon="bed",
+            temperature=bed_temperature,
+            target=60.0,
+        ),
+    )
+    return PrinterStatus(**status)
 
 
 def parse_size(value: str) -> tuple[int, int]:
@@ -110,8 +133,14 @@ def capture(
                 engine.rootContext().setContextProperty("gcodeFileModel", file_model)
                 engine.gcode_file_model = file_model  # type: ignore[attr-defined]
             if sample_status:
-                status = PrinterStatus(**SAMPLE_STATUS)
-                status_model, temperature_model = create_status_models(status)
+                first_extruder, first_bed = SAMPLE_HISTORY[0]
+                status_model, temperature_model = create_status_models(
+                    make_sample_status(first_extruder, first_bed)
+                )
+                for extruder_temperature, bed_temperature in SAMPLE_HISTORY[1:]:
+                    status_model.set_status(
+                        make_sample_status(extruder_temperature, bed_temperature)
+                    )
                 engine.rootContext().setContextProperty("statusModel", status_model)
                 engine.rootContext().setContextProperty(
                     "temperatureDeviceModel",
@@ -135,6 +164,46 @@ def capture(
                 raise RuntimeError(f"Failed to save screenshot {target}")
             captured.append(target)
     return captured
+
+
+def write_index(output_dir: Path, captured: list[Path]) -> Path:
+    index_path = output_dir / "index.html"
+    items = []
+    for path in captured:
+        relative = path.relative_to(output_dir)
+        label = html.escape(relative.stem)
+        src = html.escape(relative.as_posix())
+        items.append(
+            f'<figure><img src="{src}" alt="{label}"><figcaption>{label}</figcaption></figure>'
+        )
+    index_path.write_text(
+        "\n".join(
+            [
+                "<!doctype html>",
+                '<html lang="en">',
+                "<head>",
+                '<meta charset="utf-8">',
+                "<title>KlipperTouch Screenshots</title>",
+                "<style>",
+                "body{background:#111;color:#ddd;font-family:sans-serif;margin:24px}",
+                ".grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}",
+                "figure{margin:0;background:#1b1b1b;border:1px solid #333;padding:10px}",
+                "img{width:100%;height:auto;display:block}",
+                "figcaption{margin-top:8px;font-size:14px;color:#aaa}",
+                "</style>",
+                "</head>",
+                "<body>",
+                "<h1>KlipperTouch Screenshots</h1>",
+                '<div class="grid">',
+                *items,
+                "</div>",
+                "</body>",
+                "</html>",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    return index_path
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -174,6 +243,11 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Inject sample printer/job status into the QML context before capturing.",
     )
+    parser.add_argument(
+        "--no-index",
+        action="store_true",
+        help="Do not write index.html next to the captured screenshots.",
+    )
     args = parser.parse_args(argv)
 
     captured = capture(
@@ -184,6 +258,8 @@ def main(argv: list[str] | None = None) -> int:
         sample_files=args.sample_files,
         sample_status=args.sample_status,
     )
+    if not args.no_index:
+        print(write_index(args.output, captured))
     for path in captured:
         print(path)
     return 0

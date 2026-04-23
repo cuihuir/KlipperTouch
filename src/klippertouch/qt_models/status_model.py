@@ -15,6 +15,8 @@ EMPTY_INDEX = QModelIndex()
 
 
 class TemperatureDeviceListModel(QAbstractListModel):
+    historyChanged = Signal()
+
     NAME_ROLE = int(Qt.ItemDataRole.UserRole) + 1
     DISPLAY_NAME_ROLE = int(Qt.ItemDataRole.UserRole) + 2
     ICON_ROLE = int(Qt.ItemDataRole.UserRole) + 3
@@ -24,11 +26,31 @@ class TemperatureDeviceListModel(QAbstractListModel):
     def __init__(self) -> None:
         super().__init__()
         self._devices: tuple[TemperatureDeviceStatus, ...] = ()
+        self._history: dict[str, list[float]] = {"extruder": [], "heater_bed": []}
 
     def set_status(self, status: PrinterStatus) -> None:
         self.beginResetModel()
         self._devices = status.temperature_devices
         self.endResetModel()
+        history_changed = False
+        for device in self._devices:
+            key = _history_key_for_device(device.name)
+            if key is None or device.temperature is None:
+                continue
+            values = self._history[key]
+            values.append(float(device.temperature))
+            del values[:-60]
+            history_changed = True
+        if history_changed:
+            self.historyChanged.emit()
+
+    @Property(list, notify=historyChanged)
+    def extruderSeries(self) -> list[float]:
+        return list(self._history["extruder"])
+
+    @Property(list, notify=historyChanged)
+    def bedSeries(self) -> list[float]:
+        return list(self._history["heater_bed"])
 
     def rowCount(  # noqa: N802
         self,
@@ -67,6 +89,14 @@ class TemperatureDeviceListModel(QAbstractListModel):
             self.TEMPERATURE_ROLE: QByteArray(b"temperature"),
             self.TARGET_ROLE: QByteArray(b"target"),
         }
+
+
+def _history_key_for_device(name: str) -> str | None:
+    if name == "extruder" or name.startswith("extruder"):
+        return "extruder"
+    if name == "heater_bed":
+        return "heater_bed"
+    return None
 
 
 class StatusModel(QObject):

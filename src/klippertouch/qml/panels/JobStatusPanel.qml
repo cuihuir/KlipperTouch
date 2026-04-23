@@ -22,6 +22,7 @@ Item {
     property real maxAccel: 0
     property real maxVelocity: 0
     property var temperatureModel: null
+    property var fileModel: null
 
     function durationLabel(seconds) {
         var safeSeconds = Math.max(0, Math.round(seconds))
@@ -241,6 +242,9 @@ Item {
                     {"label": "Elapsed", "value": root.durationLabel(root.printDuration)},
                     {"label": "Remaining", "value": root.remainingLabel()},
                     {"label": "Total", "value": root.durationLabel(root.totalDuration)},
+                    {"label": "File size", "value": root.fileModel ? root.fileModel.fileSizeLabelFor(root.printFilename) : "-"},
+                    {"label": "Modified", "value": root.fileModel ? root.fileModel.fileModifiedLabelFor(root.printFilename) : "-"},
+                    {"label": "Path", "value": root.fileModel ? root.fileModel.filePathFor(root.printFilename) : ""},
                     {"label": "Layer", "value": root.layerLabel()},
                     {"label": "Filament used", "value": root.filamentLabel()},
                     {"label": "Speed", "value": root.speedLabel(root.requestedSpeed)},

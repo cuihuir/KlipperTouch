@@ -157,6 +157,8 @@ Item {
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
                 fontSize: root.metrics.fontSize
+                extruderSeries: root.activeTemperatureModel.extruderSeries
+                bedSeries: root.activeTemperatureModel.bedSeries
             }
         }
     }

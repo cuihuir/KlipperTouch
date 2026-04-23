@@ -24,3 +24,6 @@ def test_screenshot_tool_captures_common_panels_and_sizes() -> None:
     assert "setContextProperty(\"gcodeFileModel\"" in source
     assert "setContextProperty(\"statusModel\"" in source
     assert "OrcaCube_PLA_27m41s.gcode" in source
+    assert "write_index" in source
+    assert "index.html" in source
+    assert "--no-index" in source

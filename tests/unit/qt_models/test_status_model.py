@@ -108,3 +108,55 @@ def test_temperature_device_list_model_exposes_qml_roles(qtbot) -> None:
     assert model.data(first_index, roles["name"]) == "extruder"
     assert model.data(first_index, roles["displayName"]) == "Extruder"
     assert model.data(first_index, roles["icon"]) == "extruder"
+
+
+def test_temperature_device_list_model_records_read_only_history(qtbot) -> None:
+    model = TemperatureDeviceListModel()
+
+    with qtbot.waitSignal(model.historyChanged, timeout=1000):
+        model.set_status(
+            PrinterStatus(
+                objects=("extruder", "heater_bed"),
+                temperature_devices=(
+                    TemperatureDeviceStatus(
+                        name="extruder",
+                        display_name="Extruder",
+                        icon="extruder",
+                        temperature=210.0,
+                        target=215.0,
+                    ),
+                    TemperatureDeviceStatus(
+                        name="heater_bed",
+                        display_name="Heater Bed",
+                        icon="bed",
+                        temperature=58.0,
+                        target=60.0,
+                    ),
+                ),
+            )
+        )
+
+    model.set_status(
+        PrinterStatus(
+            objects=("extruder", "heater_bed"),
+            temperature_devices=(
+                TemperatureDeviceStatus(
+                    name="extruder",
+                    display_name="Extruder",
+                    icon="extruder",
+                    temperature=212.0,
+                    target=215.0,
+                ),
+                TemperatureDeviceStatus(
+                    name="heater_bed",
+                    display_name="Heater Bed",
+                    icon="bed",
+                    temperature=59.0,
+                    target=60.0,
+                ),
+            ),
+        )
+    )
+
+    assert model.extruderSeries == [210.0, 212.0]
+    assert model.bedSeries == [58.0, 59.0]

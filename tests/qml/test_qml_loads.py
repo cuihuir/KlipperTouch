@@ -139,6 +139,9 @@ def test_fake_temperature_graph_matches_heater_graph_structure() -> None:
     assert "onPaint:" in qml
     assert "drawSeries(ctx, extruderSeries, Theme.color2)" in qml
     assert "drawSeries(ctx, bedSeries, Theme.color1)" in qml
+    assert "function normalizeTemperature" in qml
+    assert "property real maxTemperature: 300" in qml
+    assert "property var extruderSeries: []" in qml
 
 
 def test_shell_has_responsive_orientation_hooks() -> None:
@@ -196,6 +199,9 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "function emptyTitle" in qml
     assert "Current folder is empty" in qml
     assert 'fileList.count + " items"' in qml
+    assert "Search files" in qml
+    assert "activeFileModel.setFilterText(text)" in qml
+    assert "activeFileModel.setBreadcrumbIndex(index)" in qml
     assert "activeFileModel.breadcrumbs" in qml
     assert "text: modelData" in qml
     assert "required property bool isDirectory" in qml
@@ -232,6 +238,13 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "property real maxAccel" in qml
     assert "property real maxVelocity" in qml
     assert "property var temperatureModel: null" in qml
+    assert "property var fileModel: null" in qml
+    assert "root.fileModel.fileSizeLabelFor(root.printFilename)" in qml
+    assert "root.fileModel.fileModifiedLabelFor(root.printFilename)" in qml
+    assert "root.fileModel.filePathFor(root.printFilename)" in qml
+    assert "File size" in qml
+    assert "Modified" in qml
+    assert "Path" in qml
     assert "model: root.temperatureModel" in qml
     assert "Temperatures" in qml
     assert 'typeof target === "undefined" || target === null' in qml
@@ -242,7 +255,6 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "Remaining" in qml
     assert "root.percentLabel(root.speedFactor)" in qml
     assert "root.zOffsetLabel()" in qml
-    assert "fileModel" not in qml
     assert "Start" not in qml
     assert "Pause" not in qml
     assert "Cancel" not in qml
@@ -460,6 +472,8 @@ def test_temperature_panel_is_read_only_and_responsive() -> None:
     assert "property var temperatureModel: null" in qml
     assert "TemperatureSummary {" not in qml
     assert "FakeTemperatureGraph {" in qml
+    assert "extruderSeries: root.activeTemperatureModel.extruderSeries" in qml
+    assert "bedSeries: root.activeTemperatureModel.bedSeries" in qml
     assert "model: root.activeTemperatureModel" in qml
     assert "Layout.minimumWidth: 0" in qml
     assert "Layout.minimumHeight: 0" in qml
@@ -507,6 +521,7 @@ def test_main_keeps_files_and_job_status_as_separate_routes() -> None:
     assert "maxAccel: window.maxAccel" in main_qml
     assert "maxVelocity: window.maxVelocity" in main_qml
     assert "temperatureModel: window.temperatureBridgeModel" in main_qml
+    assert "fileModel: window.gcodeFileBridgeModel" in main_qml
     assert "function isJobActive()" in main_qml
     assert "function syncJobStatusPanel()" in main_qml
     assert "onPrintStateChanged: window.syncJobStatusPanel()" in main_qml

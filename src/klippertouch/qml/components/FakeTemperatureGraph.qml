@@ -4,18 +4,34 @@ import "../Theme.js" as Theme
 Rectangle {
     id: root
     property real fontSize: 16
-    property var extruderSeries: [0.72, 0.58, 0.46, 0.39, 0.34, 0.32, 0.33, 0.31]
-    property var bedSeries: [0.78, 0.70, 0.62, 0.55, 0.50, 0.48, 0.47, 0.46]
+    property real maxTemperature: 300
+    property var extruderSeries: []
+    property var bedSeries: []
 
     color: Theme.buttonsBg
     border.color: "#465456"
     border.width: 1
 
+    function normalizeTemperature(value) {
+        return Math.max(0.04, Math.min(0.96, 1 - value / root.maxTemperature))
+    }
+
     function drawSeries(ctx, series, color) {
+        if (!series || series.length <= 0) {
+            return
+        }
+        if (series.length === 1) {
+            ctx.beginPath()
+            ctx.arc(root.width * 0.5, root.height * root.normalizeTemperature(series[0]),
+                    Math.max(3, Math.round(root.fontSize * 0.22)), 0, Math.PI * 2)
+            ctx.fillStyle = color
+            ctx.fill()
+            return
+        }
         ctx.beginPath()
         for (var i = 0; i < series.length; i += 1) {
             var x = root.width * i / Math.max(1, series.length - 1)
-            var y = root.height * series[i]
+            var y = root.height * root.normalizeTemperature(series[i])
             if (i === 0) {
                 ctx.moveTo(x, y)
             } else {
@@ -81,4 +97,7 @@ Rectangle {
         onWidthChanged: requestPaint()
         onHeightChanged: requestPaint()
     }
+
+    onExtruderSeriesChanged: graphCanvas.requestPaint()
+    onBedSeriesChanged: graphCanvas.requestPaint()
 }
