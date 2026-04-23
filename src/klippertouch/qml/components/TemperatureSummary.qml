@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import "../Theme.js" as Theme
+import "../models"
 
 Item {
     id: root
@@ -31,12 +32,12 @@ Item {
             }
         }
 
+        TemperatureDeviceModel {
+            id: temperatureDeviceModel
+        }
+
         Repeater {
-            model: ListModel {
-                ListElement { deviceName: "Extruder"; iconName: "extruder"; temperature: "21" }
-                ListElement { deviceName: "Heater bed"; iconName: "bed"; temperature: "25" }
-                ListElement { deviceName: "Pi"; iconName: "heat-up"; temperature: "44" }
-            }
+            model: temperatureDeviceModel
 
             Row {
                 width: devices.width
