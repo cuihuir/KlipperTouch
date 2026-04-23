@@ -1,0 +1,23 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Local development and brainstorming artifacts
+.env
+.env.*
+!.env.example
+.superpowers/
+.codex
+
+# Runtime data should stay outside the repository
+printer_data/
+logs/
+*.log
