@@ -6,6 +6,7 @@ Rectangle {
     required property string hostname
     required property string state
     required property int objectCount
+    property string panelTitle: "Home"
     default property alias panelContent: contentLayer.data
 
     color: "#071112"
@@ -30,6 +31,8 @@ Rectangle {
         hostname: root.hostname
         state: root.state
         objectCount: root.objectCount
+        printerName: root.hostname
+        panelTitle: root.panelTitle
     }
 
     Item {

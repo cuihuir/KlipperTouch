@@ -33,6 +33,18 @@ def test_action_bar_buttons_fill_available_axis() -> None:
     assert "width: buttonGrid.cellWidth" in qml
 
 
+def test_status_bar_matches_klipperscreen_titlebar_structure() -> None:
+    qml = Path("src/klippertouch/qml/components/StatusBar.qml").read_text(encoding="utf-8")
+
+    assert "property string printerName" in qml
+    assert "property string panelTitle" in qml
+    assert "property string clockText" in qml
+    assert "id: heaterStrip" in qml
+    assert "id: titleLabel" in qml
+    assert "id: clockLabel" in qml
+    assert 'text: root.printerName + " | " + root.panelTitle' in qml
+
+
 def test_shell_has_responsive_orientation_hooks() -> None:
     metrics_qml = Path("src/klippertouch/qml/Metrics.qml").read_text(encoding="utf-8")
     shell_qml = Path("src/klippertouch/qml/components/BaseShell.qml").read_text(encoding="utf-8")
