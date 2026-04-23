@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 from klippertouch.config.models import PrinterConfig
 from klippertouch.domain.printer import PrinterStatus
@@ -42,6 +43,20 @@ def test_build_websocket_request_includes_optional_api_key() -> None:
 
     assert request.url().toString() == "ws://host:7125/websocket"
     assert bytes(request.rawHeader("x-api-key")).decode() == "secret"
+
+
+def test_status_stream_schedules_read_only_reconnects() -> None:
+    source = Path("src/klippertouch/moonraker/status_stream.py").read_text(encoding="utf-8")
+
+    assert "QTimer" in source
+    assert "reconnect_interval_ms: int = 2000" in source
+    assert "self._reconnect_timer.setSingleShot(True)" in source
+    assert "self._socket.disconnected.connect(self._schedule_reconnect)" in source
+    assert "self._socket.errorOccurred.connect(self._schedule_reconnect)" in source
+    assert "self._socket.connected.connect(self._reconnect_timer.stop)" in source
+    assert "self._reconnect_timer.timeout.connect(self.start)" in source
+    assert "printer.objects.subscribe" in source
+    assert "printer.gcode.script" not in source
 
 
 def test_status_from_websocket_message_applies_notification_temperature_delta() -> None:

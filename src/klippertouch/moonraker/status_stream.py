@@ -1,7 +1,7 @@
 import json
 from typing import Any
 
-from PySide6.QtCore import QObject, QUrl, Slot
+from PySide6.QtCore import QObject, QTimer, QUrl, Slot
 from PySide6.QtNetwork import QNetworkRequest
 from PySide6.QtWebSockets import QWebSocket
 
@@ -79,19 +79,32 @@ class MoonrakerStatusStream(QObject):
         client: MoonrakerClient,
         status_model: StatusModel,
         initial_status: PrinterStatus,
+        reconnect_interval_ms: int = 2000,
     ) -> None:
         super().__init__()
         self._client = client
         self._status_model = status_model
         self._status = initial_status
+        self._reconnect_timer = QTimer(self)
+        self._reconnect_timer.setSingleShot(True)
+        self._reconnect_timer.setInterval(reconnect_interval_ms)
+        self._reconnect_timer.timeout.connect(self.start)
         self._socket = QWebSocket()
         self._socket.connected.connect(self._send_subscription)
+        self._socket.connected.connect(self._reconnect_timer.stop)
+        self._socket.disconnected.connect(self._schedule_reconnect)
+        self._socket.errorOccurred.connect(self._schedule_reconnect)
         self._socket.textMessageReceived.connect(self._handle_text_message)
 
     def start(self) -> None:
         if not self._status.temperature_devices:
             return
         self._socket.open(build_websocket_request(self._client))
+
+    def _schedule_reconnect(self, *_args: object) -> None:
+        if not self._status.temperature_devices or self._reconnect_timer.isActive():
+            return
+        self._reconnect_timer.start()
 
     @Slot()
     def _send_subscription(self) -> None:
