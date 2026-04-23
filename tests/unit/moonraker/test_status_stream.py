@@ -43,8 +43,14 @@ def test_build_temperature_subscription_message_uses_read_only_objects_method() 
                     "info",
                 ],
                 "display_status": ["progress", "message"],
-                "toolhead": ["position", "homed_axes"],
-                "gcode_move": ["gcode_position"],
+                "toolhead": ["position", "homed_axes", "max_accel", "max_velocity"],
+                "gcode_move": [
+                    "gcode_position",
+                    "homing_origin",
+                    "speed",
+                    "speed_factor",
+                    "extrude_factor",
+                ],
             }
         },
         "id": 1,
@@ -125,7 +131,14 @@ def test_status_from_websocket_message_applies_subscription_snapshot() -> None:
                         "info": {"current_layer": 5, "total_layer": 30},
                     },
                     "display_status": {"progress": 0.25},
-                    "gcode_move": {"gcode_position": [1.1, 2.2, 3.3, 4.4]},
+                    "toolhead": {"max_accel": 3000.0, "max_velocity": 250.0},
+                    "gcode_move": {
+                        "gcode_position": [1.1, 2.2, 3.3, 4.4],
+                        "speed": 125.0,
+                        "speed_factor": 1.5,
+                        "extrude_factor": 0.95,
+                        "homing_origin": [0.0, 0.0, -0.04],
+                    },
                 }
             },
             "id": 1,
@@ -147,6 +160,12 @@ def test_status_from_websocket_message_applies_subscription_snapshot() -> None:
     assert updated.position_y == 2.2
     assert updated.position_z == 3.3
     assert updated.position_e == 4.4
+    assert updated.requested_speed == 125.0
+    assert updated.speed_factor == 150.0
+    assert updated.extrude_factor == 95.0
+    assert updated.z_offset == -0.04
+    assert updated.max_accel == 3000.0
+    assert updated.max_velocity == 250.0
 
 
 def test_status_from_websocket_message_ignores_unrelated_messages() -> None:

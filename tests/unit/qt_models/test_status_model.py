@@ -35,6 +35,12 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
         position_z=3.3,
         position_e=4.4,
         homed_axes="xy",
+        requested_speed=125.0,
+        speed_factor=150.0,
+        extrude_factor=95.0,
+        z_offset=-0.04,
+        max_accel=3000.0,
+        max_velocity=250.0,
     )
 
     with qtbot.waitSignal(model.statusChanged, timeout=1000):
@@ -59,6 +65,12 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
     assert model.positionZ == 3.3
     assert model.positionE == 4.4
     assert model.homedAxes == "xy"
+    assert model.requestedSpeed == 125.0
+    assert model.speedFactor == 150.0
+    assert model.extrudeFactor == 95.0
+    assert model.zOffset == -0.04
+    assert model.maxAccel == 3000.0
+    assert model.maxVelocity == 250.0
     assert model.extruderTemperature == 212.4
     assert model.extruderTarget == 215.0
 

@@ -171,6 +171,30 @@ class StatusModel(QObject):
         return self._status.homed_axes
 
     @Property(float, notify=statusChanged)
+    def requestedSpeed(self) -> float:
+        return self._status.requested_speed
+
+    @Property(float, notify=statusChanged)
+    def speedFactor(self) -> float:
+        return self._status.speed_factor
+
+    @Property(float, notify=statusChanged)
+    def extrudeFactor(self) -> float:
+        return self._status.extrude_factor
+
+    @Property(float, notify=statusChanged)
+    def zOffset(self) -> float:
+        return self._status.z_offset
+
+    @Property(float, notify=statusChanged)
+    def maxAccel(self) -> float:
+        return self._status.max_accel
+
+    @Property(float, notify=statusChanged)
+    def maxVelocity(self) -> float:
+        return self._status.max_velocity
+
+    @Property(float, notify=statusChanged)
     def extruderTemperature(self) -> float:
         return self._status.primary_extruder_temperature
 

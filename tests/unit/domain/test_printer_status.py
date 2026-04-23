@@ -177,8 +177,19 @@ def test_printer_status_populates_read_only_toolhead_position() -> None:
         objects={"objects": ["toolhead", "gcode_move"]},
         object_status={
             "status": {
-                "toolhead": {"homed_axes": "xyz", "position": [1.0, 2.0, 3.0, 4.0]},
-                "gcode_move": {"gcode_position": [10.1, 20.2, 30.3, 40.4]},
+                "toolhead": {
+                    "homed_axes": "xyz",
+                    "position": [1.0, 2.0, 3.0, 4.0],
+                    "max_accel": 3000.0,
+                    "max_velocity": 250.0,
+                },
+                "gcode_move": {
+                    "gcode_position": [10.1, 20.2, 30.3, 40.4],
+                    "speed": 125.0,
+                    "speed_factor": 1.5,
+                    "extrude_factor": 0.95,
+                    "homing_origin": [0.0, 0.0, -0.04],
+                },
             }
         },
     )
@@ -188,6 +199,12 @@ def test_printer_status_populates_read_only_toolhead_position() -> None:
     assert status.position_z == 30.3
     assert status.position_e == 40.4
     assert status.homed_axes == "xyz"
+    assert status.requested_speed == 125.0
+    assert status.speed_factor == 150.0
+    assert status.extrude_factor == 95.0
+    assert status.z_offset == -0.04
+    assert status.max_accel == 3000.0
+    assert status.max_velocity == 250.0
 
 
 def test_printer_status_applies_read_only_toolhead_update() -> None:
@@ -195,8 +212,14 @@ def test_printer_status_applies_read_only_toolhead_update() -> None:
 
     updated = status.with_status_update(
         {
-            "toolhead": {"homed_axes": "xy"},
-            "gcode_move": {"gcode_position": [11.0, 22.0, 33.0, 44.0]},
+            "toolhead": {"homed_axes": "xy", "max_accel": 2400.0, "max_velocity": 180.0},
+            "gcode_move": {
+                "gcode_position": [11.0, 22.0, 33.0, 44.0],
+                "speed": 90.0,
+                "speed_factor": 0.8,
+                "extrude_factor": 1.1,
+                "homing_origin": [0.0, 0.0, 0.12],
+            },
         }
     )
 
@@ -205,6 +228,12 @@ def test_printer_status_applies_read_only_toolhead_update() -> None:
     assert updated.position_z == 33.0
     assert updated.position_e == 44.0
     assert updated.homed_axes == "xy"
+    assert updated.requested_speed == 90.0
+    assert updated.speed_factor == 80.0
+    assert updated.extrude_factor == 110.0
+    assert updated.z_offset == 0.12
+    assert updated.max_accel == 2400.0
+    assert updated.max_velocity == 180.0
 
 
 def test_printer_status_exposes_primary_extruder_temperatures() -> None:

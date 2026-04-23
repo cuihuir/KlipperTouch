@@ -186,6 +186,13 @@ def test_files_panel_is_only_read_only_file_management() -> None:
 
     assert "property var fileModel" in qml
     assert "G-Code files" in qml
+    assert 'property string rootPath: "gcodes"' in qml
+    assert "Sort: Name" in qml
+    assert "Sort: Date" in qml
+    assert "Sort: Size" in qml
+    assert "No G-Code files found" in qml
+    assert "Loading files..." in qml
+    assert "function modifiedLabel" in qml
     assert "property string printState" not in qml
     assert "property string printFilename" not in qml
     assert "property real printProgress" not in qml
@@ -207,8 +214,16 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "property real filamentUsed" in qml
     assert "property int currentLayer" in qml
     assert "property int totalLayers" in qml
+    assert "property real requestedSpeed" in qml
+    assert "property real speedFactor" in qml
+    assert "property real extrudeFactor" in qml
+    assert "property real zOffset" in qml
+    assert "property real maxAccel" in qml
+    assert "property real maxVelocity" in qml
     assert "root.filamentLabel()" in qml
     assert "root.layerLabel()" in qml
+    assert "root.percentLabel(root.speedFactor)" in qml
+    assert "root.zOffsetLabel()" in qml
     assert "fileModel" not in qml
     assert "Start" not in qml
     assert "Pause" not in qml
@@ -466,6 +481,12 @@ def test_main_keeps_files_and_job_status_as_separate_routes() -> None:
     assert "filamentUsed: window.filamentUsed" in main_qml
     assert "currentLayer: window.currentLayer" in main_qml
     assert "totalLayers: window.totalLayers" in main_qml
+    assert "requestedSpeed: window.requestedSpeed" in main_qml
+    assert "speedFactor: window.speedFactor" in main_qml
+    assert "extrudeFactor: window.extrudeFactor" in main_qml
+    assert "zOffset: window.zOffset" in main_qml
+    assert "maxAccel: window.maxAccel" in main_qml
+    assert "maxVelocity: window.maxVelocity" in main_qml
     assert "function isJobActive()" in main_qml
     assert "function syncJobStatusPanel()" in main_qml
     assert "onPrintStateChanged: window.syncJobStatusPanel()" in main_qml

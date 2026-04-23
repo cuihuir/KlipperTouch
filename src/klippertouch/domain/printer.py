@@ -20,6 +20,12 @@ class ToolheadStatusFields(TypedDict, total=False):
     position_z: float
     position_e: float
     homed_axes: str
+    requested_speed: float
+    speed_factor: float
+    extrude_factor: float
+    z_offset: float
+    max_accel: float
+    max_velocity: float
 
 
 @dataclass(frozen=True)
@@ -58,6 +64,12 @@ class PrinterStatus:
     position_z: float = 0.0
     position_e: float = 0.0
     homed_axes: str = ""
+    requested_speed: float = 0.0
+    speed_factor: float = 100.0
+    extrude_factor: float = 100.0
+    z_offset: float = 0.0
+    max_accel: float = 0.0
+    max_velocity: float = 0.0
 
     def __post_init__(self) -> None:
         objects = tuple(str(item) for item in self.objects)
@@ -86,6 +98,12 @@ class PrinterStatus:
         object.__setattr__(self, "position_z", _optional_float(self.position_z) or 0.0)
         object.__setattr__(self, "position_e", _optional_float(self.position_e) or 0.0)
         object.__setattr__(self, "homed_axes", str(self.homed_axes or ""))
+        object.__setattr__(self, "requested_speed", _optional_float(self.requested_speed) or 0.0)
+        object.__setattr__(self, "speed_factor", _clamped_factor_percent(self.speed_factor))
+        object.__setattr__(self, "extrude_factor", _clamped_factor_percent(self.extrude_factor))
+        object.__setattr__(self, "z_offset", _optional_float(self.z_offset) or 0.0)
+        object.__setattr__(self, "max_accel", _optional_float(self.max_accel) or 0.0)
+        object.__setattr__(self, "max_velocity", _optional_float(self.max_velocity) or 0.0)
 
     @property
     def object_count(self) -> int:
@@ -167,6 +185,12 @@ class PrinterStatus:
             "position_z": self.position_z,
             "position_e": self.position_e,
             "homed_axes": self.homed_axes,
+            "requested_speed": self.requested_speed,
+            "speed_factor": self.speed_factor,
+            "extrude_factor": self.extrude_factor,
+            "z_offset": self.z_offset,
+            "max_accel": self.max_accel,
+            "max_velocity": self.max_velocity,
         }
         toolhead_fields.update(_toolhead_fields_from_status({"status": status_update}))
 
@@ -319,7 +343,34 @@ def _toolhead_fields_from_status(object_status: dict[str, Any]) -> ToolheadStatu
         fields["position_e"] = _optional_float(position[3]) or 0.0
     if "homed_axes" in toolhead:
         fields["homed_axes"] = str(toolhead["homed_axes"])
+    if "speed" in gcode_move:
+        fields["requested_speed"] = _optional_float(gcode_move["speed"]) or 0.0
+    if "speed_factor" in gcode_move:
+        fields["speed_factor"] = _factor_to_percent(gcode_move["speed_factor"])
+    if "extrude_factor" in gcode_move:
+        fields["extrude_factor"] = _factor_to_percent(gcode_move["extrude_factor"])
+    homing_origin = gcode_move.get("homing_origin")
+    if isinstance(homing_origin, list | tuple) and len(homing_origin) >= 3:
+        fields["z_offset"] = _optional_float(homing_origin[2]) or 0.0
+    if "max_accel" in toolhead:
+        fields["max_accel"] = _optional_float(toolhead["max_accel"]) or 0.0
+    if "max_velocity" in toolhead:
+        fields["max_velocity"] = _optional_float(toolhead["max_velocity"]) or 0.0
     return fields
+
+
+def _factor_to_percent(value: Any) -> float:
+    number = _optional_float(value)
+    if number is None:
+        return 100.0
+    return _clamped_factor_percent(round(number * 100.0, 1))
+
+
+def _clamped_factor_percent(value: Any) -> float:
+    number = _optional_float(value)
+    if number is None:
+        return 100.0
+    return max(0.0, float(number))
 
 
 def _clamped_percent(value: Any) -> float:

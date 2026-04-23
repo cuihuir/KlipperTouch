@@ -33,6 +33,12 @@ ApplicationWindow {
     property real positionZ: bridgeModel ? bridgeModel.positionZ : 0
     property real positionE: bridgeModel ? bridgeModel.positionE : 0
     property string homedAxes: bridgeModel ? bridgeModel.homedAxes : ""
+    property real requestedSpeed: bridgeModel ? bridgeModel.requestedSpeed : 0
+    property real speedFactor: bridgeModel ? bridgeModel.speedFactor : 100
+    property real extrudeFactor: bridgeModel ? bridgeModel.extrudeFactor : 100
+    property real zOffset: bridgeModel ? bridgeModel.zOffset : 0
+    property real maxAccel: bridgeModel ? bridgeModel.maxAccel : 0
+    property real maxVelocity: bridgeModel ? bridgeModel.maxVelocity : 0
     property real extruderTemperature: bridgeModel ? bridgeModel.extruderTemperature : 0
     property real extruderTarget: bridgeModel ? bridgeModel.extruderTarget : 0
     property string currentPanel: "main"
@@ -176,6 +182,12 @@ ApplicationWindow {
                 filamentUsed: window.filamentUsed
                 currentLayer: window.currentLayer
                 totalLayers: window.totalLayers
+                requestedSpeed: window.requestedSpeed
+                speedFactor: window.speedFactor
+                extrudeFactor: window.extrudeFactor
+                zOffset: window.zOffset
+                maxAccel: window.maxAccel
+                maxVelocity: window.maxVelocity
             }
         }
 

@@ -15,6 +15,12 @@ Item {
     property real filamentUsed: 0
     property int currentLayer: 0
     property int totalLayers: 0
+    property real requestedSpeed: 0
+    property real speedFactor: 100
+    property real extrudeFactor: 100
+    property real zOffset: 0
+    property real maxAccel: 0
+    property real maxVelocity: 0
 
     function durationLabel(seconds) {
         var safeSeconds = Math.max(0, Math.round(seconds))
@@ -39,6 +45,28 @@ Item {
             return String(root.currentLayer)
         }
         return "-"
+    }
+
+    function percentLabel(value) {
+        return Math.round(value) + "%"
+    }
+
+    function speedLabel(value) {
+        if (value <= 0) {
+            return "-"
+        }
+        return Math.round(value) + " mm/s"
+    }
+
+    function accelLabel() {
+        if (root.maxAccel <= 0) {
+            return "-"
+        }
+        return Math.round(root.maxAccel) + " mm/s^2"
+    }
+
+    function zOffsetLabel() {
+        return root.zOffset.toFixed(2) + " mm"
     }
 
     Rectangle {
@@ -122,50 +150,56 @@ Item {
                 }
             }
 
-            GridLayout {
+            GridView {
+                id: cardGrid
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                columns: root.metrics.portrait ? 1 : 2
-                rowSpacing: root.metrics.gap
-                columnSpacing: root.metrics.gap
+                clip: true
+                cellWidth: width / (root.metrics.portrait ? 1 : 2)
+                cellHeight: Math.max(60, Math.round(root.metrics.fontSize * 4.25))
+                model: [
+                    {"label": "Elapsed", "value": root.durationLabel(root.printDuration)},
+                    {"label": "Total", "value": root.durationLabel(root.totalDuration)},
+                    {"label": "Layer", "value": root.layerLabel()},
+                    {"label": "Filament used", "value": root.filamentLabel()},
+                    {"label": "Speed", "value": root.speedLabel(root.requestedSpeed)},
+                    {"label": "Speed factor", "value": root.percentLabel(root.speedFactor)},
+                    {"label": "Flow", "value": root.percentLabel(root.extrudeFactor)},
+                    {"label": "Z offset", "value": root.zOffsetLabel()},
+                    {"label": "Accel", "value": root.accelLabel()},
+                    {"label": "Max velocity", "value": root.speedLabel(root.maxVelocity)},
+                    {"label": "State", "value": root.printState},
+                    {"label": "Mode", "value": "readonly"}
+                ]
 
-                Repeater {
-                    model: [
-                        {"label": "Elapsed", "value": root.durationLabel(root.printDuration)},
-                        {"label": "Total", "value": root.durationLabel(root.totalDuration)},
-                        {"label": "Layer", "value": root.layerLabel()},
-                        {"label": "Filament used", "value": root.filamentLabel()},
-                        {"label": "State", "value": root.printState},
-                        {"label": "Mode", "value": "readonly"}
-                    ]
+                delegate: Rectangle {
+                    required property var modelData
 
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: Math.max(54, Math.round(root.metrics.fontSize * 3.8))
-                        color: "#101617"
-                        border.color: "#263233"
-                        border.width: 1
-                        radius: Math.round(root.metrics.fontSize * 0.32)
+                    width: cardGrid.cellWidth - root.metrics.gap
+                    height: cardGrid.cellHeight - root.metrics.gap
+                    color: "#101617"
+                    border.color: "#263233"
+                    border.width: 1
+                    radius: Math.round(root.metrics.fontSize * 0.32)
 
-                        ColumnLayout {
-                            anchors.fill: parent
-                            anchors.margins: root.metrics.gap
-                            spacing: 0
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: root.metrics.gap
+                        spacing: 0
 
-                            Label {
-                                Layout.fillWidth: true
-                                color: Theme.mutedText
-                                text: modelData.label
-                                font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
-                            }
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.mutedText
+                            text: modelData.label
+                            font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                        }
 
-                            Label {
-                                Layout.fillWidth: true
-                                color: Theme.text
-                                text: modelData.value
-                                elide: Text.ElideRight
-                                font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
-                            }
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.text
+                            text: modelData.value
+                            elide: Text.ElideRight
+                            font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
                         }
                     }
                 }
