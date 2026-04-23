@@ -11,6 +11,11 @@ from klippertouch.qt_models.status_model import StatusModel
 
 SUBSCRIPTION_ID = 1
 TEMPERATURE_FIELDS = ["temperature", "target"]
+PRINT_STATUS_FIELDS = {
+    "print_stats": ["state", "filename", "print_duration", "total_duration"],
+    "display_status": ["progress", "message"],
+    "virtual_sdcard": ["progress", "is_active", "file_path"],
+}
 
 
 def build_websocket_request(client: MoonrakerClient) -> QNetworkRequest:
@@ -25,15 +30,11 @@ def build_temperature_subscription_message(
     status: PrinterStatus,
 ) -> str:
     client.policy.validate_jsonrpc("printer.objects.subscribe")
-    objects = {
-        device.name: TEMPERATURE_FIELDS
-        for device in status.temperature_devices
-    }
     return json.dumps(
         {
             "jsonrpc": "2.0",
             "method": "printer.objects.subscribe",
-            "params": {"objects": objects},
+            "params": {"objects": _subscription_objects(status)},
             "id": SUBSCRIPTION_ID,
         }
     )
@@ -54,7 +55,7 @@ def status_from_websocket_message(
     update = _status_update_from_payload(payload)
     if update is None:
         return None
-    return current_status.with_temperature_status_update(update)
+    return current_status.with_status_update(update)
 
 
 def _status_update_from_payload(payload: dict[str, Any]) -> dict[str, Any] | None:
@@ -97,12 +98,12 @@ class MoonrakerStatusStream(QObject):
         self._socket.textMessageReceived.connect(self._handle_text_message)
 
     def start(self) -> None:
-        if not self._status.temperature_devices:
+        if not _subscription_objects(self._status):
             return
         self._socket.open(build_websocket_request(self._client))
 
     def _schedule_reconnect(self, *_args: object) -> None:
-        if not self._status.temperature_devices or self._reconnect_timer.isActive():
+        if not _subscription_objects(self._status) or self._reconnect_timer.isActive():
             return
         self._reconnect_timer.start()
 
@@ -119,3 +120,15 @@ class MoonrakerStatusStream(QObject):
             return
         self._status = status
         self._status_model.set_status(status)
+
+
+def _subscription_objects(status: PrinterStatus) -> dict[str, list[str]]:
+    objects = {device.name: TEMPERATURE_FIELDS for device in status.temperature_devices}
+    objects.update(
+        {
+            name: fields
+            for name, fields in PRINT_STATUS_FIELDS.items()
+            if name in status.objects
+        }
+    )
+    return objects

@@ -56,7 +56,7 @@ class MoonrakerClient:
         return self.get("printer/objects/list")
 
     def get_printer_objects_query(self, objects: tuple[str, ...] = ()) -> dict[str, Any]:
-        params = {name: "temperature,target" for name in objects} if objects else None
+        params = {name: _query_fields_for_object(name) for name in objects} if objects else None
         return self.get("printer/objects/query", params=params)
 
     def get_gcode_file_list(self) -> list[dict[str, Any]]:
@@ -64,3 +64,13 @@ class MoonrakerClient:
         if isinstance(result, list):
             return [item for item in result if isinstance(item, dict)]
         return []
+
+
+def _query_fields_for_object(name: str) -> str:
+    if name == "print_stats":
+        return "state,filename,print_duration,total_duration"
+    if name == "display_status":
+        return "progress,message"
+    if name == "virtual_sdcard":
+        return "progress,is_active,file_path"
+    return "temperature,target"

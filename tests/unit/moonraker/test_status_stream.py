@@ -12,7 +12,9 @@ from klippertouch.moonraker.status_stream import (
 
 
 def test_build_temperature_subscription_message_uses_read_only_objects_method() -> None:
-    status = PrinterStatus(objects=("extruder", "heater_bed", "fan"))
+    status = PrinterStatus(
+        objects=("extruder", "heater_bed", "fan", "print_stats", "display_status")
+    )
     client = MoonrakerClient(PrinterConfig(name="p", moonraker_host="host"))
 
     message = json.loads(build_temperature_subscription_message(client, status))
@@ -24,6 +26,8 @@ def test_build_temperature_subscription_message_uses_read_only_objects_method() 
             "objects": {
                 "extruder": ["temperature", "target"],
                 "heater_bed": ["temperature", "target"],
+                "print_stats": ["state", "filename", "print_duration", "total_duration"],
+                "display_status": ["progress", "message"],
             }
         },
         "id": 1,
@@ -87,7 +91,7 @@ def test_status_from_websocket_message_applies_notification_temperature_delta() 
 
 
 def test_status_from_websocket_message_applies_subscription_snapshot() -> None:
-    status = PrinterStatus(objects=("extruder", "heater_bed"))
+    status = PrinterStatus(objects=("extruder", "heater_bed", "print_stats", "display_status"))
     message = json.dumps(
         {
             "jsonrpc": "2.0",
@@ -95,6 +99,8 @@ def test_status_from_websocket_message_applies_subscription_snapshot() -> None:
                 "status": {
                     "extruder": {"temperature": 24.3, "target": 0.0},
                     "heater_bed": {"temperature": 26.7, "target": 60.0},
+                    "print_stats": {"state": "printing", "filename": "cube.gcode"},
+                    "display_status": {"progress": 0.25},
                 }
             },
             "id": 1,
@@ -106,6 +112,9 @@ def test_status_from_websocket_message_applies_subscription_snapshot() -> None:
     assert updated is not None
     assert tuple(device.temperature for device in updated.temperature_devices) == (24.3, 26.7)
     assert tuple(device.target for device in updated.temperature_devices) == (0.0, 60.0)
+    assert updated.print_state == "printing"
+    assert updated.print_filename == "cube.gcode"
+    assert updated.print_progress == 25.0
 
 
 def test_status_from_websocket_message_ignores_unrelated_messages() -> None:

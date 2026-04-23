@@ -109,3 +109,27 @@ class StatusModel(QObject):
     @Property(int, notify=statusChanged)
     def temperatureDeviceCount(self) -> int:
         return self._status.temperature_device_count
+
+    @Property(str, notify=statusChanged)
+    def printState(self) -> str:
+        return self._status.print_state
+
+    @Property(str, notify=statusChanged)
+    def printFilename(self) -> str:
+        return self._status.print_filename
+
+    @Property(float, notify=statusChanged)
+    def printProgress(self) -> float:
+        return self._status.print_progress
+
+    @Property(str, notify=statusChanged)
+    def printMessage(self) -> str:
+        return self._status.print_message
+
+    @Property(float, notify=statusChanged)
+    def printDuration(self) -> float:
+        return self._status.print_duration
+
+    @Property(float, notify=statusChanged)
+    def totalDuration(self) -> float:
+        return self._status.total_duration

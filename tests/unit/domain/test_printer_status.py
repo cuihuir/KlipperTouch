@@ -106,3 +106,52 @@ def test_printer_status_applies_read_only_temperature_update() -> None:
     assert updated.objects == ("extruder", "heater_bed")
     assert tuple(device.temperature for device in updated.temperature_devices) == (25.1, 26.7)
     assert tuple(device.target for device in updated.temperature_devices) == (0.0, 55.0)
+
+
+def test_printer_status_populates_read_only_job_state_from_status_query() -> None:
+    status = PrinterStatus.from_probe(
+        server_info={"moonraker_version": "v0.10.0", "klippy_state": "ready"},
+        printer_info={"state": "ready", "hostname": "orangepi3b", "software_version": "v0.13.0"},
+        objects={"objects": ["print_stats", "display_status", "virtual_sdcard"]},
+        object_status={
+            "status": {
+                "print_stats": {
+                    "state": "printing",
+                    "filename": "calibration_cube.gcode",
+                    "print_duration": 42.5,
+                    "total_duration": 51.0,
+                },
+                "display_status": {"progress": 0.375, "message": "Printing"},
+                "virtual_sdcard": {"progress": 0.4, "is_active": True},
+            }
+        },
+    )
+
+    assert status.print_state == "printing"
+    assert status.print_filename == "calibration_cube.gcode"
+    assert status.print_progress == 37.5
+    assert status.print_message == "Printing"
+    assert status.print_duration == 42.5
+    assert status.total_duration == 51.0
+
+
+def test_printer_status_applies_read_only_print_update() -> None:
+    status = PrinterStatus(
+        objects=("print_stats", "display_status", "virtual_sdcard"),
+        print_state="standby",
+        print_filename="old.gcode",
+        print_progress=0.0,
+    )
+
+    updated = status.with_status_update(
+        {
+            "print_stats": {"state": "paused", "filename": "part.gcode"},
+            "virtual_sdcard": {"progress": 0.625, "is_active": True},
+            "display_status": {"message": "Paused"},
+        }
+    )
+
+    assert updated.print_state == "paused"
+    assert updated.print_filename == "part.gcode"
+    assert updated.print_progress == 62.5
+    assert updated.print_message == "Paused"

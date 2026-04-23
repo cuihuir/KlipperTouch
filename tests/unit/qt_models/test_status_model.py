@@ -12,6 +12,12 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
         klipper_version="v0.13.0",
         moonraker_version="v0.10.0",
         objects=("extruder", "heater_bed"),
+        print_state="printing",
+        print_filename="cube.gcode",
+        print_progress=25.0,
+        print_message="Printing",
+        print_duration=10.5,
+        total_duration=12.0,
     )
 
     with qtbot.waitSignal(model.statusChanged, timeout=1000):
@@ -21,6 +27,12 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
     assert model.klippyState == "ready"
     assert model.objectCount == 2
     assert model.temperatureDeviceCount == 2
+    assert model.printState == "printing"
+    assert model.printFilename == "cube.gcode"
+    assert model.printProgress == 25.0
+    assert model.printMessage == "Printing"
+    assert model.printDuration == 10.5
+    assert model.totalDuration == 12.0
 
 
 def test_status_model_can_notify_temperature_device_model(qtbot) -> None:

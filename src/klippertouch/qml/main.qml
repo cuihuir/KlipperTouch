@@ -18,6 +18,12 @@ ApplicationWindow {
     property string klipperVersion: bridgeModel ? bridgeModel.klipperVersion : "unknown"
     property string moonrakerVersion: bridgeModel ? bridgeModel.moonrakerVersion : "unknown"
     property int objectCount: bridgeModel ? bridgeModel.objectCount : 0
+    property string printState: bridgeModel ? bridgeModel.printState : "standby"
+    property string printFilename: bridgeModel ? bridgeModel.printFilename : ""
+    property real printProgress: bridgeModel ? bridgeModel.printProgress : 0
+    property string printMessage: bridgeModel ? bridgeModel.printMessage : ""
+    property real printDuration: bridgeModel ? bridgeModel.printDuration : 0
+    property real totalDuration: bridgeModel ? bridgeModel.totalDuration : 0
     property string currentPanel: "main"
     property var panelStack: ["main"]
     property var panelTitles: ({"main": "Home", "move": "Move", "temperature": "Temperature", "extrude": "Extrude", "more": "More", "print": "Print"})
@@ -122,6 +128,12 @@ ApplicationWindow {
             PrintPanel {
                 metrics: appMetrics
                 fileModel: window.gcodeFileBridgeModel
+                printState: window.printState
+                printFilename: window.printFilename
+                printProgress: window.printProgress
+                printMessage: window.printMessage
+                printDuration: window.printDuration
+                totalDuration: window.totalDuration
             }
         }
 

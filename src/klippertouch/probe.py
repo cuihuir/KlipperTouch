@@ -9,6 +9,7 @@ TEMPERATURE_OBJECT_PREFIXES = (
     "temperature_sensor ",
     "temperature_fan ",
 )
+PRINT_STATUS_OBJECTS = ("print_stats", "display_status", "virtual_sdcard")
 
 
 class ReadOnlyProbeClient(Protocol):
@@ -27,7 +28,7 @@ def build_status_from_client(client: ReadOnlyProbeClient) -> PrinterStatus:
         printer_info=_safe_probe(client.get_printer_info),
         objects=objects,
         object_status=_safe_probe(
-            lambda: client.get_printer_objects_query(_temperature_object_names(object_names))
+            lambda: client.get_printer_objects_query(_read_only_status_object_names(object_names))
         ),
     )
 
@@ -52,3 +53,9 @@ def _temperature_object_names(object_names: tuple[str, ...]) -> tuple[str, ...]:
         or name.startswith(TEMPERATURE_OBJECT_PREFIXES)
         or name == "heater_bed"
     )
+
+
+def _read_only_status_object_names(object_names: tuple[str, ...]) -> tuple[str, ...]:
+    wanted = set(_temperature_object_names(object_names))
+    wanted.update(name for name in PRINT_STATUS_OBJECTS if name in object_names)
+    return tuple(name for name in object_names if name in wanted)

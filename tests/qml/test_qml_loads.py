@@ -180,6 +180,20 @@ def test_responsive_layout_components_exist() -> None:
     assert missing == []
 
 
+def test_print_panel_exposes_read_only_job_status_without_controls() -> None:
+    qml = Path("src/klippertouch/qml/panels/PrintPanel.qml").read_text(encoding="utf-8")
+
+    assert "property string printState" in qml
+    assert "property string printFilename" in qml
+    assert "property real printProgress" in qml
+    assert "property string printMessage" in qml
+    assert "ProgressBar" in qml
+    assert "root.printProgress / 100" in qml
+    assert "Start" not in qml
+    assert "Pause" not in qml
+    assert "Cancel" not in qml
+
+
 def test_main_menu_matches_klipperscreen_split_and_autogrid_contract() -> None:
     qml = Path("src/klippertouch/qml/panels/MainMenuPanel.qml").read_text(encoding="utf-8")
 
