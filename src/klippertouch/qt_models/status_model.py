@@ -7,6 +7,7 @@ from PySide6.QtCore import (
     QPersistentModelIndex,
     Qt,
     Signal,
+    Slot,
 )
 
 from klippertouch.domain.printer import PrinterStatus, TemperatureDeviceStatus
@@ -16,17 +17,22 @@ EMPTY_INDEX = QModelIndex()
 
 class TemperatureDeviceListModel(QAbstractListModel):
     historyChanged = Signal()
+    graphSelectionChanged = Signal()
+    graphSeriesChanged = Signal()
 
     NAME_ROLE = int(Qt.ItemDataRole.UserRole) + 1
     DISPLAY_NAME_ROLE = int(Qt.ItemDataRole.UserRole) + 2
     ICON_ROLE = int(Qt.ItemDataRole.UserRole) + 3
     TEMPERATURE_ROLE = int(Qt.ItemDataRole.UserRole) + 4
     TARGET_ROLE = int(Qt.ItemDataRole.UserRole) + 5
+    GRAPH_VISIBLE_ROLE = int(Qt.ItemDataRole.UserRole) + 6
 
     def __init__(self) -> None:
         super().__init__()
         self._devices: tuple[TemperatureDeviceStatus, ...] = ()
-        self._history: dict[str, list[float]] = {"extruder": [], "heater_bed": []}
+        self._history: dict[str, list[float]] = {}
+        self._graph_visible: dict[str, bool] = {}
+        self._history_limit = 60
 
     def set_status(self, status: PrinterStatus) -> None:
         self.beginResetModel()
@@ -34,23 +40,66 @@ class TemperatureDeviceListModel(QAbstractListModel):
         self.endResetModel()
         history_changed = False
         for device in self._devices:
-            key = _history_key_for_device(device.name)
-            if key is None or device.temperature is None:
+            self._graph_visible.setdefault(device.name, True)
+            values = self._history.setdefault(device.name, [])
+            if device.temperature is None:
                 continue
-            values = self._history[key]
             values.append(float(device.temperature))
-            del values[:-60]
+            del values[:-self._history_limit]
             history_changed = True
         if history_changed:
             self.historyChanged.emit()
+            self.graphSeriesChanged.emit()
 
     @Property(list, notify=historyChanged)
     def extruderSeries(self) -> list[float]:
-        return list(self._history["extruder"])
+        return list(self._first_series_for_name("extruder"))
 
     @Property(list, notify=historyChanged)
     def bedSeries(self) -> list[float]:
-        return list(self._history["heater_bed"])
+        return list(self._history.get("heater_bed", []))
+
+    @Property(list, notify=graphSeriesChanged)
+    def graphSeriesModel(self) -> list[dict[str, object]]:
+        series: list[dict[str, object]] = []
+        for index, device in enumerate(self._devices):
+            if not self._graph_visible.get(device.name, True):
+                continue
+            points = self._history.get(device.name, [])
+            if not points:
+                continue
+            series.append(
+                {
+                    "name": device.name,
+                    "displayName": device.display_name,
+                    "icon": device.icon,
+                    "color": _graph_color_for_device(device.name, index),
+                    "series": list(points),
+                }
+            )
+        return series
+
+    def initialize_history(self, temperature_store: dict[str, object]) -> None:
+        history: dict[str, list[float]] = {}
+        max_length = 0
+        for name, values in temperature_store.items():
+            if not isinstance(name, str) or not isinstance(values, dict):
+                continue
+            temperatures = values.get("temperatures")
+            if not isinstance(temperatures, list):
+                continue
+            normalized = [float(value) for value in temperatures if isinstance(value, (int, float))]
+            if not normalized:
+                continue
+            history[name] = normalized
+            max_length = max(max_length, len(normalized))
+
+        if history:
+            self._history.update(history)
+            self._history_limit = max(self._history_limit, max_length)
+            self.historyChanged.emit()
+            self.graphSelectionChanged.emit()
+            self.graphSeriesChanged.emit()
 
     def rowCount(  # noqa: N802
         self,
@@ -79,6 +128,8 @@ class TemperatureDeviceListModel(QAbstractListModel):
             return device.temperature
         if role == self.TARGET_ROLE:
             return device.target
+        if role == self.GRAPH_VISIBLE_ROLE:
+            return self._graph_visible.get(device.name, True)
         return None
 
     def roleNames(self) -> dict[int, QByteArray]:  # noqa: N802
@@ -88,15 +139,37 @@ class TemperatureDeviceListModel(QAbstractListModel):
             self.ICON_ROLE: QByteArray(b"icon"),
             self.TEMPERATURE_ROLE: QByteArray(b"temperature"),
             self.TARGET_ROLE: QByteArray(b"target"),
+            self.GRAPH_VISIBLE_ROLE: QByteArray(b"graphVisible"),
         }
 
+    @Slot(str)
+    def toggleGraphDevice(self, name: str) -> None:
+        row = next((index for index, device in enumerate(self._devices) if device.name == name), -1)
+        if row < 0:
+            return
+        self._graph_visible[name] = not self._graph_visible.get(name, True)
+        index = self.index(row, 0)
+        self.dataChanged.emit(index, index, [self.GRAPH_VISIBLE_ROLE])
+        self.graphSelectionChanged.emit()
+        self.graphSeriesChanged.emit()
 
-def _history_key_for_device(name: str) -> str | None:
+    def _first_series_for_name(self, prefix: str) -> list[float]:
+        for device in self._devices:
+            if device.name == prefix:
+                return self._history.get(device.name, [])
+        for device in self._devices:
+            if device.name.startswith(prefix):
+                return self._history.get(device.name, [])
+        return []
+
+
+def _graph_color_for_device(name: str, index: int) -> str:
     if name == "extruder" or name.startswith("extruder"):
-        return "extruder"
+        return "#ed3c63"
     if name == "heater_bed":
-        return "heater_bed"
-    return None
+        return "#d46900"
+    palette = ("#007db4", "#849900", "#7f5af0", "#26a69a", "#f4b400", "#ef6c00")
+    return palette[index % len(palette)]
 
 
 class StatusModel(QObject):

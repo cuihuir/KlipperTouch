@@ -41,6 +41,7 @@ def main() -> int:
         print(f"Config path: {config_path}", flush=True)
 
     initial_status = None
+    initial_temperature_store = None
     initial_files = None
     client = None
     try:
@@ -49,6 +50,7 @@ def main() -> int:
         if args.debug:
             print(f"Moonraker endpoint: {client.endpoint}", flush=True)
         initial_status = build_status_from_client(client)
+        initial_temperature_store = client.get_temperature_store()
         initial_files = client.get_gcode_file_list()
         if args.debug:
             print(f"Initial G-Code files: {len(initial_files)}", flush=True)
@@ -58,6 +60,7 @@ def main() -> int:
     return run_app(
         sys.argv,
         initial_status=initial_status,
+        initial_temperature_store=initial_temperature_store,
         initial_files=initial_files,
         status_stream_client=client,
         file_refresh_client=client,

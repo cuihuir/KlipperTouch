@@ -7,8 +7,7 @@ Rectangle {
     id: root
     property real fontSize: 16
     property real maxTemperature: 300
-    property var extruderSeries: []
-    property var bedSeries: []
+    property var seriesModel: []
 
     color: Theme.buttonsBg
     border.color: "#465456"
@@ -71,33 +70,28 @@ Rectangle {
                 Layout.fillWidth: true
             }
 
-            RowLayout {
+            Row {
                 spacing: Math.max(8, Math.round(root.fontSize * 0.5))
 
-                Rectangle {
-                    width: Math.max(10, Math.round(root.fontSize * 0.7))
-                    height: width
-                    radius: width / 2
-                    color: Theme.color2
-                }
+                Repeater {
+                    model: root.seriesModel
 
-                Label {
-                    color: Theme.mutedText
-                    text: "Extruder"
-                    font.pixelSize: Math.max(11, Math.round(root.fontSize * 0.8))
-                }
+                    Row {
+                        spacing: Math.max(4, Math.round(root.fontSize * 0.25))
 
-                Rectangle {
-                    width: Math.max(10, Math.round(root.fontSize * 0.7))
-                    height: width
-                    radius: width / 2
-                    color: Theme.color1
-                }
+                        Rectangle {
+                            width: Math.max(10, Math.round(root.fontSize * 0.7))
+                            height: width
+                            radius: width / 2
+                            color: modelData.color
+                        }
 
-                Label {
-                    color: Theme.mutedText
-                    text: "Bed"
-                    font.pixelSize: Math.max(11, Math.round(root.fontSize * 0.8))
+                        Label {
+                            color: Theme.mutedText
+                            text: modelData.displayName
+                            font.pixelSize: Math.max(11, Math.round(root.fontSize * 0.8))
+                        }
+                    }
                 }
             }
         }
@@ -181,20 +175,6 @@ Rectangle {
                     }
                 }
 
-                Repeater {
-                    id: targetSegments
-                    model: 12
-
-                    Rectangle {
-                        width: Math.max(5, Math.round(plotArea.width / 28))
-                        height: Math.max(1, Math.round(root.fontSize * 0.08))
-                        x: Math.round(index * plotArea.width / 12)
-                        y: Math.round(plotArea.height * 0.30)
-                        color: Theme.color2
-                        opacity: 0.75
-                    }
-                }
-
                 Canvas {
                     id: graphCanvas
                     anchors.fill: parent
@@ -202,8 +182,13 @@ Rectangle {
                     onPaint: {
                         var ctx = getContext("2d")
                         ctx.clearRect(0, 0, width, height)
-                        drawSeries(ctx, extruderSeries, Theme.color2)
-                        drawSeries(ctx, bedSeries, Theme.color1)
+                        if (!root.seriesModel) {
+                            return
+                        }
+                        for (var i = 0; i < root.seriesModel.length; i += 1) {
+                            var entry = root.seriesModel[i]
+                            drawSeries(ctx, entry.series, entry.color)
+                        }
                     }
 
                     onWidthChanged: requestPaint()
@@ -213,6 +198,5 @@ Rectangle {
         }
     }
 
-    onExtruderSeriesChanged: graphCanvas.requestPaint()
-    onBedSeriesChanged: graphCanvas.requestPaint()
+    onSeriesModelChanged: graphCanvas.requestPaint()
 }

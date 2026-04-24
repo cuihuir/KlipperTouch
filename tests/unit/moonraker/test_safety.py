@@ -25,6 +25,11 @@ def test_read_only_policy_allows_update_status_endpoint() -> None:
     policy.validate_http("GET", "machine/update/status")
 
 
+def test_read_only_policy_allows_temperature_store_endpoint() -> None:
+    policy = CommandPolicy(read_only=True)
+    policy.validate_http("GET", "server/temperature_store")
+
+
 def test_read_only_policy_normalizes_endpoint_slashes() -> None:
     policy = CommandPolicy(read_only=True)
     policy.validate_http("GET", "/server/info/")

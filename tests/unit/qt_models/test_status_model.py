@@ -123,6 +123,7 @@ def test_temperature_device_list_model_exposes_qml_roles(qtbot) -> None:
         "icon": Qt.ItemDataRole.UserRole + 3,
         "temperature": Qt.ItemDataRole.UserRole + 4,
         "target": Qt.ItemDataRole.UserRole + 5,
+        "graphVisible": Qt.ItemDataRole.UserRole + 6,
     }
     assert model.data(first_index, roles["name"]) == "extruder"
     assert model.data(first_index, roles["displayName"]) == "Extruder"
@@ -179,3 +180,89 @@ def test_temperature_device_list_model_records_read_only_history(qtbot) -> None:
 
     assert model.extruderSeries == [210.0, 212.0]
     assert model.bedSeries == [58.0, 59.0]
+
+
+def test_temperature_device_list_model_initializes_history_from_temperature_store(qtbot) -> None:
+    model = TemperatureDeviceListModel()
+    model.set_status(
+        PrinterStatus(
+            objects=("extruder", "heater_bed", "temperature_sensor chamber"),
+            temperature_devices=(
+                TemperatureDeviceStatus(
+                    name="extruder",
+                    display_name="Extruder",
+                    icon="extruder",
+                    temperature=212.0,
+                    target=215.0,
+                ),
+                TemperatureDeviceStatus(
+                    name="heater_bed",
+                    display_name="Heater Bed",
+                    icon="bed",
+                    temperature=59.0,
+                    target=60.0,
+                ),
+                TemperatureDeviceStatus(
+                    name="temperature_sensor chamber",
+                    display_name="Temperature Sensor Chamber",
+                    icon="heat-up",
+                    temperature=35.0,
+                    target=None,
+                ),
+            ),
+        )
+    )
+
+    with qtbot.waitSignal(model.historyChanged, timeout=1000):
+        model.initialize_history(
+            {
+                "extruder": {"temperatures": [200.0, 205.0, 210.0]},
+                "heater_bed": {"temperatures": [50.0, 55.0, 58.0]},
+                "temperature_sensor chamber": {"temperatures": [29.0, 31.0, 33.0]},
+            }
+        )
+
+    assert model.extruderSeries == [200.0, 205.0, 210.0]
+    assert model.bedSeries == [50.0, 55.0, 58.0]
+    assert [item["name"] for item in model.graphSeriesModel] == [
+        "extruder",
+        "heater_bed",
+        "temperature_sensor chamber",
+    ]
+    assert model.graphSeriesModel[2]["series"] == [29.0, 31.0, 33.0]
+
+
+def test_temperature_device_list_model_toggles_graph_visibility(qtbot) -> None:
+    model = TemperatureDeviceListModel()
+    model.set_status(
+        PrinterStatus(
+            objects=("extruder", "heater_bed"),
+            temperature_devices=(
+                TemperatureDeviceStatus(
+                    name="extruder",
+                    display_name="Extruder",
+                    icon="extruder",
+                    temperature=212.0,
+                    target=215.0,
+                ),
+                TemperatureDeviceStatus(
+                    name="heater_bed",
+                    display_name="Heater Bed",
+                    icon="bed",
+                    temperature=59.0,
+                    target=60.0,
+                ),
+            ),
+        )
+    )
+    model.initialize_history(
+        {
+            "extruder": {"temperatures": [200.0, 205.0, 210.0]},
+            "heater_bed": {"temperatures": [50.0, 55.0, 58.0]},
+        }
+    )
+
+    with qtbot.waitSignal(model.graphSelectionChanged, timeout=1000):
+        model.toggleGraphDevice("heater_bed")
+
+    assert [item["name"] for item in model.graphSeriesModel] == ["extruder"]

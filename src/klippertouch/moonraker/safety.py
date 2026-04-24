@@ -8,6 +8,7 @@ class CommandPolicy:
         self.allowed_gets = {
             "server/info",
             "server/files/list",
+            "server/temperature_store",
             "machine/update/status",
             "printer/info",
             "printer/objects/list",

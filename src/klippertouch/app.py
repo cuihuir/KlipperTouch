@@ -16,11 +16,14 @@ from klippertouch.qt_models.status_model import StatusModel, TemperatureDeviceLi
 
 def create_status_models(
     initial_status: PrinterStatus | None = None,
+    initial_temperature_store: dict[str, object] | None = None,
 ) -> tuple[StatusModel, TemperatureDeviceListModel]:
     temperature_device_model = TemperatureDeviceListModel()
     status_model = StatusModel(temperature_device_model=temperature_device_model)
     if initial_status is not None:
         status_model.set_status(initial_status)
+    if initial_temperature_store is not None:
+        temperature_device_model.initialize_history(initial_temperature_store)
     return status_model, temperature_device_model
 
 
@@ -36,13 +39,17 @@ def create_gcode_file_model(
 def run_app(
     argv: list[str] | None = None,
     initial_status: PrinterStatus | None = None,
+    initial_temperature_store: dict[str, object] | None = None,
     initial_files: list[dict[str, object]] | None = None,
     status_stream_client: MoonrakerClient | None = None,
     file_refresh_client: MoonrakerClient | None = None,
 ) -> int:
     app = QApplication(argv or [])
     engine = QQmlApplicationEngine()
-    status_model, temperature_device_model = create_status_models(initial_status)
+    status_model, temperature_device_model = create_status_models(
+        initial_status,
+        initial_temperature_store=initial_temperature_store,
+    )
     gcode_file_model = create_gcode_file_model(initial_files)
     engine.rootContext().setContextProperty("statusModel", status_model)
     engine.rootContext().setContextProperty("temperatureDeviceModel", temperature_device_model)

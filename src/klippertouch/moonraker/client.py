@@ -68,6 +68,9 @@ class MoonrakerClient:
             return [item for item in result if isinstance(item, dict)]
         return []
 
+    def get_temperature_store(self) -> dict[str, Any]:
+        return self.get("server/temperature_store")
+
     def get_machine_update_status(self) -> dict[str, Any]:
         return self.get("machine/update/status")
 

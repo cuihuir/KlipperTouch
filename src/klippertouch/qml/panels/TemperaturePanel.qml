@@ -33,8 +33,9 @@ Item {
             Layout.preferredHeight: root.metrics.portrait ? parent.height * 0.42 : parent.height
             Layout.minimumWidth: 0
             Layout.minimumHeight: 0
-            extruderSeries: root.activeTemperatureModel.extruderSeries
-            bedSeries: root.activeTemperatureModel.bedSeries
+            seriesModel: typeof root.activeTemperatureModel.graphSeriesModel === "undefined"
+                ? []
+                : root.activeTemperatureModel.graphSeriesModel
         }
 
         Rectangle {
@@ -84,14 +85,20 @@ Item {
                     model: root.activeTemperatureModel
 
                     delegate: Item {
+                        property string deviceKey: typeof name === "undefined" || name === null
+                            ? resolvedName
+                            : name
+                        property bool deviceGraphVisible: typeof graphVisible === "undefined" || graphVisible === null
+                            ? false
+                            : graphVisible
                         property string resolvedIcon: typeof icon === "undefined" || icon === null
                             ? "heat-up"
                             : icon
                         property string resolvedName: typeof displayName === "undefined" || displayName === null
                             ? "Temperature"
                             : displayName
-                        required property var temperature
-                        required property var target
+                        property var temperature
+                        property var target
 
                         width: Math.max(0, deviceGrid.cellWidth)
                         height: deviceGrid.cellHeight
@@ -100,9 +107,18 @@ Item {
                             anchors.fill: parent
                             anchors.margins: Math.max(3, Math.round(root.metrics.gap * 0.35))
                             color: "#101617"
-                            border.color: "#263233"
-                            border.width: 1
+                            border.color: deviceGraphVisible ? Theme.color4 : "#263233"
+                            border.width: deviceGraphVisible ? 2 : 1
                             radius: Math.round(root.metrics.fontSize * 0.32)
+
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    if (typeof root.activeTemperatureModel.toggleGraphDevice === "function") {
+                                        root.activeTemperatureModel.toggleGraphDevice(deviceKey)
+                                    }
+                                }
+                            }
 
                             ColumnLayout {
                                 anchors.fill: parent

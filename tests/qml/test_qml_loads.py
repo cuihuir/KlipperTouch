@@ -135,16 +135,14 @@ def test_fake_temperature_graph_matches_heater_graph_structure() -> None:
     assert 'import "../Theme.js" as Theme' in qml
     assert "id: horizontalGrid" in qml
     assert "id: verticalGrid" in qml
-    assert "id: targetSegments" in qml
     assert "id: graphCanvas" in qml
     assert "onPaint:" in qml
-    assert "drawSeries(ctx, extruderSeries, Theme.color2)" in qml
-    assert "drawSeries(ctx, bedSeries, Theme.color1)" in qml
+    assert "property var seriesModel: []" in qml
+    assert "for (var i = 0; i < root.seriesModel.length; i += 1)" in qml
+    assert "drawSeries(ctx, entry.series, entry.color)" in qml
+    assert 'text: modelData.displayName' in qml
     assert "function normalizeTemperature" in qml
     assert "property real maxTemperature: 300" in qml
-    assert "property var extruderSeries: []" in qml
-    assert "Extruder" in qml
-    assert "Bed" in qml
     assert "maxTemperatureLabel" in qml
     assert "midTemperatureLabel" in qml
     assert "baseTemperatureLabel" in qml
@@ -527,18 +525,21 @@ def test_temperature_panel_is_read_only_and_responsive() -> None:
     assert "property int deviceColumns" in qml
     assert "GridView {" in qml
     assert "cellWidth: Math.floor(deviceGrid.width / root.deviceColumns)" in qml
-    assert "Layout.columnSpan: root.metrics.portrait ? 1 : 2" in qml
-    assert "extruderSeries: root.activeTemperatureModel.extruderSeries" in qml
-    assert "bedSeries: root.activeTemperatureModel.bedSeries" in qml
+    assert 'typeof root.activeTemperatureModel.graphSeriesModel === "undefined"' in qml
     assert "model: root.activeTemperatureModel" in qml
     assert "Layout.minimumWidth: 0" in qml
     assert "Layout.minimumHeight: 0" in qml
+    assert "property string deviceKey" in qml
+    assert "property bool deviceGraphVisible" in qml
     assert 'typeof icon === "undefined" || icon === null' in qml
     assert "TemperatureIcon {" in qml
     assert "iconName: resolvedIcon" in qml
     assert 'typeof displayName === "undefined" || displayName === null' in qml
+    assert 'typeof graphVisible === "undefined" || graphVisible === null' in qml
     assert 'typeof target === "undefined" || target === null' in qml
     assert 'typeof temperature === "undefined" || temperature === null' in qml
+    assert 'typeof root.activeTemperatureModel.toggleGraphDevice === "function"' in qml
+    assert "root.activeTemperatureModel.toggleGraphDevice(deviceKey)" in qml
     assert "Actual" in qml
     assert "Target" in qml
     assert "root.metrics.portrait" in qml
