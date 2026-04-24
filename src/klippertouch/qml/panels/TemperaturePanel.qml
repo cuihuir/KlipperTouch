@@ -117,6 +117,8 @@ Item {
                         property string resolvedName: typeof displayName === "undefined" || displayName === null
                             ? "Temperature"
                             : displayName
+                        property var targetValue: typeof target === "undefined" ? null : target
+                        property var temperatureValue: typeof temperature === "undefined" ? null : temperature
 
                         width: Math.max(0, deviceGrid.cellWidth)
                         height: deviceGrid.cellHeight
@@ -182,9 +184,9 @@ Item {
                                 Label {
                                     Layout.fillWidth: true
                                     color: Theme.text
-                                    text: typeof temperature === "undefined" || temperature === null
+                                    text: temperatureValue === null
                                         ? "--"
-                                        : Math.round(temperature) + "°"
+                                        : Math.round(temperatureValue) + "°"
                                     font.pixelSize: Math.max(20, Math.round(root.metrics.fontSize * 1.42))
                                 }
 
@@ -198,9 +200,9 @@ Item {
                                 Label {
                                     Layout.fillWidth: true
                                     color: Theme.mutedText
-                                    text: typeof target === "undefined" || target === null
+                                    text: targetValue === null
                                         ? "--"
-                                        : Math.round(target) + "°"
+                                        : Math.round(targetValue) + "°"
                                     font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.08))
                                 }
                             }

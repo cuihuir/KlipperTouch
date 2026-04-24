@@ -32,6 +32,7 @@ class TemperatureDeviceListModel(QAbstractListModel):
         super().__init__()
         self._devices: tuple[TemperatureDeviceStatus, ...] = ()
         self._history: dict[str, list[float]] = {}
+        self._target_history: dict[str, list[float]] = {}
         self._graph_visible: dict[str, bool] = {}
         self._history_limit = 60
         self._settings = (
@@ -52,9 +53,16 @@ class TemperatureDeviceListModel(QAbstractListModel):
             self._ensure_graph_visibility_default(device.name)
             values = self._history.setdefault(device.name, [])
             if device.temperature is None:
+                pass
+            else:
+                values.append(float(device.temperature))
+                del values[:-self._history_limit]
+                history_changed = True
+            target_values = self._target_history.setdefault(device.name, [])
+            if device.target is None:
                 continue
-            values.append(float(device.temperature))
-            del values[:-self._history_limit]
+            target_values.append(float(device.target))
+            del target_values[:-self._history_limit]
             history_changed = True
         if history_changed:
             self.historyChanged.emit()
@@ -84,12 +92,28 @@ class TemperatureDeviceListModel(QAbstractListModel):
                     "icon": device.icon,
                     "color": _graph_color_for_device(device.name, index),
                     "series": list(points),
+                    "dashed": False,
+                    "legendVisible": True,
                 }
             )
+            target_points = self._target_history.get(device.name, [])
+            if target_points and any(point > 0 for point in target_points):
+                series.append(
+                    {
+                        "name": f"{device.name}_target",
+                        "displayName": f"{device.display_name} Target",
+                        "icon": device.icon,
+                        "color": _graph_color_for_device(device.name, index),
+                        "series": list(target_points),
+                        "dashed": True,
+                        "legendVisible": False,
+                    }
+                )
         return series
 
     def initialize_history(self, temperature_store: dict[str, object]) -> None:
         history: dict[str, list[float]] = {}
+        target_history: dict[str, list[float]] = {}
         max_length = 0
         for name, values in temperature_store.items():
             if not isinstance(name, str) or not isinstance(values, dict):
@@ -102,9 +126,18 @@ class TemperatureDeviceListModel(QAbstractListModel):
                 continue
             history[name] = normalized
             max_length = max(max_length, len(normalized))
+            targets = values.get("targets")
+            if isinstance(targets, list):
+                normalized_targets = [
+                    float(value) for value in targets if isinstance(value, (int, float))
+                ]
+                if normalized_targets:
+                    target_history[name] = normalized_targets
+                    max_length = max(max_length, len(normalized_targets))
 
         if history:
             self._history.update(history)
+            self._target_history.update(target_history)
             self._history_limit = max(self._history_limit, max_length)
             self.historyChanged.emit()
             self.graphSelectionChanged.emit()

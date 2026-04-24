@@ -216,7 +216,10 @@ def test_temperature_device_list_model_initializes_history_from_temperature_stor
     with qtbot.waitSignal(model.historyChanged, timeout=1000):
         model.initialize_history(
             {
-                "extruder": {"temperatures": [200.0, 205.0, 210.0]},
+                "extruder": {
+                    "temperatures": [200.0, 205.0, 210.0],
+                    "targets": [215.0, 215.0, 215.0],
+                },
                 "heater_bed": {"temperatures": [50.0, 55.0, 58.0]},
                 "temperature_sensor chamber": {"temperatures": [29.0, 31.0, 33.0]},
             }
@@ -226,10 +229,16 @@ def test_temperature_device_list_model_initializes_history_from_temperature_stor
     assert model.bedSeries == [50.0, 55.0, 58.0]
     assert [item["name"] for item in model.graphSeriesModel] == [
         "extruder",
+        "extruder_target",
         "heater_bed",
+        "heater_bed_target",
         "temperature_sensor chamber",
     ]
-    assert model.graphSeriesModel[2]["series"] == [29.0, 31.0, 33.0]
+    assert model.graphSeriesModel[0]["dashed"] is False
+    assert model.graphSeriesModel[1]["dashed"] is True
+    assert model.graphSeriesModel[2]["series"] == [50.0, 55.0, 58.0]
+    assert model.graphSeriesModel[3]["dashed"] is True
+    assert model.graphSeriesModel[4]["series"] == [29.0, 31.0, 33.0]
 
 
 def test_temperature_device_list_model_toggles_graph_visibility(qtbot) -> None:
@@ -265,7 +274,61 @@ def test_temperature_device_list_model_toggles_graph_visibility(qtbot) -> None:
     with qtbot.waitSignal(model.graphSelectionChanged, timeout=1000):
         model.toggleGraphDevice("heater_bed")
 
-    assert [item["name"] for item in model.graphSeriesModel] == ["extruder"]
+    assert [item["name"] for item in model.graphSeriesModel] == ["extruder", "extruder_target"]
+
+
+def test_temperature_device_list_model_adds_target_series_for_heaters(qtbot) -> None:
+    model = TemperatureDeviceListModel()
+    model.set_status(
+        PrinterStatus(
+            objects=("extruder", "heater_bed", "temperature_sensor chamber"),
+            temperature_devices=(
+                TemperatureDeviceStatus(
+                    name="extruder",
+                    display_name="Extruder",
+                    icon="extruder",
+                    temperature=212.0,
+                    target=220.0,
+                ),
+                TemperatureDeviceStatus(
+                    name="heater_bed",
+                    display_name="Heater Bed",
+                    icon="bed",
+                    temperature=59.0,
+                    target=0.0,
+                ),
+                TemperatureDeviceStatus(
+                    name="temperature_sensor chamber",
+                    display_name="Temperature Sensor Chamber",
+                    icon="heat-up",
+                    temperature=35.0,
+                    target=None,
+                ),
+            ),
+        )
+    )
+    model.initialize_history(
+        {
+            "extruder": {
+                "temperatures": [200.0, 205.0, 210.0],
+                "targets": [220.0, 220.0, 220.0],
+            },
+            "heater_bed": {
+                "temperatures": [50.0, 55.0, 58.0],
+                "targets": [0.0, 0.0, 0.0],
+            },
+            "temperature_sensor chamber": {"temperatures": [29.0, 31.0, 33.0]},
+        }
+    )
+
+    assert [item["name"] for item in model.graphSeriesModel] == [
+        "extruder",
+        "extruder_target",
+        "heater_bed",
+        "temperature_sensor chamber",
+    ]
+    assert model.graphSeriesModel[1]["series"] == [220.0, 220.0, 220.0]
+    assert model.graphSeriesModel[1]["dashed"] is True
 
 
 def test_temperature_device_list_model_persists_graph_visibility_per_host(qtbot, tmp_path) -> None:
@@ -311,7 +374,10 @@ def test_temperature_device_list_model_persists_graph_visibility_per_host(qtbot,
         }
     )
 
-    assert [item["name"] for item in second_model.graphSeriesModel] == ["extruder"]
+    assert [item["name"] for item in second_model.graphSeriesModel] == [
+        "extruder",
+        "extruder_target",
+    ]
 
 
 def test_temperature_device_list_model_scopes_graph_visibility_by_host(qtbot, tmp_path) -> None:
@@ -377,4 +443,9 @@ def test_temperature_device_list_model_scopes_graph_visibility_by_host(qtbot, tm
         }
     )
 
-    assert [item["name"] for item in second_model.graphSeriesModel] == ["extruder", "heater_bed"]
+    assert [item["name"] for item in second_model.graphSeriesModel] == [
+        "extruder",
+        "extruder_target",
+        "heater_bed",
+        "heater_bed_target",
+    ]

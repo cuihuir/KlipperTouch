@@ -138,12 +138,16 @@ def test_fake_temperature_graph_matches_heater_graph_structure() -> None:
     assert "id: verticalGrid" in qml
     assert "id: graphContent" in qml
     assert "function segmentModel(series, color, plotWidth, plotHeight)" in qml
+    assert "property int visiblePointCount" in qml
+    assert "function visibleSeries(series)" in qml
     assert "Math.atan2(dy, dx)" in qml
     assert "transformOrigin: Item.Left" in qml
     assert "property var seriesModel: []" in qml
     assert "function seriesPoints(series, plotWidth, plotHeight)" in qml
     assert "plotArea.width," in qml
     assert "plotArea.height" in qml
+    assert "modelData.dashed" in qml
+    assert "modelData.legendVisible === false" in qml
     assert 'text: modelData.displayName' in qml
     assert "function normalizeTemperature" in qml
     assert "property real maxTemperature: 300" in qml
@@ -538,13 +542,15 @@ def test_temperature_panel_is_read_only_and_responsive() -> None:
     assert "Layout.minimumHeight: 0" in qml
     assert "property string deviceKey" in qml
     assert "property bool deviceGraphVisible" in qml
+    assert "property var targetValue" in qml
+    assert "property var temperatureValue" in qml
     assert 'typeof icon === "undefined" || icon === null' in qml
     assert "TemperatureIcon {" in qml
     assert "iconName: resolvedIcon" in qml
     assert 'typeof displayName === "undefined" || displayName === null' in qml
     assert 'typeof graphVisible === "undefined" || graphVisible === null' in qml
-    assert 'typeof target === "undefined" || target === null' in qml
-    assert 'typeof temperature === "undefined" || temperature === null' in qml
+    assert 'typeof target === "undefined"' in qml
+    assert 'typeof temperature === "undefined"' in qml
     assert 'typeof root.activeTemperatureModel.toggleGraphDevice === "function"' in qml
     assert "root.activeTemperatureModel.toggleGraphDevice(deviceKey)" in qml
     assert "Actual" in qml

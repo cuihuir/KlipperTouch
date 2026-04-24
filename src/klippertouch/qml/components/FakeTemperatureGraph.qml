@@ -8,6 +8,7 @@ Rectangle {
     property real fontSize: 16
     property real maxTemperature: 300
     property var seriesModel: []
+    property int visiblePointCount: Math.max(180, Math.round(plotArea.width))
 
     color: Theme.buttonsBg
     border.color: "#465456"
@@ -23,14 +24,22 @@ Rectangle {
         graphContent.visible = true
     }
 
+    function visibleSeries(series) {
+        if (!series || series.length <= root.visiblePointCount) {
+            return series || []
+        }
+        return series.slice(series.length - root.visiblePointCount)
+    }
+
     function seriesPoints(series, plotWidth, plotHeight) {
         var points = []
-        if (!series || series.length <= 0) {
+        var currentSeries = root.visibleSeries(series)
+        if (!currentSeries || currentSeries.length <= 0) {
             return points
         }
-        for (var i = 0; i < series.length; i += 1) {
-            var x = plotWidth * i / Math.max(1, series.length - 1)
-            var y = plotHeight * root.normalizeTemperature(series[i])
+        for (var i = 0; i < currentSeries.length; i += 1) {
+            var x = plotWidth * i / Math.max(1, currentSeries.length - 1)
+            var y = plotHeight * root.normalizeTemperature(currentSeries[i])
             points.push({"x": x, "y": y})
         }
         return points
@@ -94,6 +103,7 @@ Rectangle {
                     model: root.seriesModel
 
                     Row {
+                        visible: modelData.legendVisible === false ? false : true
                         spacing: Math.max(4, Math.round(root.fontSize * 0.25))
 
                         Rectangle {
@@ -222,6 +232,8 @@ Rectangle {
                                     color: modelData.color
                                     rotation: modelData.rotation
                                     transformOrigin: Item.Left
+                                    visible: !modelData.dashed || index % 2 === 0
+                                    opacity: modelData.dashed ? 0.7 : 1.0
                                 }
                             }
                         }
