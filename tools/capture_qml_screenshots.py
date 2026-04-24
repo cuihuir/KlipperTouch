@@ -18,7 +18,16 @@ from klippertouch.app import create_gcode_file_model, create_status_models
 from klippertouch.domain.printer import PrinterStatus, TemperatureDeviceStatus
 
 DEFAULT_SIZES = ("800x480", "1024x600", "480x800")
-DEFAULT_PANELS = ("main", "print", "job_status", "temperature", "move", "extrude", "more")
+DEFAULT_PANELS = (
+    "main",
+    "print",
+    "job_status",
+    "temperature",
+    "move",
+    "extrude",
+    "more",
+    "system",
+)
 SAMPLE_FILES = (
     {
         "path": "OrcaCube_PLA_27m41s.gcode",

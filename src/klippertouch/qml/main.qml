@@ -45,8 +45,8 @@ ApplicationWindow {
     property real extruderTarget: bridgeModel ? bridgeModel.extruderTarget : 0
     property string currentPanel: "main"
     property var panelStack: ["main"]
-    property var panelTitles: ({"main": "Home", "move": "Move", "temperature": "Temperature", "extrude": "Extrude", "more": "More", "print": "Print", "job_status": "Job Status"})
-    property var panelIcons: ({"main": "main", "move": "move", "temperature": "heat-up", "extrude": "extrude", "more": "settings", "print": "printer", "job_status": "printer"})
+    property var panelTitles: ({"main": "Home", "move": "Move", "temperature": "Temperature", "extrude": "Extrude", "more": "More", "system": "System", "print": "Print", "job_status": "Job Status"})
+    property var panelIcons: ({"main": "main", "move": "move", "temperature": "heat-up", "extrude": "extrude", "more": "settings", "system": "settings", "print": "printer", "job_status": "printer"})
 
     function shouldAutoEnterJobStatus() {
         return window.printState === "printing" || window.printState === "paused"
@@ -103,6 +103,8 @@ ApplicationWindow {
         case "job_status":
             return jobStatusComponent
         case "more":
+            return moreMenuComponent
+        case "system":
             return infoComponent
         case "move":
             return moveComponent
@@ -199,6 +201,15 @@ ApplicationWindow {
                 maxVelocity: window.maxVelocity
                 temperatureModel: window.temperatureBridgeModel
                 fileModel: window.gcodeFileBridgeModel
+            }
+        }
+
+        Component {
+            id: moreMenuComponent
+
+            MoreMenuPanel {
+                metrics: appMetrics
+                onPanelRequested: function(panelName) { window.showPanel(panelName) }
             }
         }
 

@@ -166,11 +166,13 @@ def test_responsive_layout_components_exist() -> None:
         qml_dir / "Metrics.qml",
         qml_dir / "components" / "BaseShell.qml",
         qml_dir / "panels" / "MainMenuPanel.qml",
+        qml_dir / "panels" / "MoreMenuPanel.qml",
         qml_dir / "components" / "MenuTile.qml",
         qml_dir / "components" / "TemperatureIcon.qml",
         qml_dir / "components" / "TemperatureSummary.qml",
         qml_dir / "components" / "FakeTemperatureGraph.qml",
         qml_dir / "models" / "MainMenuModel.qml",
+        qml_dir / "models" / "MoreMenuModel.qml",
         qml_dir / "models" / "TemperatureDeviceModel.qml",
         qml_dir / "panels" / "PlaceholderPanel.qml",
         qml_dir / "panels" / "TemperaturePanel.qml",
@@ -330,6 +332,26 @@ def test_info_panel_exposes_read_only_versions_and_mcu_lists() -> None:
     assert "property var serviceVersions:" in main_qml
     assert "mcuInfos: window.mcuInfos" in main_qml
     assert "serviceVersions: window.serviceVersions" in main_qml
+
+
+def test_more_menu_panel_uses_icon_list_entry_model() -> None:
+    qml = Path("src/klippertouch/qml/panels/MoreMenuPanel.qml").read_text(encoding="utf-8")
+    model_qml = Path("src/klippertouch/qml/models/MoreMenuModel.qml").read_text(encoding="utf-8")
+    main_model_qml = Path("src/klippertouch/qml/models/MainMenuModel.qml").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'import "../models"' in qml
+    assert "signal panelRequested(string panelName)" in qml
+    assert "MoreMenuModel {" in qml
+    assert "MenuTile {" in qml
+    assert "onActivated: root.panelRequested(panelName)" in qml
+    assert 'ListElement { tileLabel: "More"; tileIcon: "settings"' in main_model_qml
+    assert 'panelName: "more"' in main_model_qml
+    assert 'panelName: "system"' not in main_model_qml
+    assert 'ListElement { tileLabel: "System"; tileIcon: "settings"' in model_qml
+    assert 'panelName: "system"' in model_qml
+    assert 'ListElement { tileLabel: "System"' in model_qml
 
 
 def test_main_menu_matches_klipperscreen_split_and_autogrid_contract() -> None:
@@ -620,8 +642,13 @@ def test_main_routes_more_to_read_only_info_panel() -> None:
         in main_qml
     )
     assert 'case "more":' in main_qml
+    assert "return moreMenuComponent" in main_qml
+    assert 'case "system":' in main_qml
     assert "return infoComponent" in main_qml
+    assert '"more": "More"' in main_qml
+    assert '"system": "System"' in main_qml
     assert "InfoPanel {" in main_qml
+    assert "MoreMenuPanel {" in main_qml
     assert "hostname: window.hostname" in main_qml
     assert "klippyState: window.klippyState" in main_qml
     assert "klipperVersion: window.klipperVersion" in main_qml

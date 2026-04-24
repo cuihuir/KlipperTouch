@@ -10,6 +10,8 @@ def test_screenshot_tool_captures_common_panels_and_sizes() -> None:
     assert '"480x800"' in source
     assert "DEFAULT_PANELS = " in source
     assert '"print"' in source
+    assert '"more"' in source
+    assert '"system"' in source
     assert '"job_status"' in source
     assert "root.grabWindow()" in source
     assert "QT_QPA_PLATFORM" in source
