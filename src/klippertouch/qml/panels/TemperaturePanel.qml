@@ -95,119 +95,15 @@ Item {
                     }
                 }
 
-                GridView {
-                    id: deviceGrid
+                TemperatureDevicePager {
+                    id: devicePager
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    clip: true
-                    cellWidth: Math.floor(deviceGrid.width / root.deviceColumns)
-                    cellHeight: Math.max(112, Math.round(root.metrics.fontSize * 7.9))
-                    model: root.activeTemperatureModel
-
-                    delegate: Item {
-                        property string deviceKey: typeof name === "undefined" || name === null
-                            ? resolvedName
-                            : name
-                        property bool deviceGraphVisible: typeof graphVisible === "undefined" || graphVisible === null
-                            ? false
-                            : graphVisible
-                        property string resolvedIcon: typeof icon === "undefined" || icon === null
-                            ? "heat-up"
-                            : icon
-                        property string resolvedName: typeof displayName === "undefined" || displayName === null
-                            ? "Temperature"
-                            : displayName
-                        property var targetValue: typeof target === "undefined" ? null : target
-                        property var temperatureValue: typeof temperature === "undefined" ? null : temperature
-
-                        width: Math.max(0, deviceGrid.cellWidth)
-                        height: deviceGrid.cellHeight
-
-                        Rectangle {
-                            anchors.fill: parent
-                            anchors.margins: Math.max(3, Math.round(root.metrics.gap * 0.35))
-                            color: "#101617"
-                            border.color: deviceGraphVisible ? Theme.color4 : "#263233"
-                            border.width: deviceGraphVisible ? 2 : 1
-                            radius: Math.round(root.metrics.fontSize * 0.32)
-
-                            MouseArea {
-                                anchors.fill: parent
-                                onClicked: {
-                                    if (typeof root.activeTemperatureModel.toggleGraphDevice === "function") {
-                                        root.activeTemperatureModel.toggleGraphDevice(deviceKey)
-                                    }
-                                }
-                            }
-
-                            ColumnLayout {
-                                anchors.fill: parent
-                                anchors.margins: root.metrics.gap
-                                spacing: Math.max(6, Math.round(root.metrics.fontSize * 0.4))
-
-                                RowLayout {
-                                    Layout.fillWidth: true
-                                    spacing: root.metrics.gap
-
-                                    TemperatureIcon {
-                                        iconName: resolvedIcon
-                                        iconSize: Math.max(28, Math.round(root.metrics.fontSize * 1.9))
-                                        Layout.preferredWidth: iconSize
-                                        Layout.preferredHeight: iconSize
-                                    }
-
-                                    Label {
-                                        Layout.fillWidth: true
-                                        color: Theme.text
-                                        text: resolvedName
-                                        elide: Text.ElideRight
-                                        wrapMode: Text.WordWrap
-                                        maximumLineCount: 2
-                                        font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
-                                        font.bold: true
-                                    }
-                                }
-
-                                Rectangle {
-                                    Layout.fillWidth: true
-                                    height: 1
-                                    color: "#263233"
-                                }
-
-                                Label {
-                                    Layout.fillWidth: true
-                                    color: Theme.mutedText
-                                    text: "Actual"
-                                    font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
-                                }
-
-                                Label {
-                                    Layout.fillWidth: true
-                                    color: Theme.text
-                                    text: temperatureValue === null
-                                        ? "--"
-                                        : Math.round(temperatureValue) + "°"
-                                    font.pixelSize: Math.max(20, Math.round(root.metrics.fontSize * 1.42))
-                                }
-
-                                Label {
-                                    Layout.fillWidth: true
-                                    color: Theme.mutedText
-                                    text: "Target"
-                                    font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
-                                }
-
-                                Label {
-                                    Layout.fillWidth: true
-                                    color: Theme.mutedText
-                                    text: targetValue === null
-                                        ? "--"
-                                        : Math.round(targetValue) + "°"
-                                    font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.08))
-                                }
-                            }
-                        }
-                    }
+                    temperatureModel: root.activeTemperatureModel
+                    deviceColumns: root.deviceColumns
+                    compact: false
+                    showTargets: true
+                    fontSize: root.metrics.fontSize
                 }
             }
         }

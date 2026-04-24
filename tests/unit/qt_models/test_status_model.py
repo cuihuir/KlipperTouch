@@ -128,6 +128,14 @@ def test_temperature_device_list_model_exposes_qml_roles(qtbot) -> None:
     assert model.data(first_index, roles["name"]) == "extruder"
     assert model.data(first_index, roles["displayName"]) == "Extruder"
     assert model.data(first_index, roles["icon"]) == "extruder"
+    assert model.rowData(0) == {
+        "name": "extruder",
+        "displayName": "Extruder",
+        "icon": "extruder",
+        "temperature": None,
+        "target": None,
+        "graphVisible": True,
+    }
 
 
 def test_temperature_device_list_model_records_read_only_history(qtbot) -> None:

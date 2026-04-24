@@ -184,6 +184,20 @@ class TemperatureDeviceListModel(QAbstractListModel):
             self.GRAPH_VISIBLE_ROLE: QByteArray(b"graphVisible"),
         }
 
+    @Slot(int, result="QVariantMap")
+    def rowData(self, row: int) -> dict[str, object]:
+        if not 0 <= row < len(self._devices):
+            return {}
+        device = self._devices[row]
+        return {
+            "name": device.name,
+            "displayName": device.display_name,
+            "icon": device.icon,
+            "temperature": device.temperature,
+            "target": device.target,
+            "graphVisible": self._graph_visible.get(device.name, True),
+        }
+
     @Slot(str)
     def toggleGraphDevice(self, name: str) -> None:
         row = next((index for index, device in enumerate(self._devices) if device.name == name), -1)

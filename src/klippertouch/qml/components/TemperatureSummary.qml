@@ -29,11 +29,13 @@ Item {
         Row {
             width: parent.width
             height: Math.max(18, Math.round(root.metrics.fontSize * 1.45))
+
             Label {
                 color: Theme.mutedText
                 text: ""
                 width: parent.width * 0.68
             }
+
             Label {
                 color: Theme.mutedText
                 text: "Temp (°C)"
@@ -43,42 +45,14 @@ Item {
             }
         }
 
-        Repeater {
-            model: root.activeTemperatureModel
-
-            Row {
-                property string resolvedIcon: typeof icon === "undefined" ? iconName : icon
-                property string resolvedName: typeof displayName === "undefined" ? deviceName : displayName
-
-                width: devices.width
-                height: Math.max(22, Math.round(root.metrics.fontSize * 1.85))
-                spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.35))
-
-                TemperatureIcon {
-                    iconName: parent.resolvedIcon
-                    iconSize: Math.max(22, Math.round(root.metrics.fontSize * 1.55))
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-
-                Label {
-                    color: Theme.text
-                    text: parent.resolvedName
-                    width: parent.width * 0.68 - parent.spacing - Math.max(22, Math.round(root.metrics.fontSize * 1.55))
-                    elide: Text.ElideRight
-                    verticalAlignment: Text.AlignVCenter
-                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.95))
-                }
-                Label {
-                    color: Theme.text
-                    text: typeof temperature === "undefined" || temperature === null
-                        ? "--"
-                        : Math.round(temperature) + "°"
-                    width: parent.width * 0.32
-                    horizontalAlignment: Text.AlignRight
-                    verticalAlignment: Text.AlignVCenter
-                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.95))
-                }
-            }
+        TemperatureDevicePager {
+            width: parent.width
+            height: parent.height - y
+            temperatureModel: root.activeTemperatureModel
+            deviceColumns: 1
+            compact: true
+            showTargets: false
+            fontSize: root.metrics.fontSize
         }
     }
 
@@ -89,5 +63,8 @@ Item {
         anchors.bottom: parent.bottom
         anchors.topMargin: root.metrics.gap
         fontSize: root.metrics.fontSize
+        seriesModel: typeof root.activeTemperatureModel.graphSeriesModel === "undefined"
+            ? []
+            : root.activeTemperatureModel.graphSeriesModel
     }
 }

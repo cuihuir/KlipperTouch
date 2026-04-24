@@ -180,6 +180,7 @@ def test_responsive_layout_components_exist() -> None:
         qml_dir / "panels" / "MoreMenuPanel.qml",
         qml_dir / "components" / "MenuTile.qml",
         qml_dir / "components" / "TemperatureIcon.qml",
+        qml_dir / "components" / "TemperatureDevicePager.qml",
         qml_dir / "components" / "TemperatureSummary.qml",
         qml_dir / "components" / "FakeTemperatureGraph.qml",
         qml_dir / "models" / "MainMenuModel.qml",
@@ -492,15 +493,35 @@ def test_temperature_summary_uses_klipperscreen_device_icons_and_theme() -> None
     assert 'ListElement { deviceName: "Pi"; iconName: "heat-up"; temperature: "44" }' in qml
     assert "TemperatureDeviceModel {" in component_qml
     assert "id: fallbackTemperatureModel" in component_qml
-    assert 'typeof icon === "undefined" ? iconName : icon' in component_qml
-    assert 'typeof displayName === "undefined" ? deviceName : displayName' in component_qml
-    assert 'typeof temperature === "undefined" || temperature === null' in component_qml
-    assert "TemperatureIcon {" in component_qml
-    assert "iconName: parent.resolvedIcon" in component_qml
-    assert "model: root.activeTemperatureModel" in component_qml
-    assert "color: Theme.text" in component_qml
+    assert "TemperatureDevicePager {" in component_qml
+    assert "temperatureModel: root.activeTemperatureModel" in component_qml
     assert "color: Theme.mutedText" in component_qml
     assert "ListElement { deviceName:" not in component_qml
+
+
+def test_temperature_device_pager_uses_page_based_navigation() -> None:
+    qml = Path("src/klippertouch/qml/components/TemperatureDevicePager.qml").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'import "../Theme.js" as Theme' in qml
+    assert "property var temperatureModel: null" in qml
+    assert "property int pageIndex: 0" in qml
+    assert "property int pageSize:" in qml
+    assert "property int currentItemCount:" in qml
+    assert "function pageCount()" in qml
+    assert "function pagedModel()" in qml
+    assert "function itemAt(pageRow)" in qml
+    assert "function goToPreviousPage()" in qml
+    assert "function goToNextPage()" in qml
+    assert "WheelHandler {" in qml
+    assert "root.goToNextPage()" in qml
+    assert "root.goToPreviousPage()" in qml
+    assert "Flickable {" not in qml
+    assert "GridView {" in qml
+    assert "model: root.currentItemCount" in qml
+    assert 'typeof root.activeTemperatureModel.toggleGraphDevice === "function"' in qml
+    assert "root.activeTemperatureModel.toggleGraphDevice(deviceKey)" in qml
 
 
 def test_temperature_model_is_passed_from_app_to_shell_and_main_panel() -> None:
@@ -532,29 +553,13 @@ def test_temperature_panel_is_read_only_and_responsive() -> None:
     assert "TemperatureSummary {" not in qml
     assert "FakeTemperatureGraph {" in qml
     assert "property int deviceColumns" in qml
-    assert "GridView {" in qml
-    assert "cellWidth: Math.floor(deviceGrid.width / root.deviceColumns)" in qml
+    assert "TemperatureDevicePager {" in qml
+    assert "deviceColumns: root.deviceColumns" in qml
     assert 'typeof temperatureModel !== "undefined"' in qml
     assert "root.hasExternalTemperatureModel" in qml
     assert 'typeof root.activeTemperatureModel.graphSeriesModel === "undefined"' in qml
-    assert "model: root.activeTemperatureModel" in qml
     assert "Layout.minimumWidth: 0" in qml
     assert "Layout.minimumHeight: 0" in qml
-    assert "property string deviceKey" in qml
-    assert "property bool deviceGraphVisible" in qml
-    assert "property var targetValue" in qml
-    assert "property var temperatureValue" in qml
-    assert 'typeof icon === "undefined" || icon === null' in qml
-    assert "TemperatureIcon {" in qml
-    assert "iconName: resolvedIcon" in qml
-    assert 'typeof displayName === "undefined" || displayName === null' in qml
-    assert 'typeof graphVisible === "undefined" || graphVisible === null' in qml
-    assert 'typeof target === "undefined"' in qml
-    assert 'typeof temperature === "undefined"' in qml
-    assert 'typeof root.activeTemperatureModel.toggleGraphDevice === "function"' in qml
-    assert "root.activeTemperatureModel.toggleGraphDevice(deviceKey)" in qml
-    assert "Actual" in qml
-    assert "Target" in qml
     assert "root.metrics.portrait" in qml
     assert "readonly" in qml
     assert "Connections {" in qml
