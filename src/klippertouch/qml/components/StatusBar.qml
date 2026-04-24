@@ -13,7 +13,9 @@ Rectangle {
     property string clockText: Qt.formatTime(new Date(), "hh:mm")
     property real fontSize: 16
     property var temperatureModel: null
-    property var activeTemperatureModel: temperatureModel && temperatureModel.rowCount() > 0
+    property bool hasExternalTemperatureModel: typeof temperatureModel !== "undefined"
+        && temperatureModel !== null
+    property var activeTemperatureModel: root.hasExternalTemperatureModel
         ? temperatureModel
         : fallbackTemperatureModel
 

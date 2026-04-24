@@ -10,7 +10,9 @@ Item {
     required property var metrics
     property var temperatureModel: null
     property int deviceColumns: root.metrics.portrait ? 1 : 2
-    property var activeTemperatureModel: temperatureModel && temperatureModel.rowCount() > 0
+    property bool hasExternalTemperatureModel: typeof temperatureModel !== "undefined"
+        && temperatureModel !== null
+    property var activeTemperatureModel: root.hasExternalTemperatureModel
         ? temperatureModel
         : fallbackTemperatureModel
 
@@ -27,6 +29,7 @@ Item {
         rows: root.metrics.portrait ? 2 : 1
 
         FakeTemperatureGraph {
+            id: graph
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.preferredWidth: root.metrics.portrait ? parent.width : parent.width * 0.48
@@ -36,6 +39,23 @@ Item {
             seriesModel: typeof root.activeTemperatureModel.graphSeriesModel === "undefined"
                 ? []
                 : root.activeTemperatureModel.graphSeriesModel
+        }
+
+        Connections {
+            target: root.activeTemperatureModel
+            ignoreUnknownSignals: true
+
+            function onGraphSeriesChanged() {
+                graph.requestRedraw()
+            }
+
+            function onHistoryChanged() {
+                graph.requestRedraw()
+            }
+
+            function onModelReset() {
+                graph.requestRedraw()
+            }
         }
 
         Rectangle {
@@ -97,8 +117,6 @@ Item {
                         property string resolvedName: typeof displayName === "undefined" || displayName === null
                             ? "Temperature"
                             : displayName
-                        property var temperature
-                        property var target
 
                         width: Math.max(0, deviceGrid.cellWidth)
                         height: deviceGrid.cellHeight

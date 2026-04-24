@@ -108,6 +108,7 @@ def test_status_bar_matches_klipperscreen_titlebar_structure() -> None:
 
     assert 'import "../models"' in qml
     assert "property var temperatureModel: null" in qml
+    assert "property bool hasExternalTemperatureModel" in qml
     assert "property var activeTemperatureModel:" in qml
     assert "property string printerName" in qml
     assert "property string panelTitle" in qml
@@ -135,19 +136,20 @@ def test_fake_temperature_graph_matches_heater_graph_structure() -> None:
     assert 'import "../Theme.js" as Theme' in qml
     assert "id: horizontalGrid" in qml
     assert "id: verticalGrid" in qml
-    assert "id: graphCanvas" in qml
-    assert "onPaint:" in qml
+    assert "id: graphContent" in qml
+    assert "function segmentModel(series, color, plotWidth, plotHeight)" in qml
+    assert "Math.atan2(dy, dx)" in qml
+    assert "transformOrigin: Item.Left" in qml
     assert "property var seriesModel: []" in qml
-    assert "for (var i = 0; i < root.seriesModel.length; i += 1)" in qml
-    assert "drawSeries(ctx, entry.series, entry.color)" in qml
+    assert "function seriesPoints(series, plotWidth, plotHeight)" in qml
+    assert "plotArea.width," in qml
+    assert "plotArea.height" in qml
     assert 'text: modelData.displayName' in qml
     assert "function normalizeTemperature" in qml
     assert "property real maxTemperature: 300" in qml
     assert "maxTemperatureLabel" in qml
     assert "midTemperatureLabel" in qml
     assert "baseTemperatureLabel" in qml
-    assert "plotArea.x +" not in qml
-    assert "plotArea.y +" not in qml
 
 
 def test_shell_has_responsive_orientation_hooks() -> None:
@@ -522,11 +524,14 @@ def test_temperature_panel_is_read_only_and_responsive() -> None:
 
     assert "required property var metrics" in qml
     assert "property var temperatureModel: null" in qml
+    assert "property bool hasExternalTemperatureModel" in qml
     assert "TemperatureSummary {" not in qml
     assert "FakeTemperatureGraph {" in qml
     assert "property int deviceColumns" in qml
     assert "GridView {" in qml
     assert "cellWidth: Math.floor(deviceGrid.width / root.deviceColumns)" in qml
+    assert 'typeof temperatureModel !== "undefined"' in qml
+    assert "root.hasExternalTemperatureModel" in qml
     assert 'typeof root.activeTemperatureModel.graphSeriesModel === "undefined"' in qml
     assert "model: root.activeTemperatureModel" in qml
     assert "Layout.minimumWidth: 0" in qml
@@ -546,6 +551,13 @@ def test_temperature_panel_is_read_only_and_responsive() -> None:
     assert "Target" in qml
     assert "root.metrics.portrait" in qml
     assert "readonly" in qml
+    assert "Connections {" in qml
+    assert "target: root.activeTemperatureModel" in qml
+    assert "ignoreUnknownSignals: true" in qml
+    assert "onGraphSeriesChanged" in qml
+    assert "graph.requestRedraw()" in qml
+    assert "onHistoryChanged" in qml
+    assert "onModelReset" in qml
     assert "printer.gcode.script" not in qml
     assert "sendTextMessage" not in qml
 

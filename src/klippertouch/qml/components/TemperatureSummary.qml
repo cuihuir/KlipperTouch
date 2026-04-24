@@ -7,7 +7,9 @@ Item {
     id: root
     required property var metrics
     property var temperatureModel: null
-    property var activeTemperatureModel: temperatureModel && temperatureModel.rowCount() > 0
+    property bool hasExternalTemperatureModel: typeof temperatureModel !== "undefined"
+        && temperatureModel !== null
+    property var activeTemperatureModel: root.hasExternalTemperatureModel
         ? temperatureModel
         : fallbackTemperatureModel
 

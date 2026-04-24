@@ -18,36 +18,53 @@ Rectangle {
         return Math.max(0.04, Math.min(0.96, 1 - value / root.maxTemperature))
     }
 
-    function drawSeries(ctx, series, color) {
+    function requestRedraw() {
+        graphContent.visible = false
+        graphContent.visible = true
+    }
+
+    function seriesPoints(series, plotWidth, plotHeight) {
+        var points = []
         if (!series || series.length <= 0) {
-            return
+            return points
         }
-        if (series.length === 1) {
-            ctx.beginPath()
-            ctx.arc(
-                plotArea.width * 0.5,
-                plotArea.height * root.normalizeTemperature(series[0]),
-                Math.max(3, Math.round(root.fontSize * 0.22)),
-                0,
-                Math.PI * 2
-            )
-            ctx.fillStyle = color
-            ctx.fill()
-            return
-        }
-        ctx.beginPath()
         for (var i = 0; i < series.length; i += 1) {
-            var x = plotArea.width * i / Math.max(1, series.length - 1)
-            var y = plotArea.height * root.normalizeTemperature(series[i])
-            if (i === 0) {
-                ctx.moveTo(x, y)
-            } else {
-                ctx.lineTo(x, y)
-            }
+            var x = plotWidth * i / Math.max(1, series.length - 1)
+            var y = plotHeight * root.normalizeTemperature(series[i])
+            points.push({"x": x, "y": y})
         }
-        ctx.lineWidth = Math.max(2, Math.round(root.fontSize * 0.14))
-        ctx.strokeStyle = color
-        ctx.stroke()
+        return points
+    }
+
+    function segmentModel(series, color, plotWidth, plotHeight) {
+        var model = []
+        var points = root.seriesPoints(series, plotWidth, plotHeight)
+        if (points.length === 1) {
+            model.push({
+                "x": points[0].x - Math.max(2, Math.round(root.fontSize * 0.18)),
+                "y": points[0].y - Math.max(2, Math.round(root.fontSize * 0.18)),
+                "width": Math.max(4, Math.round(root.fontSize * 0.36)),
+                "rotation": 0,
+                "color": color,
+                "round": true
+            })
+            return model
+        }
+        for (var i = 1; i < points.length; i += 1) {
+            var start = points[i - 1]
+            var end = points[i]
+            var dx = end.x - start.x
+            var dy = end.y - start.y
+            model.push({
+                "x": start.x,
+                "y": start.y,
+                "width": Math.max(1, Math.sqrt(dx * dx + dy * dy)),
+                "rotation": Math.atan2(dy, dx) * 180 / Math.PI,
+                "color": color,
+                "round": false
+            })
+        }
+        return model
     }
 
     ColumnLayout {
@@ -103,12 +120,15 @@ Rectangle {
 
             ColumnLayout {
                 Layout.preferredWidth: Math.max(34, Math.round(root.fontSize * 2.4))
+                Layout.minimumWidth: Layout.preferredWidth
+                Layout.maximumWidth: Layout.preferredWidth
+                Layout.fillWidth: false
                 Layout.fillHeight: true
                 spacing: 0
 
                 Label {
                     id: maxTemperatureLabel
-                    Layout.fillWidth: true
+                    Layout.preferredWidth: parent.Layout.preferredWidth
                     Layout.alignment: Qt.AlignTop
                     color: Theme.mutedText
                     text: Math.round(root.maxTemperature) + "°"
@@ -122,7 +142,7 @@ Rectangle {
 
                 Label {
                     id: midTemperatureLabel
-                    Layout.fillWidth: true
+                    Layout.preferredWidth: parent.Layout.preferredWidth
                     color: Theme.mutedText
                     text: Math.round(root.maxTemperature / 2) + "°"
                     horizontalAlignment: Text.AlignRight
@@ -135,7 +155,7 @@ Rectangle {
 
                 Label {
                     id: baseTemperatureLabel
-                    Layout.fillWidth: true
+                    Layout.preferredWidth: parent.Layout.preferredWidth
                     Layout.alignment: Qt.AlignBottom
                     color: Theme.mutedText
                     text: "0°"
@@ -175,28 +195,39 @@ Rectangle {
                     }
                 }
 
-                Canvas {
-                    id: graphCanvas
+                Item {
+                    id: graphContent
                     anchors.fill: parent
 
-                    onPaint: {
-                        var ctx = getContext("2d")
-                        ctx.clearRect(0, 0, width, height)
-                        if (!root.seriesModel) {
-                            return
-                        }
-                        for (var i = 0; i < root.seriesModel.length; i += 1) {
-                            var entry = root.seriesModel[i]
-                            drawSeries(ctx, entry.series, entry.color)
+                    Repeater {
+                        model: root.seriesModel
+
+                        Item {
+                            anchors.fill: parent
+
+                            Repeater {
+                                model: root.segmentModel(
+                                    modelData.series,
+                                    modelData.color,
+                                    plotArea.width,
+                                    plotArea.height
+                                )
+
+                                Rectangle {
+                                    x: modelData.x
+                                    y: modelData.y
+                                    width: modelData.width
+                                    height: Math.max(2, Math.round(root.fontSize * 0.14))
+                                    radius: modelData.round ? width / 2 : height / 2
+                                    color: modelData.color
+                                    rotation: modelData.rotation
+                                    transformOrigin: Item.Left
+                                }
+                            }
                         }
                     }
-
-                    onWidthChanged: requestPaint()
-                    onHeightChanged: requestPaint()
                 }
             }
         }
     }
-
-    onSeriesModelChanged: graphCanvas.requestPaint()
 }
