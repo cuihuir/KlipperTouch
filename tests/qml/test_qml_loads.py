@@ -143,6 +143,11 @@ def test_fake_temperature_graph_matches_heater_graph_structure() -> None:
     assert "function normalizeTemperature" in qml
     assert "property real maxTemperature: 300" in qml
     assert "property var extruderSeries: []" in qml
+    assert "Extruder" in qml
+    assert "Bed" in qml
+    assert "maxTemperatureLabel" in qml
+    assert "midTemperatureLabel" in qml
+    assert "baseTemperatureLabel" in qml
 
 
 def test_shell_has_responsive_orientation_hooks() -> None:
@@ -356,11 +361,11 @@ def test_more_menu_panel_uses_icon_list_entry_model() -> None:
     assert 'ListElement { tileLabel: "Logs"; tileIcon: "printer"' in model_qml
     assert 'ListElement { tileLabel: "Language"; tileIcon: "settings"' in model_qml
     assert 'ListElement { tileLabel: "Update"; tileIcon: "printer"' in model_qml
-    assert 'panelName: "language"' in model_qml
-    assert 'panelName: "update"' in model_qml
     assert 'panelName: "system"' in model_qml
     assert 'panelName: "network"' in model_qml
     assert 'panelName: "logs"' in model_qml
+    assert 'panelName: "language"' in model_qml
+    assert 'panelName: "update"' in model_qml
     assert 'ListElement { tileLabel: "System"' in model_qml
 
 
@@ -519,17 +524,23 @@ def test_temperature_panel_is_read_only_and_responsive() -> None:
     assert "property var temperatureModel: null" in qml
     assert "TemperatureSummary {" not in qml
     assert "FakeTemperatureGraph {" in qml
+    assert "property int deviceColumns" in qml
+    assert "GridView {" in qml
+    assert "cellWidth: Math.floor(deviceGrid.width / root.deviceColumns)" in qml
+    assert "Layout.columnSpan: root.metrics.portrait ? 1 : 2" in qml
     assert "extruderSeries: root.activeTemperatureModel.extruderSeries" in qml
     assert "bedSeries: root.activeTemperatureModel.bedSeries" in qml
     assert "model: root.activeTemperatureModel" in qml
     assert "Layout.minimumWidth: 0" in qml
     assert "Layout.minimumHeight: 0" in qml
-    assert 'typeof icon === "undefined" ? iconName : icon' in qml
+    assert 'typeof icon === "undefined" || icon === null' in qml
     assert "TemperatureIcon {" in qml
     assert "iconName: resolvedIcon" in qml
-    assert 'typeof displayName === "undefined" ? deviceName : displayName' in qml
+    assert 'typeof displayName === "undefined" || displayName === null' in qml
     assert 'typeof target === "undefined" || target === null' in qml
     assert 'typeof temperature === "undefined" || temperature === null' in qml
+    assert "Actual" in qml
+    assert "Target" in qml
     assert "root.metrics.portrait" in qml
     assert "readonly" in qml
     assert "printer.gcode.script" not in qml
@@ -659,14 +670,14 @@ def test_main_routes_more_to_read_only_info_panel() -> None:
     assert 'case "logs":' in main_qml
     assert 'case "language":' in main_qml
     assert 'case "update":' in main_qml
-    assert '"language": "Language"' in main_qml
-    assert '"update": "Update"' in main_qml
     assert "title: window.panelTitles[window.currentPanel]" in main_qml
     assert "iconName: window.panelIcons[window.currentPanel]" in main_qml
     assert '"more": "More"' in main_qml
     assert '"system": "System"' in main_qml
     assert '"network": "Network"' in main_qml
     assert '"logs": "Logs"' in main_qml
+    assert '"language": "Language"' in main_qml
+    assert '"update": "Update"' in main_qml
     assert "InfoPanel {" in main_qml
     assert "MoreMenuPanel {" in main_qml
     assert "hostname: window.hostname" in main_qml
@@ -684,11 +695,11 @@ def test_main_routes_network_and_logs_to_safe_placeholder_panels() -> None:
     assert 'case "logs":' in main_qml
     assert 'case "language":' in main_qml
     assert 'case "update":' in main_qml
-    assert '"language": "settings"' in main_qml
-    assert '"update": "printer"' in main_qml
     assert "return placeholderComponent" in main_qml
     assert '"network": "main"' in main_qml
     assert '"logs": "printer"' in main_qml
+    assert '"language": "settings"' in main_qml
+    assert '"update": "printer"' in main_qml
 
 
 def test_move_panel_is_locked_and_responsive() -> None:

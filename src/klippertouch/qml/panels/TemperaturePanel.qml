@@ -9,6 +9,7 @@ Item {
     id: root
     required property var metrics
     property var temperatureModel: null
+    property int deviceColumns: root.metrics.portrait ? 1 : 2
     property var activeTemperatureModel: temperatureModel && temperatureModel.rowCount() > 0
         ? temperatureModel
         : fallbackTemperatureModel
@@ -25,11 +26,22 @@ Item {
         columns: root.metrics.portrait ? 1 : 2
         rows: root.metrics.portrait ? 2 : 1
 
+        FakeTemperatureGraph {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.preferredWidth: root.metrics.portrait ? parent.width : parent.width * 0.48
+            Layout.preferredHeight: root.metrics.portrait ? parent.height * 0.42 : parent.height
+            Layout.minimumWidth: 0
+            Layout.minimumHeight: 0
+            extruderSeries: root.activeTemperatureModel.extruderSeries
+            bedSeries: root.activeTemperatureModel.bedSeries
+        }
+
         Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.preferredWidth: root.metrics.portrait ? parent.width : parent.width * 0.45
-            Layout.preferredHeight: root.metrics.portrait ? parent.height * 0.45 : parent.height
+            Layout.preferredWidth: root.metrics.portrait ? parent.width : parent.width * 0.52
+            Layout.preferredHeight: root.metrics.portrait ? parent.height * 0.58 : parent.height
             Layout.minimumWidth: 0
             Layout.minimumHeight: 0
             color: Theme.buttonsBg
@@ -42,121 +54,125 @@ Item {
                 anchors.margins: root.metrics.gap
                 spacing: root.metrics.gap
 
-                Label {
-                    Layout.fillWidth: true
-                    color: Theme.mutedText
-                    text: "Temperature status (readonly)"
-                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
-                }
-
                 RowLayout {
                     Layout.fillWidth: true
+                    Layout.columnSpan: root.metrics.portrait ? 1 : 2
                     spacing: root.metrics.gap
 
                     Label {
                         Layout.fillWidth: true
-                        color: Theme.mutedText
-                        text: "Heater"
-                        font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                        color: Theme.text
+                        text: "Temperature status"
+                        font.bold: true
+                        font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
                     }
 
                     Label {
-                        Layout.preferredWidth: Math.max(62, Math.round(root.metrics.fontSize * 4.4))
                         color: Theme.mutedText
-                        text: "Actual"
-                        horizontalAlignment: Text.AlignRight
-                        font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
-                    }
-
-                    Label {
-                        Layout.preferredWidth: Math.max(62, Math.round(root.metrics.fontSize * 4.4))
-                        color: Theme.mutedText
-                        text: "Target"
-                        horizontalAlignment: Text.AlignRight
-                        font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                        text: "readonly"
+                        font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.8))
                     }
                 }
 
-                ListView {
-                    id: deviceList
+                GridView {
+                    id: deviceGrid
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     clip: true
-                    spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.35))
+                    cellWidth: Math.floor(deviceGrid.width / root.deviceColumns)
+                    cellHeight: Math.max(112, Math.round(root.metrics.fontSize * 7.9))
                     model: root.activeTemperatureModel
 
-                    delegate: Rectangle {
-                        property string resolvedIcon: typeof icon === "undefined" ? iconName : icon
-                        property string resolvedName: typeof displayName === "undefined" ? deviceName : displayName
+                    delegate: Item {
+                        property string resolvedIcon: typeof icon === "undefined" || icon === null
+                            ? "heat-up"
+                            : icon
+                        property string resolvedName: typeof displayName === "undefined" || displayName === null
+                            ? "Temperature"
+                            : displayName
+                        required property var temperature
+                        required property var target
 
-                        width: deviceList.width
-                        height: Math.max(44, Math.round(root.metrics.fontSize * 3.2))
-                        color: "#101617"
-                        border.color: "#263233"
-                        border.width: 1
-                        radius: Math.round(root.metrics.fontSize * 0.32)
+                        width: Math.max(0, deviceGrid.cellWidth)
+                        height: deviceGrid.cellHeight
 
-                        RowLayout {
+                        Rectangle {
                             anchors.fill: parent
-                            anchors.leftMargin: root.metrics.gap
-                            anchors.rightMargin: root.metrics.gap
-                            spacing: root.metrics.gap
+                            anchors.margins: Math.max(3, Math.round(root.metrics.gap * 0.35))
+                            color: "#101617"
+                            border.color: "#263233"
+                            border.width: 1
+                            radius: Math.round(root.metrics.fontSize * 0.32)
 
-                            TemperatureIcon {
-                                iconName: resolvedIcon
-                                iconSize: Math.max(28, Math.round(root.metrics.fontSize * 1.9))
-                                Layout.preferredWidth: iconSize
-                                Layout.preferredHeight: iconSize
-                            }
+                            ColumnLayout {
+                                anchors.fill: parent
+                                anchors.margins: root.metrics.gap
+                                spacing: Math.max(6, Math.round(root.metrics.fontSize * 0.4))
 
-                            Label {
-                                Layout.fillWidth: true
-                                color: Theme.text
-                                text: resolvedName
-                                elide: Text.ElideRight
-                                verticalAlignment: Text.AlignVCenter
-                                font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize))
-                            }
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: root.metrics.gap
 
-                            Label {
-                                Layout.preferredWidth: Math.max(62, Math.round(root.metrics.fontSize * 4.4))
-                                color: Theme.text
-                                text: typeof temperature === "undefined" || temperature === null ? "--" : Math.round(temperature) + "°"
-                                horizontalAlignment: Text.AlignRight
-                                verticalAlignment: Text.AlignVCenter
-                                font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize))
-                            }
+                                    TemperatureIcon {
+                                        iconName: resolvedIcon
+                                        iconSize: Math.max(28, Math.round(root.metrics.fontSize * 1.9))
+                                        Layout.preferredWidth: iconSize
+                                        Layout.preferredHeight: iconSize
+                                    }
 
-                            Label {
-                                Layout.preferredWidth: Math.max(62, Math.round(root.metrics.fontSize * 4.4))
-                                color: Theme.mutedText
-                                text: typeof target === "undefined" || target === null ? "--" : Math.round(target) + "°"
-                                horizontalAlignment: Text.AlignRight
-                                verticalAlignment: Text.AlignVCenter
-                                font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize))
+                                    Label {
+                                        Layout.fillWidth: true
+                                        color: Theme.text
+                                        text: resolvedName
+                                        elide: Text.ElideRight
+                                        wrapMode: Text.WordWrap
+                                        maximumLineCount: 2
+                                        font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
+                                        font.bold: true
+                                    }
+                                }
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    height: 1
+                                    color: "#263233"
+                                }
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    color: Theme.mutedText
+                                    text: "Actual"
+                                    font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                                }
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    color: Theme.text
+                                    text: typeof temperature === "undefined" || temperature === null
+                                        ? "--"
+                                        : Math.round(temperature) + "°"
+                                    font.pixelSize: Math.max(20, Math.round(root.metrics.fontSize * 1.42))
+                                }
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    color: Theme.mutedText
+                                    text: "Target"
+                                    font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                                }
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    color: Theme.mutedText
+                                    text: typeof target === "undefined" || target === null
+                                        ? "--"
+                                        : Math.round(target) + "°"
+                                    font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.08))
+                                }
                             }
                         }
                     }
                 }
-            }
-        }
-
-        Item {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.preferredWidth: root.metrics.portrait ? parent.width : parent.width * 0.55
-            Layout.preferredHeight: root.metrics.portrait ? parent.height * 0.55 : parent.height
-            Layout.minimumWidth: 0
-            Layout.minimumHeight: 0
-
-            FakeTemperatureGraph {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                fontSize: root.metrics.fontSize
-                extruderSeries: root.activeTemperatureModel.extruderSeries
-                bedSeries: root.activeTemperatureModel.bedSeries
             }
         }
     }
