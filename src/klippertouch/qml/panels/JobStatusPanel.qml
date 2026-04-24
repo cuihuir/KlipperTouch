@@ -78,6 +78,64 @@ Item {
         return root.zOffset.toFixed(2) + " mm"
     }
 
+    function stateHeadline() {
+        if (root.printState === "paused") {
+            return "Paused"
+        }
+        if (root.printState === "complete") {
+            return "Completed"
+        }
+        if (root.printState === "cancelled") {
+            return "Cancelled"
+        }
+        if (root.printState === "error") {
+            return "Printer error"
+        }
+        return "Printing"
+    }
+
+    function stateMessage() {
+        if (root.printMessage.length > 0) {
+            return root.printMessage
+        }
+        if (root.printState === "paused") {
+            return "Print paused. Read-only status remains visible."
+        }
+        if (root.printState === "complete") {
+            return "Print completed. Read-only summary remains visible."
+        }
+        if (root.printState === "cancelled") {
+            return "Print cancelled. Read-only summary remains visible."
+        }
+        if (root.printState === "error") {
+            return "Printer error reported. Read-only summary remains visible."
+        }
+        return "Read-only job status"
+    }
+
+    function stateAccentColor() {
+        if (root.printState === "paused") {
+            return Theme.color1
+        }
+        if (root.printState === "complete") {
+            return "#4caf50"
+        }
+        if (root.printState === "cancelled") {
+            return "#8d6e63"
+        }
+        if (root.printState === "error") {
+            return "#d8615b"
+        }
+        return Theme.color2
+    }
+
+    function stateProgressValue() {
+        if (root.printState === "complete") {
+            return 1
+        }
+        return Math.max(0, Math.min(1, root.printProgress / 100))
+    }
+
     Rectangle {
         anchors.fill: parent
         anchors.margins: root.metrics.margin
@@ -105,9 +163,10 @@ Item {
                 }
 
                 Label {
-                    color: Theme.mutedText
-                    text: root.printState
+                    color: root.stateAccentColor()
+                    text: root.stateHeadline()
                     horizontalAlignment: Text.AlignRight
+                    font.bold: true
                     font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.86))
                 }
             }
@@ -116,7 +175,7 @@ Item {
                 Layout.fillWidth: true
                 Layout.preferredHeight: Math.max(118, Math.round(root.metrics.fontSize * 8.2))
                 color: "#101617"
-                border.color: "#263233"
+                border.color: root.stateAccentColor()
                 border.width: 1
                 radius: Math.round(root.metrics.fontSize * 0.32)
 
@@ -128,14 +187,14 @@ Item {
                     Label {
                         Layout.fillWidth: true
                         color: Theme.mutedText
-                        text: root.printMessage.length > 0 ? root.printMessage : "Read-only job status"
+                        text: root.stateMessage()
                         elide: Text.ElideRight
                         font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
                     }
 
                     ProgressBar {
                         Layout.fillWidth: true
-                        value: Math.max(0, Math.min(1, root.printProgress / 100))
+                        value: root.stateProgressValue()
                     }
 
                     RowLayout {
@@ -144,14 +203,20 @@ Item {
 
                         Label {
                             Layout.fillWidth: true
-                            color: Theme.text
-                            text: Math.round(root.printProgress) + "%"
+                            color: root.stateAccentColor()
+                            text: root.stateHeadline()
                             font.pixelSize: Math.max(20, Math.round(root.metrics.fontSize * 1.5))
                         }
 
                         Label {
                             color: Theme.mutedText
-                            text: root.remainingLabel() + " remaining"
+                            text: root.printState === "complete"
+                                ? "Done"
+                                : root.printState === "cancelled"
+                                    ? "Stopped"
+                                    : root.printState === "error"
+                                        ? "Check printer"
+                                        : root.remainingLabel() + " remaining"
                             horizontalAlignment: Text.AlignRight
                             font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
                         }

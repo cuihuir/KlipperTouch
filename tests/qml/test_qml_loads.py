@@ -216,9 +216,9 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "property string printFilename" not in qml
     assert "property real printProgress" not in qml
     assert "ProgressBar" not in qml
-    assert "Start" not in qml
-    assert "Pause" not in qml
-    assert "Cancel" not in qml
+    assert 'text: "Start"' not in qml
+    assert 'text: "Pause"' not in qml
+    assert 'text: "Cancel"' not in qml
 
 
 def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
@@ -256,12 +256,23 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "root.filamentLabel()" in qml
     assert "root.layerLabel()" in qml
     assert "function remainingLabel" in qml
+    assert "function stateHeadline" in qml
+    assert "function stateMessage" in qml
+    assert "function stateAccentColor" in qml
+    assert 'if (root.printState === "paused")' in qml
+    assert 'if (root.printState === "complete")' in qml
+    assert 'if (root.printState === "cancelled")' in qml
+    assert 'if (root.printState === "error")' in qml
+    assert "Paused" in qml
+    assert "Cancelled" in qml
+    assert "Completed" in qml
+    assert "Printer error" in qml
     assert "Remaining" in qml
     assert "root.percentLabel(root.speedFactor)" in qml
     assert "root.zOffsetLabel()" in qml
-    assert "Start" not in qml
-    assert "Pause" not in qml
-    assert "Cancel" not in qml
+    assert 'text: "Start"' not in qml
+    assert 'text: "Pause"' not in qml
+    assert 'text: "Cancel"' not in qml
     assert "printer.print." not in qml
     assert "printer.gcode.script" not in qml
 
@@ -530,12 +541,26 @@ def test_main_keeps_files_and_job_status_as_separate_routes() -> None:
     assert "maxVelocity: window.maxVelocity" in main_qml
     assert "temperatureModel: window.temperatureBridgeModel" in main_qml
     assert "fileModel: window.gcodeFileBridgeModel" in main_qml
-    assert "function isJobActive()" in main_qml
+    assert "function shouldAutoEnterJobStatus()" in main_qml
+    assert "function shouldKeepJobStatusVisible()" in main_qml
     assert "function syncJobStatusPanel()" in main_qml
     assert "onPrintStateChanged: window.syncJobStatusPanel()" in main_qml
     assert "Component.onCompleted: window.syncJobStatusPanel()" in main_qml
     assert 'window.currentPanel = "job_status"' in main_qml
     assert "PrintPanel {" not in main_qml
+
+
+def test_main_keeps_job_status_visible_for_terminal_job_states() -> None:
+    main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
+
+    assert 'window.printState === "printing"' in main_qml
+    assert 'window.printState === "paused"' in main_qml
+    assert 'window.printState === "complete"' in main_qml
+    assert 'window.printState === "cancelled"' in main_qml
+    assert 'window.printState === "error"' in main_qml
+    assert "if (window.shouldAutoEnterJobStatus())" in main_qml
+    assert "else if (!window.shouldKeepJobStatusVisible()" in main_qml
+    assert "window.goHome()" in main_qml
 
 
 def test_files_panel_is_read_only_and_responsive() -> None:

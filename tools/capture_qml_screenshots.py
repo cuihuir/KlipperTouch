@@ -76,10 +76,26 @@ SAMPLE_STATUS = {
     "max_velocity": 250.0,
 }
 SAMPLE_HISTORY = ((205.0, 56.0), (208.0, 57.0), (211.8, 58.4))
+SAMPLE_STATES = ("printing", "paused", "complete", "cancelled", "error")
 
 
-def make_sample_status(extruder_temperature: float, bed_temperature: float) -> PrinterStatus:
+def make_sample_status(
+    extruder_temperature: float,
+    bed_temperature: float,
+    *,
+    state: str = "printing",
+) -> PrinterStatus:
     status = dict(SAMPLE_STATUS)
+    status["print_state"] = state
+    if state == "paused":
+        status["print_message"] = "Paused"
+    elif state == "complete":
+        status["print_message"] = "Complete"
+        status["print_progress"] = 100.0
+    elif state == "cancelled":
+        status["print_message"] = "Cancelled"
+    elif state == "error":
+        status["print_message"] = "Error"
     status["temperature_devices"] = (
         TemperatureDeviceStatus(
             name="extruder",
@@ -120,6 +136,7 @@ def capture(
     panels: tuple[str, ...],
     sample_files: bool = False,
     sample_status: bool = False,
+    sample_state: str = "printing",
 ) -> list[Path]:
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     app = QGuiApplication.instance() or QGuiApplication([])
@@ -135,11 +152,15 @@ def capture(
             if sample_status:
                 first_extruder, first_bed = SAMPLE_HISTORY[0]
                 status_model, temperature_model = create_status_models(
-                    make_sample_status(first_extruder, first_bed)
+                    make_sample_status(first_extruder, first_bed, state=sample_state)
                 )
                 for extruder_temperature, bed_temperature in SAMPLE_HISTORY[1:]:
                     status_model.set_status(
-                        make_sample_status(extruder_temperature, bed_temperature)
+                        make_sample_status(
+                            extruder_temperature,
+                            bed_temperature,
+                            state=sample_state,
+                        )
                     )
                 engine.rootContext().setContextProperty("statusModel", status_model)
                 engine.rootContext().setContextProperty(
@@ -244,6 +265,12 @@ def main(argv: list[str] | None = None) -> int:
         help="Inject sample printer/job status into the QML context before capturing.",
     )
     parser.add_argument(
+        "--sample-state",
+        choices=SAMPLE_STATES,
+        default="printing",
+        help="Choose the sample print state used with --sample-status.",
+    )
+    parser.add_argument(
         "--no-index",
         action="store_true",
         help="Do not write index.html next to the captured screenshots.",
@@ -257,6 +284,7 @@ def main(argv: list[str] | None = None) -> int:
         panels=tuple(args.panels),
         sample_files=args.sample_files,
         sample_status=args.sample_status,
+        sample_state=args.sample_state,
     )
     if not args.no_index:
         print(write_index(args.output, captured))

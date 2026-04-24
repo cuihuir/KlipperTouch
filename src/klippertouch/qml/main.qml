@@ -46,17 +46,24 @@ ApplicationWindow {
     property var panelTitles: ({"main": "Home", "move": "Move", "temperature": "Temperature", "extrude": "Extrude", "more": "More", "print": "Print", "job_status": "Job Status"})
     property var panelIcons: ({"main": "main", "move": "move", "temperature": "heat-up", "extrude": "extrude", "more": "settings", "print": "printer", "job_status": "printer"})
 
-    function isJobActive() {
+    function shouldAutoEnterJobStatus() {
         return window.printState === "printing" || window.printState === "paused"
     }
 
+    function shouldKeepJobStatusVisible() {
+        return window.shouldAutoEnterJobStatus()
+            || window.printState === "complete"
+            || window.printState === "cancelled"
+            || window.printState === "error"
+    }
+
     function syncJobStatusPanel() {
-        if (window.isJobActive()) {
+        if (window.shouldAutoEnterJobStatus()) {
             if (window.currentPanel !== "job_status") {
                 window.panelStack = ["job_status"]
                 window.currentPanel = "job_status"
             }
-        } else if (window.currentPanel === "job_status") {
+        } else if (!window.shouldKeepJobStatusVisible() && window.currentPanel === "job_status") {
             window.goHome()
         }
     }
