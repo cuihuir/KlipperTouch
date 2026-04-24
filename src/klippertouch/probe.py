@@ -18,12 +18,20 @@ class ReadOnlyProbeClient(Protocol):
     def get_printer_info(self) -> dict[str, Any]: ...
     def get_objects_list(self) -> dict[str, Any]: ...
     def get_printer_objects_query(self, objects: tuple[str, ...] = ()) -> dict[str, Any]: ...
+    def get_printer_objects_query_fields(
+        self,
+        fields_by_object: dict[str, str],
+    ) -> dict[str, Any]: ...
+    def get_machine_update_status(self) -> dict[str, Any]: ...
 
 
 def build_status_from_client(client: ReadOnlyProbeClient) -> PrinterStatus:
     server_info = client.get_server_info()
     objects = _safe_probe(client.get_objects_list)
     object_names = tuple(str(item) for item in objects.get("objects", ()))
+    mcu_object_names = tuple(
+        name for name in object_names if name == "mcu" or name.startswith("mcu ")
+    )
     return PrinterStatus.from_probe(
         server_info=server_info,
         printer_info=_safe_probe(client.get_printer_info),
@@ -31,6 +39,12 @@ def build_status_from_client(client: ReadOnlyProbeClient) -> PrinterStatus:
         object_status=_safe_probe(
             lambda: client.get_printer_objects_query(_read_only_status_object_names(object_names))
         ),
+        mcu_status=_safe_probe(
+            lambda: client.get_printer_objects_query_fields(
+                {name: "mcu_version,mcu_build_versions" for name in mcu_object_names}
+            )
+        ),
+        update_status=_safe_probe(client.get_machine_update_status),
     )
 
 

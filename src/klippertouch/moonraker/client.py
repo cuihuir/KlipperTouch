@@ -59,11 +59,17 @@ class MoonrakerClient:
         params = {name: _query_fields_for_object(name) for name in objects} if objects else None
         return self.get("printer/objects/query", params=params)
 
+    def get_printer_objects_query_fields(self, fields_by_object: dict[str, str]) -> dict[str, Any]:
+        return self.get("printer/objects/query", params=fields_by_object or None)
+
     def get_gcode_file_list(self) -> list[dict[str, Any]]:
         result = self.get("server/files/list", params={"root": "gcodes"})
         if isinstance(result, list):
             return [item for item in result if isinstance(item, dict)]
         return []
+
+    def get_machine_update_status(self) -> dict[str, Any]:
+        return self.get("machine/update/status")
 
 
 def _query_fields_for_object(name: str) -> str:

@@ -133,6 +133,36 @@ class StatusModel(QObject):
         return self._status.moonraker_version
 
     @Property(int, notify=statusChanged)
+    def mcuCount(self) -> int:
+        return self._status.mcu_count
+
+    @Property(list, notify=statusChanged)
+    def mcuInfos(self) -> list[dict[str, str]]:
+        return [
+            {
+                "name": item.name,
+                "version": item.version,
+                "build_versions": item.build_versions,
+            }
+            for item in self._status.mcu_statuses
+        ]
+
+    @Property(int, notify=statusChanged)
+    def serviceVersionCount(self) -> int:
+        return self._status.service_version_count
+
+    @Property(list, notify=statusChanged)
+    def serviceVersions(self) -> list[dict[str, str]]:
+        return [
+            {
+                "name": item.name,
+                "version": item.version,
+                "configured_type": item.configured_type,
+            }
+            for item in self._status.service_versions
+        ]
+
+    @Property(int, notify=statusChanged)
     def objectCount(self) -> int:
         return self._status.object_count
 

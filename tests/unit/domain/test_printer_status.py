@@ -1,17 +1,33 @@
-from klippertouch.domain.printer import PrinterStatus, TemperatureDeviceStatus
+from klippertouch.domain.printer import (
+    McuStatus,
+    PrinterStatus,
+    ServiceVersionStatus,
+    TemperatureDeviceStatus,
+)
 
 
 def test_printer_status_from_probe_payloads() -> None:
     status = PrinterStatus.from_probe(
-        server_info={"moonraker_version": "v0.10.0", "klippy_state": "ready"},
+        server_info={
+            "moonraker_version": "v0.10.0",
+            "klippy_state": "ready",
+            "components": ["update_manager", "history"],
+        },
         printer_info={"state": "ready", "hostname": "orangepi3b", "software_version": "v0.13.0"},
         objects={"objects": ["extruder", "heater_bed", "controller_fan 驱动"]},
+        update_status={
+            "version_info": {
+                "moonraker": {"name": "moonraker", "version": "v0.10.0"},
+                "klipper": {"name": "klipper", "version": "v0.13.0"},
+            }
+        },
     )
 
     assert status.hostname == "orangepi3b"
     assert status.klippy_state == "ready"
     assert status.object_count == 3
     assert "controller_fan 驱动" in status.objects
+    assert tuple(item.name for item in status.service_versions) == ("klipper", "moonraker")
 
 
 def test_printer_status_copies_mutable_objects() -> None:
@@ -80,6 +96,63 @@ def test_printer_status_populates_temperature_values_from_status_query() -> None
 
     assert tuple(device.temperature for device in status.temperature_devices) == (24.3, 26.7)
     assert tuple(device.target for device in status.temperature_devices) == (0.0, 60.0)
+
+
+def test_printer_status_populates_mcu_and_service_versions() -> None:
+    status = PrinterStatus.from_probe(
+        server_info={
+            "moonraker_version": "v0.10.0",
+            "klippy_state": "ready",
+            "components": ["update_manager", "history"],
+        },
+        printer_info={"state": "ready", "hostname": "orangepi3b", "software_version": "v0.13.0"},
+        objects={"objects": ["mcu", "mcu tool_head", "extruder"]},
+        object_status={"status": {"extruder": {"temperature": 24.3, "target": 0.0}}},
+        mcu_status={
+            "status": {
+                "mcu": {
+                    "mcu_version": "v0.13.0-main",
+                    "mcu_build_versions": "gcc 12.2.0",
+                },
+                "mcu tool_head": {
+                    "mcu_version": "v0.13.0-tool",
+                    "mcu_build_versions": "gcc 12.2.0",
+                },
+            }
+        },
+        update_status={
+            "version_info": {
+                "system": {"name": "system", "configured_type": "system"},
+                "moonraker": {
+                    "name": "moonraker",
+                    "configured_type": "git_repo",
+                    "version": "v0.10.0",
+                },
+                "klipper": {
+                    "name": "klipper",
+                    "configured_type": "git_repo",
+                    "version": "v0.13.0",
+                },
+                "mainsail": {
+                    "name": "mainsail",
+                    "configured_type": "web",
+                    "version": "v2.14.0",
+                },
+            }
+        },
+    )
+
+    assert status.mcu_count == 2
+    assert status.service_version_count == 3
+    assert status.mcu_statuses == (
+        McuStatus(name="mcu", version="v0.13.0-main", build_versions="gcc 12.2.0"),
+        McuStatus(name="mcu tool_head", version="v0.13.0-tool", build_versions="gcc 12.2.0"),
+    )
+    assert status.service_versions == (
+        ServiceVersionStatus(name="klipper", version="v0.13.0", configured_type="git_repo"),
+        ServiceVersionStatus(name="mainsail", version="v2.14.0", configured_type="web"),
+        ServiceVersionStatus(name="moonraker", version="v0.10.0", configured_type="git_repo"),
+    )
 
 
 def test_printer_status_applies_read_only_temperature_update() -> None:

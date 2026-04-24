@@ -17,6 +17,8 @@ ApplicationWindow {
     property string klippyState: bridgeModel ? bridgeModel.klippyState : "disconnected"
     property string klipperVersion: bridgeModel ? bridgeModel.klipperVersion : "unknown"
     property string moonrakerVersion: bridgeModel ? bridgeModel.moonrakerVersion : "unknown"
+    property var mcuInfos: bridgeModel ? bridgeModel.mcuInfos : []
+    property var serviceVersions: bridgeModel ? bridgeModel.serviceVersions : []
     property int objectCount: bridgeModel ? bridgeModel.objectCount : 0
     property var objectNames: bridgeModel ? bridgeModel.objectNames : []
     property string printState: bridgeModel ? bridgeModel.printState : "standby"
@@ -209,8 +211,8 @@ ApplicationWindow {
                 klippyState: window.klippyState
                 klipperVersion: window.klipperVersion
                 moonrakerVersion: window.moonrakerVersion
-                objectCount: window.objectCount
-                objectNames: window.objectNames
+                mcuInfos: window.mcuInfos
+                serviceVersions: window.serviceVersions
             }
         }
 

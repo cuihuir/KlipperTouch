@@ -311,27 +311,25 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "extruderTarget: window.extruderTarget" in main_qml
 
 
-def test_info_panel_exposes_read_only_object_list() -> None:
+def test_info_panel_exposes_read_only_versions_and_mcu_lists() -> None:
     qml = Path("src/klippertouch/qml/panels/InfoPanel.qml").read_text(encoding="utf-8")
 
-    assert "property var objectNames" in qml
+    assert "property var mcuInfos" in qml
+    assert "property var serviceVersions" in qml
     assert "ListView" in qml
-    assert "model: root.objectNames" in qml
-    assert "text: modelData" in qml
-    assert "clip: true" in qml
-    assert "id: bodyLayout" in qml
-    assert "columns: root.metrics.portrait ? 1 : 2" in qml
-    assert "id: objectList" in qml
-    assert (
-        "Layout.preferredWidth: root.metrics.portrait ? parent.width : parent.width * 0.48"
-        in qml
-    )
-    assert "Layout.alignment: Qt.AlignTop" in qml
+    assert "model: root.mcuInfos" in qml
+    assert "model: root.serviceVersions" in qml
+    assert "No MCU version data" in qml
+    assert "No service version data" in qml
+    assert "MCU information" in qml
+    assert "Service versions" in qml
 
     main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
 
-    assert "property var objectNames:" in main_qml
-    assert "objectNames: window.objectNames" in main_qml
+    assert "property var mcuInfos:" in main_qml
+    assert "property var serviceVersions:" in main_qml
+    assert "mcuInfos: window.mcuInfos" in main_qml
+    assert "serviceVersions: window.serviceVersions" in main_qml
 
 
 def test_main_menu_matches_klipperscreen_split_and_autogrid_contract() -> None:
@@ -600,7 +598,12 @@ def test_info_panel_is_read_only_and_responsive() -> None:
     assert "property string klippyState" in qml
     assert "property string klipperVersion" in qml
     assert "property string moonrakerVersion" in qml
-    assert "property int objectCount" in qml
+    assert "property var mcuInfos" in qml
+    assert "property var serviceVersions" in qml
+    assert "MCU information" in qml
+    assert "Service versions" in qml
+    assert "Moonraker objects" not in qml
+    assert "objectNames" not in qml
     assert "readonly" in qml
     assert "root.metrics.portrait" in qml
     assert "Repeater {" in qml
@@ -623,7 +626,8 @@ def test_main_routes_more_to_read_only_info_panel() -> None:
     assert "klippyState: window.klippyState" in main_qml
     assert "klipperVersion: window.klipperVersion" in main_qml
     assert "moonrakerVersion: window.moonrakerVersion" in main_qml
-    assert "objectCount: window.objectCount" in main_qml
+    assert "mcuInfos: window.mcuInfos" in main_qml
+    assert "serviceVersions: window.serviceVersions" in main_qml
 
 
 def test_move_panel_is_locked_and_responsive() -> None:

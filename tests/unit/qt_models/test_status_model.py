@@ -1,6 +1,11 @@
 from PySide6.QtCore import Qt
 
-from klippertouch.domain.printer import PrinterStatus, TemperatureDeviceStatus
+from klippertouch.domain.printer import (
+    McuStatus,
+    PrinterStatus,
+    ServiceVersionStatus,
+    TemperatureDeviceStatus,
+)
 from klippertouch.qt_models.status_model import StatusModel, TemperatureDeviceListModel
 
 
@@ -11,6 +16,11 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
         klippy_state="ready",
         klipper_version="v0.13.0",
         moonraker_version="v0.10.0",
+        mcu_statuses=(McuStatus(name="mcu", version="v0.13.0-main", build_versions="gcc 12.2.0"),),
+        service_versions=(
+            ServiceVersionStatus(name="klipper", version="v0.13.0", configured_type="git_repo"),
+            ServiceVersionStatus(name="moonraker", version="v0.10.0", configured_type="git_repo"),
+        ),
         objects=("extruder", "heater_bed"),
         temperature_devices=(
             TemperatureDeviceStatus(
@@ -50,6 +60,15 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
     assert model.klippyState == "ready"
     assert model.objectCount == 2
     assert model.objectNames == ["extruder", "heater_bed"]
+    assert model.mcuCount == 1
+    assert model.mcuInfos == [
+        {"name": "mcu", "version": "v0.13.0-main", "build_versions": "gcc 12.2.0"}
+    ]
+    assert model.serviceVersionCount == 2
+    assert model.serviceVersions == [
+        {"name": "klipper", "version": "v0.13.0", "configured_type": "git_repo"},
+        {"name": "moonraker", "version": "v0.10.0", "configured_type": "git_repo"},
+    ]
     assert model.temperatureDeviceCount == 1
     assert model.printState == "printing"
     assert model.printFilename == "cube.gcode"

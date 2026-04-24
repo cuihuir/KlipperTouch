@@ -43,11 +43,37 @@ class TemperatureDeviceStatus:
 
 
 @dataclass(frozen=True)
+class McuStatus:
+    name: str
+    version: str = "unknown"
+    build_versions: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "name", str(self.name))
+        object.__setattr__(self, "version", str(self.version or "unknown"))
+        object.__setattr__(self, "build_versions", str(self.build_versions or ""))
+
+
+@dataclass(frozen=True)
+class ServiceVersionStatus:
+    name: str
+    version: str = "unknown"
+    configured_type: str = "unknown"
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "name", str(self.name))
+        object.__setattr__(self, "version", str(self.version or "unknown"))
+        object.__setattr__(self, "configured_type", str(self.configured_type or "unknown"))
+
+
+@dataclass(frozen=True)
 class PrinterStatus:
     hostname: str = "unknown"
     klippy_state: str = "disconnected"
     klipper_version: str = "unknown"
     moonraker_version: str = "unknown"
+    mcu_statuses: tuple[McuStatus, ...] = ()
+    service_versions: tuple[ServiceVersionStatus, ...] = ()
     objects: tuple[str, ...] = ()
     temperature_devices: tuple[TemperatureDeviceStatus, ...] = ()
     print_state: str = "standby"
@@ -110,6 +136,14 @@ class PrinterStatus:
         return len(self.objects)
 
     @property
+    def mcu_count(self) -> int:
+        return len(self.mcu_statuses)
+
+    @property
+    def service_version_count(self) -> int:
+        return len(self.service_versions)
+
+    @property
     def temperature_device_count(self) -> int:
         return len(self.temperature_devices)
 
@@ -137,6 +171,8 @@ class PrinterStatus:
         printer_info: dict[str, Any],
         objects: dict[str, Any],
         object_status: dict[str, Any] | None = None,
+        mcu_status: dict[str, Any] | None = None,
+        update_status: dict[str, Any] | None = None,
     ) -> "PrinterStatus":
         object_names = tuple(str(item) for item in objects.get("objects", ()))
         return cls(
@@ -144,6 +180,8 @@ class PrinterStatus:
             klippy_state=str(server_info.get("klippy_state", printer_info.get("state", "unknown"))),
             klipper_version=str(printer_info.get("software_version", "unknown")),
             moonraker_version=str(server_info.get("moonraker_version", "unknown")),
+            mcu_statuses=_mcu_statuses_from_probe(mcu_status or {}),
+            service_versions=_service_versions_from_update_status(update_status or {}),
             objects=object_names,
             temperature_devices=_temperature_devices_from_status(object_names, object_status or {}),
             **_print_fields_from_status(object_status or {}),
@@ -226,6 +264,51 @@ def _temperature_devices_from_status(
         if device is not None:
             devices.append(device)
     return tuple(sorted(devices, key=_temperature_device_sort_key))
+
+
+def _mcu_statuses_from_probe(mcu_status: dict[str, Any]) -> tuple[McuStatus, ...]:
+    status = mcu_status.get("status", {})
+    if not isinstance(status, dict):
+        return ()
+
+    mcus: list[McuStatus] = []
+    for name, values in sorted(status.items()):
+        if not isinstance(values, dict):
+            continue
+        mcus.append(
+            McuStatus(
+                name=str(name),
+                version=str(values.get("mcu_version", "unknown")),
+                build_versions=str(values.get("mcu_build_versions", "")),
+            )
+        )
+    return tuple(mcus)
+
+
+def _service_versions_from_update_status(
+    update_status: dict[str, Any],
+) -> tuple[ServiceVersionStatus, ...]:
+    version_info = update_status.get("version_info", {})
+    if not isinstance(version_info, dict):
+        return ()
+
+    services: list[ServiceVersionStatus] = []
+    for key, values in sorted(version_info.items()):
+        if key == "system" or not isinstance(values, dict):
+            continue
+        services.append(
+            ServiceVersionStatus(
+                name=str(values.get("name", key)),
+                version=str(
+                    values.get("version")
+                    or values.get("full_version_string")
+                    or values.get("package_version")
+                    or "unknown"
+                ),
+                configured_type=str(values.get("configured_type", "unknown")),
+            )
+        )
+    return tuple(services)
 
 
 def _temperature_device_sort_key(device: TemperatureDeviceStatus) -> tuple[int, str]:

@@ -4,7 +4,11 @@ from klippertouch.probe import build_status_from_client, status_to_dict
 
 class FakeClient:
     def get_server_info(self):
-        return {"moonraker_version": "v0.10.0", "klippy_state": "ready"}
+        return {
+            "moonraker_version": "v0.10.0",
+            "klippy_state": "ready",
+            "components": ["update_manager", "history"],
+        }
 
     def get_printer_info(self):
         return {"hostname": "orangepi3b", "software_version": "v0.13.0", "state": "ready"}
@@ -12,6 +16,7 @@ class FakeClient:
     def get_objects_list(self):
         return {
             "objects": [
+                "mcu",
                 "extruder",
                 "heater_bed",
                 "print_stats",
@@ -41,12 +46,31 @@ class FakeClient:
             }
         }
 
+    def get_printer_objects_query_fields(self, fields_by_object):
+        assert fields_by_object == {"mcu": "mcu_version,mcu_build_versions"}
+        return {
+            "status": {
+                "mcu": {
+                    "mcu_version": "v0.13.0-main",
+                    "mcu_build_versions": "gcc 12.2.0",
+                }
+            }
+        }
+
+    def get_machine_update_status(self):
+        return {
+            "version_info": {
+                "moonraker": {"name": "moonraker", "version": "v0.10.0"},
+                "klipper": {"name": "klipper", "version": "v0.13.0"},
+            }
+        }
+
 
 def test_build_status_from_client() -> None:
     status = build_status_from_client(FakeClient())
     assert isinstance(status, PrinterStatus)
     assert status.hostname == "orangepi3b"
-    assert status.object_count == 6
+    assert status.object_count == 7
     assert tuple(device.temperature for device in status.temperature_devices) == (24.3, 26.7)
     assert tuple(device.target for device in status.temperature_devices) == (0.0, 60.0)
     assert status.print_state == "printing"
@@ -54,6 +78,8 @@ def test_build_status_from_client() -> None:
     assert status.print_progress == 50.0
     assert status.position_x == 1.1
     assert status.homed_axes == "xyz"
+    assert status.mcu_statuses[0].version == "v0.13.0-main"
+    assert tuple(item.name for item in status.service_versions) == ("klipper", "moonraker")
 
     payload = status_to_dict(status)
 
@@ -61,6 +87,8 @@ def test_build_status_from_client() -> None:
     assert payload["temperature_devices"][0]["temperature"] == 24.3
     assert payload["print_state"] == "printing"
     assert payload["position_x"] == 1.1
+    assert payload["mcu_statuses"][0]["name"] == "mcu"
+    assert payload["service_versions"][0]["name"] == "klipper"
 
 
 def test_build_status_from_client_returns_partial_status_when_optional_probe_fails() -> None:
@@ -77,6 +105,12 @@ def test_build_status_from_client_returns_partial_status_when_optional_probe_fai
         def get_printer_objects_query(self, objects=()):
             raise RuntimeError("query unavailable")
 
+        def get_printer_objects_query_fields(self, fields_by_object):
+            raise RuntimeError("mcu query unavailable")
+
+        def get_machine_update_status(self):
+            raise RuntimeError("update status unavailable")
+
     status = build_status_from_client(PartialClient())
 
     assert status.hostname == "unknown"
@@ -84,3 +118,5 @@ def test_build_status_from_client_returns_partial_status_when_optional_probe_fai
     assert status.moonraker_version == "v0.10.0"
     assert status.objects == ()
     assert status.temperature_devices == ()
+    assert status.mcu_statuses == ()
+    assert status.service_versions == ()
