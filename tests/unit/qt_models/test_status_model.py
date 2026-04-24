@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QSettings, Qt
 
 from klippertouch.domain.printer import (
     McuStatus,
@@ -266,3 +266,115 @@ def test_temperature_device_list_model_toggles_graph_visibility(qtbot) -> None:
         model.toggleGraphDevice("heater_bed")
 
     assert [item["name"] for item in model.graphSeriesModel] == ["extruder"]
+
+
+def test_temperature_device_list_model_persists_graph_visibility_per_host(qtbot, tmp_path) -> None:
+    settings = QSettings(str(tmp_path / "temperature-graph.ini"), QSettings.Format.IniFormat)
+    first_model = TemperatureDeviceListModel(settings=settings)
+    status = PrinterStatus(
+        hostname="toper1",
+        objects=("extruder", "heater_bed"),
+        temperature_devices=(
+            TemperatureDeviceStatus(
+                name="extruder",
+                display_name="Extruder",
+                icon="extruder",
+                temperature=212.0,
+                target=215.0,
+            ),
+            TemperatureDeviceStatus(
+                name="heater_bed",
+                display_name="Heater Bed",
+                icon="bed",
+                temperature=59.0,
+                target=60.0,
+            ),
+        ),
+    )
+    first_model.set_status(status)
+    first_model.initialize_history(
+        {
+            "extruder": {"temperatures": [200.0, 205.0, 210.0]},
+            "heater_bed": {"temperatures": [50.0, 55.0, 58.0]},
+        }
+    )
+
+    with qtbot.waitSignal(first_model.graphSelectionChanged, timeout=1000):
+        first_model.toggleGraphDevice("heater_bed")
+
+    second_model = TemperatureDeviceListModel(settings=settings)
+    second_model.set_status(status)
+    second_model.initialize_history(
+        {
+            "extruder": {"temperatures": [200.0, 205.0, 210.0]},
+            "heater_bed": {"temperatures": [50.0, 55.0, 58.0]},
+        }
+    )
+
+    assert [item["name"] for item in second_model.graphSeriesModel] == ["extruder"]
+
+
+def test_temperature_device_list_model_scopes_graph_visibility_by_host(qtbot, tmp_path) -> None:
+    settings = QSettings(str(tmp_path / "temperature-graph.ini"), QSettings.Format.IniFormat)
+    first_model = TemperatureDeviceListModel(settings=settings)
+    first_model.set_status(
+        PrinterStatus(
+            hostname="printer-a",
+            objects=("extruder", "heater_bed"),
+            temperature_devices=(
+                TemperatureDeviceStatus(
+                    name="extruder",
+                    display_name="Extruder",
+                    icon="extruder",
+                    temperature=212.0,
+                    target=215.0,
+                ),
+                TemperatureDeviceStatus(
+                    name="heater_bed",
+                    display_name="Heater Bed",
+                    icon="bed",
+                    temperature=59.0,
+                    target=60.0,
+                ),
+            ),
+        )
+    )
+    first_model.initialize_history(
+        {
+            "extruder": {"temperatures": [200.0, 205.0, 210.0]},
+            "heater_bed": {"temperatures": [50.0, 55.0, 58.0]},
+        }
+    )
+    first_model.toggleGraphDevice("heater_bed")
+
+    second_model = TemperatureDeviceListModel(settings=settings)
+    second_model.set_status(
+        PrinterStatus(
+            hostname="printer-b",
+            objects=("extruder", "heater_bed"),
+            temperature_devices=(
+                TemperatureDeviceStatus(
+                    name="extruder",
+                    display_name="Extruder",
+                    icon="extruder",
+                    temperature=212.0,
+                    target=215.0,
+                ),
+                TemperatureDeviceStatus(
+                    name="heater_bed",
+                    display_name="Heater Bed",
+                    icon="bed",
+                    temperature=59.0,
+                    target=60.0,
+                ),
+            ),
+        )
+    )
+    second_model.initialize_history(
+        {
+            "extruder": {"temperatures": [200.0, 205.0, 210.0]},
+            "heater_bed": {"temperatures": [50.0, 55.0, 58.0]},
+        }
+    )
+
+    assert [item["name"] for item in second_model.graphSeriesModel] == ["extruder", "heater_bed"]

@@ -25,8 +25,8 @@ Rectangle {
         if (series.length === 1) {
             ctx.beginPath()
             ctx.arc(
-                plotArea.x + plotArea.width * 0.5,
-                plotArea.y + plotArea.height * root.normalizeTemperature(series[0]),
+                plotArea.width * 0.5,
+                plotArea.height * root.normalizeTemperature(series[0]),
                 Math.max(3, Math.round(root.fontSize * 0.22)),
                 0,
                 Math.PI * 2
@@ -37,8 +37,8 @@ Rectangle {
         }
         ctx.beginPath()
         for (var i = 0; i < series.length; i += 1) {
-            var x = plotArea.x + plotArea.width * i / Math.max(1, series.length - 1)
-            var y = plotArea.y + plotArea.height * root.normalizeTemperature(series[i])
+            var x = plotArea.width * i / Math.max(1, series.length - 1)
+            var y = plotArea.height * root.normalizeTemperature(series[i])
             if (i === 0) {
                 ctx.moveTo(x, y)
             } else {

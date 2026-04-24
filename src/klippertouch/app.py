@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import QUrl
+from PySide6.QtCore import QSettings, QUrl
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtWidgets import QApplication
 
@@ -45,6 +45,9 @@ def run_app(
     file_refresh_client: MoonrakerClient | None = None,
 ) -> int:
     app = QApplication(argv or [])
+    app.setOrganizationName("KlipperTouch")
+    app.setApplicationName("KlipperTouch")
+    QSettings.setDefaultFormat(QSettings.Format.IniFormat)
     engine = QQmlApplicationEngine()
     status_model, temperature_device_model = create_status_models(
         initial_status,

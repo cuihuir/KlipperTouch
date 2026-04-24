@@ -146,6 +146,8 @@ def test_fake_temperature_graph_matches_heater_graph_structure() -> None:
     assert "maxTemperatureLabel" in qml
     assert "midTemperatureLabel" in qml
     assert "baseTemperatureLabel" in qml
+    assert "plotArea.x +" not in qml
+    assert "plotArea.y +" not in qml
 
 
 def test_shell_has_responsive_orientation_hooks() -> None:

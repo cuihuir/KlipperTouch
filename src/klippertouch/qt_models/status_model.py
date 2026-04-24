@@ -5,6 +5,7 @@ from PySide6.QtCore import (
     QModelIndex,
     QObject,
     QPersistentModelIndex,
+    QSettings,
     Qt,
     Signal,
     Slot,
@@ -27,20 +28,28 @@ class TemperatureDeviceListModel(QAbstractListModel):
     TARGET_ROLE = int(Qt.ItemDataRole.UserRole) + 5
     GRAPH_VISIBLE_ROLE = int(Qt.ItemDataRole.UserRole) + 6
 
-    def __init__(self) -> None:
+    def __init__(self, settings: QSettings | None = None) -> None:
         super().__init__()
         self._devices: tuple[TemperatureDeviceStatus, ...] = ()
         self._history: dict[str, list[float]] = {}
         self._graph_visible: dict[str, bool] = {}
         self._history_limit = 60
+        self._settings = (
+            settings if settings is not None else QSettings("KlipperTouch", "KlipperTouch")
+        )
+        self._settings_scope: str | None = None
 
     def set_status(self, status: PrinterStatus) -> None:
+        scope = _graph_scope_for_status(status)
+        if scope != self._settings_scope:
+            self._settings_scope = scope
+            self._graph_visible = self._load_graph_visibility()
         self.beginResetModel()
         self._devices = status.temperature_devices
         self.endResetModel()
         history_changed = False
         for device in self._devices:
-            self._graph_visible.setdefault(device.name, True)
+            self._ensure_graph_visibility_default(device.name)
             values = self._history.setdefault(device.name, [])
             if device.temperature is None:
                 continue
@@ -148,6 +157,7 @@ class TemperatureDeviceListModel(QAbstractListModel):
         if row < 0:
             return
         self._graph_visible[name] = not self._graph_visible.get(name, True)
+        self._persist_graph_visibility(name)
         index = self.index(row, 0)
         self.dataChanged.emit(index, index, [self.GRAPH_VISIBLE_ROLE])
         self.graphSelectionChanged.emit()
@@ -162,6 +172,30 @@ class TemperatureDeviceListModel(QAbstractListModel):
                 return self._history.get(device.name, [])
         return []
 
+    def _ensure_graph_visibility_default(self, name: str) -> None:
+        if name in self._graph_visible:
+            return
+        self._graph_visible[name] = True
+        self._persist_graph_visibility(name)
+
+    def _load_graph_visibility(self) -> dict[str, bool]:
+        if self._settings_scope is None:
+            return {}
+        self._settings.beginGroup(f"temperature_graph/{self._settings_scope}")
+        values: dict[str, bool] = {}
+        for key in self._settings.childKeys():
+            values[key] = bool(self._settings.value(key, True, type=bool))
+        self._settings.endGroup()
+        return values
+
+    def _persist_graph_visibility(self, name: str) -> None:
+        if self._settings_scope is None:
+            return
+        self._settings.beginGroup(f"temperature_graph/{self._settings_scope}")
+        self._settings.setValue(name, self._graph_visible.get(name, True))
+        self._settings.endGroup()
+        self._settings.sync()
+
 
 def _graph_color_for_device(name: str, index: int) -> str:
     if name == "extruder" or name.startswith("extruder"):
@@ -170,6 +204,13 @@ def _graph_color_for_device(name: str, index: int) -> str:
         return "#d46900"
     palette = ("#007db4", "#849900", "#7f5af0", "#26a69a", "#f4b400", "#ef6c00")
     return palette[index % len(palette)]
+
+
+def _graph_scope_for_status(status: PrinterStatus) -> str | None:
+    hostname = status.hostname.strip()
+    if not hostname or hostname == "unknown":
+        return None
+    return hostname
 
 
 class StatusModel(QObject):
