@@ -27,6 +27,8 @@ DEFAULT_PANELS = (
     "extrude",
     "more",
     "system",
+    "network",
+    "logs",
 )
 SAMPLE_FILES = (
     {

@@ -349,8 +349,14 @@ def test_more_menu_panel_uses_icon_list_entry_model() -> None:
     assert 'ListElement { tileLabel: "More"; tileIcon: "settings"' in main_model_qml
     assert 'panelName: "more"' in main_model_qml
     assert 'panelName: "system"' not in main_model_qml
+    assert 'panelName: "network"' not in main_model_qml
+    assert 'panelName: "logs"' not in main_model_qml
     assert 'ListElement { tileLabel: "System"; tileIcon: "settings"' in model_qml
+    assert 'ListElement { tileLabel: "Network"; tileIcon: "main"' in model_qml
+    assert 'ListElement { tileLabel: "Logs"; tileIcon: "printer"' in model_qml
     assert 'panelName: "system"' in model_qml
+    assert 'panelName: "network"' in model_qml
+    assert 'panelName: "logs"' in model_qml
     assert 'ListElement { tileLabel: "System"' in model_qml
 
 
@@ -645,8 +651,14 @@ def test_main_routes_more_to_read_only_info_panel() -> None:
     assert "return moreMenuComponent" in main_qml
     assert 'case "system":' in main_qml
     assert "return infoComponent" in main_qml
+    assert 'case "network":' in main_qml
+    assert 'case "logs":' in main_qml
+    assert "title: window.panelTitles[window.currentPanel]" in main_qml
+    assert "iconName: window.panelIcons[window.currentPanel]" in main_qml
     assert '"more": "More"' in main_qml
     assert '"system": "System"' in main_qml
+    assert '"network": "Network"' in main_qml
+    assert '"logs": "Logs"' in main_qml
     assert "InfoPanel {" in main_qml
     assert "MoreMenuPanel {" in main_qml
     assert "hostname: window.hostname" in main_qml
@@ -655,6 +667,16 @@ def test_main_routes_more_to_read_only_info_panel() -> None:
     assert "moonrakerVersion: window.moonrakerVersion" in main_qml
     assert "mcuInfos: window.mcuInfos" in main_qml
     assert "serviceVersions: window.serviceVersions" in main_qml
+
+
+def test_main_routes_network_and_logs_to_safe_placeholder_panels() -> None:
+    main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
+
+    assert 'case "network":' in main_qml
+    assert 'case "logs":' in main_qml
+    assert "return placeholderComponent" in main_qml
+    assert '"network": "main"' in main_qml
+    assert '"logs": "printer"' in main_qml
 
 
 def test_move_panel_is_locked_and_responsive() -> None:
