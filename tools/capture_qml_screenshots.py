@@ -29,6 +29,8 @@ DEFAULT_PANELS = (
     "system",
     "network",
     "logs",
+    "language",
+    "update",
 )
 SAMPLE_FILES = (
     {

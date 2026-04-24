@@ -45,8 +45,8 @@ ApplicationWindow {
     property real extruderTarget: bridgeModel ? bridgeModel.extruderTarget : 0
     property string currentPanel: "main"
     property var panelStack: ["main"]
-    property var panelTitles: ({"main": "Home", "move": "Move", "temperature": "Temperature", "extrude": "Extrude", "more": "More", "system": "System", "network": "Network", "logs": "Logs", "print": "Print", "job_status": "Job Status"})
-    property var panelIcons: ({"main": "main", "move": "move", "temperature": "heat-up", "extrude": "extrude", "more": "settings", "system": "settings", "network": "main", "logs": "printer", "print": "printer", "job_status": "printer"})
+    property var panelTitles: ({"main": "Home", "move": "Move", "temperature": "Temperature", "extrude": "Extrude", "more": "More", "system": "System", "network": "Network", "logs": "Logs", "language": "Language", "update": "Update", "print": "Print", "job_status": "Job Status"})
+    property var panelIcons: ({"main": "main", "move": "move", "temperature": "heat-up", "extrude": "extrude", "more": "settings", "system": "settings", "network": "main", "logs": "printer", "language": "settings", "update": "printer", "print": "printer", "job_status": "printer"})
 
     function shouldAutoEnterJobStatus() {
         return window.printState === "printing" || window.printState === "paused"
@@ -109,6 +109,10 @@ ApplicationWindow {
         case "network":
             return placeholderComponent
         case "logs":
+            return placeholderComponent
+        case "language":
+            return placeholderComponent
+        case "update":
             return placeholderComponent
         case "move":
             return moveComponent

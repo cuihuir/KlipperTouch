@@ -354,6 +354,10 @@ def test_more_menu_panel_uses_icon_list_entry_model() -> None:
     assert 'ListElement { tileLabel: "System"; tileIcon: "settings"' in model_qml
     assert 'ListElement { tileLabel: "Network"; tileIcon: "main"' in model_qml
     assert 'ListElement { tileLabel: "Logs"; tileIcon: "printer"' in model_qml
+    assert 'ListElement { tileLabel: "Language"; tileIcon: "settings"' in model_qml
+    assert 'ListElement { tileLabel: "Update"; tileIcon: "printer"' in model_qml
+    assert 'panelName: "language"' in model_qml
+    assert 'panelName: "update"' in model_qml
     assert 'panelName: "system"' in model_qml
     assert 'panelName: "network"' in model_qml
     assert 'panelName: "logs"' in model_qml
@@ -653,6 +657,10 @@ def test_main_routes_more_to_read_only_info_panel() -> None:
     assert "return infoComponent" in main_qml
     assert 'case "network":' in main_qml
     assert 'case "logs":' in main_qml
+    assert 'case "language":' in main_qml
+    assert 'case "update":' in main_qml
+    assert '"language": "Language"' in main_qml
+    assert '"update": "Update"' in main_qml
     assert "title: window.panelTitles[window.currentPanel]" in main_qml
     assert "iconName: window.panelIcons[window.currentPanel]" in main_qml
     assert '"more": "More"' in main_qml
@@ -674,6 +682,10 @@ def test_main_routes_network_and_logs_to_safe_placeholder_panels() -> None:
 
     assert 'case "network":' in main_qml
     assert 'case "logs":' in main_qml
+    assert 'case "language":' in main_qml
+    assert 'case "update":' in main_qml
+    assert '"language": "settings"' in main_qml
+    assert '"update": "printer"' in main_qml
     assert "return placeholderComponent" in main_qml
     assert '"network": "main"' in main_qml
     assert '"logs": "printer"' in main_qml

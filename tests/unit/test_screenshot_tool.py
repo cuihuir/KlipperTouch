@@ -14,6 +14,8 @@ def test_screenshot_tool_captures_common_panels_and_sizes() -> None:
     assert '"system"' in source
     assert '"network"' in source
     assert '"logs"' in source
+    assert '"language"' in source
+    assert '"update"' in source
     assert '"job_status"' in source
     assert "root.grabWindow()" in source
     assert "QT_QPA_PLATFORM" in source
