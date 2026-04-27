@@ -254,6 +254,42 @@ def test_gcode_file_list_model_tracks_read_only_selected_file(qtbot) -> None:
     assert model.selectedDisplayName == ""
 
 
+def test_gcode_file_list_model_auto_selects_first_visible_file(qtbot) -> None:
+    model = GCodeFileListModel()
+
+    with qtbot.waitSignal(model.selectedPathChanged, timeout=1000):
+        model.set_files(
+            (
+                GCodeFile(
+                    path="calibration/flow.gcode",
+                    display_name="flow.gcode",
+                    size=1024,
+                ),
+                GCodeFile(path="cube.gcode", display_name="cube.gcode", size=2048),
+            )
+        )
+
+    assert model.selectedPath == "cube.gcode"
+    assert model.selectedDisplayName == "cube.gcode"
+
+
+def test_gcode_file_list_model_reselects_when_filter_hides_selection(qtbot) -> None:
+    model = GCodeFileListModel()
+    model.set_files(
+        (
+            GCodeFile(path="alpha.gcode", display_name="alpha.gcode", size=1024),
+            GCodeFile(path="beta.gcode", display_name="beta.gcode", size=2048),
+        )
+    )
+
+    assert model.selectedPath == "alpha.gcode"
+
+    with qtbot.waitSignal(model.selectedPathChanged, timeout=1000):
+        model.setFilterText("beta")
+
+    assert model.selectedPath == "beta.gcode"
+
+
 def test_gcode_file_list_model_clears_selected_file_when_snapshot_removes_it(qtbot) -> None:
     model = GCodeFileListModel()
     model.set_files(

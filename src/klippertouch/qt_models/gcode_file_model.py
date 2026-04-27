@@ -53,6 +53,7 @@ class GCodeFileListModel(QAbstractListModel):
         files = _preserve_loaded_thumbnails(files, self._files)
         if files == self._files:
             return
+        previous_selection = self._selected_path
         self.beginResetModel()
         self._files = files
         self._entries = browser_entries_for_directory(
@@ -62,13 +63,9 @@ class GCodeFileListModel(QAbstractListModel):
             filter_text=self._filter_text,
             sort_descending=self._sort_descending,
         )
-        selection_removed = bool(self._selected_path) and self._file_for_name(
-            self._selected_path
-        ) is None
-        if selection_removed:
-            self._selected_path = ""
+        self._selected_path = self._selection_for_visible_entries()
         self.endResetModel()
-        if selection_removed:
+        if self._selected_path != previous_selection:
             self.selectedPathChanged.emit()
 
     @Property(str, notify=currentPathChanged)
@@ -253,6 +250,7 @@ class GCodeFileListModel(QAbstractListModel):
             self.selectedPathChanged.emit()
 
     def _reset_entries(self) -> None:
+        previous_selection = self._selected_path
         self.beginResetModel()
         self._entries = browser_entries_for_directory(
             self._files,
@@ -261,7 +259,10 @@ class GCodeFileListModel(QAbstractListModel):
             filter_text=self._filter_text,
             sort_descending=self._sort_descending,
         )
+        self._selected_path = self._selection_for_visible_entries()
         self.endResetModel()
+        if self._selected_path != previous_selection:
+            self.selectedPathChanged.emit()
 
     @Slot(str, result=str)
     def fileSizeLabelFor(self, filename: str) -> str:  # noqa: N802
@@ -352,6 +353,17 @@ class GCodeFileListModel(QAbstractListModel):
             if entry.path == path:
                 return row
         return -1
+
+    def _selection_for_visible_entries(self) -> str:
+        if self._selected_path and any(
+            entry.path == self._selected_path and not entry.is_directory
+            for entry in self._entries
+        ):
+            return self._selected_path
+        for entry in self._entries:
+            if not entry.is_directory:
+                return entry.path
+        return ""
 
 
 def _normalized_file_snapshot(files: tuple[GCodeFile, ...]) -> tuple[GCodeFile, ...]:

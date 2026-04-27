@@ -38,3 +38,8 @@ def test_screenshot_tool_captures_common_panels_and_sizes() -> None:
     assert "write_index" in source
     assert "index.html" in source
     assert "--no-index" in source
+    assert "--job-detail-pages" in source
+    assert "JOB_DETAIL_PAGES" in source
+    assert "_set_job_status_detail_page" in source
+    assert 'panel.setProperty("detailPage", page)' in source
+    assert 'f"{panel}_{detail_page}"' in source

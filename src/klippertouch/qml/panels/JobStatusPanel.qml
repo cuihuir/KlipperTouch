@@ -5,6 +5,7 @@ import "../Theme.js" as Theme
 
 Item {
     id: root
+    objectName: "jobStatusPanel"
     required property var metrics
     property string printState: "standby"
     property string printFilename: ""
@@ -31,6 +32,28 @@ Item {
     signal speedFactorAdjustRequested(real delta)
     signal extrudeFactorAdjustRequested(real delta)
     signal objectExcludeRequested(string objectName)
+
+    component JobButton: Button {
+        id: controlRoot
+        property color accent: Theme.color4
+
+        contentItem: Label {
+            color: controlRoot.enabled ? Theme.text : Theme.mutedText
+            text: controlRoot.text
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            elide: Text.ElideRight
+            font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.88))
+        }
+
+        background: Rectangle {
+            color: controlRoot.enabled ? "#101617" : "#151a1b"
+            border.color: controlRoot.enabled ? controlRoot.accent : "#263233"
+            border.width: controlRoot.enabled ? 2 : 1
+            radius: Math.round(root.metrics.fontSize * 0.32)
+            opacity: controlRoot.enabled ? 1.0 : 0.72
+        }
+    }
 
     function durationLabel(seconds) {
         var safeSeconds = Math.max(0, Math.round(seconds))
@@ -334,7 +357,7 @@ Item {
                 rowSpacing: root.metrics.gap
                 columnSpacing: root.metrics.gap
 
-                Button {
+                JobButton {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     text: root.primaryActionLabel()
@@ -343,16 +366,17 @@ Item {
                     ToolTip.text: root.readonlyActionHint(text)
                 }
 
-                Button {
+                JobButton {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     text: "Cancel"
+                    accent: "#d8615b"
                     enabled: false
                     ToolTip.visible: hovered
                     ToolTip.text: root.readonlyActionHint(text)
                 }
 
-                Button {
+                JobButton {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     text: "Skip Object"
@@ -362,7 +386,7 @@ Item {
                     onClicked: root.detailPage = "exclude"
                 }
 
-                Button {
+                JobButton {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     text: "Advanced"
@@ -516,6 +540,10 @@ Item {
                 spacing: root.metrics.gap
 
                 Repeater {
+                    id: advancedControlRepeater
+                    Layout.minimumHeight: 0
+                    Layout.preferredHeight: 0
+                    Layout.maximumHeight: 0
                     model: [
                         {
                             "label": "Z offset",
@@ -591,7 +619,7 @@ Item {
                                     {"text": modelData.plus, "delta": modelData.positiveDelta}
                                 ]
 
-                                Button {
+                                JobButton {
                                     Layout.preferredWidth: Math.max(74, Math.round(root.metrics.fontSize * 5.2))
                                     Layout.fillHeight: true
                                     text: modelData.text
@@ -610,59 +638,12 @@ Item {
                     }
                 }
 
-                GridLayout {
+                Item {
+                    id: advancedPageSpacer
                     Layout.fillWidth: true
-                    Layout.preferredHeight: Math.max(80, Math.round(root.metrics.fontSize * 5.4))
-                    columns: root.metrics.portrait ? 1 : 3
-                    rowSpacing: root.metrics.gap
-                    columnSpacing: root.metrics.gap
-
-                    Repeater {
-                        model: [
-                            {"label": "Requested speed", "value": root.speedLabel(root.requestedSpeed)},
-                            {"label": "Max accel", "value": root.accelLabel()},
-                            {"label": "Max velocity", "value": root.speedLabel(root.maxVelocity)}
-                        ]
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            color: "#0b1112"
-                            border.color: "#263233"
-                            border.width: 1
-                            radius: Math.round(root.metrics.fontSize * 0.32)
-
-                            ColumnLayout {
-                                anchors.fill: parent
-                                anchors.margins: root.metrics.gap
-                                spacing: 0
-
-                                Label {
-                                    Layout.fillWidth: true
-                                    color: Theme.mutedText
-                                    text: modelData.label
-                                    font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
-                                }
-
-                                Label {
-                                    Layout.fillWidth: true
-                                    color: Theme.text
-                                    text: modelData.value
-                                    elide: Text.ElideRight
-                                    font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
-                                }
-                            }
-                        }
-                    }
+                    Layout.fillHeight: true
                 }
 
-                Label {
-                    Layout.fillWidth: true
-                    color: Theme.mutedText
-                    text: "Buttons emit adjustment requests only; Moonraker control commands are intentionally not connected yet."
-                    wrapMode: Text.WordWrap
-                    font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
-                }
             }
 
             ColumnLayout {
@@ -752,7 +733,7 @@ Item {
                                 }
                             }
 
-                            Button {
+                            JobButton {
                                 Layout.preferredWidth: Math.max(112, Math.round(root.metrics.fontSize * 7.8))
                                 Layout.fillHeight: true
                                 text: "Skip"
@@ -763,13 +744,6 @@ Item {
                     }
                 }
 
-                Label {
-                    Layout.fillWidth: true
-                    color: Theme.mutedText
-                    text: "Skip buttons emit objectExcludeRequested only; Moonraker exclude commands are intentionally not connected yet."
-                    wrapMode: Text.WordWrap
-                    font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
-                }
             }
         }
     }

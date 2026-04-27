@@ -159,6 +159,7 @@ ApplicationWindow {
 
         Loader {
             id: panelLoader
+            objectName: "panelLoader"
             anchors.fill: parent
             sourceComponent: window.componentForPanel(window.currentPanel)
         }

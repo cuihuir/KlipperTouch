@@ -281,6 +281,7 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     qml = Path("src/klippertouch/qml/panels/JobStatusPanel.qml").read_text(encoding="utf-8")
 
     assert "property string printState" in qml
+    assert 'objectName: "jobStatusPanel"' in qml
     assert "property string printFilename" in qml
     assert "property real printProgress" in qml
     assert "property string printMessage" in qml
@@ -333,6 +334,9 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "Printer error" in qml
     assert "Remaining" in qml
     assert "id: jobActionGrid" in qml
+    assert "component JobButton: Button" in qml
+    assert "background: Rectangle" in qml
+    assert "color: controlRoot.enabled ? \"#101617\" : \"#151a1b\"" in qml
     assert "root.primaryActionLabel()" in qml
     assert 'root.printState === "paused" ? "Resume" : "Pause"' in qml
     assert 'text: "Cancel"' in qml
@@ -363,6 +367,9 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "signal zOffsetAdjustRequested(real delta)" in qml
     assert "signal speedFactorAdjustRequested(real delta)" in qml
     assert "signal extrudeFactorAdjustRequested(real delta)" in qml
+    assert "id: advancedControlRepeater" in qml
+    assert "Layout.maximumHeight: 0" in qml
+    assert "id: advancedPageSpacer" in qml
     assert "root.zOffsetAdjustRequested(modelData.delta)" in qml
     assert "root.speedFactorAdjustRequested(modelData.delta)" in qml
     assert "root.extrudeFactorAdjustRequested(modelData.delta)" in qml
@@ -370,6 +377,9 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert '"plus": "+0.05"' in qml
     assert '"minus": "-5%"' in qml
     assert '"plus": "+5%"' in qml
+    assert "Buttons emit adjustment requests only" not in qml
+    assert "Requested speed" not in qml
+    assert "Skip buttons emit objectExcludeRequested only" not in qml
     assert "printer.print.pause" not in qml
     assert "printer.print.cancel" not in qml
     assert "exclude_object" not in qml
@@ -573,6 +583,7 @@ def test_action_bar_requests_safe_local_navigation() -> None:
     assert "break" in shell_qml
     assert "function goBack()" in main_qml
     assert "id: panelLoader" in main_qml
+    assert 'objectName: "panelLoader"' in main_qml
     assert 'typeof panelLoader.item.goBack === "function"' in main_qml
     assert "if (panelLoader.item.goBack())" in main_qml
     assert "onBackRequested: window.goBack()" in main_qml

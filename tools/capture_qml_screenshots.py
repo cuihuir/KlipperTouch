@@ -9,7 +9,7 @@ import os
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import QUrl
+from PySide6.QtCore import QObject, QUrl
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuick import QQuickWindow  # noqa: F401
@@ -37,6 +37,7 @@ DEFAULT_PANELS = (
     "language",
     "update",
 )
+JOB_DETAIL_PAGES = ("summary", "advanced", "exclude")
 SAMPLE_FILES = (
     {
         "path": "OrcaCube_PLA_27m41s.gcode",
@@ -169,6 +170,7 @@ def capture(
     sample_files: bool = False,
     sample_status: bool = False,
     sample_state: str = "printing",
+    job_detail_pages: tuple[str, ...] = (),
 ) -> list[Path]:
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     app = QGuiApplication.instance() or QGuiApplication([])
@@ -211,12 +213,33 @@ def capture(
             root.setProperty("panelStack", [panel])
             root.setProperty("currentPanel", panel)
             app.processEvents()
-            image = root.grabWindow()
-            target = output_dir / f"{panel}-{width}x{height}.png"
-            if not image.save(str(target)):
-                raise RuntimeError(f"Failed to save screenshot {target}")
-            captured.append(target)
+            for detail_page in _detail_pages_for_panel(panel, job_detail_pages):
+                if detail_page:
+                    _set_job_status_detail_page(root, detail_page)
+                    app.processEvents()
+                image = root.grabWindow()
+                target_name = f"{panel}_{detail_page}" if detail_page else panel
+                target = output_dir / f"{target_name}-{width}x{height}.png"
+                if not image.save(str(target)):
+                    raise RuntimeError(f"Failed to save screenshot {target}")
+                captured.append(target)
     return captured
+
+
+def _detail_pages_for_panel(panel: str, job_detail_pages: tuple[str, ...]) -> tuple[str, ...]:
+    if panel != "job_status" or not job_detail_pages:
+        return ("",)
+    return job_detail_pages
+
+
+def _set_job_status_detail_page(root: QObject, page: str) -> None:
+    panel = root.findChild(QObject, "jobStatusPanel")
+    if panel is None:
+        loader = root.findChild(QObject, "panelLoader")
+        panel = loader.property("item") if loader is not None else None
+    if panel is None:
+        raise RuntimeError("Failed to find jobStatusPanel for detail screenshot")
+    panel.setProperty("detailPage", page)
 
 
 def write_index(output_dir: Path, captured: list[Path]) -> Path:
@@ -303,6 +326,13 @@ def main(argv: list[str] | None = None) -> int:
         help="Choose the sample print state used with --sample-status.",
     )
     parser.add_argument(
+        "--job-detail-pages",
+        nargs="+",
+        choices=JOB_DETAIL_PAGES,
+        default=(),
+        help="Capture specific Job Status subpages, for example summary advanced exclude.",
+    )
+    parser.add_argument(
         "--no-index",
         action="store_true",
         help="Do not write index.html next to the captured screenshots.",
@@ -317,6 +347,7 @@ def main(argv: list[str] | None = None) -> int:
         sample_files=args.sample_files,
         sample_status=args.sample_status,
         sample_state=args.sample_state,
+        job_detail_pages=tuple(args.job_detail_pages),
     )
     if not args.no_index:
         print(write_index(args.output, captured))
