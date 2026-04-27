@@ -390,7 +390,7 @@ def test_printer_status_populates_read_only_toolhead_position() -> None:
                 },
                 "gcode_move": {
                     "gcode_position": [10.1, 20.2, 30.3, 40.4],
-                    "speed": 125.0,
+                    "speed": 7500.0,
                     "speed_factor": 1.5,
                     "extrude_factor": 0.95,
                     "homing_origin": [0.0, 0.0, -0.04],
@@ -420,7 +420,7 @@ def test_printer_status_applies_read_only_toolhead_update() -> None:
             "toolhead": {"homed_axes": "xy", "max_accel": 2400.0, "max_velocity": 180.0},
             "gcode_move": {
                 "gcode_position": [11.0, 22.0, 33.0, 44.0],
-                "speed": 90.0,
+                "speed": 5400.0,
                 "speed_factor": 0.8,
                 "extrude_factor": 1.1,
                 "homing_origin": [0.0, 0.0, 0.12],

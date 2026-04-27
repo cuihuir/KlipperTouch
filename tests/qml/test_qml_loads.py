@@ -296,6 +296,11 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "property real zOffset" in qml
     assert "property real maxAccel" in qml
     assert "property real maxVelocity" in qml
+    assert "property real positionX" in qml
+    assert "property real positionY" in qml
+    assert "property real positionZ" in qml
+    assert "property real positionE" in qml
+    assert "property string homedAxes" in qml
     assert "property var temperatureModel: null" in qml
     assert "property var fileModel: null" in qml
     assert "property var excludeObjectNames: []" in qml
@@ -307,8 +312,16 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "root.fileModel.filePathFor(root.printFilename)" in qml
     assert "root.fileModel.filePreviewThumbnailUrlFor(root.printFilename)" in qml
     assert "root.fileModel.thumbnailRevision" in qml
+    assert "root.fileModel.metadataRevision" in qml
+    assert "root.fileModel.fileEstimatedTimeLabelFor(root.printFilename)" in qml
+    assert "root.fileModel.fileFilamentTotalLabelFor(root.printFilename)" in qml
+    assert "root.fileModel.fileObjectHeightLabelFor(root.printFilename)" in qml
+    assert "root.fileModel.fileLayerHeightLabelFor(root.printFilename)" in qml
     assert "id: jobThumbnail" in qml
     assert "source: root.fileModel && root.fileModel.thumbnailRevision >= 0" in qml
+    assert "id: thumbnailFrame" in qml
+    assert "id: thumbnailPlaceholder" in qml
+    assert "visible: !jobThumbnail.visible" in qml
     assert "File size" in qml
     assert "Modified" in qml
     assert "Path" in qml
@@ -348,6 +361,21 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "function jobActionButtonWidth()" in qml
     assert "gradient: Gradient" in qml
     assert "id: statusPill" in qml
+    assert "id: jobHeroLayout" in qml
+    assert "id: compactProgressBox" in qml
+    assert "function jobHeroHeight()" in qml
+    assert "function temperatureStripHeight()" in qml
+    assert "function quickInfoLimit()" in qml
+    assert "function detailTitle()" in qml
+    assert "function detailInfoModel(page)" in qml
+    assert "function positionLabel()" in qml
+    assert "Layout.preferredHeight: root.jobHeroHeight()" in qml
+    assert "Layout.preferredHeight: root.temperatureStripHeight()" in qml
+    assert "root.summaryInfoModel().slice(0, root.quickInfoLimit())" in qml
+    assert "return Math.max(146" in qml
+    assert "root.metrics.portrait && root.temperatureModel" in qml
+    assert "root.metrics.portrait ? 6 : 8" in qml
+    assert "Layout.maximumWidth: Math.max(160" in qml
     assert "id: progressRail" in qml
     assert "id: progressFill" in qml
     assert 'iconText: "||"' in qml
@@ -356,7 +384,7 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert 'iconText: "ADV"' in qml
     assert 'buttonRole: "danger"' in qml
     assert "background: Rectangle" in qml
-    assert "color: controlRoot.enabled ? \"#101617\" : \"#151a1b\"" in qml
+    assert 'color: controlRoot.enabled ? "#263033" : "#151a1b"' in qml
     assert "implicitHeight: root.jobButtonHeight" in qml
     assert "Layout.preferredHeight: root.jobActionGridHeight()" in qml
     assert "Layout.preferredWidth: root.jobActionGridWidth()" in qml
@@ -406,16 +434,33 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert '"minus": "-5%"' in qml
     assert '"plus": "+5%"' in qml
     assert "Buttons emit adjustment requests only" not in qml
-    assert "Requested speed" not in qml
     assert "Skip buttons emit objectExcludeRequested only" not in qml
     assert "printer.print.pause" not in qml
     assert "printer.print.cancel" not in qml
     assert "exclude_object" not in qml
     assert "root.percentLabel(root.speedFactor)" in qml
     assert "root.zOffsetLabel()" in qml
-    assert "id: cardGrid" in qml
-    assert "ScrollBar.vertical: ScrollBar" in qml
-    assert "policy: ScrollBar.AsNeeded" in qml
+    assert '"target": "time"' in qml
+    assert '"target": "motion"' in qml
+    assert '"target": "extrusion"' in qml
+    assert 'onClicked: root.detailPage = modelData.target' in qml
+    assert "id: detailInfoPage" in qml
+    assert "id: detailInfoGrid" in qml
+    assert 'root.detailPage === "time"' in qml
+    assert 'root.detailPage === "motion"' in qml
+    assert 'root.detailPage === "extrusion"' in qml
+    assert '"label": "Requested speed"' in qml
+    assert '"label": "Max acceleration"' in qml
+    assert '"label": "X position"' in qml
+    assert '"label": "Y position"' in qml
+    assert '"label": "Z position"' in qml
+    assert '"label": "Homed axes"' in qml
+    assert '"label": "Filament used"' in qml
+    assert '"label": "Flow factor"' in qml
+    assert "id: quickInfoGrid" in qml
+    assert "function summaryInfoModel()" in qml
+    assert "root.summaryInfoModel()" in qml
+    assert "id: cardGrid" not in qml
     assert "#ed3c63" not in qml
     assert "#28a7df" not in qml
     assert "#007db4" not in qml
@@ -807,6 +852,11 @@ def test_main_keeps_files_and_job_status_as_separate_routes() -> None:
     assert "filamentUsed: window.filamentUsed" in main_qml
     assert "currentLayer: window.currentLayer" in main_qml
     assert "totalLayers: window.totalLayers" in main_qml
+    assert "positionX: window.positionX" in main_qml
+    assert "positionY: window.positionY" in main_qml
+    assert "positionZ: window.positionZ" in main_qml
+    assert "positionE: window.positionE" in main_qml
+    assert "homedAxes: window.homedAxes" in main_qml
     assert "requestedSpeed: window.requestedSpeed" in main_qml
     assert "speedFactor: window.speedFactor" in main_qml
     assert "extrudeFactor: window.extrudeFactor" in main_qml

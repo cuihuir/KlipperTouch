@@ -551,7 +551,7 @@ def _toolhead_fields_from_status(object_status: dict[str, Any]) -> ToolheadStatu
     if "homed_axes" in toolhead:
         fields["homed_axes"] = str(toolhead["homed_axes"])
     if "speed" in gcode_move:
-        fields["requested_speed"] = _optional_float(gcode_move["speed"]) or 0.0
+        fields["requested_speed"] = _feedrate_to_speed(gcode_move["speed"])
     if "speed_factor" in gcode_move:
         fields["speed_factor"] = _factor_to_percent(gcode_move["speed_factor"])
     if "extrude_factor" in gcode_move:
@@ -564,6 +564,13 @@ def _toolhead_fields_from_status(object_status: dict[str, Any]) -> ToolheadStatu
     if "max_velocity" in toolhead:
         fields["max_velocity"] = _optional_float(toolhead["max_velocity"]) or 0.0
     return fields
+
+
+def _feedrate_to_speed(value: Any) -> float:
+    feedrate = _optional_float(value)
+    if feedrate is None:
+        return 0.0
+    return max(0.0, feedrate / 60.0)
 
 
 def _factor_to_percent(value: Any) -> float:

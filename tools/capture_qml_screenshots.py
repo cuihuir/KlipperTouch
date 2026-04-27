@@ -37,7 +37,7 @@ DEFAULT_PANELS = (
     "language",
     "update",
 )
-JOB_DETAIL_PAGES = ("summary", "advanced", "exclude")
+JOB_DETAIL_PAGES = ("summary", "advanced", "exclude", "time", "motion", "extrusion")
 SAMPLE_FILES = (
     {
         "path": "OrcaCube_PLA_27m41s.gcode",
@@ -52,6 +52,13 @@ SAMPLE_FILES = (
         "permissions": "rw",
     },
 )
+SAMPLE_METADATA = {
+    "estimated_time": 1661.0,
+    "filament_total": 2234.0,
+    "object_height": 12.35,
+    "layer_height": 0.2,
+    "thumbnails": (),
+}
 SAMPLE_STATUS = {
     "hostname": "orangepi3b",
     "klippy_state": "ready",
@@ -98,6 +105,11 @@ SAMPLE_STATUS = {
     "filament_used": 1856.0,
     "current_layer": 12,
     "total_layers": 36,
+    "position_x": 10.1,
+    "position_y": 20.2,
+    "position_z": 3.3,
+    "position_e": 40.4,
+    "homed_axes": "xyz",
     "exclude_object_names": ("part_a", "part_b", "part_c"),
     "excluded_object_names": ("part_a",),
     "current_object": "part_b",
@@ -181,6 +193,11 @@ def capture(
             engine = QQmlApplicationEngine()
             if sample_files:
                 file_model = create_gcode_file_model(list(SAMPLE_FILES))
+                file_model.setFileMetadata(
+                    "OrcaCube_PLA_27m41s.gcode",
+                    SAMPLE_METADATA,
+                    "http://127.0.0.1:7125/server/files/gcodes/",
+                )
                 engine.rootContext().setContextProperty("gcodeFileModel", file_model)
                 engine.gcode_file_model = file_model  # type: ignore[attr-defined]
             if sample_status:
@@ -330,7 +347,7 @@ def main(argv: list[str] | None = None) -> int:
         nargs="+",
         choices=JOB_DETAIL_PAGES,
         default=(),
-        help="Capture specific Job Status subpages, for example summary advanced exclude.",
+        help="Capture specific Job Status subpages, for example summary time motion extrusion.",
     )
     parser.add_argument(
         "--no-index",

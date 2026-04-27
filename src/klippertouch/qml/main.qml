@@ -216,6 +216,11 @@ ApplicationWindow {
                 filamentUsed: window.filamentUsed
                 currentLayer: window.currentLayer
                 totalLayers: window.totalLayers
+                positionX: window.positionX
+                positionY: window.positionY
+                positionZ: window.positionZ
+                positionE: window.positionE
+                homedAxes: window.homedAxes
                 requestedSpeed: window.requestedSpeed
                 speedFactor: window.speedFactor
                 extrudeFactor: window.extrudeFactor

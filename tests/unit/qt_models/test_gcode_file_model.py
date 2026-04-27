@@ -219,6 +219,35 @@ def test_gcode_file_list_model_returns_metadata_for_print_filename() -> None:
     assert model.fileSizeLabelFor("missing.gcode") == "-"
 
 
+def test_gcode_file_list_model_exposes_loaded_gcode_metadata_labels(qtbot) -> None:
+    model = GCodeFileListModel()
+    model.set_files((GCodeFile(path="cube.gcode", display_name="cube.gcode", size=2048),))
+
+    with qtbot.waitSignal(model.metadataChanged, timeout=1000):
+        model.setFileMetadata(
+            "cube.gcode",
+            {
+                "estimated_time": 1661.0,
+                "filament_total": 2234.0,
+                "object_height": 12.345,
+                "layer_height": 0.2,
+            },
+            "http://host:7125/server/files/gcodes/",
+        )
+
+    assert model.metadataRevision == 1
+    assert model.thumbnailRevision == 0
+    assert model.fileEstimatedTimeLabelFor("cube.gcode") == "27m"
+    assert model.fileFilamentTotalLabelFor("cube.gcode") == "2.2 m"
+    assert model.fileObjectHeightLabelFor("cube.gcode") == "12.35 mm"
+    assert model.fileLayerHeightLabelFor("cube.gcode") == "0.20 mm"
+
+    model.set_files((GCodeFile(path="cube.gcode", display_name="cube.gcode", size=2048),))
+
+    assert model.fileEstimatedTimeLabelFor("cube.gcode") == "27m"
+    assert model.fileFilamentTotalLabelFor("cube.gcode") == "2.2 m"
+
+
 def test_gcode_file_list_model_tracks_read_only_selected_file(qtbot) -> None:
     model = GCodeFileListModel()
     model.set_files(

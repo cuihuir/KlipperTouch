@@ -28,6 +28,8 @@ def test_screenshot_tool_captures_common_panels_and_sizes() -> None:
     assert "SAMPLE_STATUS" in source
     assert '"hostname": "orangepi3b"' in source
     assert '"print_state": "printing"' in source
+    assert '"position_x": 10.1' in source
+    assert '"homed_axes": "xyz"' in source
     assert '"cancelled"' in source
     assert '"paused"' in source
     assert '"complete"' in source
@@ -35,11 +37,17 @@ def test_screenshot_tool_captures_common_panels_and_sizes() -> None:
     assert "setContextProperty(\"gcodeFileModel\"" in source
     assert "setContextProperty(\"statusModel\"" in source
     assert "OrcaCube_PLA_27m41s.gcode" in source
+    assert "SAMPLE_METADATA" in source
+    assert '"estimated_time": 1661.0' in source
+    assert "setFileMetadata" in source
     assert "write_index" in source
     assert "index.html" in source
     assert "--no-index" in source
     assert "--job-detail-pages" in source
     assert "JOB_DETAIL_PAGES" in source
+    assert '"time"' in source
+    assert '"motion"' in source
+    assert '"extrusion"' in source
     assert "_set_job_status_detail_page" in source
     assert 'panel.setProperty("detailPage", page)' in source
     assert 'f"{panel}_{detail_page}"' in source

@@ -22,6 +22,11 @@ Item {
     property real zOffset: 0
     property real maxAccel: 0
     property real maxVelocity: 0
+    property real positionX: 0
+    property real positionY: 0
+    property real positionZ: 0
+    property real positionE: 0
+    property string homedAxes: ""
     property var temperatureModel: null
     property var fileModel: null
     property var excludeObjectNames: []
@@ -31,8 +36,8 @@ Item {
     readonly property color neutralAccent: "#8b9496"
     readonly property color mutedDangerAccent: "#9a8582"
     readonly property color accentColor: root.stateAccentColor()
-    property int jobButtonHeight: Math.min(52, Math.max(44, Math.round(root.metrics.fontSize * 2.45)))
-    property int jobButtonWidth: Math.min(150, Math.max(124, Math.round(root.metrics.fontSize * 7.4)))
+    property int jobButtonHeight: Math.min(54, Math.max(48, Math.round(root.metrics.fontSize * 2.65)))
+    property int jobButtonWidth: Math.min(156, Math.max(132, Math.round(root.metrics.fontSize * 7.8)))
     signal zOffsetAdjustRequested(real delta)
     signal speedFactorAdjustRequested(real delta)
     signal extrudeFactorAdjustRequested(real delta)
@@ -148,7 +153,7 @@ Item {
         }
 
         background: Rectangle {
-            color: controlRoot.enabled ? "#101617" : "#151a1b"
+            color: controlRoot.enabled ? "#263033" : "#151a1b"
             border.color: controlRoot.enabled ? controlRoot.roleAccent : "#263233"
             border.width: controlRoot.enabled ? 2 : 1
             radius: Math.round(root.metrics.fontSize * 0.32)
@@ -228,6 +233,44 @@ Item {
 
     function zOffsetLabel() {
         return root.zOffset.toFixed(2) + " mm"
+    }
+
+    function positionLabel() {
+        return "X " + root.positionX.toFixed(2)
+            + "  Y " + root.positionY.toFixed(2)
+            + "  Z " + root.positionZ.toFixed(2)
+    }
+
+    function fileEstimatedTimeLabel() {
+        if (!root.fileModel) {
+            return "-"
+        }
+        root.fileModel.metadataRevision
+        return root.fileModel.fileEstimatedTimeLabelFor(root.printFilename)
+    }
+
+    function fileFilamentTotalLabel() {
+        if (!root.fileModel) {
+            return "-"
+        }
+        root.fileModel.metadataRevision
+        return root.fileModel.fileFilamentTotalLabelFor(root.printFilename)
+    }
+
+    function fileObjectHeightLabel() {
+        if (!root.fileModel) {
+            return "-"
+        }
+        root.fileModel.metadataRevision
+        return root.fileModel.fileObjectHeightLabelFor(root.printFilename)
+    }
+
+    function fileLayerHeightLabel() {
+        if (!root.fileModel) {
+            return "-"
+        }
+        root.fileModel.metadataRevision
+        return root.fileModel.fileLayerHeightLabelFor(root.printFilename)
     }
 
     function stateHeadline() {
@@ -310,6 +353,98 @@ Item {
         return root.jobButtonWidth
     }
 
+    function jobHeroHeight() {
+        if (root.metrics.portrait) {
+            return Math.max(220, Math.round(root.metrics.fontSize * 13.8))
+        }
+        return Math.max(146, Math.round(root.metrics.fontSize * 9.2))
+    }
+
+    function temperatureStripHeight() {
+        return Math.max(
+            root.metrics.portrait ? 60 : 50,
+            Math.round(root.metrics.fontSize * (root.metrics.portrait ? 3.8 : 3.1))
+        )
+    }
+
+    function quickInfoLimit() {
+        return root.metrics.portrait ? 6 : 8
+    }
+
+    function summaryInfoModel() {
+        return [
+            {"label": "Elapsed", "value": root.durationLabel(root.printDuration), "target": "time"},
+            {"label": "Remaining", "value": root.remainingLabel(), "target": "time"},
+            {"label": "Total", "value": root.durationLabel(root.totalDuration), "target": "time"},
+            {"label": "Layer", "value": root.layerLabel(), "target": "motion"},
+            {"label": "Filament", "value": root.filamentLabel(), "target": "extrusion"},
+            {"label": "Speed", "value": root.speedLabel(root.requestedSpeed), "target": "motion"},
+            {"label": "Flow", "value": root.percentLabel(root.extrudeFactor), "target": "extrusion"},
+            {"label": "Z offset", "value": root.zOffsetLabel(), "target": "motion"},
+            {"label": "File size", "value": root.fileModel ? root.fileModel.fileSizeLabelFor(root.printFilename) : "-"},
+            {"label": "Modified", "value": root.fileModel ? root.fileModel.fileModifiedLabelFor(root.printFilename) : "-"},
+            {"label": "Path", "value": root.fileModel ? root.fileModel.filePathFor(root.printFilename) : ""}
+        ]
+    }
+
+    function detailTitle() {
+        if (root.detailPage === "advanced") {
+            return "Advanced tuning"
+        }
+        if (root.detailPage === "exclude") {
+            return "Object exclusion"
+        }
+        if (root.detailPage === "time") {
+            return "Time details"
+        }
+        if (root.detailPage === "motion") {
+            return "Motion details"
+        }
+        if (root.detailPage === "extrusion") {
+            return "Extrusion details"
+        }
+        return root.printFilename.length > 0 ? root.printFilename : "Job Status"
+    }
+
+    function detailInfoModel(page) {
+        if (page === "time") {
+            return [
+                {"label": "Elapsed", "value": root.durationLabel(root.printDuration)},
+                {"label": "Remaining", "value": root.remainingLabel()},
+                {"label": "Estimated total", "value": root.durationLabel(root.totalDuration)},
+                {"label": "Slicer estimate", "value": root.fileEstimatedTimeLabel()},
+                {"label": "File estimate", "value": "-"},
+                {"label": "Filament estimate", "value": "-"}
+            ]
+        }
+        if (page === "motion") {
+            return [
+                {"label": "Requested speed", "value": root.speedLabel(root.requestedSpeed)},
+                {"label": "Speed factor", "value": root.percentLabel(root.speedFactor)},
+                {"label": "Max acceleration", "value": root.accelLabel()},
+                {"label": "Max velocity", "value": root.speedLabel(root.maxVelocity)},
+                {"label": "X position", "value": root.positionX.toFixed(2) + " mm"},
+                {"label": "Y position", "value": root.positionY.toFixed(2) + " mm"},
+                {"label": "Z position", "value": root.positionZ.toFixed(2) + " mm"},
+                {"label": "Homed axes", "value": root.homedAxes.length > 0 ? root.homedAxes : "-"},
+                {"label": "Z offset", "value": root.zOffsetLabel()},
+                {"label": "Layer", "value": root.layerLabel()},
+                {"label": "Object height", "value": root.fileObjectHeightLabel()},
+                {"label": "Layer height", "value": root.fileLayerHeightLabel()}
+            ]
+        }
+        if (page === "extrusion") {
+            return [
+                {"label": "Filament used", "value": root.filamentLabel()},
+                {"label": "Filament total", "value": root.fileFilamentTotalLabel()},
+                {"label": "Flow factor", "value": root.percentLabel(root.extrudeFactor)},
+                {"label": "Extruder position", "value": root.positionE.toFixed(2) + " mm"},
+                {"label": "Layer", "value": root.layerLabel()}
+            ]
+        }
+        return []
+    }
+
     // qmllint disable missing-property
     function goBack() {
         if (root.detailPage !== "summary") {
@@ -344,11 +479,7 @@ Item {
                 Label {
                     Layout.fillWidth: true
                     color: Theme.text
-                    text: root.detailPage === "advanced"
-                        ? "Advanced tuning"
-                        : root.detailPage === "exclude"
-                            ? "Object exclusion"
-                        : root.printFilename.length > 0 ? root.printFilename : "Job Status"
+                    text: root.detailTitle()
                     elide: Text.ElideMiddle
                     font.bold: true
                     font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.15))
@@ -379,38 +510,75 @@ Item {
             StatusCard {
                 visible: root.detailPage === "summary"
                 Layout.fillWidth: true
-                Layout.preferredHeight: Math.max(126, Math.round(root.metrics.fontSize * 8.7))
+                Layout.preferredHeight: root.jobHeroHeight()
                 accent: root.accentColor
 
-                RowLayout {
+                GridLayout {
+                    id: jobHeroLayout
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    spacing: Math.max(6, Math.round(root.metrics.fontSize * 0.45))
+                    columns: root.metrics.portrait ? 1 : 2
+                    rows: root.metrics.portrait ? 2 : 1
+                    rowSpacing: root.metrics.gap
+                    columnSpacing: root.metrics.gap
 
                     Rectangle {
-                        Layout.preferredWidth: Math.max(96, Math.round(root.metrics.fontSize * 6.8))
-                        Layout.fillHeight: true
-                        visible: jobThumbnail.source.toString().length > 0
+                        id: thumbnailFrame
+                        Layout.preferredWidth: root.metrics.portrait
+                            ? Math.min(parent.width, Math.max(180, Math.round(root.metrics.fontSize * 13.6)))
+                            : Math.max(126, Math.round(root.metrics.fontSize * 8.8))
+                        Layout.preferredHeight: root.metrics.portrait
+                            ? Math.max(78, Math.round(root.metrics.fontSize * 5.0))
+                            : Math.max(96, Math.round(root.metrics.fontSize * 6.6))
+                        Layout.fillHeight: !root.metrics.portrait
+                        Layout.alignment: Qt.AlignHCenter
                         color: "#0b1112"
-                        border.color: "#263233"
+                        border.color: "#3b4648"
                         border.width: 1
-                        radius: Math.round(root.metrics.fontSize * 0.25)
+                        radius: Math.round(root.metrics.fontSize * 0.34)
+                        clip: true
 
                         Image {
                             id: jobThumbnail
                             anchors.fill: parent
-                            anchors.margins: 2
+                            anchors.margins: 4
                             source: root.fileModel && root.fileModel.thumbnailRevision >= 0
                                 ? root.fileModel.filePreviewThumbnailUrlFor(root.printFilename)
                                 : ""
                             fillMode: Image.PreserveAspectFit
+                            visible: source.toString().length > 0
+                        }
+
+                        ColumnLayout {
+                            id: thumbnailPlaceholder
+                            visible: !jobThumbnail.visible
+                            anchors.centerIn: parent
+                            width: parent.width - root.metrics.gap * 2
+                            spacing: 0
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: root.neutralAccent
+                                text: "G"
+                                horizontalAlignment: Text.AlignHCenter
+                                font.bold: true
+                                font.pixelSize: Math.max(28, Math.round(root.metrics.fontSize * 2.2))
+                            }
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: Theme.mutedText
+                                text: "G-code"
+                                horizontalAlignment: Text.AlignHCenter
+                                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                            }
                         }
                     }
 
                     ColumnLayout {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        spacing: Math.max(6, Math.round(root.metrics.fontSize * 0.45))
+                        spacing: root.metrics.gap
 
                         Label {
                             Layout.fillWidth: true
@@ -422,6 +590,7 @@ Item {
 
                         ProgressBar {
                             id: jobProgressBar
+                            Layout.maximumWidth: Math.max(160, Math.round(root.metrics.fontSize * 12.5))
                             Layout.fillWidth: true
                             Layout.preferredHeight: Math.max(18, Math.round(root.metrics.fontSize * 1.15))
                             value: root.stateProgressValue()
@@ -456,6 +625,34 @@ Item {
                         }
 
                         RowLayout {
+                            id: compactProgressBox
+                            Layout.fillWidth: true
+                            spacing: root.metrics.gap
+
+                            Label {
+                                color: Theme.text
+                                text: Math.round(root.stateProgressValue() * 100) + "%"
+                                font.bold: true
+                                font.pixelSize: Math.max(24, Math.round(root.metrics.fontSize * 1.72))
+                            }
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: Theme.mutedText
+                                text: root.printState === "complete"
+                                    ? "Done"
+                                    : root.printState === "cancelled"
+                                        ? "Stopped"
+                                        : root.printState === "error"
+                                            ? "Check printer"
+                                            : root.remainingLabel() + " remaining"
+                                horizontalAlignment: Text.AlignRight
+                                verticalAlignment: Text.AlignVCenter
+                                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
+                            }
+                        }
+
+                        RowLayout {
                             Layout.fillWidth: true
                             spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.35))
 
@@ -472,31 +669,6 @@ Item {
                                     value: modelData.value
                                     accent: "#263233"
                                 }
-                            }
-                        }
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: root.metrics.gap
-
-                            Label {
-                                Layout.fillWidth: true
-                                color: root.stateAccentColor()
-                                text: root.stateHeadline()
-                                font.pixelSize: Math.max(20, Math.round(root.metrics.fontSize * 1.5))
-                            }
-
-                            Label {
-                                color: Theme.mutedText
-                                text: root.printState === "complete"
-                                    ? "Done"
-                                    : root.printState === "cancelled"
-                                        ? "Stopped"
-                                        : root.printState === "error"
-                                            ? "Check printer"
-                                            : root.remainingLabel() + " remaining"
-                                horizontalAlignment: Text.AlignRight
-                                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
                             }
                         }
                     }
@@ -558,9 +730,10 @@ Item {
 
             Rectangle {
                 visible: root.detailPage === "summary"
-                    && root.temperatureModel && root.temperatureModel.rowCount() > 0
+                    && root.metrics.portrait && root.temperatureModel
+                    && root.temperatureModel.rowCount() > 0
                 Layout.fillWidth: true
-                Layout.preferredHeight: Math.max(58, Math.round(root.metrics.fontSize * 4.1))
+                Layout.preferredHeight: root.temperatureStripHeight()
                 color: "#101617"
                 border.color: "#263233"
                 border.width: 1
@@ -633,70 +806,139 @@ Item {
                 }
             }
 
-            GridView {
-                id: cardGrid
+            GridLayout {
+                id: quickInfoGrid
                 visible: root.detailPage === "summary"
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                clip: true
-                boundsBehavior: Flickable.StopAtBounds
-                flickDeceleration: 2600
-                cellWidth: width / (root.metrics.portrait ? 1 : 2)
-                cellHeight: Math.max(60, Math.round(root.metrics.fontSize * 4.25))
-                ScrollBar.vertical: ScrollBar {
-                    policy: ScrollBar.AsNeeded
-                }
-                model: [
-                    {"label": "Elapsed", "value": root.durationLabel(root.printDuration)},
-                    {"label": "Remaining", "value": root.remainingLabel()},
-                    {"label": "Total", "value": root.durationLabel(root.totalDuration)},
-                    {"label": "File size", "value": root.fileModel ? root.fileModel.fileSizeLabelFor(root.printFilename) : "-"},
-                    {"label": "Modified", "value": root.fileModel ? root.fileModel.fileModifiedLabelFor(root.printFilename) : "-"},
-                    {"label": "Path", "value": root.fileModel ? root.fileModel.filePathFor(root.printFilename) : ""},
-                    {"label": "Layer", "value": root.layerLabel()},
-                    {"label": "Filament used", "value": root.filamentLabel()},
-                    {"label": "Speed", "value": root.speedLabel(root.requestedSpeed)},
-                    {"label": "Speed factor", "value": root.percentLabel(root.speedFactor)},
-                    {"label": "Flow", "value": root.percentLabel(root.extrudeFactor)},
-                    {"label": "Z offset", "value": root.zOffsetLabel()},
-                    {"label": "Accel", "value": root.accelLabel()},
-                    {"label": "Max velocity", "value": root.speedLabel(root.maxVelocity)},
-                    {"label": "State", "value": root.printState},
-                    {"label": "Mode", "value": "readonly"}
-                ]
+                columns: root.metrics.portrait ? 2 : 4
+                rowSpacing: root.metrics.gap
+                columnSpacing: root.metrics.gap
 
-                delegate: Rectangle {
-                    required property var modelData
+                Repeater {
+                    model: root.summaryInfoModel().slice(0, root.quickInfoLimit())
 
-                    width: cardGrid.cellWidth - root.metrics.gap
-                    height: cardGrid.cellHeight - root.metrics.gap
-                    color: "#101617"
-                    border.color: "#263233"
-                    border.width: 1
-                    radius: Math.round(root.metrics.fontSize * 0.32)
-                    gradient: Gradient {
-                        GradientStop { position: 0.0; color: "#111a1c" }
-                        GradientStop { position: 1.0; color: "#081112" }
-                    }
+                    delegate: Rectangle {
+                        required property var modelData
+                        property bool openable: typeof modelData.target !== "undefined"
+                            && modelData.target.length > 0
 
-                    ColumnLayout {
-                        anchors.fill: parent
-                        anchors.margins: root.metrics.gap
-                        spacing: 0
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: Math.max(48, Math.round(root.metrics.fontSize * 3.05))
+                        color: "#101617"
+                        border.color: openable ? "#4b5a5d" : "#263233"
+                        border.width: 1
+                        radius: Math.round(root.metrics.fontSize * 0.32)
+                        gradient: Gradient {
+                            GradientStop { position: 0.0; color: "#111a1c" }
+                            GradientStop { position: 1.0; color: "#081112" }
+                        }
 
-                        Label {
-                            Layout.fillWidth: true
-                            color: Theme.mutedText
-                            text: modelData.label
-                            font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.margins: Math.max(7, Math.round(root.metrics.fontSize * 0.48))
+                            spacing: 0
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: Theme.mutedText
+                                text: modelData.label
+                                elide: Text.ElideRight
+                                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.74))
+                            }
+
+                            Label {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                color: Theme.text
+                                text: modelData.value
+                                verticalAlignment: Text.AlignVCenter
+                                elide: Text.ElideRight
+                                font.bold: true
+                                font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.94))
+                            }
                         }
 
                         Label {
+                            visible: parent.openable
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            anchors.margins: Math.max(5, Math.round(root.metrics.fontSize * 0.35))
+                            color: Theme.mutedText
+                            text: ">"
+                            font.bold: true
+                            font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            enabled: parent.openable
+                            onClicked: root.detailPage = modelData.target
+                        }
+                    }
+                }
+            }
+
+            ColumnLayout {
+                id: detailInfoPage
+                visible: root.detailPage === "time"
+                    || root.detailPage === "motion"
+                    || root.detailPage === "extrusion"
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                spacing: root.metrics.gap
+
+                GridLayout {
+                    id: detailInfoGrid
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    columns: 2
+                    rowSpacing: root.metrics.gap
+                    columnSpacing: root.metrics.gap
+
+                    Repeater {
+                        model: root.detailInfoModel(root.detailPage)
+
+                        delegate: Rectangle {
+                            required property var modelData
+
                             Layout.fillWidth: true
-                            color: Theme.text
-                            text: modelData.value
-                            elide: Text.ElideRight
-                            font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
+                            Layout.fillHeight: true
+                            Layout.minimumHeight: Math.max(54, Math.round(root.metrics.fontSize * 3.5))
+                            color: "#101617"
+                            border.color: "#263233"
+                            border.width: 1
+                            radius: Math.round(root.metrics.fontSize * 0.32)
+                            gradient: Gradient {
+                                GradientStop { position: 0.0; color: "#111a1c" }
+                                GradientStop { position: 1.0; color: "#081112" }
+                            }
+
+                            ColumnLayout {
+                                anchors.fill: parent
+                                anchors.margins: root.metrics.gap
+                                spacing: 0
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    color: Theme.mutedText
+                                    text: modelData.label
+                                    elide: Text.ElideRight
+                                    font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                                }
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    color: Theme.text
+                                    text: modelData.value
+                                    verticalAlignment: Text.AlignVCenter
+                                    elide: Text.ElideRight
+                                    font.bold: true
+                                    font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.18))
+                                }
+                            }
                         }
                     }
                 }

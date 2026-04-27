@@ -143,7 +143,7 @@ def test_status_from_websocket_message_applies_subscription_snapshot() -> None:
                     "toolhead": {"max_accel": 3000.0, "max_velocity": 250.0},
                     "gcode_move": {
                         "gcode_position": [1.1, 2.2, 3.3, 4.4],
-                        "speed": 125.0,
+                        "speed": 7500.0,
                         "speed_factor": 1.5,
                         "extrude_factor": 0.95,
                         "homing_origin": [0.0, 0.0, -0.04],

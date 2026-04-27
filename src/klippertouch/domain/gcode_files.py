@@ -13,6 +13,10 @@ class GCodeFile:
     permissions: str = ""
     thumbnail_url: str = ""
     preview_thumbnail_url: str = ""
+    estimated_time: float = 0.0
+    filament_total: float = 0.0
+    object_height: float = 0.0
+    layer_height: float = 0.0
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "path", str(self.path))
@@ -22,6 +26,10 @@ class GCodeFile:
         object.__setattr__(self, "permissions", str(self.permissions))
         object.__setattr__(self, "thumbnail_url", str(self.thumbnail_url))
         object.__setattr__(self, "preview_thumbnail_url", str(self.preview_thumbnail_url))
+        object.__setattr__(self, "estimated_time", max(0.0, _float_or_default(self.estimated_time)))
+        object.__setattr__(self, "filament_total", max(0.0, _float_or_default(self.filament_total)))
+        object.__setattr__(self, "object_height", max(0.0, _float_or_default(self.object_height)))
+        object.__setattr__(self, "layer_height", max(0.0, _float_or_default(self.layer_height)))
 
     @property
     def size_label(self) -> str:
@@ -36,6 +44,24 @@ class GCodeFile:
         if self.modified <= 0:
             return "-"
         return datetime.fromtimestamp(self.modified, tz=timezone.utc).strftime("%Y-%m-%d %H:%M")
+
+    @property
+    def estimated_time_label(self) -> str:
+        return _duration_label(self.estimated_time)
+
+    @property
+    def filament_total_label(self) -> str:
+        if self.filament_total <= 0:
+            return "-"
+        return f"{self.filament_total / 1000:.1f} m"
+
+    @property
+    def object_height_label(self) -> str:
+        return _millimeter_label(self.object_height)
+
+    @property
+    def layer_height_label(self) -> str:
+        return _millimeter_label(self.layer_height)
 
 
 @dataclass(frozen=True)
@@ -238,3 +264,20 @@ def _int_or_default(value: Any) -> int:
         return int(value)
     except (TypeError, ValueError):
         return 0
+
+
+def _duration_label(seconds: float) -> str:
+    if seconds <= 0:
+        return "-"
+    minutes = int(seconds) // 60
+    hours = minutes // 60
+    minutes %= 60
+    if hours > 0:
+        return f"{hours}h {minutes}m"
+    return f"{minutes}m"
+
+
+def _millimeter_label(value: float) -> str:
+    if value <= 0:
+        return "-"
+    return f"{value:.2f} mm"

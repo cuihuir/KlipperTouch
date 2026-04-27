@@ -27,6 +27,7 @@ class GCodeFileListModel(QAbstractListModel):
     filterTextChanged = Signal()
     selectedPathChanged = Signal()
     thumbnailChanged = Signal()
+    metadataChanged = Signal()
 
     PATH_ROLE = int(Qt.ItemDataRole.UserRole) + 1
     DISPLAY_NAME_ROLE = int(Qt.ItemDataRole.UserRole) + 2
@@ -47,6 +48,7 @@ class GCodeFileListModel(QAbstractListModel):
         self._filter_text = ""
         self._selected_path = ""
         self._thumbnail_revision = 0
+        self._metadata_revision = 0
 
     def set_files(self, files: tuple[GCodeFile, ...]) -> None:
         files = _normalized_file_snapshot(files)
@@ -119,6 +121,10 @@ class GCodeFileListModel(QAbstractListModel):
     @Property(int, notify=thumbnailChanged)
     def thumbnailRevision(self) -> int:
         return self._thumbnail_revision
+
+    @Property(int, notify=metadataChanged)
+    def metadataRevision(self) -> int:
+        return self._metadata_revision
 
     @Property(bool, notify=currentPathChanged)
     def canGoUp(self) -> bool:
@@ -203,8 +209,6 @@ class GCodeFileListModel(QAbstractListModel):
         clean = path.strip().strip("/")
         thumbnail_path = thumbnail_from_metadata(clean, metadata)
         preview_thumbnail_path = thumbnail_from_metadata(clean, metadata, prefer_small=False)
-        if not thumbnail_path and not preview_thumbnail_path:
-            return
         separator = "" if thumbnail_base_url.endswith("/") else "/"
         thumbnail_url = (
             f"{thumbnail_base_url}{separator}{thumbnail_path}" if thumbnail_path else ""
@@ -216,38 +220,73 @@ class GCodeFileListModel(QAbstractListModel):
         )
         files = []
         changed_index = -1
+        thumbnail_changed = False
+        metadata_changed = False
         for index, file in enumerate(self._files):
             if file.path != clean:
                 files.append(file)
                 continue
-            if (
-                file.thumbnail_url == thumbnail_url
-                and file.preview_thumbnail_url == preview_thumbnail_url
-            ):
-                return
-            files.append(
-                GCodeFile(
-                    path=file.path,
-                    display_name=file.display_name,
-                    modified=file.modified,
-                    size=file.size,
-                    permissions=file.permissions,
-                    thumbnail_url=thumbnail_url,
-                    preview_thumbnail_url=preview_thumbnail_url,
-                )
+            next_file = GCodeFile(
+                path=file.path,
+                display_name=file.display_name,
+                modified=file.modified,
+                size=file.size,
+                permissions=file.permissions,
+                thumbnail_url=thumbnail_url or file.thumbnail_url,
+                preview_thumbnail_url=preview_thumbnail_url or file.preview_thumbnail_url,
+                **_metadata_fields(metadata, file),
             )
+            if (
+                file.thumbnail_url != next_file.thumbnail_url
+                or file.preview_thumbnail_url != next_file.preview_thumbnail_url
+            ):
+                thumbnail_changed = True
+            if (
+                file.estimated_time != next_file.estimated_time
+                or file.filament_total != next_file.filament_total
+                or file.object_height != next_file.object_height
+                or file.layer_height != next_file.layer_height
+            ):
+                metadata_changed = True
+            if file == next_file:
+                return
+            files.append(next_file)
             changed_index = index
         if changed_index < 0:
             return
         self._files = tuple(files)
-        self._thumbnail_revision += 1
         row = self._row_for_path(clean)
-        if row >= 0:
-            item_index = self.index(row, 0)
-            self.dataChanged.emit(item_index, item_index, [self.THUMBNAIL_URL_ROLE])
-        self.thumbnailChanged.emit()
-        if clean == self._selected_path:
+        if thumbnail_changed:
+            self._thumbnail_revision += 1
+            if row >= 0:
+                item_index = self.index(row, 0)
+                self.dataChanged.emit(item_index, item_index, [self.THUMBNAIL_URL_ROLE])
+            self.thumbnailChanged.emit()
+        if metadata_changed:
+            self._metadata_revision += 1
+            self.metadataChanged.emit()
+        if thumbnail_changed and clean == self._selected_path:
             self.selectedPathChanged.emit()
+
+    @Slot(str, result=str)
+    def fileEstimatedTimeLabelFor(self, filename: str) -> str:  # noqa: N802
+        file = self._file_for_name(filename)
+        return file.estimated_time_label if file is not None else "-"
+
+    @Slot(str, result=str)
+    def fileFilamentTotalLabelFor(self, filename: str) -> str:  # noqa: N802
+        file = self._file_for_name(filename)
+        return file.filament_total_label if file is not None else "-"
+
+    @Slot(str, result=str)
+    def fileObjectHeightLabelFor(self, filename: str) -> str:  # noqa: N802
+        file = self._file_for_name(filename)
+        return file.object_height_label if file is not None else "-"
+
+    @Slot(str, result=str)
+    def fileLayerHeightLabelFor(self, filename: str) -> str:  # noqa: N802
+        file = self._file_for_name(filename)
+        return file.layer_height_label if file is not None else "-"
 
     def _reset_entries(self) -> None:
         previous_selection = self._selected_path
@@ -375,21 +414,52 @@ def _preserve_loaded_thumbnails(
     previous_files: tuple[GCodeFile, ...],
 ) -> tuple[GCodeFile, ...]:
     previous_by_path = {
-        file.path: (file.thumbnail_url, file.preview_thumbnail_url)
+        file.path: file
         for file in previous_files
-        if file.thumbnail_url or file.preview_thumbnail_url
+        if (
+            file.thumbnail_url
+            or file.preview_thumbnail_url
+            or file.estimated_time > 0
+            or file.filament_total > 0
+            or file.object_height > 0
+            or file.layer_height > 0
+        )
     }
     if not previous_by_path:
         return files
     return tuple(
         replace(
             file,
-            thumbnail_url=file.thumbnail_url or previous_by_path[file.path][0],
-            preview_thumbnail_url=(
-                file.preview_thumbnail_url or previous_by_path[file.path][1]
-            ),
+            thumbnail_url=file.thumbnail_url or previous_by_path[file.path].thumbnail_url,
+            preview_thumbnail_url=file.preview_thumbnail_url
+            or previous_by_path[file.path].preview_thumbnail_url,
+            estimated_time=file.estimated_time or previous_by_path[file.path].estimated_time,
+            filament_total=file.filament_total or previous_by_path[file.path].filament_total,
+            object_height=file.object_height or previous_by_path[file.path].object_height,
+            layer_height=file.layer_height or previous_by_path[file.path].layer_height,
         )
         if file.path in previous_by_path
         else file
         for file in files
     )
+
+
+def _metadata_fields(metadata: dict[str, object], file: GCodeFile) -> dict[str, float]:
+    return {
+        "estimated_time": _metadata_float(metadata, "estimated_time", file.estimated_time),
+        "filament_total": _metadata_float(metadata, "filament_total", file.filament_total),
+        "object_height": _metadata_float(metadata, "object_height", file.object_height),
+        "layer_height": _metadata_float(metadata, "layer_height", file.layer_height),
+    }
+
+
+def _metadata_float(metadata: dict[str, object], key: str, fallback: float) -> float:
+    if key not in metadata:
+        return fallback
+    value = metadata[key]
+    if isinstance(value, bool) or not isinstance(value, int | float | str):
+        return fallback
+    try:
+        return max(0.0, float(value))
+    except (TypeError, ValueError):
+        return fallback
