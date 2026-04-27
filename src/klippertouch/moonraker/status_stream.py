@@ -33,6 +33,9 @@ TOOLHEAD_STATUS_FIELDS = {
         "extrude_factor",
     ],
 }
+EXCLUDE_OBJECT_STATUS_FIELDS = {
+    "exclude_object": ["objects", "excluded_objects", "current_object"],
+}
 
 
 def build_websocket_request(client: MoonrakerClient) -> QNetworkRequest:
@@ -144,7 +147,9 @@ def _subscription_objects(status: PrinterStatus) -> dict[str, list[str]]:
     objects.update(
         {
             name: fields
-            for name, fields in (PRINT_STATUS_FIELDS | TOOLHEAD_STATUS_FIELDS).items()
+            for name, fields in (
+                PRINT_STATUS_FIELDS | TOOLHEAD_STATUS_FIELDS | EXCLUDE_OBJECT_STATUS_FIELDS
+            ).items()
             if name in status.objects
         }
     )

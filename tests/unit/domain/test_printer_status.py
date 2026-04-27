@@ -298,6 +298,51 @@ def test_printer_status_applies_read_only_print_update() -> None:
     assert updated.total_layers == 20
 
 
+def test_printer_status_populates_read_only_exclude_object_state() -> None:
+    status = PrinterStatus.from_probe(
+        server_info={"moonraker_version": "v0.10.0", "klippy_state": "ready"},
+        printer_info={"state": "ready", "hostname": "orangepi3b", "software_version": "v0.13.0"},
+        objects={"objects": ["exclude_object"]},
+        object_status={
+            "status": {
+                "exclude_object": {
+                    "objects": [{"name": "part_a"}, {"name": "part_b"}],
+                    "excluded_objects": ["part_a"],
+                    "current_object": "part_b",
+                },
+            }
+        },
+    )
+
+    assert status.exclude_object_names == ("part_a", "part_b")
+    assert status.excluded_object_names == ("part_a",)
+    assert status.current_object == "part_b"
+    assert status.exclude_object_count == 2
+    assert status.excluded_object_count == 1
+
+
+def test_printer_status_applies_read_only_exclude_object_update() -> None:
+    status = PrinterStatus(
+        objects=("exclude_object",),
+        exclude_object_names=("part_a", "part_b"),
+        excluded_object_names=(),
+        current_object="part_a",
+    )
+
+    updated = status.with_status_update(
+        {
+            "exclude_object": {
+                "current_object": "part_b",
+                "excluded_objects": ["part_a"],
+            }
+        }
+    )
+
+    assert updated.exclude_object_names == ("part_a", "part_b")
+    assert updated.excluded_object_names == ("part_a",)
+    assert updated.current_object == "part_b"
+
+
 def test_printer_status_ignores_null_display_status_message() -> None:
     status = PrinterStatus(
         objects=("print_stats", "display_status"),

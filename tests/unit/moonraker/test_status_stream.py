@@ -21,6 +21,7 @@ def test_build_temperature_subscription_message_uses_read_only_objects_method() 
             "display_status",
             "toolhead",
             "gcode_move",
+            "exclude_object",
         )
     )
     client = MoonrakerClient(PrinterConfig(name="p", moonraker_host="host"))
@@ -43,6 +44,7 @@ def test_build_temperature_subscription_message_uses_read_only_objects_method() 
                     "info",
                 ],
                 "display_status": ["progress", "message"],
+                "exclude_object": ["objects", "excluded_objects", "current_object"],
                 "toolhead": ["position", "homed_axes", "max_accel", "max_velocity"],
                 "gcode_move": [
                     "gcode_position",
@@ -115,7 +117,14 @@ def test_status_from_websocket_message_applies_notification_temperature_delta() 
 
 def test_status_from_websocket_message_applies_subscription_snapshot() -> None:
     status = PrinterStatus(
-        objects=("extruder", "heater_bed", "print_stats", "display_status", "gcode_move")
+        objects=(
+            "extruder",
+            "heater_bed",
+            "print_stats",
+            "display_status",
+            "gcode_move",
+            "exclude_object",
+        )
     )
     message = json.dumps(
         {
@@ -138,6 +147,11 @@ def test_status_from_websocket_message_applies_subscription_snapshot() -> None:
                         "speed_factor": 1.5,
                         "extrude_factor": 0.95,
                         "homing_origin": [0.0, 0.0, -0.04],
+                    },
+                    "exclude_object": {
+                        "objects": [{"name": "part_a"}, {"name": "part_b"}],
+                        "excluded_objects": ["part_a"],
+                        "current_object": "part_b",
                     },
                 }
             },
@@ -166,6 +180,9 @@ def test_status_from_websocket_message_applies_subscription_snapshot() -> None:
     assert updated.z_offset == -0.04
     assert updated.max_accel == 3000.0
     assert updated.max_velocity == 250.0
+    assert updated.exclude_object_names == ("part_a", "part_b")
+    assert updated.excluded_object_names == ("part_a",)
+    assert updated.current_object == "part_b"
 
 
 def test_status_from_websocket_message_ignores_unrelated_messages() -> None:

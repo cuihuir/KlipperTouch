@@ -40,6 +40,9 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
         filament_used=1234.5,
         current_layer=3,
         total_layers=12,
+        exclude_object_names=("part_a", "part_b"),
+        excluded_object_names=("part_a",),
+        current_object="part_b",
         position_x=1.1,
         position_y=2.2,
         position_z=3.3,
@@ -79,6 +82,11 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
     assert model.filamentUsed == 1234.5
     assert model.currentLayer == 3
     assert model.totalLayers == 12
+    assert model.excludeObjectNames == ["part_a", "part_b"]
+    assert model.excludedObjectNames == ["part_a"]
+    assert model.currentObject == "part_b"
+    assert model.excludeObjectCount == 2
+    assert model.excludedObjectCount == 1
     assert model.positionX == 1.1
     assert model.positionY == 2.2
     assert model.positionZ == 3.3

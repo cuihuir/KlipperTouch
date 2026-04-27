@@ -23,10 +23,14 @@ Item {
     property real maxVelocity: 0
     property var temperatureModel: null
     property var fileModel: null
+    property var excludeObjectNames: []
+    property var excludedObjectNames: []
+    property string currentObject: ""
     property string detailPage: "summary"
     signal zOffsetAdjustRequested(real delta)
     signal speedFactorAdjustRequested(real delta)
     signal extrudeFactorAdjustRequested(real delta)
+    signal objectExcludeRequested(string objectName)
 
     function durationLabel(seconds) {
         var safeSeconds = Math.max(0, Math.round(seconds))
@@ -179,6 +183,8 @@ Item {
                     color: Theme.text
                     text: root.detailPage === "advanced"
                         ? "Advanced tuning"
+                        : root.detailPage === "exclude"
+                            ? "Object exclusion"
                         : root.printFilename.length > 0 ? root.printFilename : "Job Status"
                     elide: Text.ElideMiddle
                     font.bold: true
@@ -350,9 +356,10 @@ Item {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     text: "Skip Object"
-                    enabled: false
+                    enabled: root.excludeObjectNames.length > 0
                     ToolTip.visible: hovered
-                    ToolTip.text: root.readonlyActionHint(text)
+                    ToolTip.text: enabled ? "Open object exclusion list" : "No object data"
+                    onClicked: root.detailPage = "exclude"
                 }
 
                 Button {
@@ -653,6 +660,113 @@ Item {
                     Layout.fillWidth: true
                     color: Theme.mutedText
                     text: "Buttons emit adjustment requests only; Moonraker control commands are intentionally not connected yet."
+                    wrapMode: Text.WordWrap
+                    font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                }
+            }
+
+            ColumnLayout {
+                id: excludePage
+                visible: root.detailPage === "exclude"
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                spacing: root.metrics.gap
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Math.max(64, Math.round(root.metrics.fontSize * 4.6))
+                    color: "#101617"
+                    border.color: root.currentObject.length > 0 ? Theme.color4 : "#263233"
+                    border.width: 1
+                    radius: Math.round(root.metrics.fontSize * 0.32)
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: root.metrics.gap
+                        spacing: 0
+
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.mutedText
+                            text: "Current object"
+                            font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.text
+                            text: root.currentObject.length > 0 ? root.currentObject : "-"
+                            elide: Text.ElideMiddle
+                            font.bold: true
+                            font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.12))
+                        }
+                    }
+                }
+
+                ListView {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    spacing: root.metrics.gap
+                    model: root.excludeObjectNames
+                    boundsBehavior: Flickable.StopAtBounds
+                    ScrollBar.vertical: ScrollBar {
+                        policy: ScrollBar.AsNeeded
+                    }
+
+                    delegate: Rectangle {
+                        width: ListView.view.width
+                        height: Math.max(58, Math.round(root.metrics.fontSize * 4.1))
+                        color: root.excludedObjectNames.indexOf(modelData) >= 0
+                            ? "#171717"
+                            : "#101617"
+                        border.color: modelData === root.currentObject ? Theme.color4 : "#263233"
+                        border.width: modelData === root.currentObject ? 2 : 1
+                        radius: Math.round(root.metrics.fontSize * 0.32)
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.margins: root.metrics.gap
+                            spacing: root.metrics.gap
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                spacing: 0
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    color: Theme.text
+                                    text: String(modelData)
+                                    elide: Text.ElideMiddle
+                                    font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize))
+                                }
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    color: Theme.mutedText
+                                    text: root.excludedObjectNames.indexOf(modelData) >= 0
+                                        ? "Excluded"
+                                        : modelData === root.currentObject ? "Printing now" : "Available"
+                                    font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                                }
+                            }
+
+                            Button {
+                                Layout.preferredWidth: Math.max(112, Math.round(root.metrics.fontSize * 7.8))
+                                Layout.fillHeight: true
+                                text: "Skip"
+                                enabled: root.excludedObjectNames.indexOf(modelData) < 0
+                                onClicked: root.objectExcludeRequested(modelData)
+                            }
+                        }
+                    }
+                }
+
+                Label {
+                    Layout.fillWidth: true
+                    color: Theme.mutedText
+                    text: "Skip buttons emit objectExcludeRequested only; Moonraker exclude commands are intentionally not connected yet."
                     wrapMode: Text.WordWrap
                     font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
                 }

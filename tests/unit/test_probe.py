@@ -23,6 +23,7 @@ class FakeClient:
                 "display_status",
                 "toolhead",
                 "gcode_move",
+                "exclude_object",
             ]
         }
 
@@ -34,6 +35,7 @@ class FakeClient:
             "display_status",
             "toolhead",
             "gcode_move",
+            "exclude_object",
         )
         return {
             "status": {
@@ -43,6 +45,11 @@ class FakeClient:
                 "display_status": {"progress": 0.5, "message": "Printing"},
                 "toolhead": {"homed_axes": "xyz"},
                 "gcode_move": {"gcode_position": [1.1, 2.2, 3.3, 4.4]},
+                "exclude_object": {
+                    "objects": [{"name": "part_a"}, {"name": "part_b"}],
+                    "excluded_objects": ["part_a"],
+                    "current_object": "part_b",
+                },
             }
         }
 
@@ -73,7 +80,7 @@ def test_build_status_from_client() -> None:
     status = build_status_from_client(FakeClient())
     assert isinstance(status, PrinterStatus)
     assert status.hostname == "orangepi3b"
-    assert status.object_count == 7
+    assert status.object_count == 8
     assert tuple(device.temperature for device in status.temperature_devices) == (24.3, 26.7)
     assert tuple(device.target for device in status.temperature_devices) == (0.0, 60.0)
     assert status.print_state == "printing"
@@ -81,6 +88,9 @@ def test_build_status_from_client() -> None:
     assert status.print_progress == 50.0
     assert status.position_x == 1.1
     assert status.homed_axes == "xyz"
+    assert status.exclude_object_names == ("part_a", "part_b")
+    assert status.excluded_object_names == ("part_a",)
+    assert status.current_object == "part_b"
     assert status.mcu_statuses[0].version == "v0.13.0-main"
     assert tuple(item.name for item in status.service_versions) == ("klipper", "moonraker")
 

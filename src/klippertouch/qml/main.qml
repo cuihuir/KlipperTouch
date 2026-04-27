@@ -43,6 +43,9 @@ ApplicationWindow {
     property real maxVelocity: bridgeModel ? bridgeModel.maxVelocity : 0
     property real extruderTemperature: bridgeModel ? bridgeModel.extruderTemperature : 0
     property real extruderTarget: bridgeModel ? bridgeModel.extruderTarget : 0
+    property var excludeObjectNames: bridgeModel ? bridgeModel.excludeObjectNames : []
+    property var excludedObjectNames: bridgeModel ? bridgeModel.excludedObjectNames : []
+    property string currentObject: bridgeModel ? bridgeModel.currentObject : ""
     property string currentPanel: "main"
     property var panelStack: ["main"]
     property var panelTitles: ({"main": "Home", "move": "Move", "temperature": "Temperature", "extrude": "Extrude", "more": "More", "system": "System", "network": "Network", "logs": "Logs", "language": "Language", "update": "Update", "print": "Print", "job_status": "Job Status"})
@@ -218,6 +221,9 @@ ApplicationWindow {
                 zOffset: window.zOffset
                 maxAccel: window.maxAccel
                 maxVelocity: window.maxVelocity
+                excludeObjectNames: window.excludeObjectNames
+                excludedObjectNames: window.excludedObjectNames
+                currentObject: window.currentObject
                 temperatureModel: window.temperatureBridgeModel
                 fileModel: window.gcodeFileBridgeModel
             }

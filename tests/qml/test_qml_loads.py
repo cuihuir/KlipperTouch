@@ -297,6 +297,10 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "property real maxVelocity" in qml
     assert "property var temperatureModel: null" in qml
     assert "property var fileModel: null" in qml
+    assert "property var excludeObjectNames: []" in qml
+    assert "property var excludedObjectNames: []" in qml
+    assert "property string currentObject" in qml
+    assert "signal objectExcludeRequested(string objectName)" in qml
     assert "root.fileModel.fileSizeLabelFor(root.printFilename)" in qml
     assert "root.fileModel.fileModifiedLabelFor(root.printFilename)" in qml
     assert "root.fileModel.filePathFor(root.printFilename)" in qml
@@ -333,6 +337,7 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert 'root.printState === "paused" ? "Resume" : "Pause"' in qml
     assert 'text: "Cancel"' in qml
     assert 'text: "Skip Object"' in qml
+    assert 'root.detailPage = "exclude"' in qml
     assert 'text: "Advanced"' in qml
     assert "enabled: false" in qml
     assert "readonlyActionHint" in qml
@@ -340,6 +345,11 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert 'root.detailPage = "advanced"' in qml
     assert 'root.detailPage = "summary"' in qml
     assert "id: advancedPage" in qml
+    assert "id: excludePage" in qml
+    assert "root.currentObject" in qml
+    assert "model: root.excludeObjectNames" in qml
+    assert "root.excludedObjectNames.indexOf(modelData) >= 0" in qml
+    assert "root.objectExcludeRequested(modelData)" in qml
     assert "qmllint disable missing-property" in qml
     assert "function goBack()" in qml
     assert 'if (root.detailPage !== "summary")' in qml
@@ -412,6 +422,9 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
 
     assert "property real extruderTemperature:" in main_qml
     assert "property real extruderTarget:" in main_qml
+    assert "property var excludeObjectNames:" in main_qml
+    assert "property var excludedObjectNames:" in main_qml
+    assert "property string currentObject:" in main_qml
     assert "extruderTemperature: window.extruderTemperature" in main_qml
     assert "extruderTarget: window.extruderTarget" in main_qml
 
@@ -752,6 +765,9 @@ def test_main_keeps_files_and_job_status_as_separate_routes() -> None:
     assert "zOffset: window.zOffset" in main_qml
     assert "maxAccel: window.maxAccel" in main_qml
     assert "maxVelocity: window.maxVelocity" in main_qml
+    assert "excludeObjectNames: window.excludeObjectNames" in main_qml
+    assert "excludedObjectNames: window.excludedObjectNames" in main_qml
+    assert "currentObject: window.currentObject" in main_qml
     assert "temperatureModel: window.temperatureBridgeModel" in main_qml
     assert "fileModel: window.gcodeFileBridgeModel" in main_qml
     assert "function shouldAutoEnterJobStatus()" in main_qml

@@ -28,6 +28,12 @@ class ToolheadStatusFields(TypedDict, total=False):
     max_velocity: float
 
 
+class ExcludeObjectStatusFields(TypedDict, total=False):
+    exclude_object_names: tuple[str, ...]
+    excluded_object_names: tuple[str, ...]
+    current_object: str
+
+
 @dataclass(frozen=True)
 class TemperatureDeviceStatus:
     name: str
@@ -85,6 +91,9 @@ class PrinterStatus:
     filament_used: float = 0.0
     current_layer: int = 0
     total_layers: int = 0
+    exclude_object_names: tuple[str, ...] = ()
+    excluded_object_names: tuple[str, ...] = ()
+    current_object: str = ""
     position_x: float = 0.0
     position_y: float = 0.0
     position_z: float = 0.0
@@ -119,6 +128,17 @@ class PrinterStatus:
         object.__setattr__(self, "filament_used", _optional_float(self.filament_used) or 0.0)
         object.__setattr__(self, "current_layer", _optional_int(self.current_layer))
         object.__setattr__(self, "total_layers", _optional_int(self.total_layers))
+        object.__setattr__(
+            self,
+            "exclude_object_names",
+            tuple(str(item) for item in self.exclude_object_names if str(item)),
+        )
+        object.__setattr__(
+            self,
+            "excluded_object_names",
+            tuple(str(item) for item in self.excluded_object_names if str(item)),
+        )
+        object.__setattr__(self, "current_object", str(self.current_object or ""))
         object.__setattr__(self, "position_x", _optional_float(self.position_x) or 0.0)
         object.__setattr__(self, "position_y", _optional_float(self.position_y) or 0.0)
         object.__setattr__(self, "position_z", _optional_float(self.position_z) or 0.0)
@@ -146,6 +166,14 @@ class PrinterStatus:
     @property
     def temperature_device_count(self) -> int:
         return len(self.temperature_devices)
+
+    @property
+    def exclude_object_count(self) -> int:
+        return len(self.exclude_object_names)
+
+    @property
+    def excluded_object_count(self) -> int:
+        return len(self.excluded_object_names)
 
     @property
     def primary_extruder_temperature(self) -> float:
@@ -185,6 +213,7 @@ class PrinterStatus:
             objects=object_names,
             temperature_devices=_temperature_devices_from_status(object_names, object_status or {}),
             **_print_fields_from_status(object_status or {}),
+            **_exclude_object_fields_from_status(object_status or {}),
             **_toolhead_fields_from_status(object_status or {}),
         )
 
@@ -219,6 +248,12 @@ class PrinterStatus:
         print_fields.update(_print_fields_from_status({"status": status_update}))
         if _should_preserve_terminal_progress(print_fields, self.print_progress):
             print_fields["print_progress"] = self.print_progress
+        exclude_object_fields: ExcludeObjectStatusFields = {
+            "exclude_object_names": self.exclude_object_names,
+            "excluded_object_names": self.excluded_object_names,
+            "current_object": self.current_object,
+        }
+        exclude_object_fields.update(_exclude_object_fields_from_status({"status": status_update}))
         toolhead_fields: ToolheadStatusFields = {
             "position_x": self.position_x,
             "position_y": self.position_y,
@@ -247,6 +282,7 @@ class PrinterStatus:
                 {"status": previous_values},
             ),
             **print_fields,
+            **exclude_object_fields,
             **toolhead_fields,
         )
 
@@ -426,6 +462,46 @@ def _print_fields_from_status(object_status: dict[str, Any]) -> PrintStatusField
         if "total_layer" in info:
             fields["total_layers"] = _optional_int(info["total_layer"])
     return fields
+
+
+def _exclude_object_fields_from_status(
+    object_status: dict[str, Any],
+) -> ExcludeObjectStatusFields:
+    status = object_status.get("status", {})
+    if not isinstance(status, dict):
+        status = {}
+    exclude_object = status.get("exclude_object", {})
+    if not isinstance(exclude_object, dict):
+        return ExcludeObjectStatusFields()
+
+    fields = ExcludeObjectStatusFields()
+    if "objects" in exclude_object:
+        fields["exclude_object_names"] = _exclude_object_names(exclude_object["objects"])
+    if "excluded_objects" in exclude_object:
+        fields["excluded_object_names"] = _string_tuple(exclude_object["excluded_objects"])
+    if "current_object" in exclude_object:
+        fields["current_object"] = str(exclude_object.get("current_object") or "")
+    return fields
+
+
+def _exclude_object_names(objects: Any) -> tuple[str, ...]:
+    if not isinstance(objects, list | tuple):
+        return ()
+    names: list[str] = []
+    for item in objects:
+        if isinstance(item, dict):
+            name = str(item.get("name", "")).strip()
+        else:
+            name = str(item).strip()
+        if name:
+            names.append(name)
+    return tuple(names)
+
+
+def _string_tuple(values: Any) -> tuple[str, ...]:
+    if not isinstance(values, list | tuple):
+        return ()
+    return tuple(str(item) for item in values if str(item))
 
 
 def _progress_to_percent(value: Any) -> float:

@@ -432,6 +432,7 @@ class StatusModel(QObject):
     infoChanged = Signal()
     objectsChanged = Signal()
     printChanged = Signal()
+    excludeObjectChanged = Signal()
     toolheadChanged = Signal()
     extruderTemperatureChanged = Signal()
 
@@ -461,6 +462,8 @@ class StatusModel(QObject):
             self.objectsChanged.emit()
         if _print_fields_changed(previous, status):
             self.printChanged.emit()
+        if _exclude_object_fields_changed(previous, status):
+            self.excludeObjectChanged.emit()
         if _toolhead_fields_changed(previous, status) and _panel_needs_toolhead(self._active_panel):
             self.toolheadChanged.emit()
         if _primary_extruder_fields_changed(previous, status):
@@ -585,6 +588,26 @@ class StatusModel(QObject):
     def totalLayers(self) -> int:
         return self._status.total_layers
 
+    @Property(list, notify=excludeObjectChanged)
+    def excludeObjectNames(self) -> list[str]:
+        return list(self._status.exclude_object_names)
+
+    @Property(list, notify=excludeObjectChanged)
+    def excludedObjectNames(self) -> list[str]:
+        return list(self._status.excluded_object_names)
+
+    @Property(str, notify=excludeObjectChanged)
+    def currentObject(self) -> str:
+        return self._status.current_object
+
+    @Property(int, notify=excludeObjectChanged)
+    def excludeObjectCount(self) -> int:
+        return self._status.exclude_object_count
+
+    @Property(int, notify=excludeObjectChanged)
+    def excludedObjectCount(self) -> int:
+        return self._status.excluded_object_count
+
     @Property(float, notify=toolheadChanged)
     def positionX(self) -> float:
         return self._status.position_x
@@ -686,6 +709,18 @@ def _print_fields_changed(previous: PrinterStatus, current: PrinterStatus) -> bo
         current.filament_used,
         current.current_layer,
         current.total_layers,
+    )
+
+
+def _exclude_object_fields_changed(previous: PrinterStatus, current: PrinterStatus) -> bool:
+    return (
+        previous.exclude_object_names,
+        previous.excluded_object_names,
+        previous.current_object,
+    ) != (
+        current.exclude_object_names,
+        current.excluded_object_names,
+        current.current_object,
     )
 
 

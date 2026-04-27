@@ -70,6 +70,7 @@ SAMPLE_STATUS = {
         "display_status",
         "toolhead",
         "gcode_move",
+        "exclude_object",
     ),
     "temperature_devices": (
         TemperatureDeviceStatus(
@@ -96,6 +97,9 @@ SAMPLE_STATUS = {
     "filament_used": 1856.0,
     "current_layer": 12,
     "total_layers": 36,
+    "exclude_object_names": ("part_a", "part_b", "part_c"),
+    "excluded_object_names": ("part_a",),
+    "current_object": "part_b",
     "requested_speed": 125.0,
     "speed_factor": 100.0,
     "extrude_factor": 96.0,
