@@ -327,7 +327,7 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert 'text: "Delete"' in qml
     assert 'actionRole: "print"' in qml
     assert 'actionRole: "delete"' in qml
-    assert "onClicked: root.requestFileAction(actionRole)" in qml
+    assert "root.requestFileAction(actionRole)" in qml
     assert "id: selectedMetadataFlickable" in qml
     assert "id: selectedMetadataGrid" in qml
     assert "component MetadataGroupCard: Rectangle" in qml
@@ -342,13 +342,15 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "visible: root.pendingFileAction.length === 0" in qml
     assert 'text: "Actions"' in qml
     assert "component FileActionButton: Button" in qml
+    assert "if (actionRole.length > 0)" in qml
     assert "id: selectedActionPreview" in qml
     assert "visible: root.pendingFileAction.length > 0" in qml
     assert 'root.pendingFileAction === "delete"' in qml
     assert 'text: "Confirmation preview only"' in qml
     assert 'text: "Confirm"' in qml
     assert 'text: "Confirm disabled"' not in qml
-    assert "onClicked: root.fileActionRequested(" in qml
+    assert "root.fileActionRequested(" in qml
+    assert "root.clearFileAction()" in qml
     assert 'text: "Dismiss"' in qml
     assert "onClicked: root.clearFileAction()" in qml
     assert "contentItem: Label" in qml

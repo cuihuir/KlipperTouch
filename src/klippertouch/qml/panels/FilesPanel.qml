@@ -286,7 +286,11 @@ Item {
         enabled: root.activeFileModel && root.activeFileModel.selectedPath.length > 0
         opacity: 0.9
         font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
-        onClicked: root.requestFileAction(actionRole)
+        onClicked: {
+            if (actionRole.length > 0) {
+                root.requestFileAction(actionRole)
+            }
+        }
         contentItem: Label {
             color: enabled ? Theme.text : Theme.mutedText
             text: parent.text
@@ -723,10 +727,13 @@ Item {
                         FileActionButton {
                             text: "Confirm"
                             enabled: true
-                            onClicked: root.fileActionRequested(
-                                root.pendingFileAction,
-                                root.activeFileModel ? root.activeFileModel.selectedPath : ""
-                            )
+                            onClicked: {
+                                root.fileActionRequested(
+                                    root.pendingFileAction,
+                                    root.activeFileModel ? root.activeFileModel.selectedPath : ""
+                                )
+                                root.clearFileAction()
+                            }
                         }
 
                         FileActionButton {
