@@ -339,6 +339,8 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "component JobButton: Button" in qml
     assert "property int jobButtonHeight" in qml
     assert "property int jobButtonWidth" in qml
+    assert 'readonly property color neutralAccent: "#8b9496"' in qml
+    assert 'readonly property color mutedDangerAccent: "#9a8582"' in qml
     assert "property string buttonRole" in qml
     assert "property string iconText" in qml
     assert "function jobActionGridHeight()" in qml
@@ -414,6 +416,15 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "id: cardGrid" in qml
     assert "ScrollBar.vertical: ScrollBar" in qml
     assert "policy: ScrollBar.AsNeeded" in qml
+    assert "#ed3c63" not in qml
+    assert "#28a7df" not in qml
+    assert "#007db4" not in qml
+    assert "#d46900" not in qml
+    assert "#4caf50" not in qml
+    assert "#d8615b" not in qml
+    assert "Theme.color1" not in qml
+    assert "Theme.color2" not in qml
+    assert "Theme.color4" not in qml
     assert 'text: "Start"' not in qml
     assert "printer.print." not in qml
     assert "printer.gcode.script" not in qml

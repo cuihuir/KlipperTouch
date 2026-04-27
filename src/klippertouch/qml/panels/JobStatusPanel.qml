@@ -28,6 +28,8 @@ Item {
     property var excludedObjectNames: []
     property string currentObject: ""
     property string detailPage: "summary"
+    readonly property color neutralAccent: "#8b9496"
+    readonly property color mutedDangerAccent: "#9a8582"
     readonly property color accentColor: root.stateAccentColor()
     property int jobButtonHeight: Math.min(52, Math.max(44, Math.round(root.metrics.fontSize * 2.45)))
     property int jobButtonWidth: Math.min(150, Math.max(124, Math.round(root.metrics.fontSize * 7.4)))
@@ -109,11 +111,11 @@ Item {
 
     component JobButton: Button {
         id: controlRoot
-        property color accent: Theme.color4
+        property color accent: root.neutralAccent
         property string buttonRole: "normal"
         property string iconText: ""
         readonly property color roleAccent: buttonRole === "danger"
-            ? "#d8615b"
+            ? root.mutedDangerAccent
             : buttonRole === "primary" ? root.accentColor : accent
         implicitHeight: root.jobButtonHeight
         implicitWidth: root.jobButtonWidth
@@ -265,18 +267,18 @@ Item {
 
     function stateAccentColor() {
         if (root.printState === "paused") {
-            return Theme.color1
+            return "#918a7f"
         }
         if (root.printState === "complete") {
-            return "#4caf50"
+            return "#87908a"
         }
         if (root.printState === "cancelled") {
-            return "#8d6e63"
+            return "#837e7a"
         }
         if (root.printState === "error") {
-            return "#d8615b"
+            return root.mutedDangerAccent
         }
-        return Theme.color2
+        return root.neutralAccent
     }
 
     function stateProgressValue() {
@@ -445,7 +447,7 @@ Item {
                                         width: Math.max(height, jobProgressBar.visualPosition * parent.width)
                                         radius: height / 2
                                         gradient: Gradient {
-                                            GradientStop { position: 0.0; color: "#28a7df" }
+                                            GradientStop { position: 0.0; color: "#687477" }
                                             GradientStop { position: 1.0; color: root.accentColor }
                                         }
                                     }
@@ -528,7 +530,7 @@ Item {
                     text: "Cancel"
                     iconText: "X"
                     buttonRole: "danger"
-                    accent: "#d8615b"
+                    accent: root.mutedDangerAccent
                     enabled: false
                     ToolTip.visible: hovered
                     ToolTip.text: root.readonlyActionHint(text)
@@ -840,7 +842,7 @@ Item {
                     Layout.fillWidth: true
                     Layout.preferredHeight: Math.max(64, Math.round(root.metrics.fontSize * 4.6))
                     color: "#101617"
-                    border.color: root.currentObject.length > 0 ? Theme.color4 : "#263233"
+                    border.color: root.currentObject.length > 0 ? root.neutralAccent : "#263233"
                     border.width: 1
                     radius: Math.round(root.metrics.fontSize * 0.32)
                     gradient: Gradient {
@@ -888,13 +890,13 @@ Item {
                         color: root.excludedObjectNames.indexOf(modelData) >= 0
                             ? "#171717"
                             : "#101617"
-                        border.color: modelData === root.currentObject ? Theme.color4 : "#263233"
+                        border.color: modelData === root.currentObject ? root.neutralAccent : "#263233"
                         border.width: modelData === root.currentObject ? 2 : 1
                         radius: Math.round(root.metrics.fontSize * 0.32)
                         gradient: Gradient {
                             GradientStop {
                                 position: 0.0
-                                color: modelData === root.currentObject ? "#102129" : "#101a1d"
+                                color: modelData === root.currentObject ? "#172023" : "#101a1d"
                             }
                             GradientStop { position: 1.0; color: "#071011" }
                         }
