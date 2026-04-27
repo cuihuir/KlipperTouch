@@ -246,6 +246,8 @@ ApplicationWindow {
             FilesPanel {
                 metrics: appMetrics
                 fileModel: window.gcodeFileBridgeModel
+                controlStatus: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastStatus : ""
+                controlError: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastError : ""
                 onFileActionRequested: function(action, path) {
                     window.requestFileControl(action, path)
                 }

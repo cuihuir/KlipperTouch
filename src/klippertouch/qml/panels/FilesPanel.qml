@@ -14,6 +14,8 @@ Item {
     property bool compactFileRows: root.metrics.portrait || width < 920
     property bool detailPage: false
     property string pendingFileAction: ""
+    property string controlStatus: ""
+    property string controlError: ""
     signal fileActionRequested(string action, string path)
 
     function currentPathLabel() {
@@ -84,6 +86,10 @@ Item {
 
     function clearFileAction() {
         root.pendingFileAction = ""
+    }
+
+    function controlFeedbackText() {
+        return root.controlError.length > 0 ? root.controlError : root.controlStatus
     }
 
     function handleFileDeleted(path) {
@@ -749,6 +755,29 @@ Item {
                             enabled: true
                             onClicked: root.clearFileAction()
                         }
+                    }
+                }
+
+                Rectangle {
+                    id: selectedActionFeedback
+                    visible: root.controlFeedbackText().length > 0
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: visible ? Math.max(34, Math.round(root.metrics.fontSize * 2.35)) : 0
+                    Layout.fillHeight: false
+                    color: root.controlError.length > 0 ? "#181311" : "#111819"
+                    border.color: root.controlError.length > 0 ? "#4a3430" : "#354346"
+                    border.width: 1
+                    radius: Math.round(root.metrics.fontSize * 0.28)
+
+                    Label {
+                        anchors.fill: parent
+                        anchors.leftMargin: root.metrics.gap
+                        anchors.rightMargin: root.metrics.gap
+                        color: Theme.text
+                        text: root.controlFeedbackText()
+                        elide: Text.ElideRight
+                        verticalAlignment: Text.AlignVCenter
+                        font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
                     }
                 }
             }

@@ -246,6 +246,9 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "function handleFileDeleted(path)" in qml
     assert "property bool detailPage" in qml
     assert "property string pendingFileAction" in qml
+    assert "property string controlStatus" in qml
+    assert "property string controlError" in qml
+    assert "function controlFeedbackText()" in qml
     assert "signal fileActionRequested(string action, string path)" in qml
     assert "Current folder is empty" in qml
     assert 'fileList.count + " items"' in qml
@@ -346,6 +349,8 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "if (actionRole.length > 0)" in qml
     assert "id: selectedActionPreview" in qml
     assert "visible: root.pendingFileAction.length > 0" in qml
+    assert "id: selectedActionFeedback" in qml
+    assert "visible: root.controlFeedbackText().length > 0" in qml
     assert 'root.pendingFileAction === "delete"' in qml
     assert 'text: "Confirmation preview only"' in qml
     assert 'text: "Confirm"' in qml
@@ -1062,6 +1067,16 @@ def test_main_keeps_files_and_job_status_as_separate_routes() -> None:
     )
     assert "onJobActionRequested: function(action, objectName)" in main_qml
     assert "onFileActionRequested: function(action, path)" in main_qml
+    assert (
+        "controlStatus: window.jobControlBridgeModel ? "
+        'window.jobControlBridgeModel.lastStatus : ""'
+        in main_qml
+    )
+    assert (
+        "controlError: window.jobControlBridgeModel ? "
+        'window.jobControlBridgeModel.lastError : ""'
+        in main_qml
+    )
     assert "FilesPanel {" in main_qml
     assert "JobStatusPanel {" in main_qml
     assert "fileModel: window.gcodeFileBridgeModel" in main_qml
