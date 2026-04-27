@@ -14,6 +14,11 @@ Item {
     property string controlStatus: ""
     property string controlError: ""
     property bool compactVertical: root.height < 380
+    property int recoveryColumns: root.width > 720 ? 4 : 2
+    property int recoveryRows: root.recoveryColumns === 4 ? 1 : 2
+    property int recoveryNavHeight: root.recoveryRows === 1
+        ? Math.max(72, Math.round(root.metrics.fontSize * 4.4))
+        : Math.max(106, Math.round(root.metrics.fontSize * 6.2))
     signal recoveryActionRequested(string action)
 
     function moonrakerOffline() {
@@ -75,6 +80,28 @@ Item {
         return "Current Klippy state: " + root.klippyState
     }
 
+    function detailPageSize() {
+        if (root.compactVertical) {
+            return 150
+        }
+        if (root.width < 620) {
+            return 210
+        }
+        if (root.height < 520) {
+            return 280
+        }
+        return 480
+    }
+
+    function detailPageCount() {
+        return Math.max(1, Math.ceil(root.detail().length / root.detailPageSize()))
+    }
+
+    function detailPageText(pageIndex) {
+        var pageSize = root.detailPageSize()
+        return root.detail().slice(pageIndex * pageSize, (pageIndex + 1) * pageSize)
+    }
+
     Rectangle {
         anchors.fill: parent
         color: "#05090a"
@@ -86,154 +113,206 @@ Item {
         }
     }
 
-    ColumnLayout {
-        anchors.fill: parent
+    Item {
+        id: displayArea
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: recoveryNavBar.top
         anchors.margins: root.metrics.margin
-        width: Math.min(parent.width - root.metrics.margin * 2, Math.max(360, parent.width * 0.72))
-        spacing: root.compactVertical ? Math.max(5, Math.round(root.metrics.gap * 0.45)) : Math.max(8, root.metrics.gap * 0.85)
 
-        Rectangle {
-            Layout.alignment: Qt.AlignHCenter
-            Layout.preferredWidth: Math.max(48, Math.round(root.metrics.fontSize * 3.2))
-            Layout.preferredHeight: Math.max(48, Math.round(root.metrics.fontSize * 3.2))
-            visible: !root.compactVertical
-            radius: width / 2
-            color: "#151f22"
-            border.color: "#637075"
-            border.width: Math.max(2, Math.round(width * 0.035))
-
-            Label {
-                anchors.centerIn: parent
-                text: "!"
-                color: Theme.text
-                font.pixelSize: Math.round(parent.width * 0.52)
-                font.bold: true
-            }
-        }
-
-        Label {
-            text: root.headline()
-            color: Theme.text
-            font.pixelSize: root.compactVertical
-                ? Math.max(18, Math.round(root.metrics.fontSize * 1.05))
-                : Math.max(20, Math.round(root.metrics.fontSize * 1.35))
-            font.bold: true
-            horizontalAlignment: Text.AlignHCenter
-            Layout.fillWidth: true
-            wrapMode: Text.WordWrap
-        }
-
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.minimumHeight: root.compactVertical
-                ? Math.max(48, Math.round(root.metrics.fontSize * 2.6))
-                : Math.max(76, Math.round(root.metrics.fontSize * 4.7))
-            Layout.maximumHeight: root.compactVertical
-                ? Math.max(58, Math.round(parent.height * 0.24))
-                : Math.max(120, Math.round(parent.height * 0.36))
-            radius: Math.round(root.metrics.fontSize * 0.35)
-            color: "#0b1416"
-            border.color: "#2f3a3e"
-            border.width: 1
+        SwipeView {
+            id: messagePager
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.bottom: pagerIndicator.top
+            anchors.bottomMargin: Math.max(2, Math.round(root.metrics.gap * 0.25))
             clip: true
+            interactive: true
 
-            Flickable {
-                id: detailScroller
-                anchors.fill: parent
-                anchors.margins: root.metrics.gap
-                contentWidth: width
-                contentHeight: detailLabel.implicitHeight
-                boundsBehavior: Flickable.StopAtBounds
-                clip: true
+            Repeater {
+                model: root.detailPageCount()
 
-                Label {
-                    id: detailLabel
-                    width: detailScroller.width
-                    text: root.detail()
-                    color: Theme.mutedText
-                    font.pixelSize: root.compactVertical
-                        ? Math.max(10, Math.round(root.metrics.fontSize * 0.64))
-                        : Math.max(12, Math.round(root.metrics.fontSize * 0.82))
-                    horizontalAlignment: Text.AlignLeft
-                    wrapMode: Text.WordWrap
+                Item {
+                    required property int index
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        spacing: root.compactVertical ? Math.max(5, Math.round(root.metrics.gap * 0.45)) : Math.max(8, root.metrics.gap * 0.85)
+
+                        Rectangle {
+                            Layout.alignment: Qt.AlignHCenter
+                            Layout.preferredWidth: Math.max(48, Math.round(root.metrics.fontSize * 3.2))
+                            Layout.preferredHeight: Math.max(48, Math.round(root.metrics.fontSize * 3.2))
+                            visible: !root.compactVertical && index === 0
+                            radius: width / 2
+                            color: "#151f22"
+                            border.color: "#637075"
+                            border.width: Math.max(2, Math.round(width * 0.035))
+
+                            Label {
+                                anchors.centerIn: parent
+                                text: "!"
+                                color: Theme.text
+                                font.pixelSize: Math.round(parent.width * 0.52)
+                                font.bold: true
+                            }
+                        }
+
+                        Label {
+                            text: index === 0
+                                ? root.headline()
+                                : root.headline() + " (" + (index + 1) + "/" + root.detailPageCount() + ")"
+                            color: Theme.text
+                            font.pixelSize: root.compactVertical
+                                ? Math.max(18, Math.round(root.metrics.fontSize * 1.05))
+                                : Math.max(20, Math.round(root.metrics.fontSize * 1.35))
+                            font.bold: true
+                            horizontalAlignment: Text.AlignHCenter
+                            Layout.fillWidth: true
+                            wrapMode: Text.WordWrap
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            Layout.minimumHeight: 0
+                            radius: Math.round(root.metrics.fontSize * 0.35)
+                            color: "#0b1416"
+                            border.color: "#2f3a3e"
+                            border.width: 1
+                            clip: true
+
+                            Label {
+                                id: detailLabel
+                                anchors.fill: parent
+                                anchors.margins: root.metrics.gap
+                                text: root.detailPageText(index)
+                                color: Theme.mutedText
+                                font.pixelSize: root.compactVertical
+                                    ? Math.max(10, Math.round(root.metrics.fontSize * 0.64))
+                                    : Math.max(12, Math.round(root.metrics.fontSize * 0.82))
+                                horizontalAlignment: Text.AlignLeft
+                                verticalAlignment: Text.AlignTop
+                                wrapMode: Text.WordWrap
+                                clip: true
+                            }
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: Math.max(38, recoveryLabel.implicitHeight + root.metrics.gap)
+                            radius: Math.round(root.metrics.fontSize * 0.28)
+                            color: root.controlError.length > 0 ? "#221719" : "#121b1d"
+                            border.color: root.controlError.length > 0 ? "#80676a" : "#344044"
+                            border.width: 1
+                            visible: root.recoveryStatusText().length > 0 && index === root.detailPageCount() - 1
+
+                            Label {
+                                id: recoveryLabel
+                                anchors.centerIn: parent
+                                width: parent.width - root.metrics.gap * 2
+                                text: root.recoveryStatusText()
+                                color: Theme.text
+                                font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.76))
+                                horizontalAlignment: Text.AlignHCenter
+                                elide: Text.ElideRight
+                            }
+                        }
+                    }
                 }
+            }
 
-                ScrollBar.vertical: ScrollBar {
-                    policy: detailScroller.contentHeight > detailScroller.height
-                        ? ScrollBar.AlwaysOn
-                        : ScrollBar.AsNeeded
+            Item {
+                id: servicePage
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: Math.round(root.metrics.fontSize * 0.35)
+                    color: "#0c1517"
+                    border.color: "#2f3a3e"
+                    border.width: 1
+
+                    ColumnLayout {
+                        id: statusColumn
+                        anchors.fill: parent
+                        anchors.margins: root.metrics.gap
+                        spacing: Math.max(6, Math.round(root.metrics.gap * 0.65))
+
+                        Label {
+                            text: "Host"
+                            color: Theme.mutedText
+                            font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.78))
+                            Layout.fillWidth: true
+                        }
+
+                        Label {
+                            text: root.hostname
+                            color: Theme.text
+                            font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.25))
+                            font.bold: true
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                        }
+
+                        Label {
+                            text: "Klippy: " + root.klippyState
+                            color: Theme.text
+                            font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 0.95))
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                        }
+
+                        Label {
+                            text: "Moonraker: " + root.moonrakerVersion
+                            color: Theme.text
+                            font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 0.95))
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                        }
+
+                        Label {
+                            text: "Printer movement controls are unavailable while recovery is active."
+                            color: "#9aa7ad"
+                            font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.76))
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            verticalAlignment: Text.AlignBottom
+                            wrapMode: Text.WordWrap
+                        }
+                    }
                 }
             }
         }
 
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: root.compactVertical
-                ? Math.max(54, statusColumn.implicitHeight + root.metrics.gap * 0.6)
-                : Math.max(72, statusColumn.implicitHeight + root.metrics.gap * 1.2)
-            radius: Math.round(root.metrics.fontSize * 0.35)
-            color: "#0c1517"
-            border.color: "#2f3a3e"
-            border.width: 1
-
-            ColumnLayout {
-                id: statusColumn
-                anchors.fill: parent
-                anchors.margins: root.compactVertical ? Math.max(4, Math.round(root.metrics.gap * 0.5)) : root.metrics.gap
-                spacing: root.compactVertical ? 1 : Math.max(3, Math.round(root.metrics.gap * 0.35))
-
-                Label {
-                    text: "Host: " + root.hostname
-                    color: Theme.text
-                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.8))
-                    Layout.fillWidth: true
-                    elide: Text.ElideRight
-                }
-
-                Label {
-                    text: "Klippy: " + root.klippyState
-                    color: Theme.text
-                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.8))
-                    Layout.fillWidth: true
-                    elide: Text.ElideRight
-                }
-
-                Label {
-                    text: "Moonraker: " + root.moonrakerVersion
-                    color: Theme.text
-                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.8))
-                    Layout.fillWidth: true
-                    elide: Text.ElideRight
-                }
-            }
+        PageIndicator {
+            id: pagerIndicator
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: parent.bottom
+            count: messagePager.count
+            currentIndex: messagePager.currentIndex
+            visible: count > 1
         }
+    }
 
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: Math.max(40, recoveryLabel.implicitHeight + root.metrics.gap)
-            radius: Math.round(root.metrics.fontSize * 0.28)
-            color: root.controlError.length > 0 ? "#221719" : "#121b1d"
-            border.color: root.controlError.length > 0 ? "#80676a" : "#344044"
-            border.width: 1
-            visible: root.recoveryStatusText().length > 0
-
-            Label {
-                id: recoveryLabel
-                anchors.centerIn: parent
-                width: parent.width - root.metrics.gap * 2
-                text: root.recoveryStatusText()
-                color: Theme.text
-                font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.76))
-                horizontalAlignment: Text.AlignHCenter
-                elide: Text.ElideRight
-            }
-        }
+    Rectangle {
+        id: recoveryNavBar
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.margins: root.metrics.margin
+        height: root.recoveryNavHeight
+        radius: Math.round(root.metrics.fontSize * 0.36)
+        color: "#081011"
+        border.color: "#263235"
+        border.width: 1
 
         GridLayout {
             id: recoveryActions
-            Layout.fillWidth: true
-            columns: root.width > 720 ? 4 : 2
+            anchors.fill: recoveryNavBar
+            anchors.margins: root.metrics.gap
+            columns: root.recoveryColumns
             rowSpacing: root.compactVertical ? Math.max(5, Math.round(root.metrics.gap * 0.5)) : root.metrics.gap
             columnSpacing: root.metrics.gap
 
@@ -251,12 +330,8 @@ Item {
                     required property bool placeholder
 
                     Layout.fillWidth: true
-                    Layout.minimumHeight: root.compactVertical
-                        ? Math.max(42, Math.round(root.metrics.fontSize * 2.35))
-                        : Math.max(54, Math.round(root.metrics.fontSize * 3.2))
-                    Layout.preferredHeight: root.compactVertical
-                        ? Math.max(42, Math.round(root.metrics.fontSize * 2.35))
-                        : Math.max(54, Math.round(root.metrics.fontSize * 3.2))
+                    Layout.fillHeight: true
+                    Layout.minimumHeight: 0
                     radius: Math.round(height * 0.18)
                     color: placeholder ? "#141b1d" : "#1a2528"
                     border.color: placeholder ? "#3d474a" : "#667276"
@@ -293,16 +368,6 @@ Item {
                     }
                 }
             }
-        }
-
-        Label {
-            text: "No printer controls are available while this screen is active."
-            color: "#9aa7ad"
-            font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.76))
-            horizontalAlignment: Text.AlignHCenter
-            Layout.fillWidth: true
-            wrapMode: Text.WordWrap
-            visible: !root.compactVertical
         }
     }
 }

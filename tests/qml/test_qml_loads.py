@@ -857,16 +857,27 @@ def test_splash_panel_handles_system_fault_states() -> None:
     assert "property bool compactVertical" in panel_qml
     assert "root.height < 380" in panel_qml
     assert "function recoveryStatusText()" in panel_qml
+    assert "function detailPageSize()" in panel_qml
+    assert "function detailPageCount()" in panel_qml
+    assert "function detailPageText(pageIndex)" in panel_qml
+    assert "Math.ceil(root.detail().length / root.detailPageSize())" in panel_qml
     assert 'return ""' in panel_qml
     assert "return root.webhooksMessage\n" not in panel_qml
-    assert "Flickable {" in panel_qml
-    assert "id: detailScroller" in panel_qml
-    assert "Layout.maximumHeight" in panel_qml
+    assert "id: messagePager" in panel_qml
+    assert "SwipeView {" in panel_qml
+    assert "Repeater {" in panel_qml
+    assert "model: root.detailPageCount()" in panel_qml
+    assert "id: pagerIndicator" in panel_qml
+    assert "count: messagePager.count" in panel_qml
+    assert "id: detailLabel" in panel_qml
+    assert "root.detailPageText(index)" in panel_qml
     assert "clip: true" in panel_qml
-    assert "ScrollBar.vertical" in panel_qml
+    assert "ScrollBar.vertical" not in panel_qml
+    assert "id: recoveryNavBar" in panel_qml
+    assert "anchors.bottom: parent.bottom" in panel_qml
+    assert "anchors.bottom: recoveryNavBar.top" in panel_qml
     assert "id: recoveryActions" in panel_qml
-    assert "visible: !root.compactVertical" in panel_qml
-    assert "Layout.preferredHeight: root.compactVertical" in panel_qml
+    assert "anchors.fill: recoveryNavBar" in panel_qml
     assert "signal recoveryActionRequested(string action)" in panel_qml
     assert '"Firmware Restart"' in panel_qml
     assert '"Restart Klipper"' in panel_qml
@@ -876,7 +887,7 @@ def test_splash_panel_handles_system_fault_states() -> None:
         '{"label": "Emergency Stop", "action": "emergency_stop", "placeholder": false}'
     ) in panel_qml
     assert "root.recoveryActionRequested(action)" in panel_qml
-    assert "No printer controls are available while this screen is active." in panel_qml
+    assert "Printer movement controls are unavailable while recovery is active." in panel_qml
 
 
 def test_main_menu_matches_klipperscreen_split_and_autogrid_contract() -> None:
