@@ -13,6 +13,7 @@ Rectangle {
     property string clockText: Qt.formatTime(new Date(), "hh:mm")
     property real fontSize: 16
     property var temperatureModel: null
+    property int notificationUnreadCount: 0
     property bool hasExternalTemperatureModel: typeof temperatureModel !== "undefined"
         && temperatureModel !== null
     property var activeTemperatureModel: root.hasExternalTemperatureModel
@@ -22,6 +23,7 @@ Rectangle {
         2,
         Math.floor(heaterStrip.width / Math.max(42, root.fontSize * 2.8))
     )
+    signal notificationRequested()
 
     function updateClock() {
         var nextText = Qt.formatTime(new Date(), "hh:mm")
@@ -97,16 +99,52 @@ Rectangle {
             elide: Text.ElideRight
         }
 
-        Label {
-            id: clockLabel
-            color: Theme.mutedText
-            text: root.clockText
-            font.pixelSize: Math.max(10, Math.round(root.fontSize * 0.8))
-            horizontalAlignment: Text.AlignRight
-            verticalAlignment: Text.AlignVCenter
+        Item {
+            id: notificationArea
             width: parent.width * 0.22
             height: parent.height
-            elide: Text.ElideRight
+
+            Row {
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Math.max(6, Math.round(root.fontSize * 0.35))
+
+                Rectangle {
+                    id: notificationBadge
+                    width: Math.max(26, Math.round(root.fontSize * 1.6))
+                    height: Math.max(22, Math.round(root.fontSize * 1.25))
+                    radius: Math.round(height * 0.45)
+                    color: root.notificationUnreadCount > 0 ? "#5f6b70" : "#30383d"
+                    border.color: root.notificationUnreadCount > 0 ? "#9aa7ad" : "#4c565b"
+                    border.width: 1
+
+                    Label {
+                        anchors.centerIn: parent
+                        color: Theme.text
+                        text: root.notificationUnreadCount > 0
+                            ? (root.notificationUnreadCount > 99 ? "99+" : root.notificationUnreadCount)
+                            : "!"
+                        font.pixelSize: Math.max(10, Math.round(root.fontSize * 0.68))
+                        font.bold: root.notificationUnreadCount > 0
+                    }
+                }
+
+                Label {
+                    id: clockLabel
+                    color: Theme.mutedText
+                    text: root.clockText
+                    font.pixelSize: Math.max(10, Math.round(root.fontSize * 0.8))
+                    horizontalAlignment: Text.AlignRight
+                    verticalAlignment: Text.AlignVCenter
+                    height: notificationArea.height
+                    elide: Text.ElideRight
+                }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: root.notificationRequested()
+            }
         }
     }
 

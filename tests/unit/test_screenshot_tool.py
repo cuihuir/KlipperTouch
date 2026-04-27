@@ -11,6 +11,7 @@ def test_screenshot_tool_captures_common_panels_and_sizes() -> None:
     assert "DEFAULT_PANELS = " in source
     assert '"print"' in source
     assert '"more"' in source
+    assert '"notifications"' in source
     assert '"system"' in source
     assert '"network"' in source
     assert '"logs"' in source

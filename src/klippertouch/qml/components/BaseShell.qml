@@ -9,10 +9,12 @@ Rectangle {
     required property int objectCount
     property var temperatureModel: null
     property string panelTitle: "Home"
+    property int notificationUnreadCount: 0
     default property alias panelContent: contentLayer.data
     signal backRequested()
     signal homeRequested()
     signal menuRequested()
+    signal notificationsRequested()
 
     color: Theme.bg
 
@@ -54,6 +56,8 @@ Rectangle {
         printerName: root.hostname
         panelTitle: root.panelTitle
         temperatureModel: root.temperatureModel
+        notificationUnreadCount: root.notificationUnreadCount
+        onNotificationRequested: root.notificationsRequested()
     }
 
     Item {

@@ -38,6 +38,15 @@ def test_app_registers_job_control_context() -> None:
     assert 'setContextProperty("jobControlModel", job_control_model)' in source
 
 
+def test_app_registers_notification_context() -> None:
+    source = app.Path(app.__file__).read_text(encoding="utf-8")
+
+    assert "NotificationModel" in source
+    assert "notification_model = NotificationModel()" in source
+    assert 'setContextProperty("notificationModel", notification_model)' in source
+    assert "engine.notification_model = notification_model" in source
+
+
 def test_create_status_models_applies_initial_status(qtbot) -> None:
     status = PrinterStatus(objects=("extruder", "heater_bed"))
 

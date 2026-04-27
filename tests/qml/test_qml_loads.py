@@ -770,6 +770,53 @@ def test_more_menu_panel_uses_icon_list_entry_model() -> None:
     assert 'ListElement { tileLabel: "System"' in model_qml
 
 
+def test_notification_center_is_globally_routed() -> None:
+    main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
+    shell_qml = Path("src/klippertouch/qml/components/BaseShell.qml").read_text(encoding="utf-8")
+    status_qml = Path("src/klippertouch/qml/components/StatusBar.qml").read_text(
+        encoding="utf-8"
+    )
+    more_model_qml = Path("src/klippertouch/qml/models/MoreMenuModel.qml").read_text(
+        encoding="utf-8"
+    )
+    panel_qml = Path("src/klippertouch/qml/panels/NotificationCenterPanel.qml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "property var notificationBridgeModel" in main_qml
+    assert 'typeof notificationModel === "undefined" ? null : notificationModel' in main_qml
+    assert '"notifications": "Notifications"' in main_qml
+    assert 'case "notifications":' in main_qml
+    assert "return notificationCenterComponent" in main_qml
+    assert "NotificationCenterPanel {" in main_qml
+    assert "notificationModel: window.notificationBridgeModel" in main_qml
+    assert "onNotificationsRequested: window.showPanel(\"notifications\")" in main_qml
+    assert "notificationUnreadCount: window.notificationBridgeModel" in main_qml
+    assert "signal notificationsRequested()" in shell_qml
+    assert "notificationUnreadCount: root.notificationUnreadCount" in shell_qml
+    assert "onNotificationRequested: root.notificationsRequested()" in shell_qml
+    assert "property int notificationUnreadCount" in status_qml
+    assert "signal notificationRequested()" in status_qml
+    assert "notificationBadge" in status_qml
+    assert 'ListElement { tileLabel: "Notifications"; tileIcon: "printer"' in more_model_qml
+    assert "required property var metrics" in panel_qml
+    assert "property var notificationModel: null" in panel_qml
+    assert "notificationModel.markAllRead()" in panel_qml
+    assert "notificationModel.clear()" in panel_qml
+    assert "No notifications" in panel_qml
+
+
+def test_job_control_events_are_forwarded_to_notifications() -> None:
+    main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
+
+    assert "function notify(level, title, message, source, sticky, actionPanel)" in main_qml
+    assert "notificationBridgeModel.addNotification" in main_qml
+    assert "function onStatusChanged()" in main_qml
+    assert "function onErrorChanged()" in main_qml
+    assert 'window.notify("info", "Command sent"' in main_qml
+    assert 'window.notify("error", "Command failed"' in main_qml
+
+
 def test_main_menu_matches_klipperscreen_split_and_autogrid_contract() -> None:
     qml = Path("src/klippertouch/qml/panels/MainMenuPanel.qml").read_text(encoding="utf-8")
 

@@ -14,6 +14,7 @@ ApplicationWindow {
     property var temperatureBridgeModel: typeof temperatureDeviceModel === "undefined" ? null : temperatureDeviceModel
     property var gcodeFileBridgeModel: typeof gcodeFileModel === "undefined" ? null : gcodeFileModel
     property var jobControlBridgeModel: typeof jobControlModel === "undefined" ? null : jobControlModel
+    property var notificationBridgeModel: typeof notificationModel === "undefined" ? null : notificationModel
     property string requestedPrintState: jobControlBridgeModel ? jobControlBridgeModel.requestedPrintState : ""
     property string hostname: bridgeModel ? bridgeModel.hostname : "offline"
     property string klippyState: bridgeModel ? bridgeModel.klippyState : "disconnected"
@@ -50,8 +51,8 @@ ApplicationWindow {
     property string currentObject: bridgeModel ? bridgeModel.currentObject : ""
     property string currentPanel: "main"
     property var panelStack: ["main"]
-    property var panelTitles: ({"main": "Home", "move": "Move", "temperature": "Temperature", "extrude": "Extrude", "more": "More", "system": "System", "network": "Network", "logs": "Logs", "language": "Language", "update": "Update", "print": "Print", "job_status": "Job Status"})
-    property var panelIcons: ({"main": "main", "move": "move", "temperature": "heat-up", "extrude": "extrude", "more": "settings", "system": "settings", "network": "main", "logs": "printer", "language": "settings", "update": "printer", "print": "printer", "job_status": "printer"})
+    property var panelTitles: ({"main": "Home", "move": "Move", "temperature": "Temperature", "extrude": "Extrude", "more": "More", "system": "System", "network": "Network", "logs": "Logs", "language": "Language", "update": "Update", "print": "Print", "job_status": "Job Status", "notifications": "Notifications"})
+    property var panelIcons: ({"main": "main", "move": "move", "temperature": "heat-up", "extrude": "extrude", "more": "settings", "system": "settings", "network": "main", "logs": "printer", "language": "settings", "update": "printer", "print": "printer", "job_status": "printer", "notifications": "printer"})
 
     function shouldAutoEnterJobStatus() {
         return window.printState === "printing" || window.printState === "paused"
@@ -119,6 +120,8 @@ ApplicationWindow {
             return filesComponent
         case "job_status":
             return jobStatusComponent
+        case "notifications":
+            return notificationCenterComponent
         case "more":
             return moreMenuComponent
         case "system":
@@ -179,6 +182,13 @@ ApplicationWindow {
         return Math.max(1, Math.min(999, value))
     }
 
+    function notify(level, title, message, source, sticky, actionPanel) {
+        if (!notificationBridgeModel) {
+            return
+        }
+        notificationBridgeModel.addNotification(level, title, message, source, sticky, actionPanel)
+    }
+
     Metrics {
         id: appMetrics
         viewportWidth: window.width
@@ -197,6 +207,18 @@ ApplicationWindow {
     Connections {
         target: window.jobControlBridgeModel
 
+        function onStatusChanged() {
+            if (window.jobControlBridgeModel && window.jobControlBridgeModel.lastStatus.length > 0) {
+                window.notify("info", "Command sent", window.jobControlBridgeModel.lastStatus, "job", false, window.currentPanel)
+            }
+        }
+
+        function onErrorChanged() {
+            if (window.jobControlBridgeModel && window.jobControlBridgeModel.lastError.length > 0) {
+                window.notify("error", "Command failed", window.jobControlBridgeModel.lastError, "job", true, window.currentPanel)
+            }
+        }
+
         function onFileDeleted(path) {
             if (panelLoader.item && typeof panelLoader.item.handleFileDeleted === "function") {
                 panelLoader.item.handleFileDeleted(path)
@@ -214,10 +236,14 @@ ApplicationWindow {
         state: window.klippyState
         objectCount: window.objectCount
         temperatureModel: window.temperatureBridgeModel
+        notificationUnreadCount: window.notificationBridgeModel
+            ? window.notificationBridgeModel.unreadCount
+            : 0
         panelTitle: window.panelTitles[window.currentPanel]
         onBackRequested: window.goBack()
         onHomeRequested: window.goHome()
         onMenuRequested: window.showPanel("more")
+        onNotificationsRequested: window.showPanel("notifications")
 
         Loader {
             id: panelLoader
@@ -329,6 +355,15 @@ ApplicationWindow {
             MoreMenuPanel {
                 metrics: appMetrics
                 onPanelRequested: function(panelName) { window.showPanel(panelName) }
+            }
+        }
+
+        Component {
+            id: notificationCenterComponent
+
+            NotificationCenterPanel {
+                metrics: appMetrics
+                notificationModel: window.notificationBridgeModel
             }
         }
 

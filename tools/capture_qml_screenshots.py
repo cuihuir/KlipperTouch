@@ -31,6 +31,7 @@ DEFAULT_PANELS = (
     "move",
     "extrude",
     "more",
+    "notifications",
     "system",
     "network",
     "logs",

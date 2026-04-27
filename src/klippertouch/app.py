@@ -12,6 +12,7 @@ from klippertouch.moonraker.file_refresh import GCodeFileRefresh
 from klippertouch.moonraker.status_stream import MoonrakerStatusStream
 from klippertouch.qt_models.gcode_file_model import GCodeFileListModel
 from klippertouch.qt_models.job_control_model import JobControlModel
+from klippertouch.qt_models.notification_model import NotificationModel
 from klippertouch.qt_models.status_model import StatusModel, TemperatureDeviceListModel
 
 
@@ -57,11 +58,14 @@ def run_app(
     )
     gcode_file_model = create_gcode_file_model(initial_files)
     job_control_model = JobControlModel(job_control_client)
+    notification_model = NotificationModel()
     engine.rootContext().setContextProperty("statusModel", status_model)
     engine.rootContext().setContextProperty("temperatureDeviceModel", temperature_device_model)
     engine.rootContext().setContextProperty("gcodeFileModel", gcode_file_model)
     engine.rootContext().setContextProperty("jobControlModel", job_control_model)
+    engine.rootContext().setContextProperty("notificationModel", notification_model)
     engine.job_control_model = job_control_model  # type: ignore[attr-defined]
+    engine.notification_model = notification_model  # type: ignore[attr-defined]
     qml_path = Path(__file__).parent / "qml" / "main.qml"
     engine.load(QUrl.fromLocalFile(str(qml_path)))
     if not engine.rootObjects():
