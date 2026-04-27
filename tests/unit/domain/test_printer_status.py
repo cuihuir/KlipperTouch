@@ -302,6 +302,22 @@ def test_printer_status_applies_webhooks_state_from_websocket_update() -> None:
     assert updated.webhooks_message == "Shutdown due to webhooks"
 
 
+def test_printer_status_marks_klippy_ready_when_webhooks_recovers() -> None:
+    status = PrinterStatus(
+        klippy_state="shutdown",
+        moonraker_version="v0.10.0",
+        objects=("webhooks",),
+        webhooks_state="shutdown",
+        webhooks_message="Shutdown due to webhooks request",
+    )
+
+    updated = status.with_status_update({"webhooks": {"state": "ready"}})
+
+    assert updated.klippy_state == "ready"
+    assert updated.webhooks_state == "ready"
+    assert updated.webhooks_message == "Printer is ready"
+
+
 def test_printer_status_applies_read_only_print_update() -> None:
     status = PrinterStatus(
         objects=("print_stats", "display_status", "virtual_sdcard"),

@@ -72,6 +72,9 @@ ApplicationWindow {
     }
 
     function klippyFaultActive() {
+        if (window.webhooksState === "ready") {
+            return false
+        }
         return window.klippyState.length <= 0 || window.klippyState !== "ready"
     }
 

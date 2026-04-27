@@ -283,10 +283,17 @@ class PrinterStatus:
             "webhooks_message": self.webhooks_message,
         }
         webhooks_fields.update(_webhooks_fields_from_status({"status": status_update}))
+        klippy_state = self.klippy_state
+        if webhooks_fields.get("webhooks_state") == "ready":
+            klippy_state = "ready"
+            if webhooks_fields.get("webhooks_message") != "Printer is ready":
+                webhooks_fields["webhooks_message"] = "Printer is ready"
+        elif webhooks_fields.get("webhooks_state") in {"shutdown", "error", "disconnected"}:
+            klippy_state = str(webhooks_fields["webhooks_state"])
 
         return PrinterStatus(
             hostname=self.hostname,
-            klippy_state=self.klippy_state,
+            klippy_state=klippy_state,
             klipper_version=self.klipper_version,
             moonraker_version=self.moonraker_version,
             mcu_statuses=self.mcu_statuses,

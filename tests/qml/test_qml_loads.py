@@ -829,6 +829,7 @@ def test_splash_panel_handles_system_fault_states() -> None:
     assert "function moonrakerFaultActive()" in main_qml
     assert "function klippyFaultActive()" in main_qml
     assert "function webhooksFaultActive()" in main_qml
+    assert 'if (window.webhooksState === "ready") {' in main_qml
     assert 'if (window.webhooksState === "ready")' in main_qml
     assert "sourceComponent: window.systemFaultActive()" in main_qml
     assert "return splashComponent" in main_qml

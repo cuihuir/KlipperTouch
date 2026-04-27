@@ -117,6 +117,30 @@ def test_status_from_websocket_message_applies_notification_temperature_delta() 
     assert tuple(device.target for device in updated.temperature_devices) == (0.0, 60.0)
 
 
+def test_status_from_websocket_message_recovers_from_webhooks_shutdown() -> None:
+    status = PrinterStatus(
+        klippy_state="shutdown",
+        moonraker_version="v0.10.0",
+        objects=("webhooks",),
+        webhooks_state="shutdown",
+        webhooks_message="Shutdown due to webhooks request",
+    )
+    message = json.dumps(
+        {
+            "jsonrpc": "2.0",
+            "method": "notify_status_update",
+            "params": [{"webhooks": {"state": "ready"}}],
+        }
+    )
+
+    updated = status_from_websocket_message(status, message)
+
+    assert updated is not None
+    assert updated.klippy_state == "ready"
+    assert updated.webhooks_state == "ready"
+    assert updated.webhooks_message == "Printer is ready"
+
+
 def test_status_from_websocket_message_applies_subscription_snapshot() -> None:
     status = PrinterStatus(
         objects=(
