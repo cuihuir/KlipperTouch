@@ -504,6 +504,10 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "root.primaryActionLabel()" in qml
     assert 'root.effectivePrintState() === "paused" ? "Resume" : "Pause"' in qml
     assert 'text: "Cancel"' in qml
+    assert 'text: "Clear"' in qml
+    assert "function terminalJobState()" in qml
+    assert "visible: root.terminalJobState()" in qml
+    assert 'root.stageImmediateJobAction("clear")' in qml
     assert 'text: "Skip Object"' in qml
     assert 'root.detailPage = "exclude"' in qml
     assert 'text: "Advanced"' in qml
@@ -1033,6 +1037,7 @@ def test_main_keeps_files_and_job_status_as_separate_routes() -> None:
     assert "jobControlBridgeModel.requestPause()" in main_qml
     assert "jobControlBridgeModel.requestResume()" in main_qml
     assert "jobControlBridgeModel.requestCancel()" in main_qml
+    assert "jobControlBridgeModel.requestClearJob()" in main_qml
     assert "jobControlBridgeModel.requestSkipObject(objectName)" in main_qml
     assert "function requestFileControl(action, path)" in main_qml
     assert "jobControlBridgeModel.requestStartPrint(path)" in main_qml

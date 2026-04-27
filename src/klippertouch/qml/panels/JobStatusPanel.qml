@@ -538,6 +538,11 @@ Item {
         return root.effectivePrintState() === "paused" ? "Resume" : "Pause"
     }
 
+    function terminalJobState() {
+        var state = root.effectivePrintState()
+        return state === "cancelled" || state === "complete"
+    }
+
     function effectivePrintState() {
         if (root.printState === "complete"
                 || root.printState === "cancelled"
@@ -586,7 +591,9 @@ Item {
     }
 
     function jobActionGridHeight() {
-        var rows = root.metrics.portrait ? 2 : 1
+        var buttonCount = root.terminalJobState() ? 1 : 4
+        var columns = root.metrics.portrait ? 2 : 4
+        var rows = Math.ceil(buttonCount / columns)
         return root.jobButtonHeight * rows + root.metrics.gap * (rows - 1)
     }
 
@@ -965,6 +972,7 @@ Item {
                 columnSpacing: root.metrics.gap
 
                 JobButton {
+                    visible: !root.terminalJobState()
                     Layout.preferredWidth: root.jobActionButtonWidth()
                     Layout.preferredHeight: root.jobButtonHeight
                     text: root.primaryActionLabel()
@@ -977,6 +985,7 @@ Item {
                 }
 
                 JobButton {
+                    visible: !root.terminalJobState()
                     Layout.preferredWidth: root.jobActionButtonWidth()
                     Layout.preferredHeight: root.jobButtonHeight
                     text: "Cancel"
@@ -990,6 +999,20 @@ Item {
                 }
 
                 JobButton {
+                    visible: root.terminalJobState()
+                    Layout.preferredWidth: root.jobActionButtonWidth()
+                    Layout.preferredHeight: root.jobButtonHeight
+                    text: "Clear"
+                    iconText: "CLR"
+                    buttonRole: "primary"
+                    enabled: true
+                    ToolTip.visible: hovered
+                    ToolTip.text: root.readonlyActionHint(text)
+                    onClicked: root.stageImmediateJobAction("clear")
+                }
+
+                JobButton {
+                    visible: !root.terminalJobState()
                     Layout.preferredWidth: root.jobActionButtonWidth()
                     Layout.preferredHeight: root.jobButtonHeight
                     text: "Skip Object"
@@ -1001,6 +1024,7 @@ Item {
                 }
 
                 JobButton {
+                    visible: !root.terminalJobState()
                     Layout.preferredWidth: root.jobActionButtonWidth()
                     Layout.preferredHeight: root.jobButtonHeight
                     text: "Advanced"

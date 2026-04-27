@@ -42,6 +42,10 @@ class FakeClient:
         self.calls.append(("delete", filename))
         return {"ok": True}
 
+    def clear_sdcard_file(self) -> dict[str, bool]:
+        self.calls.append(("clear", ""))
+        return {"ok": True}
+
 
 class BlockingClient(FakeClient):
     def pause_print(self) -> dict[str, bool]:
@@ -154,3 +158,14 @@ def test_job_control_model_rejects_empty_delete(qtbot) -> None:
     model.requestDeleteFile("")
 
     assert errors == ["Filename is required"]
+
+
+def test_job_control_model_clears_terminal_job_file(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestClearJob()
+
+    assert client.calls == [("clear", "")]
+    assert model.lastStatus == "Clear sent"
+    assert model.requestedPrintState == "standby"

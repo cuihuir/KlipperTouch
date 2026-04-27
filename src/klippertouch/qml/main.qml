@@ -144,6 +144,8 @@ ApplicationWindow {
             jobControlBridgeModel.requestCancel()
         } else if (action === "skip") {
             jobControlBridgeModel.requestSkipObject(objectName)
+        } else if (action === "clear") {
+            jobControlBridgeModel.requestClearJob()
         }
     }
 

@@ -23,6 +23,8 @@ class JobControlClient(Protocol):
 
     def delete_gcode_file(self, filename: str) -> dict[str, object]: ...
 
+    def clear_sdcard_file(self) -> dict[str, object]: ...
+
 
 class JobControlModel(QObject):
     statusChanged = Signal()
@@ -63,6 +65,10 @@ class JobControlModel(QObject):
     @Slot(str)
     def requestStartPrint(self, filename: str) -> None:  # noqa: N802
         self._run_control("Print", lambda client: client.start_print(filename), "printing")
+
+    @Slot()
+    def requestClearJob(self) -> None:  # noqa: N802
+        self._run_control("Clear", lambda client: client.clear_sdcard_file(), "standby")
 
     @Slot(str)
     def requestDeleteFile(self, filename: str) -> None:  # noqa: N802

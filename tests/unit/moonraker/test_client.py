@@ -290,6 +290,7 @@ def test_client_sends_print_control_when_controls_enabled(
         ("set_speed_factor", 95.0, "M220 S95"),
         ("set_extrude_factor", 105.0, "M221 S105"),
         ("exclude_object", "part_a", "EXCLUDE_OBJECT NAME=part_a"),
+        ("clear_sdcard_file", None, "SDCARD_RESET_FILE"),
     ],
 )
 def test_client_sends_gcode_control_scripts_when_controls_enabled(
@@ -324,7 +325,10 @@ def test_client_sends_gcode_control_scripts_when_controls_enabled(
         policy=CommandPolicy(read_only=False),
     )
 
-    assert getattr(client, client_method)(argument) == {"ok": True}
+    if argument is None:
+        assert getattr(client, client_method)() == {"ok": True}
+    else:
+        assert getattr(client, client_method)(argument) == {"ok": True}
     assert captured["json"] == {
         "jsonrpc": "2.0",
         "method": "printer.gcode.script",
@@ -367,6 +371,8 @@ def test_client_blocks_print_control_in_read_only_mode(monkeypatch) -> None:
         client.exclude_object("part_a")
     with pytest.raises(UnsafeCommandError):
         client.delete_gcode_file("cube.gcode")
+    with pytest.raises(UnsafeCommandError):
+        client.clear_sdcard_file()
 
     assert calls == []
 
