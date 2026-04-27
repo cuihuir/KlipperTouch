@@ -28,6 +28,8 @@ Item {
     property var excludedObjectNames: []
     property string currentObject: ""
     property string detailPage: "summary"
+    property int jobButtonHeight: Math.min(52, Math.max(44, Math.round(root.metrics.fontSize * 2.45)))
+    property int jobButtonWidth: Math.min(112, Math.max(86, Math.round(root.metrics.fontSize * 5.3)))
     signal zOffsetAdjustRequested(real delta)
     signal speedFactorAdjustRequested(real delta)
     signal extrudeFactorAdjustRequested(real delta)
@@ -36,6 +38,7 @@ Item {
     component JobButton: Button {
         id: controlRoot
         property color accent: Theme.color4
+        implicitHeight: root.jobButtonHeight
 
         contentItem: Label {
             color: controlRoot.enabled ? Theme.text : Theme.mutedText
@@ -43,7 +46,7 @@ Item {
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
-            font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.88))
+            font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.82))
         }
 
         background: Rectangle {
@@ -173,6 +176,20 @@ Item {
 
     function readonlyActionHint(actionName) {
         return actionName + " is staged for the control layer."
+    }
+
+    function jobActionGridHeight() {
+        var rows = root.metrics.portrait ? 2 : 1
+        return root.jobButtonHeight * rows + root.metrics.gap * (rows - 1)
+    }
+
+    function jobActionGridWidth() {
+        var columns = root.metrics.portrait ? 2 : 4
+        return root.jobButtonWidth * columns + root.metrics.gap * (columns - 1)
+    }
+
+    function jobActionButtonWidth() {
+        return root.jobButtonWidth
     }
 
     // qmllint disable missing-property
@@ -351,15 +368,16 @@ Item {
             GridLayout {
                 id: jobActionGrid
                 visible: root.detailPage === "summary"
-                Layout.fillWidth: true
-                Layout.preferredHeight: Math.max(54, Math.round(root.metrics.fontSize * 3.7))
-                columns: 4
+                Layout.preferredWidth: root.jobActionGridWidth()
+                Layout.preferredHeight: root.jobActionGridHeight()
+                Layout.alignment: Qt.AlignHCenter
+                columns: root.metrics.portrait ? 2 : 4
                 rowSpacing: root.metrics.gap
                 columnSpacing: root.metrics.gap
 
                 JobButton {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
+                    Layout.preferredWidth: root.jobActionButtonWidth()
+                    Layout.preferredHeight: root.jobButtonHeight
                     text: root.primaryActionLabel()
                     enabled: false
                     ToolTip.visible: hovered
@@ -367,8 +385,8 @@ Item {
                 }
 
                 JobButton {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
+                    Layout.preferredWidth: root.jobActionButtonWidth()
+                    Layout.preferredHeight: root.jobButtonHeight
                     text: "Cancel"
                     accent: "#d8615b"
                     enabled: false
@@ -377,8 +395,8 @@ Item {
                 }
 
                 JobButton {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
+                    Layout.preferredWidth: root.jobActionButtonWidth()
+                    Layout.preferredHeight: root.jobButtonHeight
                     text: "Skip Object"
                     enabled: root.excludeObjectNames.length > 0
                     ToolTip.visible: hovered
@@ -387,8 +405,8 @@ Item {
                 }
 
                 JobButton {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
+                    Layout.preferredWidth: root.jobActionButtonWidth()
+                    Layout.preferredHeight: root.jobButtonHeight
                     text: "Advanced"
                     onClicked: root.detailPage = "advanced"
                 }
@@ -579,7 +597,7 @@ Item {
                         property string adjustmentTarget: modelData.target
 
                         Layout.fillWidth: true
-                        Layout.preferredHeight: Math.max(78, Math.round(root.metrics.fontSize * 5.6))
+                        Layout.preferredHeight: Math.max(root.jobButtonHeight + root.metrics.gap * 2, Math.round(root.metrics.fontSize * 3.8))
                         color: "#101617"
                         border.color: "#263233"
                         border.width: 1
@@ -620,8 +638,9 @@ Item {
                                 ]
 
                                 JobButton {
-                                    Layout.preferredWidth: Math.max(74, Math.round(root.metrics.fontSize * 5.2))
-                                    Layout.fillHeight: true
+                                    Layout.preferredWidth: root.jobButtonWidth
+                                    Layout.preferredHeight: root.jobButtonHeight
+                                    Layout.alignment: Qt.AlignVCenter
                                     text: modelData.text
                                     onClicked: {
                                         if (adjustmentCard.adjustmentTarget === "z") {
@@ -734,8 +753,9 @@ Item {
                             }
 
                             JobButton {
-                                Layout.preferredWidth: Math.max(112, Math.round(root.metrics.fontSize * 7.8))
-                                Layout.fillHeight: true
+                                Layout.preferredWidth: root.jobButtonWidth
+                                Layout.preferredHeight: root.jobButtonHeight
+                                Layout.alignment: Qt.AlignVCenter
                                 text: "Skip"
                                 enabled: root.excludedObjectNames.indexOf(modelData) < 0
                                 onClicked: root.objectExcludeRequested(modelData)

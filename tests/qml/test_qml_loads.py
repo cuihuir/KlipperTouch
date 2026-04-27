@@ -335,8 +335,21 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "Remaining" in qml
     assert "id: jobActionGrid" in qml
     assert "component JobButton: Button" in qml
+    assert "property int jobButtonHeight" in qml
+    assert "property int jobButtonWidth" in qml
+    assert "function jobActionGridHeight()" in qml
+    assert "function jobActionGridWidth()" in qml
+    assert "function jobActionButtonWidth()" in qml
     assert "background: Rectangle" in qml
     assert "color: controlRoot.enabled ? \"#101617\" : \"#151a1b\"" in qml
+    assert "implicitHeight: root.jobButtonHeight" in qml
+    assert "Layout.preferredHeight: root.jobActionGridHeight()" in qml
+    assert "Layout.preferredWidth: root.jobActionGridWidth()" in qml
+    assert "Layout.preferredWidth: root.jobActionButtonWidth()" in qml
+    assert "columns: root.metrics.portrait ? 2 : 4" in qml
+    assert "Layout.preferredHeight: root.jobButtonHeight" in qml
+    assert "Layout.preferredWidth: root.jobButtonWidth" in qml
+    assert "Layout.alignment: Qt.AlignVCenter" in qml
     assert "root.primaryActionLabel()" in qml
     assert 'root.printState === "paused" ? "Resume" : "Pause"' in qml
     assert 'text: "Cancel"' in qml
