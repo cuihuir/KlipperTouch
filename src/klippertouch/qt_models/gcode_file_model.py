@@ -200,6 +200,13 @@ class GCodeFileListModel(QAbstractListModel):
         self._selected_path = ""
         self.selectedPathChanged.emit()
 
+    @Slot(str)
+    def removeFile(self, path: str) -> None:  # noqa: N802
+        clean = path.strip().strip("/")
+        if not clean or self._file_for_name(clean) is None:
+            return
+        self.set_files(tuple(file for file in self._files if file.path != clean))
+
     @Slot(str, dict, str)
     def setFileMetadata(  # noqa: N802
         self,

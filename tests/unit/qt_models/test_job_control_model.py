@@ -143,10 +143,13 @@ def test_job_control_model_rejects_empty_object_skip(qtbot) -> None:
 def test_job_control_model_deletes_selected_file(qtbot) -> None:
     client = FakeClient()
     model = JobControlModel(client)
+    deleted: list[str] = []
+    model.fileDeleted.connect(lambda path: deleted.append(path))
 
     model.requestDeleteFile("cube.gcode")
 
     assert client.calls == [("delete", "cube.gcode")]
+    assert deleted == ["cube.gcode"]
     assert model.lastStatus == "Delete sent"
 
 

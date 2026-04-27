@@ -243,6 +243,7 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "function goBack()" in qml
     assert "function requestFileAction(action)" in qml
     assert "function clearFileAction()" in qml
+    assert "function handleFileDeleted(path)" in qml
     assert "property bool detailPage" in qml
     assert "property string pendingFileAction" in qml
     assert "signal fileActionRequested(string action, string path)" in qml
@@ -1048,6 +1049,9 @@ def test_main_keeps_files_and_job_status_as_separate_routes() -> None:
     assert "function requestFileControl(action, path)" in main_qml
     assert "jobControlBridgeModel.requestStartPrint(path)" in main_qml
     assert "jobControlBridgeModel.requestDeleteFile(path)" in main_qml
+    assert "function onFileDeleted(path)" in main_qml
+    assert "window.gcodeFileBridgeModel.removeFile(path)" in main_qml
+    assert "panelLoader.item.handleFileDeleted(path)" in main_qml
     assert (
         "controlStatus: window.jobControlBridgeModel ? "
         'window.jobControlBridgeModel.lastStatus : ""'

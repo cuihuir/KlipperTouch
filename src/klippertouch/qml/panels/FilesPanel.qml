@@ -86,6 +86,14 @@ Item {
         root.pendingFileAction = ""
     }
 
+    function handleFileDeleted(path) {
+        if (root.activeFileModel && root.activeFileModel.selectedPath === path) {
+            root.pendingFileAction = ""
+            root.detailPage = false
+            root.activeFileModel.clearSelection()
+        }
+    }
+
     function emptyTitle() {
         if (root.loading) {
             return "Loading files..."

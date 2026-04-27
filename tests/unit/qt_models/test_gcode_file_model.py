@@ -365,6 +365,24 @@ def test_gcode_file_list_model_clears_selected_file_when_snapshot_removes_it(qtb
     assert model.selectedSizeLabel == "-"
 
 
+def test_gcode_file_list_model_removes_deleted_file_immediately(qtbot) -> None:
+    model = GCodeFileListModel()
+    model.set_files(
+        (
+            GCodeFile(path="cube.gcode", display_name="cube.gcode", size=2048),
+            GCodeFile(path="other.gcode", display_name="other.gcode", size=1024),
+        )
+    )
+    model.selectPath("cube.gcode", False)
+
+    with qtbot.waitSignal(model.selectedPathChanged, timeout=1000):
+        model.removeFile("cube.gcode")
+
+    assert model.rowCount() == 1
+    assert model.filePathFor("cube.gcode") == ""
+    assert model.selectedPath == "other.gcode"
+
+
 def test_gcode_file_list_model_updates_single_file_thumbnail_from_metadata(qtbot) -> None:
     model = GCodeFileListModel()
     model.set_files(

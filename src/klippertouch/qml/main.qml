@@ -179,6 +179,19 @@ ApplicationWindow {
     }
     Component.onCompleted: window.syncJobStatusPanel()
 
+    Connections {
+        target: window.jobControlBridgeModel
+
+        function onFileDeleted(path) {
+            if (panelLoader.item && typeof panelLoader.item.handleFileDeleted === "function") {
+                panelLoader.item.handleFileDeleted(path)
+            }
+            if (window.gcodeFileBridgeModel) {
+                window.gcodeFileBridgeModel.removeFile(path)
+            }
+        }
+    }
+
     BaseShell {
         anchors.fill: parent
         metrics: appMetrics

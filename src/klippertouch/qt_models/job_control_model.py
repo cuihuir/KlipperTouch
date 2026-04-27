@@ -30,6 +30,7 @@ class JobControlModel(QObject):
     statusChanged = Signal()
     errorChanged = Signal()
     requestedPrintStateChanged = Signal()
+    fileDeleted = Signal(str)
 
     def __init__(self, client: JobControlClient | None = None) -> None:
         super().__init__()
@@ -77,6 +78,8 @@ class JobControlModel(QObject):
             self._set_error("Filename is required")
             return
         self._run_control("Delete", lambda client: client.delete_gcode_file(clean_filename))
+        if not self._last_error:
+            self.fileDeleted.emit(clean_filename)
 
     @Slot(str)
     def requestSkipObject(self, object_name: str) -> None:  # noqa: N802
