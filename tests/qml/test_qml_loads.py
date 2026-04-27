@@ -1105,7 +1105,13 @@ def test_main_keeps_files_and_job_status_as_separate_routes() -> None:
     assert "function shouldAutoEnterJobStatus()" in main_qml
     assert "function shouldKeepJobStatusVisible()" in main_qml
     assert "function syncJobStatusPanel()" in main_qml
+    assert "function syncRequestedPrintState()" in main_qml
+    assert 'window.requestedPrintState === "standby"' in main_qml
+    assert 'window.currentPanel === "job_status"' in main_qml
+    assert 'window.panelStack = ["main", "print"]' in main_qml
+    assert 'window.currentPanel = "print"' in main_qml
     assert "onPrintStateChanged: window.syncJobStatusPanel()" in main_qml
+    assert "onRequestedPrintStateChanged: window.syncRequestedPrintState()" in main_qml
     assert "Component.onCompleted: window.syncJobStatusPanel()" in main_qml
     assert 'window.currentPanel = "job_status"' in main_qml
     assert "PrintPanel {" not in main_qml

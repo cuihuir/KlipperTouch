@@ -14,6 +14,7 @@ ApplicationWindow {
     property var temperatureBridgeModel: typeof temperatureDeviceModel === "undefined" ? null : temperatureDeviceModel
     property var gcodeFileBridgeModel: typeof gcodeFileModel === "undefined" ? null : gcodeFileModel
     property var jobControlBridgeModel: typeof jobControlModel === "undefined" ? null : jobControlModel
+    property string requestedPrintState: jobControlBridgeModel ? jobControlBridgeModel.requestedPrintState : ""
     property string hostname: bridgeModel ? bridgeModel.hostname : "offline"
     property string klippyState: bridgeModel ? bridgeModel.klippyState : "disconnected"
     property string klipperVersion: bridgeModel ? bridgeModel.klipperVersion : "unknown"
@@ -71,6 +72,13 @@ ApplicationWindow {
             }
         } else if (!window.shouldKeepJobStatusVisible() && window.currentPanel === "job_status") {
             window.goHome()
+        }
+    }
+
+    function syncRequestedPrintState() {
+        if (window.requestedPrintState === "standby" && window.currentPanel === "job_status") {
+            window.panelStack = ["main", "print"]
+            window.currentPanel = "print"
         }
     }
 
@@ -178,6 +186,7 @@ ApplicationWindow {
     }
 
     onPrintStateChanged: window.syncJobStatusPanel()
+    onRequestedPrintStateChanged: window.syncRequestedPrintState()
     onCurrentPanelChanged: {
         if (bridgeModel && typeof bridgeModel.setActivePanel === "function") {
             bridgeModel.setActivePanel(window.currentPanel)
