@@ -157,6 +157,9 @@ class MoonrakerClient:
     def clear_sdcard_file(self) -> dict[str, Any]:
         return self.run_gcode_script("SDCARD_RESET_FILE")
 
+    def disable_motors(self) -> dict[str, Any]:
+        return self.run_gcode_script("M84")
+
     def delete_gcode_file(self, filename: str) -> dict[str, Any]:
         return self.delete(f"server/files/gcodes/{filename.strip('/')}")
 

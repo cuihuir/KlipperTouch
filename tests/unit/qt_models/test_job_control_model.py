@@ -58,6 +58,10 @@ class FakeClient:
         self.calls.append(("emergency_stop", ""))
         return {"ok": True}
 
+    def disable_motors(self) -> dict[str, bool]:
+        self.calls.append(("disable_motors", ""))
+        return {"ok": True}
+
 
 class BlockingClient(FakeClient):
     def pause_print(self) -> dict[str, bool]:
@@ -170,6 +174,16 @@ def test_job_control_model_sends_emergency_stop(qtbot) -> None:
 
     assert client.calls == [("emergency_stop", "")]
     assert model.lastStatus == "Emergency Stop sent"
+
+
+def test_job_control_model_sends_disable_motors(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestDisableMotors()
+
+    assert client.calls == [("disable_motors", "")]
+    assert model.lastStatus == "Disable motors sent"
 
 
 def test_job_control_model_reports_placeholder_recovery_actions(qtbot) -> None:

@@ -219,6 +219,15 @@ ApplicationWindow {
         jobControlBridgeModel.requestEmergencyStop()
     }
 
+    function requestMoveControl(action) {
+        if (!jobControlBridgeModel) {
+            return
+        }
+        if (action === "disable_motors") {
+            jobControlBridgeModel.requestDisableMotors()
+        }
+    }
+
     function requestFileControl(action, path) {
         if (!jobControlBridgeModel) {
             return
@@ -471,6 +480,9 @@ ApplicationWindow {
                 positionZ: window.positionZ
                 positionE: window.positionE
                 homedAxes: window.homedAxes
+                onMoveActionRequested: function(action) {
+                    window.requestMoveControl(action)
+                }
             }
         }
 

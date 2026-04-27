@@ -668,6 +668,9 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert 'property var distances: [".1", ".5", "1", "5", "10", "25", "50"]' in qml
     assert 'property var xyButtons' in qml
     assert 'property var zButtons' in qml
+    assert 'property var actionButtons' in qml
+    assert 'property bool moreVisible' in qml
+    assert 'signal moveActionRequested(string action)' in qml
     assert '"label": "Y+"' in qml
     assert '"label": "X-"' in qml
     assert '"label": "X+"' in qml
@@ -689,6 +692,15 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert "id: zMovePad" in qml
     assert 'title: "Home"' in qml
     assert 'title: "Z Home"' in qml
+    assert '"label": "Disable Motors"' in qml
+    assert '"action": "disable_motors"' in qml
+    assert '"hint": "M84"' in qml
+    assert '"label": "More"' in qml
+    assert '"action": "more"' in qml
+    assert "id: moveActionBar" in qml
+    assert "id: moveMorePanel" in qml
+    assert "root.moreVisible = !root.moreVisible" in qml
+    assert "root.moveActionRequested(modelData.action)" in qml
     assert "id: distanceGrid" in qml
     assert "id: positionGrid" in qml
     assert "M18" not in qml
@@ -1376,6 +1388,8 @@ def test_move_panel_is_locked_and_responsive() -> None:
     assert "component DirectionButton: Rectangle" in qml
     assert "function arrowGlyph(direction)" in qml
     assert "Canvas {" not in qml
+    assert "id: moveActionBar" in qml
+    assert "id: moveMorePanel" in qml
     assert "id: controlGroupGrid" in qml
     assert "id: xyMovePad" in qml
     assert "id: zMovePad" in qml
@@ -1420,6 +1434,9 @@ def test_main_routes_move_and_extrude_to_locked_panels() -> None:
     assert 'case "extrude":' in main_qml
     assert "return extrudeComponent" in main_qml
     assert "MovePanel {" in main_qml
+    assert "onMoveActionRequested: function(action)" in main_qml
+    assert "function requestMoveControl(action)" in main_qml
+    assert "jobControlBridgeModel.requestDisableMotors()" in main_qml
     assert "ExtrudePanel {" in main_qml
 
 

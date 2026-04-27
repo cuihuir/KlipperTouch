@@ -324,6 +324,7 @@ def test_client_sends_print_control_when_controls_enabled(
         ("set_extrude_factor", 105.0, "M221 S105"),
         ("exclude_object", "part_a", "EXCLUDE_OBJECT NAME=part_a"),
         ("clear_sdcard_file", None, "SDCARD_RESET_FILE"),
+        ("disable_motors", None, "M84"),
     ],
 )
 def test_client_sends_gcode_control_scripts_when_controls_enabled(

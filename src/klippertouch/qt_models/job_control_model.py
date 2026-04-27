@@ -31,6 +31,8 @@ class JobControlClient(Protocol):
 
     def emergency_stop(self) -> dict[str, object]: ...
 
+    def disable_motors(self) -> dict[str, object]: ...
+
 
 class JobControlModel(QObject):
     statusChanged = Signal()
@@ -92,6 +94,10 @@ class JobControlModel(QObject):
     @Slot()
     def requestEmergencyStop(self) -> None:  # noqa: N802
         self._run_control("Emergency Stop", lambda client: client.emergency_stop())
+
+    @Slot()
+    def requestDisableMotors(self) -> None:  # noqa: N802
+        self._run_control("Disable motors", lambda client: client.disable_motors())
 
     @Slot(str)
     def requestPlaceholderControl(self, label: str) -> None:  # noqa: N802

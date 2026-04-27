@@ -24,13 +24,19 @@ Item {
         {"label": "Z+", "direction": "up"},
         {"label": "Z-", "direction": "down"}
     ]
+    property var actionButtons: [
+        {"label": "Disable Motors", "action": "disable_motors", "hint": "M84"},
+        {"label": "More", "action": "more", "hint": "settings"}
+    ]
     property var distances: [".1", ".5", "1", "5", "10", "25", "50"]
     property string selectedDistance: "10"
+    property bool moreVisible: false
     property real positionX: 0
     property real positionY: 0
     property real positionZ: 0
     property real positionE: 0
     property string homedAxes: ""
+    signal moveActionRequested(string action)
 
     function selectDistance(distance) {
         root.selectedDistance = distance
@@ -250,7 +256,9 @@ Item {
         Rectangle {
             id: auxiliaryPanel
             Layout.fillWidth: true
-            Layout.preferredHeight: Math.max(104, Math.round(root.metrics.fontSize * 6.9))
+            Layout.preferredHeight: root.moreVisible
+                ? Math.max(164, Math.round(root.metrics.fontSize * 10.2))
+                : Math.max(132, Math.round(root.metrics.fontSize * 8.2))
             color: "#0d1415"
             border.color: "#344044"
             border.width: 1
@@ -281,6 +289,105 @@ Item {
                             color: Theme.mutedText
                             text: "Controls locked"
                             font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.76))
+                        }
+
+                        RowLayout {
+                            id: moveActionBar
+                            spacing: Math.max(5, Math.round(root.metrics.gap * 0.55))
+
+                            Repeater {
+                                model: root.actionButtons
+
+                                Rectangle {
+                                    required property var modelData
+
+                                    Layout.preferredWidth: Math.max(82, Math.round(root.metrics.fontSize * 5.8))
+                                    Layout.preferredHeight: Math.max(30, Math.round(root.metrics.fontSize * 1.9))
+                                    color: modelData.action === "more" && root.moreVisible ? "#1b2b2e" : "#101617"
+                                    border.color: modelData.action === "more" && root.moreVisible ? Theme.color3 : "#48565a"
+                                    border.width: 1
+                                    radius: Math.round(height * 0.28)
+
+                                    ColumnLayout {
+                                        anchors.centerIn: parent
+                                        width: parent.width - Math.max(4, root.metrics.gap * 0.5)
+                                        spacing: 0
+
+                                        Label {
+                                            Layout.fillWidth: true
+                                            color: Theme.text
+                                            text: modelData.label
+                                            horizontalAlignment: Text.AlignHCenter
+                                            elide: Text.ElideRight
+                                            font.bold: true
+                                            font.pixelSize: Math.max(9, Math.round(root.metrics.fontSize * 0.62))
+                                        }
+
+                                        Label {
+                                            Layout.fillWidth: true
+                                            color: Theme.mutedText
+                                            text: modelData.hint
+                                            horizontalAlignment: Text.AlignHCenter
+                                            elide: Text.ElideRight
+                                            font.pixelSize: Math.max(8, Math.round(root.metrics.fontSize * 0.52))
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        onClicked: {
+                                            if (modelData.action === "more") {
+                                                root.moreVisible = !root.moreVisible
+                                            } else {
+                                                root.moveActionRequested(modelData.action)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        id: moveMorePanel
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: root.moreVisible
+                            ? Math.max(46, Math.round(root.metrics.fontSize * 2.9))
+                            : 0
+                        visible: root.moreVisible
+                        color: "#101617"
+                        border.color: "#263233"
+                        border.width: 1
+                        radius: Math.round(root.metrics.fontSize * 0.22)
+
+                        GridLayout {
+                            anchors.fill: parent
+                            anchors.margins: Math.max(5, Math.round(root.metrics.gap * 0.5))
+                            columns: 5
+                            columnSpacing: Math.max(5, Math.round(root.metrics.gap * 0.5))
+
+                            Repeater {
+                                model: ["Invert X", "Invert Y", "Invert Z", "XY Speed", "Z Speed"]
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    color: "#0b1112"
+                                    border.color: "#263233"
+                                    border.width: 1
+                                    radius: Math.round(root.metrics.fontSize * 0.18)
+
+                                    Label {
+                                        anchors.centerIn: parent
+                                        width: parent.width - 4
+                                        color: Theme.mutedText
+                                        text: modelData
+                                        horizontalAlignment: Text.AlignHCenter
+                                        elide: Text.ElideRight
+                                        font.pixelSize: Math.max(9, Math.round(root.metrics.fontSize * 0.62))
+                                    }
+                                }
+                            }
                         }
                     }
 
@@ -330,7 +437,7 @@ Item {
                 GridLayout {
                     id: distanceGrid
                     Layout.fillWidth: true
-                    Layout.preferredHeight: Math.max(34, Math.round(root.metrics.fontSize * 2.15))
+                    Layout.preferredHeight: Math.max(30, Math.round(root.metrics.fontSize * 1.9))
                     columns: 7
                     rowSpacing: Math.max(5, Math.round(root.metrics.gap * 0.5))
                     columnSpacing: Math.max(5, Math.round(root.metrics.gap * 0.5))
@@ -341,7 +448,7 @@ Item {
                         LockedTile {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
-                            Layout.minimumHeight: Math.max(34, Math.round(root.metrics.fontSize * 2.1))
+                            Layout.minimumHeight: Math.max(30, Math.round(root.metrics.fontSize * 1.9))
                             title: modelData
                             hint: "mm"
                             selected: root.selectedDistance === modelData
