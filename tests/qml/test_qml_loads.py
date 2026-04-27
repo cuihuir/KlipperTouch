@@ -235,6 +235,8 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "Loading files..." in qml
     assert "function currentPathLabel" in qml
     assert "root.currentPathLabel()" in qml
+    assert "function fileListPreferredHeight()" in qml
+    assert "Layout.preferredHeight: root.fileListPreferredHeight()" in qml
     assert "function emptyTitle" in qml
     assert "Current folder is empty" in qml
     assert 'fileList.count + " items"' in qml
@@ -255,6 +257,22 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "selectedModifiedLabel" in qml
     assert "selectedPermissions" in qml
     assert "selectedPreviewThumbnailUrl" in qml
+    assert "function selectedMetadataModel()" in qml
+    assert "activeFileModel.metadataRevision" in qml
+    assert (
+        "root.activeFileModel.fileEstimatedTimeLabelFor(root.activeFileModel.selectedPath)"
+        in qml
+    )
+    assert "root.activeFileModel.fileLayerHeightLabelFor(root.activeFileModel.selectedPath)" in qml
+    assert "root.activeFileModel.fileObjectHeightLabelFor(root.activeFileModel.selectedPath)" in qml
+    assert (
+        "root.activeFileModel.fileFilamentTotalLabelFor(root.activeFileModel.selectedPath)"
+        in qml
+    )
+    assert '"label": "Estimated time"' in qml
+    assert '"label": "Layer height"' in qml
+    assert '"label": "Object height"' in qml
+    assert '"label": "Filament total"' in qml
     assert "required property string thumbnailUrl" in qml
     assert "source: thumbnailUrl" in qml
     assert "root.activeFileModel.selectedPreviewThumbnailUrl" in qml

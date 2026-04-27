@@ -66,6 +66,44 @@ Item {
         return "No G-Code files found"
     }
 
+    function selectedMetadataModel() {
+        if (!root.activeFileModel || root.activeFileModel.selectedPath.length <= 0) {
+            return []
+        }
+        root.activeFileModel.metadataRevision
+        return [
+            {"label": "Size", "value": root.activeFileModel.selectedSizeLabel},
+            {"label": "Modified", "value": root.activeFileModel.selectedModifiedLabel},
+            {
+                "label": "Estimated time",
+                "value": root.activeFileModel.fileEstimatedTimeLabelFor(root.activeFileModel.selectedPath)
+            },
+            {
+                "label": "Layer height",
+                "value": root.activeFileModel.fileLayerHeightLabelFor(root.activeFileModel.selectedPath)
+            },
+            {
+                "label": "Object height",
+                "value": root.activeFileModel.fileObjectHeightLabelFor(root.activeFileModel.selectedPath)
+            },
+            {
+                "label": "Filament total",
+                "value": root.activeFileModel.fileFilamentTotalLabelFor(root.activeFileModel.selectedPath)
+            },
+            {"label": "Permissions", "value": root.activeFileModel.selectedPermissions},
+            {"label": "Mode", "value": "readonly"}
+        ]
+    }
+
+    function fileListPreferredHeight() {
+        if (!root.metrics.portrait) {
+            return -1
+        }
+        var visibleRows = Math.max(1, Math.min(fileList.count, 3))
+        var rowHeight = Math.max(46, Math.round(root.metrics.fontSize * 4.2))
+        return visibleRows * rowHeight + Math.max(0, visibleRows - 1) * fileList.spacing
+    }
+
     Rectangle {
         anchors.fill: parent
         anchors.margins: root.metrics.margin
@@ -177,7 +215,8 @@ Item {
                 ListView {
                     id: fileList
                     Layout.fillWidth: true
-                    Layout.fillHeight: true
+                    Layout.fillHeight: !root.metrics.portrait
+                    Layout.preferredHeight: root.fileListPreferredHeight()
                     Layout.minimumWidth: 0
                     clip: true
                     spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.35))
@@ -354,12 +393,7 @@ Item {
                             columnSpacing: root.metrics.gap
 
                             Repeater {
-                                model: [
-                                    {"label": "Size", "value": root.activeFileModel ? root.activeFileModel.selectedSizeLabel : "-"},
-                                    {"label": "Modified", "value": root.activeFileModel ? root.activeFileModel.selectedModifiedLabel : "-"},
-                                    {"label": "Permissions", "value": root.activeFileModel ? root.activeFileModel.selectedPermissions : "-"},
-                                    {"label": "Mode", "value": "readonly"}
-                                ]
+                                model: root.selectedMetadataModel()
 
                                 Rectangle {
                                     Layout.fillWidth: true
