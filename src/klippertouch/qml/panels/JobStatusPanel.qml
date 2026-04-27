@@ -136,6 +136,14 @@ Item {
         return Math.max(0, Math.min(1, root.printProgress / 100))
     }
 
+    function primaryActionLabel() {
+        return root.printState === "paused" ? "Resume" : "Pause"
+    }
+
+    function readonlyActionHint(actionName) {
+        return actionName + " is staged for the control layer."
+    }
+
     Rectangle {
         anchors.fill: parent
         anchors.margins: root.metrics.margin
@@ -224,6 +232,50 @@ Item {
 
                         RowLayout {
                             Layout.fillWidth: true
+                            spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.35))
+
+                            Repeater {
+                                model: [
+                                    {"label": "Z", "value": root.zOffsetLabel()},
+                                    {"label": "Speed", "value": root.percentLabel(root.speedFactor)},
+                                    {"label": "Flow", "value": root.percentLabel(root.extrudeFactor)}
+                                ]
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: Math.max(28, Math.round(root.metrics.fontSize * 1.9))
+                                    color: "#0b1112"
+                                    border.color: "#263233"
+                                    border.width: 1
+                                    radius: Math.round(root.metrics.fontSize * 0.22)
+
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: Math.max(5, Math.round(root.metrics.fontSize * 0.35))
+                                        anchors.rightMargin: anchors.leftMargin
+                                        spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.25))
+
+                                        Label {
+                                            color: Theme.mutedText
+                                            text: modelData.label
+                                            font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                                        }
+
+                                        Label {
+                                            Layout.fillWidth: true
+                                            color: Theme.text
+                                            text: modelData.value
+                                            horizontalAlignment: Text.AlignRight
+                                            elide: Text.ElideRight
+                                            font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.8))
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
                             spacing: root.metrics.gap
 
                             Label {
@@ -247,6 +299,49 @@ Item {
                             }
                         }
                     }
+                }
+            }
+
+            GridLayout {
+                id: jobActionGrid
+                Layout.fillWidth: true
+                Layout.preferredHeight: Math.max(54, Math.round(root.metrics.fontSize * 3.7))
+                columns: 4
+                rowSpacing: root.metrics.gap
+                columnSpacing: root.metrics.gap
+
+                Button {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    text: root.primaryActionLabel()
+                    enabled: false
+                    ToolTip.visible: hovered
+                    ToolTip.text: root.readonlyActionHint(text)
+                }
+
+                Button {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    text: "Cancel"
+                    enabled: false
+                    ToolTip.visible: hovered
+                    ToolTip.text: root.readonlyActionHint(text)
+                }
+
+                Button {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    text: "Skip Object"
+                    enabled: false
+                    ToolTip.visible: hovered
+                    ToolTip.text: root.readonlyActionHint(text)
+                }
+
+                Button {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    text: "Advanced"
+                    onClicked: advancedPopup.open()
                 }
             }
 
@@ -384,6 +479,96 @@ Item {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    Popup {
+        id: advancedPopup
+        parent: Overlay.overlay
+        modal: true
+        focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        width: Math.min(parent ? parent.width - root.metrics.margin * 2 : root.width, Math.max(320, Math.round(root.metrics.fontSize * 26)))
+        height: Math.min(parent ? parent.height - root.metrics.margin * 2 : root.height, Math.max(260, Math.round(root.metrics.fontSize * 18)))
+        x: parent ? Math.round((parent.width - width) / 2) : root.metrics.margin
+        y: parent ? Math.round((parent.height - height) / 2) : root.metrics.margin
+        padding: root.metrics.gap
+
+        background: Rectangle {
+            color: "#101617"
+            border.color: Theme.color4
+            border.width: 2
+            radius: Math.round(root.metrics.fontSize * 0.45)
+        }
+
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: root.metrics.gap
+
+            Label {
+                Layout.fillWidth: true
+                color: Theme.text
+                text: "Advanced"
+                font.bold: true
+                font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.15))
+            }
+
+            GridLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                columns: 2
+                rowSpacing: root.metrics.gap
+                columnSpacing: root.metrics.gap
+
+                Repeater {
+                    model: [
+                        {"label": "Z offset", "value": root.zOffsetLabel()},
+                        {"label": "Speed factor", "value": root.percentLabel(root.speedFactor)},
+                        {"label": "Extrude factor", "value": root.percentLabel(root.extrudeFactor)},
+                        {"label": "Requested speed", "value": root.speedLabel(root.requestedSpeed)},
+                        {"label": "Max accel", "value": root.accelLabel()},
+                        {"label": "Max velocity", "value": root.speedLabel(root.maxVelocity)}
+                    ]
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: Math.max(54, Math.round(root.metrics.fontSize * 3.6))
+                        color: "#0b1112"
+                        border.color: "#263233"
+                        border.width: 1
+                        radius: Math.round(root.metrics.fontSize * 0.32)
+
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.margins: root.metrics.gap
+                            spacing: 0
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: Theme.mutedText
+                                text: modelData.label
+                                font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                            }
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: Theme.text
+                                text: modelData.value
+                                elide: Text.ElideRight
+                                font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
+                            }
+                        }
+                    }
+                }
+            }
+
+            Label {
+                Layout.fillWidth: true
+                color: Theme.mutedText
+                text: "Pause, cancel, object skip, Z offset and tuning controls are read-only placeholders until the control policy is reviewed."
+                wrapMode: Text.WordWrap
+                font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
             }
         }
     }

@@ -328,14 +328,27 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "Completed" in qml
     assert "Printer error" in qml
     assert "Remaining" in qml
+    assert "id: jobActionGrid" in qml
+    assert "root.primaryActionLabel()" in qml
+    assert 'root.printState === "paused" ? "Resume" : "Pause"' in qml
+    assert 'text: "Cancel"' in qml
+    assert 'text: "Skip Object"' in qml
+    assert 'text: "Advanced"' in qml
+    assert "enabled: false" in qml
+    assert "readonlyActionHint" in qml
+    assert "id: advancedPopup" in qml
+    assert "root.zOffsetLabel()" in qml
+    assert "root.percentLabel(root.speedFactor)" in qml
+    assert "root.percentLabel(root.extrudeFactor)" in qml
+    assert "printer.print.pause" not in qml
+    assert "printer.print.cancel" not in qml
+    assert "exclude_object" not in qml
     assert "root.percentLabel(root.speedFactor)" in qml
     assert "root.zOffsetLabel()" in qml
     assert "id: cardGrid" in qml
     assert "ScrollBar.vertical: ScrollBar" in qml
     assert "policy: ScrollBar.AsNeeded" in qml
     assert 'text: "Start"' not in qml
-    assert 'text: "Pause"' not in qml
-    assert 'text: "Cancel"' not in qml
     assert "printer.print." not in qml
     assert "printer.gcode.script" not in qml
 
