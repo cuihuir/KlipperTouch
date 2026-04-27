@@ -41,6 +41,7 @@ Item {
     property real positionZ: 0
     property real positionE: 0
     property string homedAxes: ""
+    readonly property color selectedAccent: "#7f9298"
     signal moveActionRequested(string action)
 
     function selectDistance(distance) {
@@ -84,7 +85,7 @@ Item {
 
         color: selected ? "#1b2b2e" : "#101617"
         opacity: selected ? 1.0 : 0.9
-        border.color: selected ? Theme.color3 : "#48565a"
+        border.color: selected ? root.selectedAccent : "#48565a"
         border.width: 1
         radius: Math.round(Math.min(width, height) * 0.2)
 
@@ -177,7 +178,7 @@ Item {
         property bool selected: false
 
         color: selected ? "#1b2b2e" : "#101819"
-        border.color: selected ? Theme.color3 : "#536165"
+        border.color: selected ? root.selectedAccent : "#536165"
         border.width: 1
         radius: Math.round(Math.min(width, height) * 0.22)
 

@@ -688,7 +688,8 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert "property string selectedDistance" in qml
     assert "function selectDistance(distance)" in qml
     assert "root.selectedDistance === modelData" in qml
-    assert "Theme.color3" in qml
+    assert 'readonly property color selectedAccent: "#7f9298"' in qml
+    assert "Theme.color3" not in qml
     assert "id: xyMovePad" in qml
     assert "id: zMovePad" in qml
     assert "id: motionPad" in qml
