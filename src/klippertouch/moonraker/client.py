@@ -130,6 +130,12 @@ class MoonrakerClient:
     def cancel_print(self) -> dict[str, Any]:
         return self.post_jsonrpc("printer.print.cancel")
 
+    def firmware_restart(self) -> dict[str, Any]:
+        return self.post_jsonrpc("printer.firmware_restart")
+
+    def restart_klipper(self) -> dict[str, Any]:
+        return self.post_jsonrpc("printer.restart")
+
     def run_gcode_script(self, script: str) -> dict[str, Any]:
         return self.post_jsonrpc("printer.gcode.script", params={"script": script})
 

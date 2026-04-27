@@ -11,6 +11,7 @@ Item {
     property string moonrakerVersion: "unknown"
     property string webhooksState: ""
     property string webhooksMessage: ""
+    signal recoveryActionRequested(string action)
 
     function moonrakerOffline() {
         return root.moonrakerVersion.length <= 0 || root.moonrakerVersion === "unknown"
@@ -132,6 +133,66 @@ Item {
                     font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.8))
                     Layout.fillWidth: true
                     elide: Text.ElideRight
+                }
+            }
+        }
+
+        GridLayout {
+            Layout.fillWidth: true
+            columns: root.width > 720 ? 4 : 2
+            rowSpacing: root.metrics.gap
+            columnSpacing: root.metrics.gap
+
+            Repeater {
+                model: [
+                    {"label": "Firmware Restart", "action": "firmware_restart", "placeholder": false},
+                    {"label": "Restart Klipper", "action": "restart_klipper", "placeholder": false},
+                    {"label": "Restart Moonraker", "action": "restart_moonraker", "placeholder": true},
+                    {"label": "Emergency Stop", "action": "emergency_stop", "placeholder": true}
+                ]
+
+                Rectangle {
+                    required property string label
+                    required property string action
+                    required property bool placeholder
+
+                    Layout.fillWidth: true
+                    Layout.minimumHeight: Math.max(54, Math.round(root.metrics.fontSize * 3.2))
+                    Layout.preferredHeight: Math.max(54, Math.round(root.metrics.fontSize * 3.2))
+                    radius: Math.round(height * 0.18)
+                    color: placeholder ? "#141b1d" : "#1a2528"
+                    border.color: placeholder ? "#3d474a" : "#667276"
+                    border.width: 1
+
+                    Column {
+                        anchors.centerIn: parent
+                        width: parent.width - root.metrics.gap
+                        spacing: 2
+
+                        Label {
+                            width: parent.width
+                            text: label
+                            color: Theme.text
+                            font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.76))
+                            font.bold: !placeholder
+                            horizontalAlignment: Text.AlignHCenter
+                            elide: Text.ElideRight
+                        }
+
+                        Label {
+                            width: parent.width
+                            text: placeholder ? "Soon" : "Send"
+                            color: "#9aa7ad"
+                            font.pixelSize: Math.max(9, Math.round(root.metrics.fontSize * 0.6))
+                            horizontalAlignment: Text.AlignHCenter
+                            elide: Text.ElideRight
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: root.recoveryActionRequested(action)
+                    }
                 }
             }
         }

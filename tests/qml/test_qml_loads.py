@@ -836,9 +836,21 @@ def test_splash_panel_handles_system_fault_states() -> None:
     assert "moonrakerVersion: window.moonrakerVersion" in main_qml
     assert "webhooksState: window.webhooksState" in main_qml
     assert "webhooksMessage: window.webhooksMessage" in main_qml
+    assert "onRecoveryActionRequested: function(action)" in main_qml
+    assert "function requestRecoveryControl(action)" in main_qml
+    assert "jobControlBridgeModel.requestFirmwareRestart()" in main_qml
+    assert "jobControlBridgeModel.requestKlipperRestart()" in main_qml
+    assert 'jobControlBridgeModel.requestPlaceholderControl("Restart Moonraker")' in main_qml
+    assert 'jobControlBridgeModel.requestPlaceholderControl("Emergency Stop")' in main_qml
     assert "Moonraker offline" in panel_qml
     assert "Klippy not ready" in panel_qml
     assert "Shutdown due to webhooks" in panel_qml
+    assert "signal recoveryActionRequested(string action)" in panel_qml
+    assert '"Firmware Restart"' in panel_qml
+    assert '"Restart Klipper"' in panel_qml
+    assert '"Restart Moonraker"' in panel_qml
+    assert '"Emergency Stop"' in panel_qml
+    assert "root.recoveryActionRequested(action)" in panel_qml
     assert "No printer controls are available while this screen is active." in panel_qml
 
 
@@ -941,7 +953,8 @@ def test_action_bar_requests_safe_local_navigation() -> None:
     assert "onBackRequested: window.goBack()" in main_qml
     assert "onHomeRequested: window.goHome()" in main_qml
     assert 'onMenuRequested: window.showPanel("more")' in main_qml
-    assert "emergency" not in main_qml.lower()
+    assert "printer.emergency_stop" not in main_qml
+    assert "printer.emergency_stop" not in shell_qml
     assert "printer.gcode.script" not in shell_qml
 
 

@@ -25,6 +25,10 @@ class JobControlClient(Protocol):
 
     def clear_sdcard_file(self) -> dict[str, object]: ...
 
+    def firmware_restart(self) -> dict[str, object]: ...
+
+    def restart_klipper(self) -> dict[str, object]: ...
+
 
 class JobControlModel(QObject):
     statusChanged = Signal()
@@ -74,6 +78,19 @@ class JobControlModel(QObject):
     @Slot()
     def requestClearJob(self) -> None:  # noqa: N802
         self._run_control("Clear", lambda client: client.clear_sdcard_file(), "standby")
+
+    @Slot()
+    def requestFirmwareRestart(self) -> None:  # noqa: N802
+        self._run_control("Firmware restart", lambda client: client.firmware_restart())
+
+    @Slot()
+    def requestKlipperRestart(self) -> None:  # noqa: N802
+        self._run_control("Restart Klipper", lambda client: client.restart_klipper())
+
+    @Slot(str)
+    def requestPlaceholderControl(self, label: str) -> None:  # noqa: N802
+        clean_label = label.strip() or "Action"
+        self._set_status(f"{clean_label} is not implemented yet")
 
     @Slot(str)
     def requestDeleteFile(self, filename: str) -> None:  # noqa: N802

@@ -46,6 +46,14 @@ class FakeClient:
         self.calls.append(("clear", ""))
         return {"ok": True}
 
+    def firmware_restart(self) -> dict[str, bool]:
+        self.calls.append(("firmware_restart", ""))
+        return {"ok": True}
+
+    def restart_klipper(self) -> dict[str, bool]:
+        self.calls.append(("restart_klipper", ""))
+        return {"ok": True}
+
 
 class BlockingClient(FakeClient):
     def pause_print(self) -> dict[str, bool]:
@@ -137,6 +145,27 @@ def test_job_control_model_sends_advanced_adjustments(qtbot) -> None:
         ("extrude", 105.0),
     ]
     assert model.lastStatus == "Flow sent"
+
+
+def test_job_control_model_sends_recovery_restart_commands(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestFirmwareRestart()
+    model.requestKlipperRestart()
+
+    assert client.calls == [("firmware_restart", ""), ("restart_klipper", "")]
+    assert model.lastStatus == "Restart Klipper sent"
+
+
+def test_job_control_model_reports_placeholder_recovery_actions(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestPlaceholderControl("Restart Moonraker")
+
+    assert client.calls == []
+    assert model.lastStatus == "Restart Moonraker is not implemented yet"
 
 
 def test_job_control_model_sends_object_skip(qtbot) -> None:

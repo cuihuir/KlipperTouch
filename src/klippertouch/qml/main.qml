@@ -190,6 +190,21 @@ ApplicationWindow {
         }
     }
 
+    function requestRecoveryControl(action) {
+        if (!jobControlBridgeModel) {
+            return
+        }
+        if (action === "firmware_restart") {
+            jobControlBridgeModel.requestFirmwareRestart()
+        } else if (action === "restart_klipper") {
+            jobControlBridgeModel.requestKlipperRestart()
+        } else if (action === "restart_moonraker") {
+            jobControlBridgeModel.requestPlaceholderControl("Restart Moonraker")
+        } else if (action === "emergency_stop") {
+            jobControlBridgeModel.requestPlaceholderControl("Emergency Stop")
+        }
+    }
+
     function requestFileControl(action, path) {
         if (!jobControlBridgeModel) {
             return
@@ -314,6 +329,9 @@ ApplicationWindow {
                 moonrakerVersion: window.moonrakerVersion
                 webhooksState: window.webhooksState
                 webhooksMessage: window.webhooksMessage
+                onRecoveryActionRequested: function(action) {
+                    window.requestRecoveryControl(action)
+                }
             }
         }
 

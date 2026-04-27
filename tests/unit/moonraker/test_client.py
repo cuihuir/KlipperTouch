@@ -270,6 +270,8 @@ def test_client_starts_gcode_print_when_controls_enabled(monkeypatch) -> None:
         ("pause_print", "printer.print.pause"),
         ("resume_print", "printer.print.resume"),
         ("cancel_print", "printer.print.cancel"),
+        ("firmware_restart", "printer.firmware_restart"),
+        ("restart_klipper", "printer.restart"),
     ],
 )
 def test_client_sends_print_control_when_controls_enabled(
@@ -391,6 +393,10 @@ def test_client_blocks_print_control_in_read_only_mode(monkeypatch) -> None:
         client.resume_print()
     with pytest.raises(UnsafeCommandError):
         client.cancel_print()
+    with pytest.raises(UnsafeCommandError):
+        client.firmware_restart()
+    with pytest.raises(UnsafeCommandError):
+        client.restart_klipper()
     with pytest.raises(UnsafeCommandError):
         client.adjust_z_offset(0.05)
     with pytest.raises(UnsafeCommandError):
