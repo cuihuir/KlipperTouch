@@ -655,202 +655,178 @@ Item {
                 }
             }
 
-            GridLayout {
-                id: summaryContentGrid
+            StatusCard {
                 visible: root.detailPage === "summary"
                 Layout.fillWidth: true
-                Layout.fillHeight: true
-                columns: root.metrics.ultraWide ? 2 : 1
-                rowSpacing: root.metrics.gap
-                columnSpacing: root.metrics.gap
+                Layout.preferredHeight: root.jobHeroHeight()
+                accent: root.accentColor
 
-                StatusCard {
-                    Layout.row: 0
-                    Layout.column: 0
+                GridLayout {
+                    id: jobHeroLayout
                     Layout.fillWidth: true
-                    Layout.fillHeight: root.metrics.ultraWide
-                    Layout.preferredWidth: root.metrics.ultraWide
-                        ? Math.round(summaryContentGrid.width * 0.36)
-                        : summaryContentGrid.width
-                    Layout.preferredHeight: root.metrics.ultraWide ? root.parent.height : root.jobHeroHeight()
-                    accent: root.accentColor
+                    Layout.fillHeight: true
+                    columns: root.metrics.portrait ? 1 : 2
+                    rows: root.metrics.portrait ? 2 : 1
+                    rowSpacing: root.metrics.gap
+                    columnSpacing: root.metrics.gap
 
-                    GridLayout {
-                        id: jobHeroLayout
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        columns: root.metrics.portrait ? 1 : 2
-                        rows: root.metrics.portrait ? 2 : 1
-                        rowSpacing: root.metrics.gap
-                        columnSpacing: root.metrics.gap
+                    Rectangle {
+                        id: thumbnailFrame
+                        Layout.preferredWidth: root.metrics.portrait
+                            ? Math.min(parent.width, Math.max(180, Math.round(root.metrics.fontSize * 13.6)))
+                            : Math.max(126, Math.round(root.metrics.fontSize * 8.8))
+                        Layout.preferredHeight: root.metrics.portrait
+                            ? Math.max(78, Math.round(root.metrics.fontSize * 5.0))
+                            : Math.max(96, Math.round(root.metrics.fontSize * 6.6))
+                        Layout.fillHeight: !root.metrics.portrait
+                        Layout.alignment: Qt.AlignHCenter
+                        color: "#0b1112"
+                        border.color: "#3b4648"
+                        border.width: 1
+                        radius: Math.round(root.metrics.fontSize * 0.34)
+                        clip: true
 
-                        Rectangle {
-                            id: thumbnailFrame
-                            Layout.preferredWidth: root.metrics.portrait
-                                ? Math.min(parent.width, Math.max(180, Math.round(root.metrics.fontSize * 13.6)))
-                                : Math.max(126, Math.round(root.metrics.fontSize * 8.8))
-                            Layout.preferredHeight: root.metrics.portrait
-                                ? Math.max(78, Math.round(root.metrics.fontSize * 5.0))
-                                : Math.max(96, Math.round(root.metrics.fontSize * 6.6))
-                            Layout.fillHeight: !root.metrics.portrait
-                            Layout.alignment: Qt.AlignHCenter
-                            color: "#0b1112"
-                            border.color: "#3b4648"
-                            border.width: 1
-                            radius: Math.round(root.metrics.fontSize * 0.34)
-                            clip: true
-
-                            Image {
-                                id: jobThumbnail
-                                anchors.fill: parent
-                                anchors.margins: 4
-                                source: root.fileModel && root.fileModel.thumbnailRevision >= 0
-                                    ? root.fileModel.filePreviewThumbnailUrlFor(root.printFilename)
-                                    : ""
-                                fillMode: Image.PreserveAspectFit
-                                visible: source.toString().length > 0
-                            }
-
-                            ColumnLayout {
-                                id: thumbnailPlaceholder
-                                visible: !jobThumbnail.visible
-                                anchors.centerIn: parent
-                                width: parent.width - root.metrics.gap * 2
-                                spacing: 0
-
-                                Label {
-                                    Layout.fillWidth: true
-                                    color: root.neutralAccent
-                                    text: "G"
-                                    horizontalAlignment: Text.AlignHCenter
-                                    font.bold: true
-                                    font.pixelSize: Math.max(28, Math.round(root.metrics.fontSize * 2.2))
-                                }
-
-                                Label {
-                                    Layout.fillWidth: true
-                                    color: Theme.mutedText
-                                    text: "G-code"
-                                    horizontalAlignment: Text.AlignHCenter
-                                    font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
-                                }
-                            }
+                        Image {
+                            id: jobThumbnail
+                            anchors.fill: parent
+                            anchors.margins: 4
+                            source: root.fileModel && root.fileModel.thumbnailRevision >= 0
+                                ? root.fileModel.filePreviewThumbnailUrlFor(root.printFilename)
+                                : ""
+                            fillMode: Image.PreserveAspectFit
+                            visible: source.toString().length > 0
                         }
 
                         ColumnLayout {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            spacing: root.metrics.gap
+                            id: thumbnailPlaceholder
+                            visible: !jobThumbnail.visible
+                            anchors.centerIn: parent
+                            width: parent.width - root.metrics.gap * 2
+                            spacing: 0
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: root.neutralAccent
+                                text: "G"
+                                horizontalAlignment: Text.AlignHCenter
+                                font.bold: true
+                                font.pixelSize: Math.max(28, Math.round(root.metrics.fontSize * 2.2))
+                            }
 
                             Label {
                                 Layout.fillWidth: true
                                 color: Theme.mutedText
-                                text: root.stateMessage()
-                                elide: Text.ElideRight
-                                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
+                                text: "G-code"
+                                horizontalAlignment: Text.AlignHCenter
+                                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
                             }
+                        }
+                    }
 
-                            ProgressBar {
-                                id: jobProgressBar
-                                Layout.maximumWidth: Math.max(160, Math.round(root.metrics.fontSize * 12.5))
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: Math.max(18, Math.round(root.metrics.fontSize * 1.15))
-                                value: root.stateProgressValue()
-                                background: Rectangle {
-                                    color: "#050809"
-                                    border.color: "#2c3b3e"
-                                    border.width: 1
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        spacing: root.metrics.gap
+
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.mutedText
+                            text: root.stateMessage()
+                            elide: Text.ElideRight
+                            font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
+                        }
+
+                        ProgressBar {
+                            id: jobProgressBar
+                            Layout.maximumWidth: Math.max(160, Math.round(root.metrics.fontSize * 12.5))
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: Math.max(18, Math.round(root.metrics.fontSize * 1.15))
+                            value: root.stateProgressValue()
+                            background: Rectangle {
+                                color: "#050809"
+                                border.color: "#2c3b3e"
+                                border.width: 1
+                                radius: height / 2
+                            }
+                            contentItem: Item {
+                                Rectangle {
+                                    id: progressRail
+                                    anchors.fill: parent
+                                    anchors.margins: 2
+                                    color: "#071112"
                                     radius: height / 2
-                                }
-                                contentItem: Item {
-                                    Rectangle {
-                                        id: progressRail
-                                        anchors.fill: parent
-                                        anchors.margins: 2
-                                        color: "#071112"
-                                        radius: height / 2
 
-                                        Rectangle {
-                                            id: progressFill
-                                            anchors.left: parent.left
-                                            anchors.top: parent.top
-                                            anchors.bottom: parent.bottom
-                                            width: Math.max(height, jobProgressBar.visualPosition * parent.width)
-                                            radius: height / 2
-                                            gradient: Gradient {
-                                                GradientStop { position: 0.0; color: "#687477" }
-                                                GradientStop { position: 1.0; color: root.accentColor }
-                                            }
+                                    Rectangle {
+                                        id: progressFill
+                                        anchors.left: parent.left
+                                        anchors.top: parent.top
+                                        anchors.bottom: parent.bottom
+                                        width: Math.max(height, jobProgressBar.visualPosition * parent.width)
+                                        radius: height / 2
+                                        gradient: Gradient {
+                                            GradientStop { position: 0.0; color: "#687477" }
+                                            GradientStop { position: 1.0; color: root.accentColor }
                                         }
                                     }
                                 }
                             }
+                        }
 
-                            RowLayout {
-                                id: compactProgressBox
-                                Layout.fillWidth: true
-                                spacing: root.metrics.gap
+                        RowLayout {
+                            id: compactProgressBox
+                            Layout.fillWidth: true
+                            spacing: root.metrics.gap
 
-                                Label {
-                                    color: Theme.text
-                                    text: Math.round(root.stateProgressValue() * 100) + "%"
-                                    font.bold: true
-                                    font.pixelSize: Math.max(24, Math.round(root.metrics.fontSize * 1.72))
-                                }
-
-                                Label {
-                                    Layout.fillWidth: true
-                                    color: Theme.mutedText
-                                    text: root.printState === "complete"
-                                        ? "Done"
-                                        : root.printState === "cancelled"
-                                            ? "Stopped"
-                                            : root.printState === "error"
-                                                ? "Check printer"
-                                                : root.remainingLabel() + " remaining"
-                                    horizontalAlignment: Text.AlignRight
-                                    verticalAlignment: Text.AlignVCenter
-                                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
-                                }
+                            Label {
+                                color: Theme.text
+                                text: Math.round(root.stateProgressValue() * 100) + "%"
+                                font.bold: true
+                                font.pixelSize: Math.max(24, Math.round(root.metrics.fontSize * 1.72))
                             }
 
-                            RowLayout {
-                                visible: !root.metrics.portrait
+                            Label {
                                 Layout.fillWidth: true
-                                spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.35))
+                                color: Theme.mutedText
+                                text: root.printState === "complete"
+                                    ? "Done"
+                                    : root.printState === "cancelled"
+                                        ? "Stopped"
+                                        : root.printState === "error"
+                                            ? "Check printer"
+                                            : root.remainingLabel() + " remaining"
+                                horizontalAlignment: Text.AlignRight
+                                verticalAlignment: Text.AlignVCenter
+                                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
+                            }
+                        }
 
-                                Repeater {
-                                    model: [
-                                        {"label": "Z", "value": root.zOffsetLabel()},
-                                        {"label": "Speed", "value": root.percentLabel(root.speedFactor)},
-                                        {"label": "Flow", "value": root.percentLabel(root.extrudeFactor)}
-                                    ]
+                        RowLayout {
+                            visible: !root.metrics.portrait
+                            Layout.fillWidth: true
+                            spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.35))
 
-                                    MetricPill {
-                                        Layout.fillWidth: true
-                                        label: modelData.label
-                                        value: modelData.value
-                                        accent: "#263233"
-                                    }
+                            Repeater {
+                                model: [
+                                    {"label": "Z", "value": root.zOffsetLabel()},
+                                    {"label": "Speed", "value": root.percentLabel(root.speedFactor)},
+                                    {"label": "Flow", "value": root.percentLabel(root.extrudeFactor)}
+                                ]
+
+                                MetricPill {
+                                    Layout.fillWidth: true
+                                    label: modelData.label
+                                    value: modelData.value
+                                    accent: "#263233"
                                 }
                             }
                         }
                     }
                 }
-
-                ColumnLayout {
-                    id: summarySidePanel
-                    Layout.row: root.metrics.ultraWide ? 0 : 1
-                    Layout.column: root.metrics.ultraWide ? 1 : 0
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    Layout.preferredWidth: root.metrics.ultraWide
-                        ? Math.round(summaryContentGrid.width * 0.64)
-                        : summaryContentGrid.width
-                    spacing: root.metrics.gap
+            }
 
             GridLayout {
                 id: jobActionGrid
+                visible: root.detailPage === "summary"
                 Layout.preferredWidth: root.jobActionGridWidth()
                 Layout.preferredHeight: root.jobActionGridHeight()
                 Layout.alignment: Qt.AlignHCenter
@@ -902,7 +878,8 @@ Item {
             }
 
             Rectangle {
-                visible: root.metrics.portrait && root.height > 760
+                visible: root.detailPage === "summary"
+                    && root.metrics.portrait && root.height > 760
                     && root.temperatureModel
                     && root.temperatureModel.rowCount() > 0
                 Layout.fillWidth: true
@@ -981,9 +958,10 @@ Item {
 
             GridLayout {
                 id: summaryZoneGrid
+                visible: root.detailPage === "summary"
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                columns: root.metrics.ultraWide ? 3 : root.metrics.portrait ? 1 : 3
+                columns: root.metrics.portrait ? 1 : 3
                 rowSpacing: root.metrics.gap
                 columnSpacing: root.metrics.gap
 
@@ -1017,8 +995,6 @@ Item {
                     onActivated: root.detailPage = "extrusion"
                 }
             }
-                }
-            }
 
             ColumnLayout {
                 id: detailInfoPage
@@ -1045,7 +1021,7 @@ Item {
                     GridLayout {
                         id: detailInfoGrid
                         width: detailInfoFlickable.width
-                        columns: root.metrics.ultraWide ? 4 : root.metrics.portrait ? 1 : 2
+                        columns: root.metrics.portrait ? 1 : 2
                         rowSpacing: root.metrics.gap
                         columnSpacing: root.metrics.gap
 
