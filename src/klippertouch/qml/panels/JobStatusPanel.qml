@@ -185,6 +185,7 @@ Item {
 
     component JobActionPreview: Rectangle {
         id: previewRoot
+        readonly property bool confirmButtonVisible: root.confirmationRequired()
 
         Layout.fillWidth: true
         Layout.preferredHeight: root.metrics.portrait
@@ -212,7 +213,7 @@ Item {
                 Label {
                     Layout.fillWidth: true
                     color: Theme.text
-                    text: "Confirmation preview only"
+                    text: root.confirmationRequired() ? "Confirmation preview only" : "Action staged"
                     font.bold: true
                     font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.88))
                 }
@@ -238,6 +239,7 @@ Item {
 
                 JobButton {
                     Layout.fillWidth: root.metrics.portrait
+                    visible: previewRoot.confirmButtonVisible
                     text: "Confirm disabled"
                     enabled: false
                 }
@@ -534,9 +536,18 @@ Item {
         root.pendingJobObject = objectName || ""
     }
 
+    function stageImmediateJobAction(action) {
+        root.pendingJobAction = "staged_" + action
+        root.pendingJobObject = ""
+    }
+
     function clearJobAction() {
         root.pendingJobAction = ""
         root.pendingJobObject = ""
+    }
+
+    function confirmationRequired() {
+        return root.pendingJobAction === "cancel" || root.pendingJobAction === "skip"
     }
 
     function pendingJobActionLabel() {
@@ -551,6 +562,12 @@ Item {
         }
         if (root.pendingJobAction === "pause") {
             return "Pause " + (root.printFilename.length > 0 ? root.printFilename : "current print")
+        }
+        if (root.pendingJobAction === "staged_resume") {
+            return "Resume staged for control layer"
+        }
+        if (root.pendingJobAction === "staged_pause") {
+            return "Pause staged for control layer"
         }
         return ""
     }
@@ -943,7 +960,7 @@ Item {
                     enabled: true
                     ToolTip.visible: hovered
                     ToolTip.text: root.readonlyActionHint(text)
-                    onClicked: root.requestJobAction(root.printState === "paused" ? "resume" : "pause", "")
+                    onClicked: root.stageImmediateJobAction(root.printState === "paused" ? "resume" : "pause")
                 }
 
                 JobButton {

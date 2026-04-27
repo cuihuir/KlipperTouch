@@ -506,13 +506,20 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert 'root.detailPage = "advanced"' in qml
     assert 'root.detailPage = "summary"' in qml
     assert "function requestJobAction(action, objectName)" in qml
+    assert "function stageImmediateJobAction(action)" in qml
     assert "function clearJobAction()" in qml
     assert "root.pendingJobAction = action" in qml
     assert "root.pendingJobObject = objectName || \"\"" in qml
+    assert 'root.pendingJobAction = "staged_" + action' in qml
     assert "id: jobActionPreview" in qml
     assert "visible: root.pendingJobAction.length > 0" in qml
+    assert "function confirmationRequired()" in qml
     assert "root.pendingJobAction === \"cancel\"" in qml
-    assert 'text: "Confirmation preview only"' in qml
+    assert 'root.pendingJobAction === "skip"' in qml
+    assert 'root.pendingJobAction === "staged_pause"' in qml
+    assert 'root.confirmationRequired() ? "Confirmation preview only" : "Action staged"' in qml
+    assert "readonly property bool confirmButtonVisible: root.confirmationRequired()" in qml
+    assert "visible: previewRoot.confirmButtonVisible" in qml
     assert 'text: "Confirm disabled"' in qml
     assert 'text: "Dismiss"' in qml
     assert "onClicked: root.clearJobAction()" in qml
@@ -530,6 +537,8 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "return false" in qml
     assert "Popup {" not in qml
     assert 'text: "Back"' not in qml
+    assert 'root.requestJobAction(root.printState === "paused" ? "resume" : "pause", "")' not in qml
+    assert 'root.stageImmediateJobAction(root.printState === "paused" ? "resume" : "pause")' in qml
     assert "root.zOffsetLabel()" in qml
     assert "root.percentLabel(root.speedFactor)" in qml
     assert "root.percentLabel(root.extrudeFactor)" in qml
