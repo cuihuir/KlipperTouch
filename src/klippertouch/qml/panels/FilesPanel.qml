@@ -13,6 +13,7 @@ Item {
     property bool loading: false
     property bool compactFileRows: root.metrics.portrait || width < 920
     property bool detailPage: false
+    property string pendingFileAction: ""
 
     function currentPathLabel() {
         if (root.activeFileModel && root.activeFileModel.currentPath.length > 0) {
@@ -54,18 +55,34 @@ Item {
         if (isDirectory && root.activeFileModel) {
             root.activeFileModel.setCurrentPath(path)
             root.detailPage = false
+            root.pendingFileAction = ""
         } else if (root.activeFileModel) {
             root.activeFileModel.selectPath(path, isDirectory)
             root.detailPage = true
+            root.pendingFileAction = ""
         }
     }
 
     function goBack() {
+        if (root.pendingFileAction.length > 0) {
+            root.pendingFileAction = ""
+            return true
+        }
         if (root.detailPage) {
             root.detailPage = false
             return true
         }
         return false
+    }
+
+    function requestFileAction(action) {
+        if (root.activeFileModel && root.activeFileModel.selectedPath.length > 0) {
+            root.pendingFileAction = action
+        }
+    }
+
+    function clearFileAction() {
+        root.pendingFileAction = ""
     }
 
     function emptyTitle() {
@@ -261,11 +278,22 @@ Item {
     }
 
     component FileActionButton: Button {
+        property string actionRole: ""
+
         Layout.preferredWidth: Math.max(126, Math.round(root.metrics.fontSize * 8.8))
         Layout.preferredHeight: Math.max(44, Math.round(root.metrics.fontSize * 3.0))
-        enabled: false
+        enabled: root.activeFileModel && root.activeFileModel.selectedPath.length > 0
         opacity: 0.9
         font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+        onClicked: root.requestFileAction(actionRole)
+        contentItem: Label {
+            color: enabled ? Theme.text : Theme.mutedText
+            text: parent.text
+            elide: Text.ElideRight
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            font.pixelSize: parent.font.pixelSize
+        }
         background: Rectangle {
             color: "#121b1d"
             border.color: "#354346"
@@ -640,11 +668,65 @@ Item {
                         }
 
                         FileActionButton {
-                            text: "Print disabled"
+                            actionRole: "print"
+                            text: "Print"
                         }
 
                         FileActionButton {
-                            text: "Delete disabled"
+                            actionRole: "delete"
+                            text: "Delete"
+                        }
+                    }
+                }
+
+                Rectangle {
+                    id: selectedActionPreview
+                    visible: root.pendingFileAction.length > 0
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: visible ? Math.max(62, Math.round(root.metrics.fontSize * 4.2)) : 0
+                    Layout.maximumHeight: Layout.preferredHeight
+                    Layout.fillHeight: false
+                    color: root.pendingFileAction === "delete" ? "#181311" : "#111819"
+                    border.color: root.pendingFileAction === "delete" ? "#4a3430" : "#354346"
+                    border.width: 1
+                    radius: Math.round(root.metrics.fontSize * 0.32)
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.margins: root.metrics.gap
+                        spacing: root.metrics.gap
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 0
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: Theme.text
+                                text: "Confirmation preview only"
+                                font.bold: true
+                                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.88))
+                            }
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: Theme.mutedText
+                                text: (root.pendingFileAction === "delete" ? "Delete " : "Print ")
+                                    + (root.activeFileModel ? root.activeFileModel.selectedDisplayName : "")
+                                elide: Text.ElideMiddle
+                                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                            }
+                        }
+
+                        FileActionButton {
+                            text: "Confirm disabled"
+                            enabled: false
+                        }
+
+                        FileActionButton {
+                            text: "Dismiss"
+                            enabled: true
+                            onClicked: root.clearFileAction()
                         }
                     }
                 }

@@ -215,6 +215,7 @@ def capture(
     sample_state: str = "printing",
     job_detail_pages: tuple[str, ...] = (),
     file_detail_pages: tuple[str, ...] = (),
+    file_action_previews: tuple[str, ...] = (),
 ) -> list[Path]:
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     app = QGuiApplication.instance() or QGuiApplication([])
@@ -270,12 +271,22 @@ def capture(
                     elif panel == "print":
                         _set_files_detail_page(root, detail_page)
                     app.processEvents()
-                image = root.grabWindow()
-                target_name = f"{panel}_{detail_page}" if detail_page else panel
-                target = output_dir / f"{target_name}-{width}x{height}.png"
-                if not image.save(str(target)):
-                    raise RuntimeError(f"Failed to save screenshot {target}")
-                captured.append(target)
+                for action_preview in _file_action_previews_for_panel(
+                    panel,
+                    detail_page,
+                    file_action_previews,
+                ):
+                    if action_preview:
+                        _set_files_action_preview(root, action_preview)
+                        app.processEvents()
+                    image = root.grabWindow()
+                    target_name = f"{panel}_{detail_page}" if detail_page else panel
+                    if action_preview:
+                        target_name = f"{target_name}_{action_preview}"
+                    target = output_dir / f"{target_name}-{width}x{height}.png"
+                    if not image.save(str(target)):
+                        raise RuntimeError(f"Failed to save screenshot {target}")
+                    captured.append(target)
     return captured
 
 
@@ -288,6 +299,16 @@ def _detail_pages_for_panel(
         return job_detail_pages
     if panel == "print" and file_detail_pages:
         return file_detail_pages
+    return ("",)
+
+
+def _file_action_previews_for_panel(
+    panel: str,
+    detail_page: str,
+    file_action_previews: tuple[str, ...],
+) -> tuple[str, ...]:
+    if panel == "print" and detail_page == "detail" and file_action_previews:
+        return file_action_previews
     return ("",)
 
 
@@ -309,6 +330,16 @@ def _set_files_detail_page(root: QObject, page: str) -> None:
     if panel is None:
         raise RuntimeError("Failed to find filesPanel for detail screenshot")
     panel.setProperty("detailPage", page == "detail")
+
+
+def _set_files_action_preview(root: QObject, action: str) -> None:
+    panel = root.findChild(QObject, "filesPanel")
+    if panel is None:
+        loader = root.findChild(QObject, "panelLoader")
+        panel = loader.property("item") if loader is not None else None
+    if panel is None:
+        raise RuntimeError("Failed to find filesPanel for action preview screenshot")
+    panel.setProperty("pendingFileAction", action)
 
 
 def write_index(output_dir: Path, captured: list[Path]) -> Path:
@@ -409,6 +440,13 @@ def main(argv: list[str] | None = None) -> int:
         help='Capture specific Print subpages, for example "detail".',
     )
     parser.add_argument(
+        "--file-action-previews",
+        nargs="+",
+        choices=("print", "delete"),
+        default=(),
+        help="Capture specific read-only Print action preview states.",
+    )
+    parser.add_argument(
         "--no-index",
         action="store_true",
         help="Do not write index.html next to the captured screenshots.",
@@ -425,6 +463,7 @@ def main(argv: list[str] | None = None) -> int:
         sample_state=args.sample_state,
         job_detail_pages=tuple(args.job_detail_pages),
         file_detail_pages=tuple(args.file_detail_pages),
+        file_action_previews=tuple(args.file_action_previews),
     )
     if not args.no_index:
         print(write_index(args.output, captured))

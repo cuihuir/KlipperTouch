@@ -241,7 +241,10 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "root.currentPathLabel()" in qml
     assert "function emptyTitle" in qml
     assert "function goBack()" in qml
+    assert "function requestFileAction(action)" in qml
+    assert "function clearFileAction()" in qml
     assert "property bool detailPage" in qml
+    assert "property string pendingFileAction" in qml
     assert "Current folder is empty" in qml
     assert 'fileList.count + " items"' in qml
     assert "Search files" in qml
@@ -256,6 +259,7 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "root.compactFileRows ? 2 : 5" in qml
     assert "root.activeFileModel.selectPath(path, isDirectory)" in qml
     assert "root.detailPage = true" in qml
+    assert "root.pendingFileAction = action" in qml
     assert "selectedPath" in qml
     assert "selectedDisplayName" in qml
     assert "selectedSizeLabel" in qml
@@ -317,9 +321,11 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "visible: !root.detailPage" in qml
     assert "visible: root.detailPage" in qml
     assert "Read-only file actions" in qml
-    assert 'text: "Print disabled"' in qml
-    assert 'text: "Delete disabled"' in qml
-    assert "enabled: false" in qml
+    assert 'text: "Print"' in qml
+    assert 'text: "Delete"' in qml
+    assert 'actionRole: "print"' in qml
+    assert 'actionRole: "delete"' in qml
+    assert "onClicked: root.requestFileAction(actionRole)" in qml
     assert "id: selectedMetadataFlickable" in qml
     assert "id: selectedMetadataGrid" in qml
     assert "component MetadataGroupCard: Rectangle" in qml
@@ -333,6 +339,18 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "id: selectedActionBar" in qml
     assert 'text: "Actions"' in qml
     assert "component FileActionButton: Button" in qml
+    assert "id: selectedActionPreview" in qml
+    assert "visible: root.pendingFileAction.length > 0" in qml
+    assert 'root.pendingFileAction === "delete"' in qml
+    assert 'text: "Confirmation preview only"' in qml
+    assert 'text: "Confirm disabled"' in qml
+    assert 'text: "Dismiss"' in qml
+    assert "onClicked: root.clearFileAction()" in qml
+    assert "contentItem: Label" in qml
+    assert "color: enabled ? Theme.text : Theme.mutedText" in qml
+    assert "printer.print.start" not in qml
+    assert "server.files.delete" not in qml
+    assert "server/files/delete" not in qml
     assert "required property bool isDirectory" in qml
     assert "required property string modifiedLabel" in qml
     assert "activeFileModel.canGoUp" in qml

@@ -48,12 +48,15 @@ def test_screenshot_tool_captures_common_panels_and_sizes() -> None:
     assert "--no-index" in source
     assert "--job-detail-pages" in source
     assert "--file-detail-pages" in source
+    assert "--file-action-previews" in source
     assert "JOB_DETAIL_PAGES" in source
     assert '"time"' in source
     assert '"motion"' in source
     assert '"extrusion"' in source
     assert "_set_job_status_detail_page" in source
     assert "_set_files_detail_page" in source
+    assert "_set_files_action_preview" in source
     assert 'panel.setProperty("detailPage", page)' in source
     assert 'panel.setProperty("detailPage", page == "detail")' in source
+    assert 'panel.setProperty("pendingFileAction", action)' in source
     assert 'f"{panel}_{detail_page}"' in source
