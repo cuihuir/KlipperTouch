@@ -282,6 +282,57 @@ def test_client_sends_print_control_when_controls_enabled(
     }
 
 
+@pytest.mark.parametrize(
+    ("client_method", "argument", "script"),
+    [
+        ("adjust_z_offset", 0.05, "SET_GCODE_OFFSET Z_ADJUST=0.050 MOVE=1"),
+        ("adjust_z_offset", -0.05, "SET_GCODE_OFFSET Z_ADJUST=-0.050 MOVE=1"),
+        ("set_speed_factor", 95.0, "M220 S95"),
+        ("set_extrude_factor", 105.0, "M221 S105"),
+        ("exclude_object", "part_a", "EXCLUDE_OBJECT NAME=part_a"),
+    ],
+)
+def test_client_sends_gcode_control_scripts_when_controls_enabled(
+    monkeypatch,
+    client_method: str,
+    argument: float | str,
+    script: str,
+) -> None:
+    captured: dict[str, object] = {}
+
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            pass
+
+        def json(self) -> dict[str, object]:
+            return {"result": {"ok": True}}
+
+    def fake_post(
+        _url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, object],
+        timeout: float,
+    ) -> FakeResponse:
+        captured["json"] = json
+        return FakeResponse()
+
+    monkeypatch.setattr("klippertouch.moonraker.client.requests.post", fake_post)
+
+    client = MoonrakerClient(
+        PrinterConfig(name="p", moonraker_host="host"),
+        policy=CommandPolicy(read_only=False),
+    )
+
+    assert getattr(client, client_method)(argument) == {"ok": True}
+    assert captured["json"] == {
+        "jsonrpc": "2.0",
+        "method": "printer.gcode.script",
+        "params": {"script": script},
+        "id": 1,
+    }
+
+
 def test_client_blocks_print_control_in_read_only_mode(monkeypatch) -> None:
     calls: list[bool] = []
 
@@ -301,6 +352,14 @@ def test_client_blocks_print_control_in_read_only_mode(monkeypatch) -> None:
         client.resume_print()
     with pytest.raises(UnsafeCommandError):
         client.cancel_print()
+    with pytest.raises(UnsafeCommandError):
+        client.adjust_z_offset(0.05)
+    with pytest.raises(UnsafeCommandError):
+        client.set_speed_factor(95)
+    with pytest.raises(UnsafeCommandError):
+        client.set_extrude_factor(105)
+    with pytest.raises(UnsafeCommandError):
+        client.exclude_object("part_a")
 
     assert calls == []
 

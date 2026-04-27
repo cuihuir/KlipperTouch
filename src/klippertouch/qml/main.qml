@@ -158,6 +158,10 @@ ApplicationWindow {
         }
     }
 
+    function clampControlPercent(value) {
+        return Math.max(1, Math.min(999, value))
+    }
+
     Metrics {
         id: appMetrics
         viewportWidth: window.width
@@ -266,6 +270,21 @@ ApplicationWindow {
                 controlError: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastError : ""
                 onJobActionRequested: function(action, objectName) {
                     window.requestJobControl(action, objectName)
+                }
+                onZOffsetAdjustRequested: function(delta) {
+                    if (window.jobControlBridgeModel) {
+                        window.jobControlBridgeModel.requestZOffsetAdjust(delta)
+                    }
+                }
+                onSpeedFactorAdjustRequested: function(delta) {
+                    if (window.jobControlBridgeModel) {
+                        window.jobControlBridgeModel.requestSpeedFactor(window.clampControlPercent(window.speedFactor + delta))
+                    }
+                }
+                onExtrudeFactorAdjustRequested: function(delta) {
+                    if (window.jobControlBridgeModel) {
+                        window.jobControlBridgeModel.requestExtrudeFactor(window.clampControlPercent(window.extrudeFactor + delta))
+                    }
                 }
             }
         }

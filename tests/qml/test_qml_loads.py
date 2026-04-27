@@ -606,6 +606,21 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "printer.print." not in qml
     assert "printer.gcode.script" not in qml
 
+    main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
+
+    assert "function clampControlPercent(value)" in main_qml
+    assert "jobControlBridgeModel.requestZOffsetAdjust(delta)" in main_qml
+    assert (
+        "jobControlBridgeModel.requestSpeedFactor("
+        "window.clampControlPercent(window.speedFactor + delta))"
+        in main_qml
+    )
+    assert (
+        "jobControlBridgeModel.requestExtrudeFactor("
+        "window.clampControlPercent(window.extrudeFactor + delta))"
+        in main_qml
+    )
+
 
 def test_move_panel_exposes_read_only_position_without_controls() -> None:
     qml = Path("src/klippertouch/qml/panels/MovePanel.qml").read_text(encoding="utf-8")

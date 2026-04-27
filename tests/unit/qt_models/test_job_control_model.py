@@ -4,7 +4,7 @@ from klippertouch.qt_models.job_control_model import JobControlModel
 
 class FakeClient:
     def __init__(self) -> None:
-        self.calls: list[tuple[str, str]] = []
+        self.calls: list[tuple[str, str | float]] = []
 
     def pause_print(self) -> dict[str, bool]:
         self.calls.append(("pause", ""))
@@ -20,6 +20,22 @@ class FakeClient:
 
     def cancel_print(self) -> dict[str, bool]:
         self.calls.append(("cancel", ""))
+        return {"ok": True}
+
+    def adjust_z_offset(self, delta: float) -> dict[str, bool]:
+        self.calls.append(("z_offset", delta))
+        return {"ok": True}
+
+    def set_speed_factor(self, percent: float) -> dict[str, bool]:
+        self.calls.append(("speed", percent))
+        return {"ok": True}
+
+    def set_extrude_factor(self, percent: float) -> dict[str, bool]:
+        self.calls.append(("extrude", percent))
+        return {"ok": True}
+
+    def exclude_object(self, object_name: str) -> dict[str, bool]:
+        self.calls.append(("exclude", object_name))
         return {"ok": True}
 
 
@@ -64,14 +80,40 @@ def test_job_control_model_reports_read_only_blocks(qtbot) -> None:
     assert model.lastStatus == ""
 
 
-def test_job_control_model_rejects_object_skip_until_gcode_control_exists(qtbot) -> None:
+def test_job_control_model_sends_advanced_adjustments(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestZOffsetAdjust(0.05)
+    model.requestSpeedFactor(95)
+    model.requestExtrudeFactor(105)
+
+    assert client.calls == [
+        ("z_offset", 0.05),
+        ("speed", 95.0),
+        ("extrude", 105.0),
+    ]
+    assert model.lastStatus == "Flow sent"
+
+
+def test_job_control_model_sends_object_skip(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestSkipObject("part_b")
+
+    assert client.calls == [("exclude", "part_b")]
+    assert model.lastStatus == "Object skip sent"
+
+
+def test_job_control_model_rejects_empty_object_skip(qtbot) -> None:
     model = JobControlModel(FakeClient())
     errors: list[str] = []
     model.errorChanged.connect(lambda: errors.append(model.lastError))
 
-    model.requestSkipObject("part_b")
+    model.requestSkipObject("")
 
-    assert errors == ["Object exclusion control is not implemented yet"]
+    assert errors == ["Object name is required"]
 
 
 def test_job_control_model_rejects_delete_until_file_control_exists(qtbot) -> None:

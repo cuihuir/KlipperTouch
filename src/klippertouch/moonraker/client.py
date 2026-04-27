@@ -113,6 +113,21 @@ class MoonrakerClient:
     def cancel_print(self) -> dict[str, Any]:
         return self.post_jsonrpc("printer.print.cancel")
 
+    def run_gcode_script(self, script: str) -> dict[str, Any]:
+        return self.post_jsonrpc("printer.gcode.script", params={"script": script})
+
+    def adjust_z_offset(self, delta: float) -> dict[str, Any]:
+        return self.run_gcode_script(f"SET_GCODE_OFFSET Z_ADJUST={delta:.3f} MOVE=1")
+
+    def set_speed_factor(self, percent: float) -> dict[str, Any]:
+        return self.run_gcode_script(f"M220 S{percent:.0f}")
+
+    def set_extrude_factor(self, percent: float) -> dict[str, Any]:
+        return self.run_gcode_script(f"M221 S{percent:.0f}")
+
+    def exclude_object(self, object_name: str) -> dict[str, Any]:
+        return self.run_gcode_script(f"EXCLUDE_OBJECT NAME={object_name}")
+
     def get_gcode_file_list(self) -> list[dict[str, Any]]:
         result = self.get("server/files/list", params={"root": "gcodes"})
         if isinstance(result, list):

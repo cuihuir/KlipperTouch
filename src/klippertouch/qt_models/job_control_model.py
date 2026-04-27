@@ -13,6 +13,14 @@ class JobControlClient(Protocol):
 
     def cancel_print(self) -> dict[str, object]: ...
 
+    def adjust_z_offset(self, delta: float) -> dict[str, object]: ...
+
+    def set_speed_factor(self, percent: float) -> dict[str, object]: ...
+
+    def set_extrude_factor(self, percent: float) -> dict[str, object]: ...
+
+    def exclude_object(self, object_name: str) -> dict[str, object]: ...
+
 
 class JobControlModel(QObject):
     statusChanged = Signal()
@@ -53,8 +61,24 @@ class JobControlModel(QObject):
         self._set_error("File delete control is not implemented yet")
 
     @Slot(str)
-    def requestSkipObject(self, _object_name: str) -> None:  # noqa: N802
-        self._set_error("Object exclusion control is not implemented yet")
+    def requestSkipObject(self, object_name: str) -> None:  # noqa: N802
+        clean_name = object_name.strip()
+        if not clean_name:
+            self._set_error("Object name is required")
+            return
+        self._run_control("Object skip", lambda client: client.exclude_object(clean_name))
+
+    @Slot(float)
+    def requestZOffsetAdjust(self, delta: float) -> None:  # noqa: N802
+        self._run_control("Z offset", lambda client: client.adjust_z_offset(delta))
+
+    @Slot(float)
+    def requestSpeedFactor(self, percent: float) -> None:  # noqa: N802
+        self._run_control("Speed", lambda client: client.set_speed_factor(percent))
+
+    @Slot(float)
+    def requestExtrudeFactor(self, percent: float) -> None:  # noqa: N802
+        self._run_control("Flow", lambda client: client.set_extrude_factor(percent))
 
     def _run_control(
         self,
