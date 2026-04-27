@@ -38,6 +38,10 @@ class FakeClient:
         self.calls.append(("exclude", object_name))
         return {"ok": True}
 
+    def delete_gcode_file(self, filename: str) -> dict[str, bool]:
+        self.calls.append(("delete", filename))
+        return {"ok": True}
+
 
 class BlockingClient(FakeClient):
     def pause_print(self) -> dict[str, bool]:
@@ -116,11 +120,21 @@ def test_job_control_model_rejects_empty_object_skip(qtbot) -> None:
     assert errors == ["Object name is required"]
 
 
-def test_job_control_model_rejects_delete_until_file_control_exists(qtbot) -> None:
+def test_job_control_model_deletes_selected_file(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestDeleteFile("cube.gcode")
+
+    assert client.calls == [("delete", "cube.gcode")]
+    assert model.lastStatus == "Delete sent"
+
+
+def test_job_control_model_rejects_empty_delete(qtbot) -> None:
     model = JobControlModel(FakeClient())
     errors: list[str] = []
     model.errorChanged.connect(lambda: errors.append(model.lastError))
 
-    model.requestDeleteFile("cube.gcode")
+    model.requestDeleteFile("")
 
-    assert errors == ["File delete control is not implemented yet"]
+    assert errors == ["Filename is required"]

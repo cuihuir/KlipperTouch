@@ -662,7 +662,7 @@ Item {
                             Label {
                                 Layout.fillWidth: true
                                 color: Theme.mutedText
-                                text: "Read-only file actions"
+                                text: "File actions"
                                 elide: Text.ElideRight
                                 font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
                             }

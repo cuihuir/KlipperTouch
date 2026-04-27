@@ -334,13 +334,18 @@ def test_client_sends_gcode_control_scripts_when_controls_enabled(
 
 
 def test_client_blocks_print_control_in_read_only_mode(monkeypatch) -> None:
-    calls: list[bool] = []
+    calls: list[str] = []
 
     def fake_post(*_args: object, **_kwargs: object) -> object:
-        calls.append(True)
+        calls.append("post")
+        raise AssertionError("network should not be called")
+
+    def fake_delete(*_args: object, **_kwargs: object) -> object:
+        calls.append("delete")
         raise AssertionError("network should not be called")
 
     monkeypatch.setattr("klippertouch.moonraker.client.requests.post", fake_post)
+    monkeypatch.setattr("klippertouch.moonraker.client.requests.delete", fake_delete)
 
     client = MoonrakerClient(PrinterConfig(name="p", moonraker_host="host"))
 
@@ -360,8 +365,48 @@ def test_client_blocks_print_control_in_read_only_mode(monkeypatch) -> None:
         client.set_extrude_factor(105)
     with pytest.raises(UnsafeCommandError):
         client.exclude_object("part_a")
+    with pytest.raises(UnsafeCommandError):
+        client.delete_gcode_file("cube.gcode")
 
     assert calls == []
+
+
+def test_client_deletes_gcode_file_when_controls_enabled(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            pass
+
+        def json(self) -> dict[str, object]:
+            return {"result": {"item": {"path": "folder/cube.gcode"}}}
+
+    def fake_delete(
+        url: str,
+        *,
+        headers: dict[str, str],
+        timeout: float,
+    ) -> FakeResponse:
+        captured["url"] = url
+        captured["headers"] = headers
+        captured["timeout"] = timeout
+        return FakeResponse()
+
+    monkeypatch.setattr("klippertouch.moonraker.client.requests.delete", fake_delete)
+
+    client = MoonrakerClient(
+        PrinterConfig(name="p", moonraker_host="host", moonraker_api_key="secret"),
+        policy=CommandPolicy(read_only=False),
+    )
+
+    assert client.delete_gcode_file("folder/cube.gcode") == {
+        "item": {"path": "folder/cube.gcode"}
+    }
+    assert captured == {
+        "url": "http://host:7125/server/files/gcodes/folder/cube.gcode",
+        "headers": {"x-api-key": "secret"},
+        "timeout": 4.0,
+    }
 
 
 def test_client_raises_on_jsonrpc_error(monkeypatch) -> None:

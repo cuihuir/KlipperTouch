@@ -21,6 +21,8 @@ class JobControlClient(Protocol):
 
     def exclude_object(self, object_name: str) -> dict[str, object]: ...
 
+    def delete_gcode_file(self, filename: str) -> dict[str, object]: ...
+
 
 class JobControlModel(QObject):
     statusChanged = Signal()
@@ -57,8 +59,12 @@ class JobControlModel(QObject):
         self._run_control("Print", lambda client: client.start_print(filename))
 
     @Slot(str)
-    def requestDeleteFile(self, _filename: str) -> None:  # noqa: N802
-        self._set_error("File delete control is not implemented yet")
+    def requestDeleteFile(self, filename: str) -> None:  # noqa: N802
+        clean_filename = filename.strip().strip("/")
+        if not clean_filename:
+            self._set_error("Filename is required")
+            return
+        self._run_control("Delete", lambda client: client.delete_gcode_file(clean_filename))
 
     @Slot(str)
     def requestSkipObject(self, object_name: str) -> None:  # noqa: N802

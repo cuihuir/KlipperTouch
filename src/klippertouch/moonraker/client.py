@@ -48,6 +48,23 @@ class MoonrakerClient:
         result = payload["result"] if isinstance(payload, dict) and "result" in payload else payload
         return cast(dict[str, Any], result)
 
+    def delete(self, endpoint: str, timeout: float = 4.0) -> dict[str, Any]:
+        self.policy.validate_http("DELETE", endpoint)
+        headers = (
+            {"x-api-key": self.config.moonraker_api_key} if self.config.moonraker_api_key else {}
+        )
+        response = requests.delete(
+            f"{self.endpoint}/{endpoint.strip('/')}",
+            headers=headers,
+            timeout=timeout,
+        )
+        response.raise_for_status()
+        payload = response.json()
+        if isinstance(payload, dict) and "error" in payload:
+            raise RuntimeError(_jsonrpc_error_message(payload["error"]))
+        result = payload["result"] if isinstance(payload, dict) and "result" in payload else payload
+        return cast(dict[str, Any], result)
+
     def get_server_info(self) -> dict[str, Any]:
         return self.get("server/info")
 
@@ -127,6 +144,9 @@ class MoonrakerClient:
 
     def exclude_object(self, object_name: str) -> dict[str, Any]:
         return self.run_gcode_script(f"EXCLUDE_OBJECT NAME={object_name}")
+
+    def delete_gcode_file(self, filename: str) -> dict[str, Any]:
+        return self.delete(f"server/files/gcodes/{filename.strip('/')}")
 
     def get_gcode_file_list(self) -> list[dict[str, Any]]:
         result = self.get("server/files/list", params={"root": "gcodes"})

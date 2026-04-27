@@ -321,7 +321,8 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "Layout.preferredHeight: root.selectedPreviewSize()" in qml
     assert "visible: !root.detailPage" in qml
     assert "visible: root.detailPage" in qml
-    assert "Read-only file actions" in qml
+    assert "Read-only file actions" not in qml
+    assert "File actions" in qml
     assert 'text: "Print"' in qml
     assert 'text: "Delete"' in qml
     assert 'actionRole: "print"' in qml
