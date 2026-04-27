@@ -10,6 +10,7 @@ Implemented:
 
 - PySide6/QML application shell, responsive metrics, navigation stack, and top-level panels.
 - Read-only Moonraker startup probe, websocket subscription, file refresh, and safety allowlist.
+- Unicode Klipper object probing through read-only JSON-RPC fallback.
 - Read-only temperature, files, job status, move, extrude, and information panels.
 - Screenshot capture tooling for common target resolutions.
 - Real-printer read-only validation against the Orange Pi Moonraker endpoint.
@@ -61,6 +62,7 @@ Goal: build the complete read-only data model before enabling any state-changing
 Deliverables:
 
 - REST startup probe for server info, printer info, objects, object status, and G-Code files.
+- JSON-RPC read-only fallback for Unicode object names that HTTP query parameters cannot address reliably.
 - Websocket subscription for temperatures, print state, toolhead state, and job state.
 - Domain reducers that normalize Moonraker data into stable QML-facing models.
 - File browser model with directory entries, sort state, metadata, and read-only navigation.

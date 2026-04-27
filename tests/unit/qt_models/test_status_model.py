@@ -106,6 +106,172 @@ def test_status_model_can_notify_temperature_device_model(qtbot) -> None:
     assert temperature_model.rowCount() == 2
 
 
+def test_status_model_emits_granular_temperature_signal_without_global_property_churn(
+    qtbot,
+) -> None:
+    model = StatusModel()
+    model.set_status(
+        PrinterStatus(
+            hostname="orangepi3b",
+            klippy_state="ready",
+            objects=("extruder",),
+            temperature_devices=(
+                TemperatureDeviceStatus(
+                    name="extruder",
+                    display_name="Extruder",
+                    icon="extruder",
+                    temperature=210.0,
+                    target=215.0,
+                ),
+            ),
+            print_state="printing",
+            print_progress=10.0,
+        )
+    )
+    host_changes: list[bool] = []
+    print_changes: list[bool] = []
+    object_changes: list[bool] = []
+    toolhead_changes: list[bool] = []
+    temperature_changes: list[bool] = []
+    model.hostChanged.connect(lambda: host_changes.append(True))
+    model.printChanged.connect(lambda: print_changes.append(True))
+    model.objectsChanged.connect(lambda: object_changes.append(True))
+    model.toolheadChanged.connect(lambda: toolhead_changes.append(True))
+    model.extruderTemperatureChanged.connect(lambda: temperature_changes.append(True))
+
+    with qtbot.waitSignal(model.extruderTemperatureChanged, timeout=1000):
+        model.set_status(
+            PrinterStatus(
+                hostname="orangepi3b",
+                klippy_state="ready",
+                objects=("extruder",),
+                temperature_devices=(
+                    TemperatureDeviceStatus(
+                        name="extruder",
+                        display_name="Extruder",
+                        icon="extruder",
+                        temperature=212.0,
+                        target=215.0,
+                    ),
+                ),
+                print_state="printing",
+                print_progress=10.0,
+            )
+        )
+
+    assert temperature_changes == [True]
+    assert host_changes == []
+    assert print_changes == []
+    assert object_changes == []
+    assert toolhead_changes == []
+    assert model.extruderTemperature == 212.0
+
+
+def test_status_model_emits_granular_print_signal_without_host_or_temperature_churn(
+    qtbot,
+) -> None:
+    model = StatusModel()
+    model.set_status(
+        PrinterStatus(
+            hostname="orangepi3b",
+            klippy_state="ready",
+            objects=("extruder",),
+            temperature_devices=(
+                TemperatureDeviceStatus(
+                    name="extruder",
+                    display_name="Extruder",
+                    icon="extruder",
+                    temperature=210.0,
+                    target=215.0,
+                ),
+            ),
+            print_state="printing",
+            print_progress=10.0,
+        )
+    )
+    host_changes: list[bool] = []
+    print_changes: list[bool] = []
+    temperature_changes: list[bool] = []
+    model.hostChanged.connect(lambda: host_changes.append(True))
+    model.printChanged.connect(lambda: print_changes.append(True))
+    model.extruderTemperatureChanged.connect(lambda: temperature_changes.append(True))
+
+    with qtbot.waitSignal(model.printChanged, timeout=1000):
+        model.set_status(
+            PrinterStatus(
+                hostname="orangepi3b",
+                klippy_state="ready",
+                objects=("extruder",),
+                temperature_devices=(
+                    TemperatureDeviceStatus(
+                        name="extruder",
+                        display_name="Extruder",
+                        icon="extruder",
+                        temperature=210.0,
+                        target=215.0,
+                    ),
+                ),
+                print_state="printing",
+                print_progress=25.0,
+            )
+        )
+
+    assert print_changes == [True]
+    assert host_changes == []
+    assert temperature_changes == []
+    assert model.printProgress == 25.0
+
+
+def test_status_model_suppresses_hidden_toolhead_updates_until_panel_needs_them(
+    qtbot,
+) -> None:
+    model = StatusModel()
+    model.set_status(
+        PrinterStatus(
+            objects=("toolhead", "gcode_move"),
+            position_x=1.0,
+            position_y=2.0,
+            position_z=3.0,
+            position_e=4.0,
+        )
+    )
+    toolhead_changes: list[bool] = []
+    model.toolheadChanged.connect(lambda: toolhead_changes.append(True))
+
+    model.set_status(
+        PrinterStatus(
+            objects=("toolhead", "gcode_move"),
+            position_x=5.0,
+            position_y=6.0,
+            position_z=7.0,
+            position_e=8.0,
+        )
+    )
+
+    assert toolhead_changes == []
+    assert model.positionX == 5.0
+
+    with qtbot.waitSignal(model.toolheadChanged, timeout=1000):
+        model.setActivePanel("move")
+
+    assert toolhead_changes == [True]
+    assert model.activePanel == "move"
+
+    with qtbot.waitSignal(model.toolheadChanged, timeout=1000):
+        model.set_status(
+            PrinterStatus(
+                objects=("toolhead", "gcode_move"),
+                position_x=9.0,
+                position_y=10.0,
+                position_z=11.0,
+                position_e=12.0,
+            )
+        )
+
+    assert toolhead_changes == [True, True]
+    assert model.positionX == 9.0
+
+
 def test_temperature_device_list_model_exposes_qml_roles(qtbot) -> None:
     model = TemperatureDeviceListModel()
     status = PrinterStatus(objects=("extruder", "heater_bed"))
@@ -124,6 +290,8 @@ def test_temperature_device_list_model_exposes_qml_roles(qtbot) -> None:
         "temperature": Qt.ItemDataRole.UserRole + 4,
         "target": Qt.ItemDataRole.UserRole + 5,
         "graphVisible": Qt.ItemDataRole.UserRole + 6,
+        "targetPending": Qt.ItemDataRole.UserRole + 7,
+        "targetState": Qt.ItemDataRole.UserRole + 8,
     }
     assert model.data(first_index, roles["name"]) == "extruder"
     assert model.data(first_index, roles["displayName"]) == "Extruder"
@@ -135,6 +303,8 @@ def test_temperature_device_list_model_exposes_qml_roles(qtbot) -> None:
         "temperature": None,
         "target": None,
         "graphVisible": True,
+        "targetPending": False,
+        "targetState": "actual",
     }
 
 
@@ -188,6 +358,122 @@ def test_temperature_device_list_model_records_read_only_history(qtbot) -> None:
 
     assert model.extruderSeries == [210.0, 212.0]
     assert model.bedSeries == [58.0, 59.0]
+
+
+def test_temperature_device_list_model_updates_existing_devices_without_model_reset(
+    qtbot,
+) -> None:
+    model = TemperatureDeviceListModel()
+    model.set_status(
+        PrinterStatus(
+            objects=("extruder", "heater_bed"),
+            temperature_devices=(
+                TemperatureDeviceStatus(
+                    name="extruder",
+                    display_name="Extruder",
+                    icon="extruder",
+                    temperature=210.0,
+                    target=215.0,
+                ),
+                TemperatureDeviceStatus(
+                    name="heater_bed",
+                    display_name="Heater Bed",
+                    icon="bed",
+                    temperature=58.0,
+                    target=60.0,
+                ),
+            ),
+        )
+    )
+    resets: list[bool] = []
+    changes: list[tuple[int, int, list[int]]] = []
+    model.modelReset.connect(lambda: resets.append(True))
+    model.dataChanged.connect(
+        lambda top_left, bottom_right, roles: changes.append(
+            (top_left.row(), bottom_right.row(), list(roles))
+        )
+    )
+
+    with qtbot.waitSignal(model.dataChanged, timeout=1000):
+        model.set_status(
+            PrinterStatus(
+                objects=("extruder", "heater_bed"),
+                temperature_devices=(
+                    TemperatureDeviceStatus(
+                        name="extruder",
+                        display_name="Extruder",
+                        icon="extruder",
+                        temperature=212.0,
+                        target=220.0,
+                    ),
+                    TemperatureDeviceStatus(
+                        name="heater_bed",
+                        display_name="Heater Bed",
+                        icon="bed",
+                        temperature=58.0,
+                        target=60.0,
+                    ),
+                ),
+            )
+        )
+
+    assert resets == []
+    assert changes == [
+        (
+            0,
+            0,
+            [
+                model.TEMPERATURE_ROLE,
+                model.TARGET_ROLE,
+            ],
+        )
+    ]
+    assert model.rowData(0)["temperature"] == 212.0
+    assert model.rowData(0)["target"] == 220.0
+    assert model.extruderSeries == [210.0, 212.0]
+
+
+def test_temperature_device_list_model_resets_when_device_structure_changes(qtbot) -> None:
+    model = TemperatureDeviceListModel()
+    model.set_status(
+        PrinterStatus(
+            objects=("extruder",),
+            temperature_devices=(
+                TemperatureDeviceStatus(
+                    name="extruder",
+                    display_name="Extruder",
+                    icon="extruder",
+                    temperature=210.0,
+                    target=215.0,
+                ),
+            ),
+        )
+    )
+
+    with qtbot.waitSignal(model.modelReset, timeout=1000):
+        model.set_status(
+            PrinterStatus(
+                objects=("extruder", "heater_bed"),
+                temperature_devices=(
+                    TemperatureDeviceStatus(
+                        name="extruder",
+                        display_name="Extruder",
+                        icon="extruder",
+                        temperature=212.0,
+                        target=220.0,
+                    ),
+                    TemperatureDeviceStatus(
+                        name="heater_bed",
+                        display_name="Heater Bed",
+                        icon="bed",
+                        temperature=58.0,
+                        target=60.0,
+                    ),
+                ),
+            )
+        )
+
+    assert model.rowCount() == 2
 
 
 def test_temperature_device_list_model_initializes_history_from_temperature_store(qtbot) -> None:
@@ -247,6 +533,53 @@ def test_temperature_device_list_model_initializes_history_from_temperature_stor
     assert model.graphSeriesModel[2]["series"] == [50.0, 55.0, 58.0]
     assert model.graphSeriesModel[3]["dashed"] is True
     assert model.graphSeriesModel[4]["series"] == [29.0, 31.0, 33.0]
+
+
+def test_temperature_device_list_model_caches_graph_series_until_graph_data_changes(
+    qtbot,
+) -> None:
+    model = TemperatureDeviceListModel()
+    model.set_status(
+        PrinterStatus(
+            objects=("extruder",),
+            temperature_devices=(
+                TemperatureDeviceStatus(
+                    name="extruder",
+                    display_name="Extruder",
+                    icon="extruder",
+                    temperature=210.0,
+                    target=215.0,
+                ),
+            ),
+        )
+    )
+
+    first_series = model.graphSeriesModel
+    second_series = model.graphSeriesModel
+
+    assert first_series is second_series
+
+    with qtbot.waitSignal(model.graphSeriesChanged, timeout=1000):
+        model.set_status(
+            PrinterStatus(
+                objects=("extruder",),
+                temperature_devices=(
+                    TemperatureDeviceStatus(
+                        name="extruder",
+                        display_name="Extruder",
+                        icon="extruder",
+                        temperature=212.0,
+                        target=215.0,
+                    ),
+                ),
+            )
+        )
+
+    updated_series = model.graphSeriesModel
+
+    assert updated_series is not first_series
+    assert updated_series is model.graphSeriesModel
+    assert updated_series[0]["series"] == [210.0, 212.0]
 
 
 def test_temperature_device_list_model_toggles_graph_visibility(qtbot) -> None:
@@ -337,6 +670,217 @@ def test_temperature_device_list_model_adds_target_series_for_heaters(qtbot) -> 
     ]
     assert model.graphSeriesModel[1]["series"] == [220.0, 220.0, 220.0]
     assert model.graphSeriesModel[1]["dashed"] is True
+
+
+def test_temperature_device_list_model_uses_latest_stored_target_when_status_target_is_missing(
+    qtbot,
+) -> None:
+    model = TemperatureDeviceListModel()
+    model.set_status(
+        PrinterStatus(
+            objects=("extruder",),
+            temperature_devices=(
+                TemperatureDeviceStatus(
+                    name="extruder",
+                    display_name="Extruder",
+                    icon="extruder",
+                    temperature=212.0,
+                    target=None,
+                ),
+            ),
+        )
+    )
+    model.initialize_history(
+        {
+            "extruder": {
+                "temperatures": [200.0, 205.0, 210.0],
+                "targets": [0.0, 220.0, 220.0],
+            },
+        }
+    )
+
+    assert model.rowData(0)["target"] == 220.0
+    assert [item["name"] for item in model.graphSeriesModel] == [
+        "extruder",
+        "extruder_target",
+    ]
+    assert model.graphSeriesModel[1]["series"] == [None, 220.0, 220.0]
+
+
+def test_temperature_device_list_model_tracks_pending_target_locally(qtbot) -> None:
+    model = TemperatureDeviceListModel()
+    model.set_status(
+        PrinterStatus(
+            objects=("extruder",),
+            temperature_devices=(
+                TemperatureDeviceStatus(
+                    name="extruder",
+                    display_name="Extruder",
+                    icon="extruder",
+                    temperature=212.0,
+                    target=215.0,
+                ),
+            ),
+        )
+    )
+
+    with qtbot.waitSignal(model.dataChanged, timeout=1000):
+        model.setPendingTarget("extruder", 230.0)
+
+    assert model.rowData(0)["target"] == 230.0
+    assert model.rowData(0)["targetPending"] is True
+    assert model.rowData(0)["targetState"] == "pending"
+    assert [item["name"] for item in model.graphSeriesModel] == ["extruder", "extruder_target"]
+    assert model.graphSeriesModel[1]["series"] == [215.0]
+
+    with qtbot.waitSignal(model.dataChanged, timeout=1000):
+        model.set_status(
+            PrinterStatus(
+                objects=("extruder",),
+                temperature_devices=(
+                    TemperatureDeviceStatus(
+                        name="extruder",
+                        display_name="Extruder",
+                        icon="extruder",
+                        temperature=212.0,
+                        target=230.0,
+                    ),
+                ),
+            )
+        )
+
+    assert model.rowData(0)["target"] == 230.0
+    assert model.rowData(0)["targetPending"] is False
+    assert model.rowData(0)["targetState"] == "actual"
+
+
+def test_temperature_device_list_model_real_target_overrides_pending_target(qtbot) -> None:
+    model = TemperatureDeviceListModel()
+    model.set_status(
+        PrinterStatus(
+            objects=("extruder",),
+            temperature_devices=(
+                TemperatureDeviceStatus(
+                    name="extruder",
+                    display_name="Extruder",
+                    icon="extruder",
+                    temperature=212.0,
+                    target=215.0,
+                ),
+            ),
+        )
+    )
+    model.setPendingTarget("extruder", 230.0)
+
+    with qtbot.waitSignal(model.dataChanged, timeout=1000):
+        model.set_status(
+            PrinterStatus(
+                objects=("extruder",),
+                temperature_devices=(
+                    TemperatureDeviceStatus(
+                        name="extruder",
+                        display_name="Extruder",
+                        icon="extruder",
+                        temperature=212.0,
+                        target=0.0,
+                    ),
+                ),
+            )
+        )
+
+    assert model.rowData(0)["target"] == 0.0
+    assert model.rowData(0)["targetPending"] is False
+    assert model.rowData(0)["targetState"] == "actual"
+
+
+def test_temperature_device_list_model_tracks_failed_target_until_real_target_arrives(
+    qtbot,
+) -> None:
+    model = TemperatureDeviceListModel()
+    model.set_status(
+        PrinterStatus(
+            objects=("extruder",),
+            temperature_devices=(
+                TemperatureDeviceStatus(
+                    name="extruder",
+                    display_name="Extruder",
+                    icon="extruder",
+                    temperature=212.0,
+                    target=215.0,
+                ),
+            ),
+        )
+    )
+
+    with qtbot.waitSignal(model.dataChanged, timeout=1000):
+        model.setFailedTarget("extruder", 230.0)
+
+    assert model.rowData(0)["target"] == 230.0
+    assert model.rowData(0)["targetPending"] is False
+    assert model.rowData(0)["targetState"] == "failed"
+
+    with qtbot.waitSignal(model.dataChanged, timeout=1000):
+        model.set_status(
+            PrinterStatus(
+                objects=("extruder",),
+                temperature_devices=(
+                    TemperatureDeviceStatus(
+                        name="extruder",
+                        display_name="Extruder",
+                        icon="extruder",
+                        temperature=212.0,
+                        target=215.0,
+                    ),
+                ),
+            )
+        )
+
+    assert model.rowData(0)["target"] == 215.0
+    assert model.rowData(0)["targetState"] == "actual"
+
+
+def test_temperature_device_list_model_suppresses_target_series_without_active_target(
+    qtbot,
+) -> None:
+    model = TemperatureDeviceListModel()
+    model.set_status(
+        PrinterStatus(
+            objects=("extruder", "heater_bed"),
+            temperature_devices=(
+                TemperatureDeviceStatus(
+                    name="extruder",
+                    display_name="Extruder",
+                    icon="extruder",
+                    temperature=212.0,
+                    target=0.0,
+                ),
+                TemperatureDeviceStatus(
+                    name="heater_bed",
+                    display_name="Heater Bed",
+                    icon="bed",
+                    temperature=59.0,
+                    target=None,
+                ),
+            ),
+        )
+    )
+    model.initialize_history(
+        {
+            "extruder": {
+                "temperatures": [200.0, 205.0, 210.0],
+                "targets": [220.0, 220.0, 0.0],
+            },
+            "heater_bed": {
+                "temperatures": [50.0, 55.0, 58.0],
+                "targets": [60.0, 60.0, 0.0],
+            },
+        }
+    )
+
+    assert [item["name"] for item in model.graphSeriesModel] == [
+        "extruder",
+        "heater_bed",
+    ]
 
 
 def test_temperature_device_list_model_persists_graph_visibility_per_host(qtbot, tmp_path) -> None:

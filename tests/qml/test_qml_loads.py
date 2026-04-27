@@ -113,7 +113,15 @@ def test_status_bar_matches_klipperscreen_titlebar_structure() -> None:
     assert "property string printerName" in qml
     assert "property string panelTitle" in qml
     assert "property string clockText" in qml
+    assert "function updateClock()" in qml
+    assert "function scheduleNextClockTick()" in qml
+    assert "id: clockTimer" in qml
+    assert "interval: 1000" not in qml
     assert "id: heaterStrip" in qml
+    assert "root.width < 520 ? 0.25 : 0.35" in qml
+    assert "root.width < 520 ? 0.45 : 0.32" in qml
+    assert "property int maxVisibleTemperatureItems" in qml
+    assert "index < root.maxVisibleTemperatureItems" in qml
     assert "TemperatureDeviceModel {" in qml
     assert "id: fallbackTemperatureModel" in qml
     assert 'typeof icon === "undefined" ? iconName : icon' in qml
@@ -136,17 +144,27 @@ def test_fake_temperature_graph_matches_heater_graph_structure() -> None:
     assert 'import "../Theme.js" as Theme' in qml
     assert "id: horizontalGrid" in qml
     assert "id: verticalGrid" in qml
-    assert "id: graphContent" in qml
-    assert "function segmentModel(series, color, plotWidth, plotHeight)" in qml
+    assert "id: graphCanvas" in qml
+    assert "Canvas {" in qml
+    assert "onPaint:" in qml
+    assert "getContext(\"2d\")" in qml
+    assert "function drawSeries(ctx, item, plotWidth, plotHeight)" in qml
+    assert "ctx.setLineDash" in qml
     assert "property int visiblePointCount" in qml
     assert "function visibleSeries(series)" in qml
-    assert "Math.atan2(dy, dx)" in qml
-    assert "transformOrigin: Item.Left" in qml
     assert "property var seriesModel: []" in qml
     assert "function seriesPoints(series, plotWidth, plotHeight)" in qml
-    assert "plotArea.width," in qml
-    assert "plotArea.height" in qml
-    assert "modelData.dashed" in qml
+    assert 'currentSeries[i] === null || typeof currentSeries[i] === "undefined"' in qml
+    assert "points.push(null)" in qml
+    assert "hasActiveSegment = false" in qml
+    assert "item.dashed" in qml
+    assert "function segmentModel(" not in qml
+    assert "graphContent.visible = false" not in qml
+    assert "transformOrigin: Item.Left" not in qml
+    assert "ctx.stroke()" in qml
+    assert "id: legendViewport" in qml
+    assert "clip: true" in qml
+    assert "elide: Text.ElideRight" in qml
     assert "modelData.legendVisible === false" in qml
     assert 'text: modelData.displayName' in qml
     assert "function normalizeTemperature" in qml
@@ -206,9 +224,9 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "property var fileModel" in qml
     assert "G-Code files" in qml
     assert 'property string rootPath: "gcodes"' in qml
-    assert "Sort: Name" in qml
-    assert "Sort: Date" in qml
-    assert "Sort: Size" in qml
+    assert '"label": "Name"' in qml
+    assert '"label": "Date"' in qml
+    assert '"label": "Size"' in qml
     assert "No G-Code files found" in qml
     assert "Loading files..." in qml
     assert "function currentPathLabel" in qml
@@ -217,9 +235,24 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert 'fileList.count + " items"' in qml
     assert "Search files" in qml
     assert "activeFileModel.setFilterText(text)" in qml
-    assert "activeFileModel.setBreadcrumbIndex(index)" in qml
-    assert "activeFileModel.breadcrumbs" in qml
-    assert "text: modelData" in qml
+    assert "id: compactTitleRow" in qml
+    assert "id: compactControlRow" in qml
+    assert "id: pathLabel" in qml
+    assert "Layout.fillWidth: true" in qml
+    assert "activeFileModel.breadcrumbs" not in qml
+    assert "breadcrumbText" not in qml
+    assert "property bool compactFileRows" in qml
+    assert "root.compactFileRows ? 1 : 4" in qml
+    assert "root.activeFileModel.selectPath(path, isDirectory)" in qml
+    assert "selectedPath" in qml
+    assert "selectedDisplayName" in qml
+    assert "selectedSizeLabel" in qml
+    assert "selectedModifiedLabel" in qml
+    assert "selectedPermissions" in qml
+    assert "id: detailsPanel" in qml
+    assert "Read-only file details" in qml
+    assert "ScrollBar.vertical: ScrollBar" in qml
+    assert "policy: ScrollBar.AsNeeded" in qml
     assert "required property bool isDirectory" in qml
     assert "required property string modifiedLabel" in qml
     assert "activeFileModel.canGoUp" in qml
@@ -284,6 +317,9 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "Remaining" in qml
     assert "root.percentLabel(root.speedFactor)" in qml
     assert "root.zOffsetLabel()" in qml
+    assert "id: cardGrid" in qml
+    assert "ScrollBar.vertical: ScrollBar" in qml
+    assert "policy: ScrollBar.AsNeeded" in qml
     assert 'text: "Start"' not in qml
     assert 'text: "Pause"' not in qml
     assert 'text: "Cancel"' not in qml
@@ -301,7 +337,11 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert "property string homedAxes" in qml
     assert "root.positionX.toFixed(2)" in qml
     assert "root.homedAxes.length > 0" in qml
-    assert "MouseArea" not in qml
+    assert "property string selectedDistance" in qml
+    assert "function selectDistance(distance)" in qml
+    assert "root.selectedDistance === modelData" in qml
+    assert "Theme.color3" in qml
+    assert "id: positionGrid" in qml
     assert "printer.gcode.script" not in qml
 
 
@@ -311,10 +351,15 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "property real extruderTemperature" in qml
     assert "property real extruderTarget" in qml
     assert "property real positionE" in qml
+    assert "property string selectedDistance" in qml
+    assert "property string selectedSpeed" in qml
+    assert "function selectDistance(distance)" in qml
+    assert "function selectSpeed(speed)" in qml
+    assert "root.selectedDistance === modelData" in qml
+    assert "root.selectedSpeed === modelData" in qml
     assert "root.extruderTemperature.toFixed(1)" in qml
     assert "root.extruderTarget.toFixed(1)" in qml
     assert "root.positionE.toFixed(2)" in qml
-    assert "MouseArea" not in qml
     assert "printer.gcode.script" not in qml
 
     main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
@@ -495,6 +540,8 @@ def test_temperature_summary_uses_klipperscreen_device_icons_and_theme() -> None
     assert "id: fallbackTemperatureModel" in component_qml
     assert "TemperatureDevicePager {" in component_qml
     assert "temperatureModel: root.activeTemperatureModel" in component_qml
+    assert 'text: "Target (°C)"' in component_qml
+    assert "showTargets: true" in component_qml
     assert "color: Theme.mutedText" in component_qml
     assert "ListElement { deviceName:" not in component_qml
 
@@ -511,17 +558,73 @@ def test_temperature_device_pager_uses_page_based_navigation() -> None:
     assert "property int currentItemCount:" in qml
     assert "function pageCount()" in qml
     assert "function pagedModel()" in qml
-    assert "function itemAt(pageRow)" in qml
+    assert "function itemAt(pageRow, revision)" in qml
+    assert "property int modelRevision: 0" in qml
+    assert "function refreshVisibleItems()" in qml
     assert "function goToPreviousPage()" in qml
     assert "function goToNextPage()" in qml
+    assert "function onDataChanged()" in qml
+    assert "function onGraphSelectionChanged()" in qml
+    assert "property var entry: root.itemAt(index, root.modelRevision)" in qml
+    assert "property int touchTargetSize:" in qml
+    assert "property bool targetEditorFullscreen: false" in qml
+    assert "targetColumnWidth" in qml
+    assert "actualTargetGrid" in qml
+    assert "signal targetTemperatureRequested(string deviceName, real target)" in qml
+    assert "function openTargetEditor(deviceName, displayName, actual, target)" in qml
+    assert "function positionTargetEditor()" in qml
+    assert "function bestExternalEditorRegion(minWidth, minHeight)" in qml
+    assert "targetEditorPopup.parent" in qml
+    assert "function appendTargetDigit(digit)" in qml
+    assert "function confirmTargetEditor()" in qml
+    assert 'typeof root.activeTemperatureModel.setPendingTarget === "function"' in qml
+    assert "root.activeTemperatureModel.setPendingTarget(root.targetEditorDeviceName, value)" in qml
+    assert "id: targetEditorPopup" in qml
+    assert "parent: Overlay.overlay" in qml
+    assert "id: targetKeypadGrid" in qml
+    assert "Layout.minimumWidth: root.touchTargetSize" in qml
+    assert "Layout.minimumHeight: root.touchTargetSize" in qml
+    assert "Layout.minimumHeight: root.touchTargetSize" in qml
+    assert "root.targetTemperatureRequested(root.targetEditorDeviceName, value)" in qml
+    assert "id: graphToggleArea" in qml
+    assert "id: compactGraphStateBar" in qml
+    assert "id: compactGraphStateBorder" in qml
+    assert "deviceGraphVisible ? Theme.color4 : \"#465456\"" in qml
+    assert "deviceGraphVisible ? Theme.text : Theme.mutedText" in qml
+    assert "id: compactValueArea" in qml
+    assert "id: cardValueArea" in qml
+    assert "id: cardTitleLabel" in qml
+    assert "wrapMode: Text.NoWrap" in qml
+    assert "maximumLineCount: 1" in qml
+    assert (
+        "Layout.preferredHeight: Math.max(root.touchTargetSize, "
+        "Math.round(root.fontSize * 3.2))"
+    ) in qml
+    assert (
+        'property string targetState: entry.targetState === undefined '
+        '? "actual" : entry.targetState'
+    ) in qml
+    assert "function targetColor()" in qml
+    assert 'if (targetState === "failed")' in qml
+    assert 'if (targetState === "pending")' in qml
+    assert "color: targetColor()" in qml
+    assert 'text: "Target"' in qml
+    assert "visible: root.showTargets" in qml
     assert "WheelHandler {" in qml
     assert "root.goToNextPage()" in qml
     assert "root.goToPreviousPage()" in qml
     assert "Flickable {" not in qml
     assert "GridView {" in qml
     assert "model: root.currentItemCount" in qml
+    assert "id: previousPageButton" in qml
+    assert "id: nextPageButton" in qml
+    assert "property int pageControlReservedHeight:" in qml
+    assert "anchors.bottomMargin: root.pageControlReservedHeight" in qml
+    assert "enabled: root.pageIndex > 0" in qml
+    assert "enabled: root.pageIndex < root.pageCount() - 1" in qml
     assert 'typeof root.activeTemperatureModel.toggleGraphDevice === "function"' in qml
     assert "root.activeTemperatureModel.toggleGraphDevice(deviceKey)" in qml
+    assert "targetEditorPopup.open()" in qml
 
 
 def test_temperature_model_is_passed_from_app_to_shell_and_main_panel() -> None:
@@ -562,13 +665,7 @@ def test_temperature_panel_is_read_only_and_responsive() -> None:
     assert "Layout.minimumHeight: 0" in qml
     assert "root.metrics.portrait" in qml
     assert "readonly" in qml
-    assert "Connections {" in qml
-    assert "target: root.activeTemperatureModel" in qml
-    assert "ignoreUnknownSignals: true" in qml
-    assert "onGraphSeriesChanged" in qml
-    assert "graph.requestRedraw()" in qml
-    assert "onHistoryChanged" in qml
-    assert "onModelReset" in qml
+    assert "graph.requestRedraw()" not in qml
     assert "printer.gcode.script" not in qml
     assert "sendTextMessage" not in qml
 
@@ -737,7 +834,7 @@ def test_move_panel_is_locked_and_responsive() -> None:
     assert "Controls locked" in qml
     assert "root.metrics.portrait" in qml
     assert "Repeater {" in qml
-    assert "MouseArea" not in qml
+    assert "root.selectDistance(modelData)" in qml
     assert "printer.gcode.script" not in qml
     assert "G1" not in qml
     assert "G28" not in qml
@@ -756,7 +853,8 @@ def test_extrude_panel_is_locked_and_responsive() -> None:
     assert "Extrusion locked" in qml
     assert "root.metrics.portrait" in qml
     assert "Repeater {" in qml
-    assert "MouseArea" not in qml
+    assert "root.selectDistance(modelData)" in qml
+    assert "root.selectSpeed(modelData)" in qml
     assert "printer.gcode.script" not in qml
     assert "M83" not in qml
     assert "G1" not in qml
@@ -780,6 +878,9 @@ def test_main_uses_responsive_base_shell_and_main_panel() -> None:
     assert "Loader {" in main_qml
     assert "Metrics {" in main_qml
     assert 'property string currentPanel: "main"' in main_qml
+    assert "onCurrentPanelChanged" in main_qml
+    assert 'typeof bridgeModel.setActivePanel === "function"' in main_qml
+    assert "bridgeModel.setActivePanel(window.currentPanel)" in main_qml
     assert 'property var panelTitles: ({"main": "Home"' in main_qml
     assert "panelTitle: window.panelTitles[window.currentPanel]" in main_qml
     assert (

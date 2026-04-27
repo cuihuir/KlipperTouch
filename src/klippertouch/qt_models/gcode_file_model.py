@@ -22,6 +22,7 @@ class GCodeFileListModel(QAbstractListModel):
     currentPathChanged = Signal()
     sortKeyChanged = Signal()
     filterTextChanged = Signal()
+    selectedPathChanged = Signal()
 
     PATH_ROLE = int(Qt.ItemDataRole.UserRole) + 1
     DISPLAY_NAME_ROLE = int(Qt.ItemDataRole.UserRole) + 2
@@ -38,17 +39,28 @@ class GCodeFileListModel(QAbstractListModel):
         self._current_path = ""
         self._sort_key = "name"
         self._filter_text = ""
+        self._selected_path = ""
 
     def set_files(self, files: tuple[GCodeFile, ...]) -> None:
+        files = _normalized_file_snapshot(files)
+        if files == self._files:
+            return
         self.beginResetModel()
-        self._files = tuple(files)
+        self._files = files
         self._entries = browser_entries_for_directory(
             self._files,
             directory=self._current_path,
             sort_key=self._sort_key,
             filter_text=self._filter_text,
         )
+        selection_removed = bool(self._selected_path) and self._file_for_name(
+            self._selected_path
+        ) is None
+        if selection_removed:
+            self._selected_path = ""
         self.endResetModel()
+        if selection_removed:
+            self.selectedPathChanged.emit()
 
     @Property(str, notify=currentPathChanged)
     def currentPath(self) -> str:
@@ -62,6 +74,28 @@ class GCodeFileListModel(QAbstractListModel):
     def filterText(self) -> str:
         return self._filter_text
 
+    @Property(str, notify=selectedPathChanged)
+    def selectedPath(self) -> str:
+        return self._selected_path
+
+    @Property(str, notify=selectedPathChanged)
+    def selectedDisplayName(self) -> str:
+        file = self._file_for_name(self._selected_path)
+        return file.display_name if file is not None else ""
+
+    @Property(str, notify=selectedPathChanged)
+    def selectedSizeLabel(self) -> str:
+        return self.fileSizeLabelFor(self._selected_path)
+
+    @Property(str, notify=selectedPathChanged)
+    def selectedModifiedLabel(self) -> str:
+        return self.fileModifiedLabelFor(self._selected_path)
+
+    @Property(str, notify=selectedPathChanged)
+    def selectedPermissions(self) -> str:
+        file = self._file_for_name(self._selected_path)
+        return file.permissions if file is not None else ""
+
     @Property(bool, notify=currentPathChanged)
     def canGoUp(self) -> bool:
         return bool(self._current_path)
@@ -72,9 +106,10 @@ class GCodeFileListModel(QAbstractListModel):
 
     @Slot(str)
     def setCurrentPath(self, path: str) -> None:  # noqa: N802
-        if path == self._current_path:
+        normalized = path.strip().strip("/")
+        if normalized == self._current_path:
             return
-        self._current_path = path.strip().strip("/")
+        self._current_path = normalized
         self._reset_entries()
         self.currentPathChanged.emit()
 
@@ -111,6 +146,23 @@ class GCodeFileListModel(QAbstractListModel):
             return
         parent = "/".join(self._current_path.split("/")[:-1])
         self.setCurrentPath(parent)
+
+    @Slot(str, bool)
+    def selectPath(self, path: str, is_directory: bool) -> None:  # noqa: N802
+        if is_directory:
+            return
+        clean = path.strip().strip("/")
+        if self._file_for_name(clean) is None or clean == self._selected_path:
+            return
+        self._selected_path = clean
+        self.selectedPathChanged.emit()
+
+    @Slot()
+    def clearSelection(self) -> None:  # noqa: N802
+        if not self._selected_path:
+            return
+        self._selected_path = ""
+        self.selectedPathChanged.emit()
 
     def _reset_entries(self) -> None:
         self.beginResetModel()
@@ -189,3 +241,7 @@ class GCodeFileListModel(QAbstractListModel):
             self.IS_DIRECTORY_ROLE: QByteArray(b"isDirectory"),
             self.MODIFIED_LABEL_ROLE: QByteArray(b"modifiedLabel"),
         }
+
+
+def _normalized_file_snapshot(files: tuple[GCodeFile, ...]) -> tuple[GCodeFile, ...]:
+    return tuple(sorted(tuple(files), key=lambda file: file.path))

@@ -8,11 +8,16 @@ Item {
     required property var metrics
     property var axes: ["X-", "X+", "Y-", "Y+", "Z-", "Z+"]
     property var distances: ["0.1", "1", "10", "100"]
+    property string selectedDistance: "10"
     property real positionX: 0
     property real positionY: 0
     property real positionZ: 0
     property real positionE: 0
     property string homedAxes: ""
+
+    function selectDistance(distance) {
+        root.selectedDistance = distance
+    }
 
     GridLayout {
         anchors.fill: parent
@@ -64,36 +69,50 @@ Item {
                         spacing: Math.max(3, Math.round(root.metrics.fontSize * 0.25))
 
                         GridLayout {
+                            id: positionGrid
                             Layout.fillWidth: true
-                            columns: 4
+                            columns: root.metrics.portrait ? 2 : 4
                             columnSpacing: Math.max(6, Math.round(root.metrics.fontSize * 0.45))
+                            rowSpacing: Math.max(5, Math.round(root.metrics.fontSize * 0.35))
 
-                            Label {
-                                Layout.fillWidth: true
-                                color: Theme.text
-                                text: "X " + root.positionX.toFixed(2)
-                                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.88))
-                            }
+                            Repeater {
+                                model: [
+                                    {"label": "X", "value": root.positionX.toFixed(2)},
+                                    {"label": "Y", "value": root.positionY.toFixed(2)},
+                                    {"label": "Z", "value": root.positionZ.toFixed(2)},
+                                    {"label": "E", "value": root.positionE.toFixed(2)}
+                                ]
 
-                            Label {
-                                Layout.fillWidth: true
-                                color: Theme.text
-                                text: "Y " + root.positionY.toFixed(2)
-                                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.88))
-                            }
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: Math.max(26, Math.round(root.metrics.fontSize * 1.8))
+                                    color: "#0b1112"
+                                    border.color: "#263233"
+                                    border.width: 1
+                                    radius: Math.round(root.metrics.fontSize * 0.22)
 
-                            Label {
-                                Layout.fillWidth: true
-                                color: Theme.text
-                                text: "Z " + root.positionZ.toFixed(2)
-                                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.88))
-                            }
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: Math.max(5, Math.round(root.metrics.fontSize * 0.35))
+                                        anchors.rightMargin: Math.max(5, Math.round(root.metrics.fontSize * 0.35))
+                                        spacing: 4
 
-                            Label {
-                                Layout.fillWidth: true
-                                color: Theme.text
-                                text: "E " + root.positionE.toFixed(2)
-                                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.88))
+                                        Label {
+                                            color: Theme.mutedText
+                                            text: modelData.label
+                                            font.bold: true
+                                            font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.8))
+                                        }
+
+                                        Label {
+                                            Layout.fillWidth: true
+                                            color: Theme.text
+                                            text: modelData.value
+                                            horizontalAlignment: Text.AlignRight
+                                            font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.88))
+                                        }
+                                    }
+                                }
                             }
                         }
 
@@ -166,17 +185,23 @@ Item {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: Math.max(42, Math.round(root.metrics.fontSize * 3.1))
-                        color: "#101617"
-                        opacity: 0.55
-                        border.color: "#263233"
+                        color: root.selectedDistance === modelData ? "#182b20" : "#101617"
+                        opacity: 1.0
+                        border.color: root.selectedDistance === modelData ? Theme.color3 : "#263233"
                         border.width: 1
                         radius: Math.round(root.metrics.fontSize * 0.32)
 
                         Label {
                             anchors.centerIn: parent
-                            color: Theme.mutedText
+                            color: root.selectedDistance === modelData ? Theme.text : Theme.mutedText
                             text: modelData + " mm"
+                            font.bold: root.selectedDistance === modelData
                             font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: root.selectDistance(modelData)
                         }
                     }
                 }

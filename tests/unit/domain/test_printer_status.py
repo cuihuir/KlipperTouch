@@ -81,6 +81,30 @@ def test_printer_status_derives_read_only_temperature_devices_from_objects() -> 
     assert status.temperature_device_count == 3
 
 
+def test_temperature_device_display_names_remove_klipper_object_prefixes() -> None:
+    status = PrinterStatus.from_probe(
+        server_info={"moonraker_version": "v0.10.0", "klippy_state": "ready"},
+        printer_info={"state": "ready", "hostname": "toper1", "software_version": "v0.13.0"},
+        objects={
+            "objects": [
+                "temperature_fan SOC散热",
+                "temperature_host SOC散热",
+                "temperature_sensor chamber",
+                "heater_generic chamber heater",
+            ]
+        },
+    )
+
+    display_names = {device.name: device.display_name for device in status.temperature_devices}
+
+    assert display_names == {
+        "heater_generic chamber heater": "Chamber Heater",
+        "temperature_fan SOC散热": "SOC散热 Fan",
+        "temperature_host SOC散热": "SOC散热 Host",
+        "temperature_sensor chamber": "Chamber",
+    }
+
+
 def test_printer_status_populates_temperature_values_from_status_query() -> None:
     status = PrinterStatus.from_probe(
         server_info={"moonraker_version": "v0.10.0", "klippy_state": "ready"},
@@ -181,6 +205,37 @@ def test_printer_status_applies_read_only_temperature_update() -> None:
     assert tuple(device.target for device in updated.temperature_devices) == (0.0, 55.0)
 
 
+def test_printer_status_update_preserves_static_version_metadata() -> None:
+    status = PrinterStatus(
+        hostname="toper1",
+        klippy_state="ready",
+        klipper_version="v0.13.0",
+        moonraker_version="v0.10.0",
+        mcu_statuses=(McuStatus(name="mcu", version="v0.13.0-main"),),
+        service_versions=(
+            ServiceVersionStatus(name="klipper", version="v0.13.0"),
+            ServiceVersionStatus(name="moonraker", version="v0.10.0"),
+        ),
+        objects=("extruder",),
+        temperature_devices=(
+            TemperatureDeviceStatus(
+                name="extruder",
+                display_name="Extruder",
+                icon="extruder",
+                temperature=210.0,
+                target=215.0,
+            ),
+        ),
+    )
+
+    updated = status.with_status_update({"extruder": {"temperature": 212.0}})
+
+    assert updated.mcu_statuses == status.mcu_statuses
+    assert updated.service_versions == status.service_versions
+    assert updated.klipper_version == "v0.13.0"
+    assert updated.moonraker_version == "v0.10.0"
+
+
 def test_printer_status_populates_read_only_job_state_from_status_query() -> None:
     status = PrinterStatus.from_probe(
         server_info={"moonraker_version": "v0.10.0", "klippy_state": "ready"},
@@ -241,6 +296,38 @@ def test_printer_status_applies_read_only_print_update() -> None:
     assert updated.filament_used == 2345.6
     assert updated.current_layer == 4
     assert updated.total_layers == 20
+
+
+def test_printer_status_ignores_null_display_status_message() -> None:
+    status = PrinterStatus(
+        objects=("print_stats", "display_status"),
+        print_state="printing",
+        print_message="",
+    )
+
+    updated = status.with_status_update({"display_status": {"message": None}})
+
+    assert updated.print_message == ""
+
+
+def test_printer_status_preserves_progress_when_terminal_update_reports_zero() -> None:
+    status = PrinterStatus(
+        objects=("print_stats", "display_status", "virtual_sdcard"),
+        print_state="printing",
+        print_filename="part.gcode",
+        print_progress=46.3,
+    )
+
+    updated = status.with_status_update(
+        {
+            "print_stats": {"state": "cancelled", "filename": "part.gcode"},
+            "display_status": {"progress": 0.0},
+            "virtual_sdcard": {"progress": 0.0},
+        }
+    )
+
+    assert updated.print_state == "cancelled"
+    assert updated.print_progress == 46.3
 
 
 def test_printer_status_populates_read_only_toolhead_position() -> None:

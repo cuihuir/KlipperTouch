@@ -66,7 +66,11 @@ def run_app(
         status_stream.start()
         engine.status_stream = status_stream  # type: ignore[attr-defined]
     if file_refresh_client is not None:
-        file_refresh = GCodeFileRefresh(file_refresh_client, gcode_file_model)
+        file_refresh = GCodeFileRefresh(
+            file_refresh_client,
+            gcode_file_model,
+            status_model=status_model,
+        )
         file_refresh.start()
         engine.gcode_file_refresh = file_refresh  # type: ignore[attr-defined]
     return app.exec()

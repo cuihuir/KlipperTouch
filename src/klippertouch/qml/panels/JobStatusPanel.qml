@@ -301,8 +301,13 @@ Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 clip: true
+                boundsBehavior: Flickable.StopAtBounds
+                flickDeceleration: 2600
                 cellWidth: width / (root.metrics.portrait ? 1 : 2)
                 cellHeight: Math.max(60, Math.round(root.metrics.fontSize * 4.25))
+                ScrollBar.vertical: ScrollBar {
+                    policy: ScrollBar.AsNeeded
+                }
                 model: [
                     {"label": "Elapsed", "value": root.durationLabel(root.printDuration)},
                     {"label": "Remaining", "value": root.remainingLabel()},

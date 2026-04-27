@@ -78,6 +78,37 @@ def test_gcode_file_list_model_exposes_directory_entries_and_sorting(qtbot) -> N
     assert model.canGoUp is False
 
 
+def test_gcode_file_list_model_skips_reset_when_file_snapshot_is_unchanged(qtbot) -> None:
+    model = GCodeFileListModel()
+    files = (
+        GCodeFile(path="cube.gcode", display_name="cube.gcode", modified=2, size=200),
+    )
+    model.set_files(files)
+    resets: list[bool] = []
+    model.modelReset.connect(lambda: resets.append(True))
+
+    model.set_files(files)
+
+    assert resets == []
+    assert model.rowCount() == 1
+
+
+def test_gcode_file_list_model_skips_reset_when_file_snapshot_order_changes(qtbot) -> None:
+    model = GCodeFileListModel()
+    files = (
+        GCodeFile(path="cube.gcode", display_name="cube.gcode", modified=2, size=200),
+        GCodeFile(path="calibration/flow.gcode", display_name="flow.gcode", modified=3, size=100),
+    )
+    model.set_files(files)
+    resets: list[bool] = []
+    model.modelReset.connect(lambda: resets.append(True))
+
+    model.set_files(tuple(reversed(files)))
+
+    assert resets == []
+    assert model.rowCount() == 2
+
+
 def test_gcode_file_list_model_filters_entries_and_navigates_breadcrumbs(qtbot) -> None:
     model = GCodeFileListModel()
     files = (
@@ -115,6 +146,26 @@ def test_gcode_file_list_model_filters_entries_and_navigates_breadcrumbs(qtbot) 
     assert model.currentPath == ""
 
 
+def test_gcode_file_list_model_skips_reset_for_equivalent_current_path(qtbot) -> None:
+    model = GCodeFileListModel()
+    model.set_files(
+        (
+            GCodeFile(path="calibration/flow.gcode", display_name="flow.gcode", size=100),
+        )
+    )
+    model.setCurrentPath("calibration")
+    resets: list[bool] = []
+    path_changes: list[bool] = []
+    model.modelReset.connect(lambda: resets.append(True))
+    model.currentPathChanged.connect(lambda: path_changes.append(True))
+
+    model.setCurrentPath("/calibration/")
+
+    assert resets == []
+    assert path_changes == []
+    assert model.currentPath == "calibration"
+
+
 def test_gcode_file_list_model_returns_metadata_for_print_filename() -> None:
     model = GCodeFileListModel()
     model.set_files(
@@ -134,3 +185,54 @@ def test_gcode_file_list_model_returns_metadata_for_print_filename() -> None:
     assert model.fileModifiedLabelFor("cube.gcode") == "2024-03-09 16:00"
     assert model.filePathFor("cube.gcode") == "calibration/cube.gcode"
     assert model.fileSizeLabelFor("missing.gcode") == "-"
+
+
+def test_gcode_file_list_model_tracks_read_only_selected_file(qtbot) -> None:
+    model = GCodeFileListModel()
+    model.set_files(
+        (
+            GCodeFile(
+                path="calibration/cube.gcode",
+                display_name="cube.gcode",
+                modified=1710000000.5,
+                size=2048,
+                permissions="rw",
+            ),
+            GCodeFile(path="calibration", display_name="calibration", size=0),
+        )
+    )
+
+    with qtbot.waitSignal(model.selectedPathChanged, timeout=1000):
+        model.selectPath("calibration/cube.gcode", False)
+
+    assert model.selectedPath == "calibration/cube.gcode"
+    assert model.selectedDisplayName == "cube.gcode"
+    assert model.selectedSizeLabel == "2.0 KB"
+    assert model.selectedModifiedLabel == "2024-03-09 16:00"
+    assert model.selectedPermissions == "rw"
+
+    model.selectPath("calibration", True)
+
+    assert model.selectedPath == "calibration/cube.gcode"
+
+    with qtbot.waitSignal(model.selectedPathChanged, timeout=1000):
+        model.clearSelection()
+
+    assert model.selectedPath == ""
+    assert model.selectedDisplayName == ""
+
+
+def test_gcode_file_list_model_clears_selected_file_when_snapshot_removes_it(qtbot) -> None:
+    model = GCodeFileListModel()
+    model.set_files(
+        (
+            GCodeFile(path="cube.gcode", display_name="cube.gcode", size=2048),
+        )
+    )
+    model.selectPath("cube.gcode", False)
+
+    with qtbot.waitSignal(model.selectedPathChanged, timeout=1000):
+        model.set_files(())
+
+    assert model.selectedPath == ""
+    assert model.selectedSizeLabel == "-"

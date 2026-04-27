@@ -57,6 +57,9 @@ class FakeClient:
             }
         }
 
+    def get_printer_objects_query_jsonrpc(self, objects):
+        return {"status": {}}
+
     def get_machine_update_status(self):
         return {
             "version_info": {
@@ -105,6 +108,9 @@ def test_build_status_from_client_returns_partial_status_when_optional_probe_fai
         def get_printer_objects_query(self, objects=()):
             raise RuntimeError("query unavailable")
 
+        def get_printer_objects_query_jsonrpc(self, objects):
+            raise RuntimeError("jsonrpc query unavailable")
+
         def get_printer_objects_query_fields(self, fields_by_object):
             raise RuntimeError("mcu query unavailable")
 
@@ -120,3 +126,62 @@ def test_build_status_from_client_returns_partial_status_when_optional_probe_fai
     assert status.temperature_devices == ()
     assert status.mcu_statuses == ()
     assert status.service_versions == ()
+
+
+def test_build_status_from_client_uses_unfiltered_query_for_non_ascii_temperature_objects() -> None:
+    class NonAsciiTemperatureClient(FakeClient):
+        def __init__(self) -> None:
+            self.queries: list[tuple[str, ...]] = []
+
+        def get_objects_list(self):
+            return {
+                "objects": [
+                    "extruder",
+                    "temperature_host SOC散热",
+                    "temperature_sensor chamber",
+                ]
+            }
+
+        def get_printer_objects_query(self, objects=()):
+            self.queries.append(tuple(objects))
+            return {
+                "status": {
+                    "extruder": {"temperature": 24.3, "target": 0.0},
+                    "temperature_sensor chamber": {"temperature": 35.5},
+                }
+            }
+
+        def get_printer_objects_query_jsonrpc(self, objects):
+            self.queries.append(tuple(objects))
+            assert objects == {"temperature_host SOC散热": ["temperature", "target"]}
+            return {
+                "status": {
+                    "temperature_host SOC散热": {"temperature": 42.5},
+                }
+            }
+
+        def get_printer_objects_query_fields(self, fields_by_object):
+            return {"status": {}}
+
+    client = NonAsciiTemperatureClient()
+    status = build_status_from_client(client)
+
+    assert client.queries == [
+        ("extruder", "temperature_host SOC散热", "temperature_sensor chamber"),
+        ("temperature_host SOC散热",),
+    ]
+    assert tuple(device.name for device in status.temperature_devices) == (
+        "extruder",
+        "temperature_sensor chamber",
+        "temperature_host SOC散热",
+    )
+    assert tuple(device.display_name for device in status.temperature_devices) == (
+        "Extruder",
+        "Chamber",
+        "SOC散热 Host",
+    )
+    assert tuple(device.temperature for device in status.temperature_devices) == (
+        24.3,
+        35.5,
+        42.5,
+    )

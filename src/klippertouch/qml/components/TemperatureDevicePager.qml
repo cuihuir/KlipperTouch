@@ -17,12 +17,29 @@ Item {
         ? temperatureModel
         : fallbackTemperatureModel
     property real fontSize: 16
+    property int touchTargetSize: Math.max(44, Math.round(root.fontSize * 2.8))
+    property int targetEditorMargin: Math.max(8, Math.round(root.fontSize * 0.7))
+    property bool targetEditorFullscreen: false
     property int rowHeight: compact
-        ? Math.max(22, Math.round(root.fontSize * 1.85))
-        : Math.max(112, Math.round(root.fontSize * 7.9))
+        ? root.touchTargetSize
+        : Math.max(root.touchTargetSize * 2, Math.round(root.fontSize * 7.9))
+    property int pageControlSpacing: Math.max(6, Math.round(root.fontSize * 0.4))
+    property int rawAvailableRows: Math.max(1, Math.floor(root.height / rowHeight))
+    property bool needsPageControls: root.modelCount() > root.deviceColumns * root.rawAvailableRows
+    property int pageControlReservedHeight: root.needsPageControls
+        ? root.touchTargetSize + root.pageControlSpacing
+        : 0
     property int availableRows: Math.max(1, Math.floor(deviceGrid.height / rowHeight))
     property int pageSize: Math.max(1, root.deviceColumns * root.availableRows)
     property int currentItemCount: Math.max(0, Math.min(root.pageSize, root.modelCount() - root.pageIndex * root.pageSize))
+    property int modelRevision: 0
+    property real targetColumnWidth: root.showTargets ? 0.27 : 0
+    property real compactValueColumnWidth: root.showTargets ? 0.46 : 0.32
+    property string targetEditorDeviceName: ""
+    property string targetEditorDisplayName: ""
+    property string targetEditorValue: ""
+    property var targetEditorActual: null
+    signal targetTemperatureRequested(string deviceName, real target)
 
     function modelCount() {
         if (!root.activeTemperatureModel) {
@@ -54,7 +71,8 @@ Item {
         return items
     }
 
-    function itemAt(pageRow) {
+    function itemAt(pageRow, revision) {
+        revision
         var source = root.activeTemperatureModel
         var row = root.pageIndex * root.pageSize + pageRow
         if (!source || row < 0 || row >= root.modelCount()) {
@@ -81,6 +99,10 @@ Item {
         pageIndex = Math.max(0, Math.min(pageIndex, pageCount() - 1))
     }
 
+    function refreshVisibleItems() {
+        root.modelRevision += 1
+    }
+
     function goToPreviousPage() {
         if (root.pageIndex > 0) {
             root.pageIndex -= 1
@@ -91,6 +113,126 @@ Item {
         if (root.pageIndex < root.pageCount() - 1) {
             root.pageIndex += 1
         }
+    }
+
+    function editorMinimumWidth() {
+        return root.touchTargetSize * 3
+            + Math.max(6, Math.round(root.fontSize * 0.4)) * 2
+            + root.targetEditorMargin * 2
+    }
+
+    function editorMinimumHeight() {
+        return root.touchTargetSize * 6
+            + Math.max(8, Math.round(root.fontSize * 0.55)) * 5
+            + root.targetEditorMargin * 2
+    }
+
+    function editorParentWidth() {
+        return targetEditorPopup.parent ? targetEditorPopup.parent.width : root.width
+    }
+
+    function editorParentHeight() {
+        return targetEditorPopup.parent ? targetEditorPopup.parent.height : root.height
+    }
+
+    function rootRectInEditorParent() {
+        var parentItem = targetEditorPopup.parent
+        if (!parentItem || !root.mapToItem) {
+            return {"x": 0, "y": 0, "width": root.width, "height": root.height}
+        }
+        var point = root.mapToItem(parentItem, 0, 0)
+        return {"x": point.x, "y": point.y, "width": root.width, "height": root.height}
+    }
+
+    function bestExternalEditorRegion(minWidth, minHeight) {
+        var margin = root.targetEditorMargin
+        var parentWidth = root.editorParentWidth()
+        var parentHeight = root.editorParentHeight()
+        var rect = root.rootRectInEditorParent()
+        var regions = [
+            {"x": margin, "y": margin, "width": Math.max(0, rect.x - margin * 2), "height": parentHeight - margin * 2},
+            {"x": rect.x + rect.width + margin, "y": margin, "width": Math.max(0, parentWidth - rect.x - rect.width - margin * 2), "height": parentHeight - margin * 2},
+            {"x": margin, "y": margin, "width": parentWidth - margin * 2, "height": Math.max(0, rect.y - margin * 2)},
+            {"x": margin, "y": rect.y + rect.height + margin, "width": parentWidth - margin * 2, "height": Math.max(0, parentHeight - rect.y - rect.height - margin * 2)}
+        ]
+        var best = null
+        for (var i = 0; i < regions.length; i += 1) {
+            var region = regions[i]
+            if (region.width < minWidth || region.height < minHeight) {
+                continue
+            }
+            if (best === null || region.width * region.height > best.width * best.height) {
+                best = region
+            }
+        }
+        return best
+    }
+
+    function positionTargetEditor() {
+        var margin = root.targetEditorMargin
+        var minWidth = root.editorMinimumWidth()
+        var minHeight = root.editorMinimumHeight()
+        var parentWidth = root.editorParentWidth()
+        var parentHeight = root.editorParentHeight()
+        var region = root.bestExternalEditorRegion(minWidth, minHeight)
+        if (region !== null) {
+            root.targetEditorFullscreen = false
+            targetEditorPopup.width = Math.min(region.width, Math.max(minWidth, Math.round(parentWidth * 0.36)))
+            targetEditorPopup.height = Math.min(region.height, Math.max(minHeight, Math.round(parentHeight * 0.72)))
+            targetEditorPopup.x = Math.round(region.x + (region.width - targetEditorPopup.width) / 2)
+            targetEditorPopup.y = Math.round(region.y + (region.height - targetEditorPopup.height) / 2)
+            return
+        }
+
+        root.targetEditorFullscreen = true
+        targetEditorPopup.width = Math.max(minWidth, parentWidth - margin * 2)
+        targetEditorPopup.height = Math.max(minHeight, parentHeight - margin * 2)
+        targetEditorPopup.x = Math.round((parentWidth - targetEditorPopup.width) / 2)
+        targetEditorPopup.y = Math.round((parentHeight - targetEditorPopup.height) / 2)
+    }
+
+    function openTargetEditor(deviceName, displayName, actual, target) {
+        root.targetEditorDeviceName = deviceName
+        root.targetEditorDisplayName = displayName
+        root.targetEditorActual = actual
+        root.targetEditorValue = target === null || typeof target === "undefined"
+            ? ""
+            : String(Math.round(target))
+        root.positionTargetEditor()
+        targetEditorPopup.open()
+    }
+
+    function appendTargetDigit(digit) {
+        if (root.targetEditorValue.length >= 3) {
+            return
+        }
+        if (root.targetEditorValue === "0") {
+            root.targetEditorValue = digit
+            return
+        }
+        root.targetEditorValue += digit
+    }
+
+    function deleteTargetDigit() {
+        root.targetEditorValue = root.targetEditorValue.slice(0, -1)
+    }
+
+    function clearTargetEditor() {
+        root.targetEditorValue = ""
+    }
+
+    function confirmTargetEditor() {
+        var value = Number(root.targetEditorValue)
+        if (!isFinite(value)) {
+            return
+        }
+        value = Math.max(0, Math.min(350, Math.round(value)))
+        root.targetEditorValue = String(value)
+        if (typeof root.activeTemperatureModel.setPendingTarget === "function") {
+            root.activeTemperatureModel.setPendingTarget(root.targetEditorDeviceName, value)
+        }
+        root.targetTemperatureRequested(root.targetEditorDeviceName, value)
+        targetEditorPopup.close()
     }
 
     onPageSizeChanged: clampPageIndex()
@@ -105,6 +247,25 @@ Item {
 
         function onModelReset() {
             root.clampPageIndex()
+            root.refreshVisibleItems()
+        }
+
+        function onDataChanged() {
+            root.refreshVisibleItems()
+        }
+
+        function onRowsInserted() {
+            root.clampPageIndex()
+            root.refreshVisibleItems()
+        }
+
+        function onRowsRemoved() {
+            root.clampPageIndex()
+            root.refreshVisibleItems()
+        }
+
+        function onGraphSelectionChanged() {
+            root.refreshVisibleItems()
         }
     }
 
@@ -123,6 +284,7 @@ Item {
     GridView {
         id: deviceGrid
         anchors.fill: parent
+        anchors.bottomMargin: root.pageControlReservedHeight
         clip: true
         interactive: false
         cellWidth: Math.floor(deviceGrid.width / root.deviceColumns)
@@ -130,7 +292,7 @@ Item {
         model: root.currentItemCount
 
         delegate: Item {
-            property var entry: root.itemAt(index)
+            property var entry: root.itemAt(index, root.modelRevision)
             property string deviceKey: entry.name || ""
             property bool deviceGraphVisible: entry.graphVisible === undefined ? false : entry.graphVisible
             property string resolvedIcon: typeof entry.icon === "undefined" || entry.icon === null
@@ -140,7 +302,18 @@ Item {
                 ? "Temperature"
                 : entry.displayName
             property var targetValue: typeof entry.target === "undefined" ? null : entry.target
+            property string targetState: entry.targetState === undefined ? "actual" : entry.targetState
             property var temperatureValue: typeof entry.temperature === "undefined" ? null : entry.temperature
+
+            function targetColor() {
+                if (targetState === "failed") {
+                    return "#ff5d5d"
+                }
+                if (targetState === "pending") {
+                    return Theme.color4
+                }
+                return Theme.mutedText
+            }
 
             width: Math.max(0, deviceGrid.cellWidth)
             height: deviceGrid.cellHeight
@@ -155,15 +328,6 @@ Item {
                 border.width: compact ? 0 : deviceGraphVisible ? 2 : 1
                 radius: compact ? 0 : Math.round(root.fontSize * 0.32)
 
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: {
-                        if (typeof root.activeTemperatureModel.toggleGraphDevice === "function") {
-                            root.activeTemperatureModel.toggleGraphDevice(deviceKey)
-                        }
-                    }
-                }
-
                 Loader {
                     anchors.fill: parent
                     sourceComponent: compact ? compactDelegate : cardDelegate
@@ -174,32 +338,112 @@ Item {
                 id: compactDelegate
 
                 Row {
+                    anchors.fill: parent
                     spacing: Math.max(4, Math.round(root.fontSize * 0.35))
 
-                    TemperatureIcon {
-                        iconName: resolvedIcon
-                        iconSize: Math.max(22, Math.round(root.fontSize * 1.55))
-                        anchors.verticalCenter: parent.verticalCenter
+                    Item {
+                        id: graphToggleArea
+                        width: parent.width * (1 - root.compactValueColumnWidth)
+                            - parent.spacing * (root.showTargets ? 3 : 2)
+                        height: Math.max(root.touchTargetSize, parent.height)
+
+                        Rectangle {
+                            id: compactGraphStateBorder
+                            anchors.fill: parent
+                            anchors.rightMargin: Math.max(4, Math.round(root.fontSize * 0.35))
+                            color: deviceGraphVisible ? "#101617" : "transparent"
+                            border.color: deviceGraphVisible ? Theme.color4 : "#465456"
+                            border.width: 1
+                            radius: Math.round(root.fontSize * 0.25)
+                            opacity: deviceGraphVisible ? 1.0 : 0.55
+                        }
+
+                        TemperatureIcon {
+                            id: compactGraphIcon
+                            iconName: resolvedIcon
+                            iconSize: Math.max(22, Math.round(root.fontSize * 1.55))
+                            anchors.left: parent.left
+                            anchors.leftMargin: Math.max(6, Math.round(root.fontSize * 0.45))
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        Label {
+                            anchors.left: compactGraphIcon.right
+                            anchors.right: compactGraphStateBorder.right
+                            anchors.leftMargin: Math.max(4, Math.round(root.fontSize * 0.35))
+                            anchors.rightMargin: Math.max(4, Math.round(root.fontSize * 0.35))
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            color: deviceGraphVisible ? Theme.text : Theme.mutedText
+                            text: resolvedName
+                            elide: Text.ElideRight
+                            verticalAlignment: Text.AlignVCenter
+                            font.pixelSize: Math.max(12, Math.round(root.fontSize * 0.95))
+                        }
+
+                        Rectangle {
+                            id: compactGraphStateBar
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.rightMargin: compactGraphStateBorder.anchors.rightMargin
+                            anchors.bottom: parent.bottom
+                            height: Math.max(2, Math.round(root.fontSize * 0.18))
+                            color: deviceGraphVisible ? Theme.color4 : "#465456"
+                            opacity: deviceGraphVisible ? 1.0 : 0.35
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                if (typeof root.activeTemperatureModel.toggleGraphDevice === "function") {
+                                    root.activeTemperatureModel.toggleGraphDevice(deviceKey)
+                                }
+                            }
+                        }
                     }
 
-                    Label {
-                        color: Theme.text
-                        text: resolvedName
-                        width: parent.width * 0.68 - parent.spacing - Math.max(22, Math.round(root.fontSize * 1.55))
-                        elide: Text.ElideRight
-                        verticalAlignment: Text.AlignVCenter
-                        font.pixelSize: Math.max(12, Math.round(root.fontSize * 0.95))
-                    }
+                    Item {
+                        id: compactValueArea
+                        width: parent.width * root.compactValueColumnWidth
+                        height: Math.max(root.touchTargetSize, parent.height)
 
-                    Label {
-                        color: Theme.text
-                        text: temperatureValue === null
-                            ? "--"
-                            : Math.round(temperatureValue) + "°"
-                        width: parent.width * 0.32
-                        horizontalAlignment: Text.AlignRight
-                        verticalAlignment: Text.AlignVCenter
-                        font.pixelSize: Math.max(12, Math.round(root.fontSize * 0.95))
+                        Row {
+                            anchors.fill: parent
+                            spacing: Math.max(4, Math.round(root.fontSize * 0.35))
+
+                            Label {
+                                color: Theme.text
+                                text: temperatureValue === null
+                                    ? "--"
+                                    : Math.round(temperatureValue) + "°"
+                                width: root.showTargets ? parent.width * 0.5 - parent.spacing / 2 : parent.width
+                                horizontalAlignment: Text.AlignRight
+                                verticalAlignment: Text.AlignVCenter
+                                font.pixelSize: Math.max(12, Math.round(root.fontSize * 0.95))
+                            }
+
+                            Label {
+                                color: targetColor()
+                                visible: root.showTargets
+                                text: targetValue === null
+                                    ? "--"
+                                    : Math.round(targetValue) + "°"
+                                width: parent.width * 0.5 - parent.spacing / 2
+                                horizontalAlignment: Text.AlignRight
+                                verticalAlignment: Text.AlignVCenter
+                                font.pixelSize: Math.max(12, Math.round(root.fontSize * 0.95))
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: root.openTargetEditor(
+                                deviceKey,
+                                resolvedName,
+                                temperatureValue,
+                                targetValue
+                            )
+                        }
                     }
                 }
             }
@@ -212,26 +456,45 @@ Item {
                     anchors.margins: Math.max(6, Math.round(root.fontSize * 0.45))
                     spacing: Math.max(6, Math.round(root.fontSize * 0.4))
 
-                    RowLayout {
+                    Item {
+                        id: graphToggleArea
                         Layout.fillWidth: true
-                        spacing: Math.max(8, Math.round(root.fontSize * 0.5))
+                        Layout.minimumHeight: root.touchTargetSize
+                        Layout.preferredHeight: Math.max(root.touchTargetSize, Math.round(root.fontSize * 3.2))
 
-                        TemperatureIcon {
-                            iconName: resolvedIcon
-                            iconSize: Math.max(28, Math.round(root.fontSize * 1.9))
-                            Layout.preferredWidth: iconSize
-                            Layout.preferredHeight: iconSize
+                        RowLayout {
+                            anchors.fill: parent
+                            spacing: Math.max(8, Math.round(root.fontSize * 0.5))
+
+                            TemperatureIcon {
+                                iconName: resolvedIcon
+                                iconSize: Math.max(28, Math.round(root.fontSize * 1.9))
+                                Layout.preferredWidth: iconSize
+                                Layout.preferredHeight: iconSize
+                            }
+
+                            Label {
+                                id: cardTitleLabel
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                color: Theme.text
+                                text: resolvedName
+                                elide: Text.ElideRight
+                                wrapMode: Text.NoWrap
+                                maximumLineCount: 1
+                                verticalAlignment: Text.AlignVCenter
+                                font.pixelSize: Math.max(12, Math.round(root.fontSize * 0.9))
+                                font.bold: true
+                            }
                         }
 
-                        Label {
-                            Layout.fillWidth: true
-                            color: Theme.text
-                            text: resolvedName
-                            elide: Text.ElideRight
-                            wrapMode: Text.WordWrap
-                            maximumLineCount: 2
-                            font.pixelSize: Math.max(12, Math.round(root.fontSize * 0.9))
-                            font.bold: true
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                if (typeof root.activeTemperatureModel.toggleGraphDevice === "function") {
+                                    root.activeTemperatureModel.toggleGraphDevice(deviceKey)
+                                }
+                            }
                         }
                     }
 
@@ -241,34 +504,59 @@ Item {
                         color: "#263233"
                     }
 
-                    Label {
+                    Item {
+                        id: cardValueArea
                         Layout.fillWidth: true
-                        color: Theme.mutedText
-                        text: "Actual"
-                        font.pixelSize: Math.max(10, Math.round(root.fontSize * 0.72))
-                    }
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: root.touchTargetSize
 
-                    Label {
-                        Layout.fillWidth: true
-                        color: Theme.text
-                        text: temperatureValue === null ? "--" : Math.round(temperatureValue) + "°"
-                        font.pixelSize: Math.max(20, Math.round(root.fontSize * 1.42))
-                    }
+                        GridLayout {
+                            id: actualTargetGrid
+                            anchors.fill: parent
+                            columns: root.showTargets ? 2 : 1
+                            columnSpacing: Math.max(8, Math.round(root.fontSize * 0.5))
+                            rowSpacing: Math.max(2, Math.round(root.fontSize * 0.16))
 
-                    Label {
-                        Layout.fillWidth: true
-                        color: Theme.mutedText
-                        text: "Target"
-                        visible: root.showTargets
-                        font.pixelSize: Math.max(10, Math.round(root.fontSize * 0.72))
-                    }
+                            Label {
+                                Layout.fillWidth: true
+                                color: Theme.mutedText
+                                text: "Actual"
+                                font.pixelSize: Math.max(10, Math.round(root.fontSize * 0.72))
+                            }
 
-                    Label {
-                        Layout.fillWidth: true
-                        color: Theme.mutedText
-                        visible: root.showTargets
-                        text: targetValue === null ? "--" : Math.round(targetValue) + "°"
-                        font.pixelSize: Math.max(16, Math.round(root.fontSize * 1.08))
+                            Label {
+                                Layout.fillWidth: true
+                                color: Theme.mutedText
+                                text: "Target"
+                                visible: root.showTargets
+                                font.pixelSize: Math.max(10, Math.round(root.fontSize * 0.72))
+                            }
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: Theme.text
+                                text: temperatureValue === null ? "--" : Math.round(temperatureValue) + "°"
+                                font.pixelSize: Math.max(20, Math.round(root.fontSize * 1.42))
+                            }
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: targetColor()
+                                visible: root.showTargets
+                                text: targetValue === null ? "--" : Math.round(targetValue) + "°"
+                                font.pixelSize: Math.max(20, Math.round(root.fontSize * 1.42))
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: root.openTargetEditor(
+                                deviceKey,
+                                resolvedName,
+                                temperatureValue,
+                                targetValue
+                            )
+                        }
                     }
                 }
             }
@@ -276,16 +564,162 @@ Item {
     }
 
     Row {
+        id: pageControls
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.margins: Math.max(6, Math.round(root.fontSize * 0.4))
-        spacing: Math.max(6, Math.round(root.fontSize * 0.4))
+        anchors.margins: root.pageControlSpacing
+        spacing: root.pageControlSpacing
         visible: root.pageCount() > 1
+
+        Button {
+            id: previousPageButton
+            width: root.touchTargetSize
+            height: root.touchTargetSize
+            enabled: root.pageIndex > 0
+            text: "<"
+            font.pixelSize: Math.max(14, Math.round(root.fontSize))
+            onClicked: root.goToPreviousPage()
+        }
 
         Label {
             color: Theme.mutedText
             text: (root.pageIndex + 1) + " / " + root.pageCount()
+            height: root.touchTargetSize
+            verticalAlignment: Text.AlignVCenter
             font.pixelSize: Math.max(10, Math.round(root.fontSize * 0.72))
+        }
+
+        Button {
+            id: nextPageButton
+            width: root.touchTargetSize
+            height: root.touchTargetSize
+            enabled: root.pageIndex < root.pageCount() - 1
+            text: ">"
+            font.pixelSize: Math.max(14, Math.round(root.fontSize))
+            onClicked: root.goToNextPage()
+        }
+    }
+
+    Popup {
+        id: targetEditorPopup
+        parent: Overlay.overlay
+        modal: true
+        focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        padding: root.targetEditorMargin
+
+        background: Rectangle {
+            color: "#101617"
+            border.color: Theme.color4
+            border.width: 2
+            radius: Math.round(root.fontSize * 0.45)
+        }
+
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: Math.max(8, Math.round(root.fontSize * 0.55))
+
+            Label {
+                Layout.fillWidth: true
+                color: Theme.text
+                text: root.targetEditorDisplayName
+                elide: Text.ElideRight
+                font.bold: true
+                font.pixelSize: Math.max(18, Math.round(root.fontSize * 1.2))
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+
+                Label {
+                    Layout.fillWidth: true
+                    color: Theme.mutedText
+                    text: root.targetEditorActual === null
+                        ? "Actual --"
+                        : "Actual " + Math.round(root.targetEditorActual) + "°"
+                    font.pixelSize: Math.max(12, Math.round(root.fontSize * 0.85))
+                }
+
+                Label {
+                    color: Theme.mutedText
+                    text: "Max 350°"
+                    font.pixelSize: Math.max(12, Math.round(root.fontSize * 0.85))
+                }
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.minimumHeight: root.touchTargetSize
+                Layout.preferredHeight: Math.max(root.touchTargetSize, Math.round(root.fontSize * 3.0))
+                color: "#050808"
+                border.color: "#465456"
+                border.width: 1
+                radius: Math.round(root.fontSize * 0.3)
+
+                Label {
+                    anchors.fill: parent
+                    anchors.margins: Math.max(8, Math.round(root.fontSize * 0.5))
+                    color: Theme.text
+                    text: root.targetEditorValue === "" ? "--" : root.targetEditorValue + "°"
+                    horizontalAlignment: Text.AlignRight
+                    verticalAlignment: Text.AlignVCenter
+                    font.pixelSize: Math.max(26, Math.round(root.fontSize * 1.8))
+                }
+            }
+
+            GridLayout {
+                id: targetKeypadGrid
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                columns: 3
+                columnSpacing: Math.max(6, Math.round(root.fontSize * 0.4))
+                rowSpacing: columnSpacing
+
+                Repeater {
+                    model: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "Clear", "0", "Del"]
+
+                    Button {
+                        required property string modelData
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.minimumWidth: root.touchTargetSize
+                        Layout.minimumHeight: root.touchTargetSize
+                        text: modelData
+                        font.pixelSize: Math.max(16, Math.round(root.fontSize * 1.1))
+                        onClicked: {
+                            if (modelData === "Clear") {
+                                root.clearTargetEditor()
+                            } else if (modelData === "Del") {
+                                root.deleteTargetDigit()
+                            } else {
+                                root.appendTargetDigit(modelData)
+                            }
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Math.max(8, Math.round(root.fontSize * 0.5))
+
+                Button {
+                    Layout.fillWidth: true
+                    Layout.minimumHeight: root.touchTargetSize
+                    text: "Cancel"
+                    font.pixelSize: Math.max(14, Math.round(root.fontSize))
+                    onClicked: targetEditorPopup.close()
+                }
+
+                Button {
+                    Layout.fillWidth: true
+                    Layout.minimumHeight: root.touchTargetSize
+                    text: "Set"
+                    enabled: root.targetEditorValue !== ""
+                    font.pixelSize: Math.max(14, Math.round(root.fontSize))
+                    onClicked: root.confirmTargetEditor()
+                }
+            }
         }
     }
 }

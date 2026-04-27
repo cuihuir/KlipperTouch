@@ -217,6 +217,8 @@ class PrinterStatus:
             "total_layers": self.total_layers,
         }
         print_fields.update(_print_fields_from_status({"status": status_update}))
+        if _should_preserve_terminal_progress(print_fields, self.print_progress):
+            print_fields["print_progress"] = self.print_progress
         toolhead_fields: ToolheadStatusFields = {
             "position_x": self.position_x,
             "position_y": self.position_y,
@@ -237,6 +239,8 @@ class PrinterStatus:
             klippy_state=self.klippy_state,
             klipper_version=self.klipper_version,
             moonraker_version=self.moonraker_version,
+            mcu_statuses=self.mcu_statuses,
+            service_versions=self.service_versions,
             objects=self.objects,
             temperature_devices=_temperature_devices_from_status(
                 self.objects,
@@ -344,7 +348,9 @@ def _temperature_device_from_object(
             temperature=temperature,
             target=target,
         )
-    if name.startswith(("heater_generic ", "temperature_sensor ", "temperature_fan ")):
+    if name.startswith(
+        ("heater_generic ", "temperature_host ", "temperature_sensor ", "temperature_fan ")
+    ):
         return TemperatureDeviceStatus(
             name=name,
             display_name=_prettify_name(name),
@@ -356,7 +362,25 @@ def _temperature_device_from_object(
 
 
 def _prettify_name(name: str) -> str:
-    return name.replace("_", " ").replace("  ", " ").title()
+    suffix = ""
+    for prefix, type_suffix in (
+        ("heater_generic ", ""),
+        ("temperature_host ", " Host"),
+        ("temperature_sensor ", ""),
+        ("temperature_fan ", " Fan"),
+    ):
+        if name.startswith(prefix):
+            name = name.removeprefix(prefix)
+            suffix = type_suffix
+            break
+    return _title_words(name.replace("_", " ").replace("  ", " ")) + suffix
+
+
+def _title_words(name: str) -> str:
+    words = []
+    for word in name.split(" "):
+        words.append(word.title() if word.islower() else word)
+    return " ".join(words)
 
 
 def _print_fields_from_status(object_status: dict[str, Any]) -> PrintStatusFields:
@@ -386,8 +410,9 @@ def _print_fields_from_status(object_status: dict[str, Any]) -> PrintStatusField
         fields["print_filename"] = str(filename)
     if progress is not None:
         fields["print_progress"] = _progress_to_percent(progress)
-    if "message" in display_status:
-        fields["print_message"] = str(display_status["message"])
+    message = display_status.get("message")
+    if message is not None:
+        fields["print_message"] = str(message)
     if "print_duration" in print_stats:
         fields["print_duration"] = _optional_float(print_stats["print_duration"]) or 0.0
     if "total_duration" in print_stats:
@@ -410,6 +435,19 @@ def _progress_to_percent(value: Any) -> float:
     if 0.0 <= number <= 1.0:
         return round(number * 100.0, 1)
     return _clamped_percent(number)
+
+
+def _should_preserve_terminal_progress(
+    print_fields: PrintStatusFields,
+    previous_progress: float,
+) -> bool:
+    state = print_fields.get("print_state")
+    progress = print_fields.get("print_progress")
+    return (
+        state in {"complete", "cancelled", "error"}
+        and previous_progress > 0
+        and (progress is None or progress <= 0)
+    )
 
 
 def _toolhead_fields_from_status(object_status: dict[str, Any]) -> ToolheadStatusFields:

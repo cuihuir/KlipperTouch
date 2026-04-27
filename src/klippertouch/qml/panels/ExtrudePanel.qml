@@ -8,11 +8,21 @@ Item {
     required property var metrics
     property var distances: ["5", "10", "15", "25"]
     property var speeds: ["1", "2", "5", "25"]
+    property string selectedDistance: "10"
+    property string selectedSpeed: "5"
     property real actionFraction: 0.42
     property real settingsFraction: 0.58
     property real extruderTemperature: 0
     property real extruderTarget: 0
     property real positionE: 0
+
+    function selectDistance(distance) {
+        root.selectedDistance = distance
+    }
+
+    function selectSpeed(speed) {
+        root.selectedSpeed = speed
+    }
 
     GridLayout {
         anchors.fill: parent
@@ -157,12 +167,27 @@ Item {
                     Repeater {
                         model: root.distances
 
-                        Label {
+                        Rectangle {
                             Layout.fillWidth: true
-                            color: Theme.mutedText
-                            text: modelData + " mm"
-                            horizontalAlignment: Text.AlignHCenter
-                            font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.92))
+                            Layout.preferredHeight: Math.max(42, Math.round(root.metrics.fontSize * 3.0))
+                            color: root.selectedDistance === modelData ? "#182b20" : "#101617"
+                            border.color: root.selectedDistance === modelData ? Theme.color3 : "#263233"
+                            border.width: 1
+                            radius: Math.round(root.metrics.fontSize * 0.28)
+
+                            Label {
+                                anchors.centerIn: parent
+                                color: root.selectedDistance === modelData ? Theme.text : Theme.mutedText
+                                text: modelData + " mm"
+                                horizontalAlignment: Text.AlignHCenter
+                                font.bold: root.selectedDistance === modelData
+                                font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.92))
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: root.selectDistance(modelData)
+                            }
                         }
                     }
                 }
@@ -193,12 +218,27 @@ Item {
                     Repeater {
                         model: root.speeds
 
-                        Label {
+                        Rectangle {
                             Layout.fillWidth: true
-                            color: Theme.mutedText
-                            text: modelData + " mm/s"
-                            horizontalAlignment: Text.AlignHCenter
-                            font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.92))
+                            Layout.preferredHeight: Math.max(42, Math.round(root.metrics.fontSize * 3.0))
+                            color: root.selectedSpeed === modelData ? "#182b20" : "#101617"
+                            border.color: root.selectedSpeed === modelData ? Theme.color3 : "#263233"
+                            border.width: 1
+                            radius: Math.round(root.metrics.fontSize * 0.28)
+
+                            Label {
+                                anchors.centerIn: parent
+                                color: root.selectedSpeed === modelData ? Theme.text : Theme.mutedText
+                                text: modelData + " mm/s"
+                                horizontalAlignment: Text.AlignHCenter
+                                font.bold: root.selectedSpeed === modelData
+                                font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.92))
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: root.selectSpeed(modelData)
+                            }
                         }
                     }
                 }

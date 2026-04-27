@@ -6,6 +6,7 @@ from klippertouch.domain.printer import PrinterStatus
 TEMPERATURE_OBJECT_PREFIXES = (
     "extruder",
     "heater_generic ",
+    "temperature_host ",
     "temperature_sensor ",
     "temperature_fan ",
 )
@@ -22,6 +23,10 @@ class ReadOnlyProbeClient(Protocol):
         self,
         fields_by_object: dict[str, str],
     ) -> dict[str, Any]: ...
+    def get_printer_objects_query_jsonrpc(
+        self,
+        objects: dict[str, list[str]],
+    ) -> dict[str, Any]: ...
     def get_machine_update_status(self) -> dict[str, Any]: ...
 
 
@@ -32,13 +37,15 @@ def build_status_from_client(client: ReadOnlyProbeClient) -> PrinterStatus:
     mcu_object_names = tuple(
         name for name in object_names if name == "mcu" or name.startswith("mcu ")
     )
+    object_status = _safe_probe(
+        lambda: client.get_printer_objects_query(_read_only_status_object_names(object_names))
+    )
+    object_status = _with_non_ascii_temperature_status(client, object_names, object_status)
     return PrinterStatus.from_probe(
         server_info=server_info,
         printer_info=_safe_probe(client.get_printer_info),
         objects=objects,
-        object_status=_safe_probe(
-            lambda: client.get_printer_objects_query(_read_only_status_object_names(object_names))
-        ),
+        object_status=object_status,
         mcu_status=_safe_probe(
             lambda: client.get_printer_objects_query_fields(
                 {name: "mcu_version,mcu_build_versions" for name in mcu_object_names}
@@ -75,3 +82,33 @@ def _read_only_status_object_names(object_names: tuple[str, ...]) -> tuple[str, 
     wanted.update(name for name in PRINT_STATUS_OBJECTS if name in object_names)
     wanted.update(name for name in TOOLHEAD_STATUS_OBJECTS if name in object_names)
     return tuple(name for name in object_names if name in wanted)
+
+
+def _with_non_ascii_temperature_status(
+    client: ReadOnlyProbeClient,
+    object_names: tuple[str, ...],
+    object_status: dict[str, Any],
+) -> dict[str, Any]:
+    non_ascii_temperature_names = tuple(
+        name for name in _temperature_object_names(object_names) if not name.isascii()
+    )
+    if not non_ascii_temperature_names:
+        return object_status
+
+    fallback = _safe_probe(
+        lambda: client.get_printer_objects_query_jsonrpc(
+            {name: ["temperature", "target"] for name in non_ascii_temperature_names}
+        )
+    )
+    fallback_status = fallback.get("status", {})
+    if not isinstance(fallback_status, dict):
+        return object_status
+
+    merged = dict(object_status)
+    merged_status = dict(merged.get("status", {})) if isinstance(merged.get("status"), dict) else {}
+    for name in non_ascii_temperature_names:
+        values = fallback_status.get(name)
+        if isinstance(values, dict):
+            merged_status[name] = values
+    merged["status"] = merged_status
+    return merged

@@ -41,23 +41,6 @@ Item {
                 : root.activeTemperatureModel.graphSeriesModel
         }
 
-        Connections {
-            target: root.activeTemperatureModel
-            ignoreUnknownSignals: true
-
-            function onGraphSeriesChanged() {
-                graph.requestRedraw()
-            }
-
-            function onHistoryChanged() {
-                graph.requestRedraw()
-            }
-
-            function onModelReset() {
-                graph.requestRedraw()
-            }
-        }
-
         Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true

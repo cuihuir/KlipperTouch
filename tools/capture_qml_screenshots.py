@@ -15,7 +15,12 @@ from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuick import QQuickWindow  # noqa: F401
 
 from klippertouch.app import create_gcode_file_model, create_status_models
-from klippertouch.domain.printer import PrinterStatus, TemperatureDeviceStatus
+from klippertouch.domain.printer import (
+    McuStatus,
+    PrinterStatus,
+    ServiceVersionStatus,
+    TemperatureDeviceStatus,
+)
 
 DEFAULT_SIZES = ("800x480", "1024x600", "480x800")
 DEFAULT_PANELS = (
@@ -48,6 +53,16 @@ SAMPLE_FILES = (
 )
 SAMPLE_STATUS = {
     "hostname": "orangepi3b",
+    "klippy_state": "ready",
+    "klipper_version": "v0.13.0",
+    "moonraker_version": "v0.10.0",
+    "mcu_statuses": (
+        McuStatus(name="mcu", version="v0.13.0-main", build_versions="gcc 12.2.0"),
+    ),
+    "service_versions": (
+        ServiceVersionStatus(name="klipper", version="v0.13.0", configured_type="git_repo"),
+        ServiceVersionStatus(name="moonraker", version="v0.10.0", configured_type="git_repo"),
+    ),
     "objects": (
         "extruder",
         "heater_bed",

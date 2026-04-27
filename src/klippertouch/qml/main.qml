@@ -130,6 +130,11 @@ ApplicationWindow {
     }
 
     onPrintStateChanged: window.syncJobStatusPanel()
+    onCurrentPanelChanged: {
+        if (bridgeModel && typeof bridgeModel.setActivePanel === "function") {
+            bridgeModel.setActivePanel(window.currentPanel)
+        }
+    }
     Component.onCompleted: window.syncJobStatusPanel()
 
     BaseShell {

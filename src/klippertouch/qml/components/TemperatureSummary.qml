@@ -33,13 +33,21 @@ Item {
             Label {
                 color: Theme.mutedText
                 text: ""
-                width: parent.width * 0.68
+                width: parent.width * 0.46
             }
 
             Label {
                 color: Theme.mutedText
                 text: "Temp (°C)"
-                width: parent.width * 0.32
+                width: parent.width * 0.27
+                horizontalAlignment: Text.AlignRight
+                font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.85))
+            }
+
+            Label {
+                color: Theme.mutedText
+                text: "Target (°C)"
+                width: parent.width * 0.27
                 horizontalAlignment: Text.AlignRight
                 font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.85))
             }
@@ -51,7 +59,7 @@ Item {
             temperatureModel: root.activeTemperatureModel
             deviceColumns: 1
             compact: true
-            showTargets: false
+            showTargets: true
             fontSize: root.metrics.fontSize
         }
     }

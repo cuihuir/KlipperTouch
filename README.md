@@ -6,7 +6,7 @@ KlipperTouch is planned as a production-oriented PySide6 + QML touchscreen UI fo
 
 This repository now contains the clean PySide6/QML skeleton. It includes Python package scaffolding, application bootstrap, configuration loading, test tooling, and read-only Moonraker probe support. Printer control features remain disabled until separate reviewed implementation plans enable them.
 
-The skeleton is grounded in the maintained implementation blueprint based on KlipperScreen source analysis, the previous experimental KlipperTouch project at `/home/tope/project_py/KlipperTouch`, and read-only validation against the real printer at `192.168.123.117`.
+The skeleton is grounded in the maintained implementation blueprint based on KlipperScreen source analysis, the previous experimental KlipperTouch project at `/home/tope/project_py/KlipperTouch`, and read-only validation against the current real printer at `192.168.123.227`.
 
 ## Documentation
 
@@ -14,6 +14,7 @@ The skeleton is grounded in the maintained implementation blueprint based on Kli
 - [Research-first design spec](docs/superpowers/specs/2026-04-23-klippertouch-research-first-design.md)
 - [KlipperScreen architecture map](docs/research/klipperscreen-architecture.md)
 - [Printer read-only probe](docs/research/printer-readonly-probe-2026-04-23.md)
+- [Current printer read-only probe](docs/research/printer-readonly-probe-2026-04-24.md)
 - [Runtime safety boundary](docs/safety-boundary.md)
 - [Roadmap](docs/roadmap.md)
 

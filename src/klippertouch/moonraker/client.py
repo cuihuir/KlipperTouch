@@ -43,6 +43,8 @@ class MoonrakerClient:
         )
         response.raise_for_status()
         payload = response.json()
+        if isinstance(payload, dict) and "error" in payload:
+            raise RuntimeError(_jsonrpc_error_message(payload["error"]))
         result = payload["result"] if isinstance(payload, dict) and "result" in payload else payload
         return cast(dict[str, Any], result)
 
@@ -61,6 +63,43 @@ class MoonrakerClient:
 
     def get_printer_objects_query_fields(self, fields_by_object: dict[str, str]) -> dict[str, Any]:
         return self.get("printer/objects/query", params=fields_by_object or None)
+
+    def post_jsonrpc(
+        self,
+        method: str,
+        params: dict[str, Any] | None = None,
+        timeout: float = 4.0,
+    ) -> dict[str, Any]:
+        self.policy.validate_jsonrpc(method)
+        headers = (
+            {"x-api-key": self.config.moonraker_api_key} if self.config.moonraker_api_key else {}
+        )
+        response = requests.post(
+            f"{self.endpoint}/server/jsonrpc",
+            headers=headers,
+            json={
+                "jsonrpc": "2.0",
+                "method": method,
+                "params": params or {},
+                "id": 1,
+            },
+            timeout=timeout,
+        )
+        response.raise_for_status()
+        payload = response.json()
+        if isinstance(payload, dict) and "error" in payload:
+            raise RuntimeError(_jsonrpc_error_message(payload["error"]))
+        result = payload["result"] if isinstance(payload, dict) and "result" in payload else payload
+        return cast(dict[str, Any], result)
+
+    def get_printer_objects_query_jsonrpc(
+        self,
+        objects: dict[str, list[str]],
+    ) -> dict[str, Any]:
+        return self.post_jsonrpc(
+            "printer.objects.query",
+            params={"objects": objects},
+        )
 
     def get_gcode_file_list(self) -> list[dict[str, Any]]:
         result = self.get("server/files/list", params={"root": "gcodes"})
@@ -87,3 +126,11 @@ def _query_fields_for_object(name: str) -> str:
     if name == "gcode_move":
         return "gcode_position,homing_origin,speed,speed_factor,extrude_factor"
     return "temperature,target"
+
+
+def _jsonrpc_error_message(error: Any) -> str:
+    if isinstance(error, dict):
+        message = error.get("message")
+        if message:
+            return str(message)
+    return str(error)

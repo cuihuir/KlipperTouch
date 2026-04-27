@@ -27,6 +27,8 @@ class TemperatureDeviceListModel(QAbstractListModel):
     TEMPERATURE_ROLE = int(Qt.ItemDataRole.UserRole) + 4
     TARGET_ROLE = int(Qt.ItemDataRole.UserRole) + 5
     GRAPH_VISIBLE_ROLE = int(Qt.ItemDataRole.UserRole) + 6
+    TARGET_PENDING_ROLE = int(Qt.ItemDataRole.UserRole) + 7
+    TARGET_STATE_ROLE = int(Qt.ItemDataRole.UserRole) + 8
 
     def __init__(self, settings: QSettings | None = None) -> None:
         super().__init__()
@@ -34,6 +36,9 @@ class TemperatureDeviceListModel(QAbstractListModel):
         self._history: dict[str, list[float]] = {}
         self._target_history: dict[str, list[float]] = {}
         self._graph_visible: dict[str, bool] = {}
+        self._graph_series_cache: list[dict[str, object]] = []
+        self._graph_series_dirty = True
+        self._local_targets: dict[str, tuple[float, str]] = {}
         self._history_limit = 60
         self._settings = (
             settings if settings is not None else QSettings("KlipperTouch", "KlipperTouch")
@@ -42,15 +47,34 @@ class TemperatureDeviceListModel(QAbstractListModel):
 
     def set_status(self, status: PrinterStatus) -> None:
         scope = _graph_scope_for_status(status)
+        scope_changed = scope != self._settings_scope
         if scope != self._settings_scope:
             self._settings_scope = scope
             self._graph_visible = self._load_graph_visibility()
-        self.beginResetModel()
-        self._devices = status.temperature_devices
-        self.endResetModel()
+
+        new_devices = status.temperature_devices
+        old_names = tuple(device.name for device in self._devices)
+        new_names = tuple(device.name for device in new_devices)
+        structure_changed = scope_changed or old_names != new_names
+
+        if structure_changed:
+            self.beginResetModel()
+            self._devices = new_devices
+            self._prune_local_targets(new_names)
+            self.endResetModel()
+            self._invalidate_graph_series()
+            changed_rows: list[tuple[int, list[int]]] = []
+        else:
+            old_rows = [self._role_values_for_device(device) for device in self._devices]
+            self._devices = new_devices
+            self._prune_local_targets(new_names)
+            changed_rows = []
+
         history_changed = False
         for device in self._devices:
             self._ensure_graph_visibility_default(device.name)
+            if device.name in self._local_targets and device.target is not None:
+                del self._local_targets[device.name]
             values = self._history.setdefault(device.name, [])
             if device.temperature is None:
                 pass
@@ -64,7 +88,19 @@ class TemperatureDeviceListModel(QAbstractListModel):
             target_values.append(float(device.target))
             del target_values[:-self._history_limit]
             history_changed = True
+        if not structure_changed:
+            for row, (old_values, device) in enumerate(zip(old_rows, self._devices, strict=True)):
+                changed_roles = self._changed_roles(
+                    old_values,
+                    self._role_values_for_device(device),
+                )
+                if changed_roles:
+                    changed_rows.append((row, changed_roles))
+            for row, roles in changed_rows:
+                index = self.index(row, 0)
+                self.dataChanged.emit(index, index, roles)
         if history_changed:
+            self._invalidate_graph_series()
             self.historyChanged.emit()
             self.graphSeriesChanged.emit()
 
@@ -78,6 +114,8 @@ class TemperatureDeviceListModel(QAbstractListModel):
 
     @Property(list, notify=graphSeriesChanged)
     def graphSeriesModel(self) -> list[dict[str, object]]:
+        if not self._graph_series_dirty:
+            return self._graph_series_cache
         series: list[dict[str, object]] = []
         for index, device in enumerate(self._devices):
             if not self._graph_visible.get(device.name, True):
@@ -97,19 +135,23 @@ class TemperatureDeviceListModel(QAbstractListModel):
                 }
             )
             target_points = self._target_history.get(device.name, [])
-            if target_points and any(point > 0 for point in target_points):
+            effective_target = self._effective_target(device)
+            if target_points and effective_target is not None and effective_target > 0:
+                active_target_points = _active_target_series(target_points)
                 series.append(
                     {
                         "name": f"{device.name}_target",
                         "displayName": f"{device.display_name} Target",
                         "icon": device.icon,
                         "color": _graph_color_for_device(device.name, index),
-                        "series": list(target_points),
+                        "series": active_target_points,
                         "dashed": True,
                         "legendVisible": False,
                     }
                 )
-        return series
+        self._graph_series_cache = series
+        self._graph_series_dirty = False
+        return self._graph_series_cache
 
     def initialize_history(self, temperature_store: dict[str, object]) -> None:
         history: dict[str, list[float]] = {}
@@ -139,6 +181,7 @@ class TemperatureDeviceListModel(QAbstractListModel):
             self._history.update(history)
             self._target_history.update(target_history)
             self._history_limit = max(self._history_limit, max_length)
+            self._invalidate_graph_series()
             self.historyChanged.emit()
             self.graphSelectionChanged.emit()
             self.graphSeriesChanged.emit()
@@ -169,9 +212,13 @@ class TemperatureDeviceListModel(QAbstractListModel):
         if role == self.TEMPERATURE_ROLE:
             return device.temperature
         if role == self.TARGET_ROLE:
-            return device.target
+            return self._effective_target(device)
         if role == self.GRAPH_VISIBLE_ROLE:
             return self._graph_visible.get(device.name, True)
+        if role == self.TARGET_PENDING_ROLE:
+            return self._target_state(device.name) == "pending"
+        if role == self.TARGET_STATE_ROLE:
+            return self._target_state(device.name)
         return None
 
     def roleNames(self) -> dict[int, QByteArray]:  # noqa: N802
@@ -182,6 +229,8 @@ class TemperatureDeviceListModel(QAbstractListModel):
             self.TEMPERATURE_ROLE: QByteArray(b"temperature"),
             self.TARGET_ROLE: QByteArray(b"target"),
             self.GRAPH_VISIBLE_ROLE: QByteArray(b"graphVisible"),
+            self.TARGET_PENDING_ROLE: QByteArray(b"targetPending"),
+            self.TARGET_STATE_ROLE: QByteArray(b"targetState"),
         }
 
     @Slot(int, result="QVariantMap")
@@ -194,8 +243,10 @@ class TemperatureDeviceListModel(QAbstractListModel):
             "displayName": device.display_name,
             "icon": device.icon,
             "temperature": device.temperature,
-            "target": device.target,
+            "target": self._effective_target(device),
             "graphVisible": self._graph_visible.get(device.name, True),
+            "targetPending": self._target_state(device.name) == "pending",
+            "targetState": self._target_state(device.name),
         }
 
     @Slot(str)
@@ -207,8 +258,29 @@ class TemperatureDeviceListModel(QAbstractListModel):
         self._persist_graph_visibility(name)
         index = self.index(row, 0)
         self.dataChanged.emit(index, index, [self.GRAPH_VISIBLE_ROLE])
+        self._invalidate_graph_series()
         self.graphSelectionChanged.emit()
         self.graphSeriesChanged.emit()
+
+    @Slot(str, float)
+    def setPendingTarget(self, name: str, target: float) -> None:  # noqa: N802
+        self._set_local_target(name, target, "pending")
+
+    @Slot(str, float)
+    def setFailedTarget(self, name: str, target: float) -> None:  # noqa: N802
+        self._set_local_target(name, target, "failed")
+
+    def _set_local_target(self, name: str, target: float, state: str) -> None:
+        row = next((index for index, device in enumerate(self._devices) if device.name == name), -1)
+        if row < 0:
+            return
+        self._local_targets[name] = (float(target), state)
+        index = self.index(row, 0)
+        self.dataChanged.emit(
+            index,
+            index,
+            [self.TARGET_ROLE, self.TARGET_PENDING_ROLE, self.TARGET_STATE_ROLE],
+        )
 
     def _first_series_for_name(self, prefix: str) -> list[float]:
         for device in self._devices:
@@ -218,6 +290,62 @@ class TemperatureDeviceListModel(QAbstractListModel):
             if device.name.startswith(prefix):
                 return self._history.get(device.name, [])
         return []
+
+    def _effective_target(self, device: TemperatureDeviceStatus) -> float | None:
+        if device.name in self._local_targets:
+            return self._local_targets[device.name][0]
+        if device.target is not None and device.target > 0:
+            return device.target
+        target_history = self._target_history.get(device.name, [])
+        if target_history and target_history[-1] > 0:
+            return target_history[-1]
+        return device.target
+
+    def _target_state(self, name: str) -> str:
+        if name in self._local_targets:
+            return self._local_targets[name][1]
+        return "actual"
+
+    def _invalidate_graph_series(self) -> None:
+        self._graph_series_dirty = True
+
+    def _role_values_for_device(self, device: TemperatureDeviceStatus) -> dict[int, object]:
+        return {
+            self.NAME_ROLE: device.name,
+            self.DISPLAY_NAME_ROLE: device.display_name,
+            self.ICON_ROLE: device.icon,
+            self.TEMPERATURE_ROLE: device.temperature,
+            self.TARGET_ROLE: self._effective_target(device),
+            self.GRAPH_VISIBLE_ROLE: self._graph_visible.get(device.name, True),
+            self.TARGET_PENDING_ROLE: self._target_state(device.name) == "pending",
+            self.TARGET_STATE_ROLE: self._target_state(device.name),
+        }
+
+    def _changed_roles(
+        self,
+        old_values: dict[int, object],
+        new_values: dict[int, object],
+    ) -> list[int]:
+        return [
+            role
+            for role in (
+                self.NAME_ROLE,
+                self.DISPLAY_NAME_ROLE,
+                self.ICON_ROLE,
+                self.TEMPERATURE_ROLE,
+                self.TARGET_ROLE,
+                self.GRAPH_VISIBLE_ROLE,
+                self.TARGET_PENDING_ROLE,
+                self.TARGET_STATE_ROLE,
+            )
+            if old_values.get(role) != new_values.get(role)
+        ]
+
+    def _prune_local_targets(self, names: tuple[str, ...]) -> None:
+        valid_names = set(names)
+        for name in tuple(self._local_targets):
+            if name not in valid_names:
+                del self._local_targets[name]
 
     def _ensure_graph_visibility_default(self, name: str) -> None:
         if name in self._graph_visible:
@@ -253,6 +381,10 @@ def _graph_color_for_device(name: str, index: int) -> str:
     return palette[index % len(palette)]
 
 
+def _active_target_series(points: list[float]) -> list[float | None]:
+    return [point if point > 0 else None for point in points]
+
+
 def _graph_scope_for_status(status: PrinterStatus) -> str | None:
     hostname = status.hostname.strip()
     if not hostname or hostname == "unknown":
@@ -262,6 +394,13 @@ def _graph_scope_for_status(status: PrinterStatus) -> str | None:
 
 class StatusModel(QObject):
     statusChanged = Signal()
+    activePanelChanged = Signal()
+    hostChanged = Signal()
+    infoChanged = Signal()
+    objectsChanged = Signal()
+    printChanged = Signal()
+    toolheadChanged = Signal()
+    extruderTemperatureChanged = Signal()
 
     def __init__(
         self,
@@ -270,34 +409,68 @@ class StatusModel(QObject):
         super().__init__()
         self._status = PrinterStatus()
         self._temperature_device_model = temperature_device_model
+        self._active_panel = "main"
 
     def set_status(self, status: PrinterStatus) -> None:
+        previous = self._status
         self._status = status
         if self._temperature_device_model is not None:
             self._temperature_device_model.set_status(status)
-        self.statusChanged.emit()
+        if _host_fields_changed(previous, status):
+            self.hostChanged.emit()
+        if _info_fields_changed(previous, status):
+            self.infoChanged.emit()
+        if _object_fields_changed(previous, status):
+            self.objectsChanged.emit()
+        if _print_fields_changed(previous, status):
+            self.printChanged.emit()
+        if _toolhead_fields_changed(previous, status) and _panel_needs_toolhead(self._active_panel):
+            self.toolheadChanged.emit()
+        if _primary_extruder_fields_changed(previous, status):
+            self.extruderTemperatureChanged.emit()
+        if previous != status:
+            self.statusChanged.emit()
 
-    @Property(str, notify=statusChanged)
+    @Property(str, notify=activePanelChanged)
+    def activePanel(self) -> str:
+        return self._active_panel
+
+    @property
+    def active_panel_name(self) -> str:
+        return self._active_panel
+
+    @Slot(str)
+    def setActivePanel(self, panel: str) -> None:  # noqa: N802
+        next_panel = str(panel or "main")
+        if next_panel == self._active_panel:
+            return
+        previous_panel = self._active_panel
+        self._active_panel = next_panel
+        self.activePanelChanged.emit()
+        if not _panel_needs_toolhead(previous_panel) and _panel_needs_toolhead(next_panel):
+            self.toolheadChanged.emit()
+
+    @Property(str, notify=hostChanged)
     def hostname(self) -> str:
         return self._status.hostname
 
-    @Property(str, notify=statusChanged)
+    @Property(str, notify=hostChanged)
     def klippyState(self) -> str:
         return self._status.klippy_state
 
-    @Property(str, notify=statusChanged)
+    @Property(str, notify=infoChanged)
     def klipperVersion(self) -> str:
         return self._status.klipper_version
 
-    @Property(str, notify=statusChanged)
+    @Property(str, notify=infoChanged)
     def moonrakerVersion(self) -> str:
         return self._status.moonraker_version
 
-    @Property(int, notify=statusChanged)
+    @Property(int, notify=infoChanged)
     def mcuCount(self) -> int:
         return self._status.mcu_count
 
-    @Property(list, notify=statusChanged)
+    @Property(list, notify=infoChanged)
     def mcuInfos(self) -> list[dict[str, str]]:
         return [
             {
@@ -308,11 +481,11 @@ class StatusModel(QObject):
             for item in self._status.mcu_statuses
         ]
 
-    @Property(int, notify=statusChanged)
+    @Property(int, notify=infoChanged)
     def serviceVersionCount(self) -> int:
         return self._status.service_version_count
 
-    @Property(list, notify=statusChanged)
+    @Property(list, notify=infoChanged)
     def serviceVersions(self) -> list[dict[str, str]]:
         return [
             {
@@ -323,102 +496,195 @@ class StatusModel(QObject):
             for item in self._status.service_versions
         ]
 
-    @Property(int, notify=statusChanged)
+    @Property(int, notify=objectsChanged)
     def objectCount(self) -> int:
         return self._status.object_count
 
-    @Property(list, notify=statusChanged)
+    @Property(list, notify=objectsChanged)
     def objectNames(self) -> list[str]:
         return list(self._status.objects)
 
-    @Property(int, notify=statusChanged)
+    @Property(int, notify=objectsChanged)
     def temperatureDeviceCount(self) -> int:
         return self._status.temperature_device_count
 
-    @Property(str, notify=statusChanged)
+    @Property(str, notify=printChanged)
     def printState(self) -> str:
         return self._status.print_state
 
-    @Property(str, notify=statusChanged)
+    @Property(str, notify=printChanged)
     def printFilename(self) -> str:
         return self._status.print_filename
 
-    @Property(float, notify=statusChanged)
+    @Property(float, notify=printChanged)
     def printProgress(self) -> float:
         return self._status.print_progress
 
-    @Property(str, notify=statusChanged)
+    @Property(str, notify=printChanged)
     def printMessage(self) -> str:
         return self._status.print_message
 
-    @Property(float, notify=statusChanged)
+    @Property(float, notify=printChanged)
     def printDuration(self) -> float:
         return self._status.print_duration
 
-    @Property(float, notify=statusChanged)
+    @Property(float, notify=printChanged)
     def totalDuration(self) -> float:
         return self._status.total_duration
 
-    @Property(float, notify=statusChanged)
+    @Property(float, notify=printChanged)
     def filamentUsed(self) -> float:
         return self._status.filament_used
 
-    @Property(int, notify=statusChanged)
+    @Property(int, notify=printChanged)
     def currentLayer(self) -> int:
         return self._status.current_layer
 
-    @Property(int, notify=statusChanged)
+    @Property(int, notify=printChanged)
     def totalLayers(self) -> int:
         return self._status.total_layers
 
-    @Property(float, notify=statusChanged)
+    @Property(float, notify=toolheadChanged)
     def positionX(self) -> float:
         return self._status.position_x
 
-    @Property(float, notify=statusChanged)
+    @Property(float, notify=toolheadChanged)
     def positionY(self) -> float:
         return self._status.position_y
 
-    @Property(float, notify=statusChanged)
+    @Property(float, notify=toolheadChanged)
     def positionZ(self) -> float:
         return self._status.position_z
 
-    @Property(float, notify=statusChanged)
+    @Property(float, notify=toolheadChanged)
     def positionE(self) -> float:
         return self._status.position_e
 
-    @Property(str, notify=statusChanged)
+    @Property(str, notify=toolheadChanged)
     def homedAxes(self) -> str:
         return self._status.homed_axes
 
-    @Property(float, notify=statusChanged)
+    @Property(float, notify=toolheadChanged)
     def requestedSpeed(self) -> float:
         return self._status.requested_speed
 
-    @Property(float, notify=statusChanged)
+    @Property(float, notify=toolheadChanged)
     def speedFactor(self) -> float:
         return self._status.speed_factor
 
-    @Property(float, notify=statusChanged)
+    @Property(float, notify=toolheadChanged)
     def extrudeFactor(self) -> float:
         return self._status.extrude_factor
 
-    @Property(float, notify=statusChanged)
+    @Property(float, notify=toolheadChanged)
     def zOffset(self) -> float:
         return self._status.z_offset
 
-    @Property(float, notify=statusChanged)
+    @Property(float, notify=toolheadChanged)
     def maxAccel(self) -> float:
         return self._status.max_accel
 
-    @Property(float, notify=statusChanged)
+    @Property(float, notify=toolheadChanged)
     def maxVelocity(self) -> float:
         return self._status.max_velocity
 
-    @Property(float, notify=statusChanged)
+    @Property(float, notify=extruderTemperatureChanged)
     def extruderTemperature(self) -> float:
         return self._status.primary_extruder_temperature
 
-    @Property(float, notify=statusChanged)
+    @Property(float, notify=extruderTemperatureChanged)
     def extruderTarget(self) -> float:
         return self._status.primary_extruder_target
+
+
+def _host_fields_changed(previous: PrinterStatus, current: PrinterStatus) -> bool:
+    return (previous.hostname, previous.klippy_state) != (current.hostname, current.klippy_state)
+
+
+def _info_fields_changed(previous: PrinterStatus, current: PrinterStatus) -> bool:
+    return (
+        previous.klipper_version,
+        previous.moonraker_version,
+        previous.mcu_statuses,
+        previous.service_versions,
+    ) != (
+        current.klipper_version,
+        current.moonraker_version,
+        current.mcu_statuses,
+        current.service_versions,
+    )
+
+
+def _object_fields_changed(previous: PrinterStatus, current: PrinterStatus) -> bool:
+    previous_device_names = tuple(device.name for device in previous.temperature_devices)
+    current_device_names = tuple(device.name for device in current.temperature_devices)
+    return (previous.objects, previous_device_names) != (
+        current.objects,
+        current_device_names,
+    )
+
+
+def _print_fields_changed(previous: PrinterStatus, current: PrinterStatus) -> bool:
+    return (
+        previous.print_state,
+        previous.print_filename,
+        previous.print_progress,
+        previous.print_message,
+        previous.print_duration,
+        previous.total_duration,
+        previous.filament_used,
+        previous.current_layer,
+        previous.total_layers,
+    ) != (
+        current.print_state,
+        current.print_filename,
+        current.print_progress,
+        current.print_message,
+        current.print_duration,
+        current.total_duration,
+        current.filament_used,
+        current.current_layer,
+        current.total_layers,
+    )
+
+
+def _toolhead_fields_changed(previous: PrinterStatus, current: PrinterStatus) -> bool:
+    return (
+        previous.position_x,
+        previous.position_y,
+        previous.position_z,
+        previous.position_e,
+        previous.homed_axes,
+        previous.requested_speed,
+        previous.speed_factor,
+        previous.extrude_factor,
+        previous.z_offset,
+        previous.max_accel,
+        previous.max_velocity,
+    ) != (
+        current.position_x,
+        current.position_y,
+        current.position_z,
+        current.position_e,
+        current.homed_axes,
+        current.requested_speed,
+        current.speed_factor,
+        current.extrude_factor,
+        current.z_offset,
+        current.max_accel,
+        current.max_velocity,
+    )
+
+
+def _primary_extruder_fields_changed(previous: PrinterStatus, current: PrinterStatus) -> bool:
+    return (
+        previous.primary_extruder_temperature,
+        previous.primary_extruder_target,
+    ) != (
+        current.primary_extruder_temperature,
+        current.primary_extruder_target,
+    )
+
+
+def _panel_needs_toolhead(panel: str) -> bool:
+    return panel in {"move", "extrude", "job_status"}

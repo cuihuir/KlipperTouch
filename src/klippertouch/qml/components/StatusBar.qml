@@ -18,6 +18,24 @@ Rectangle {
     property var activeTemperatureModel: root.hasExternalTemperatureModel
         ? temperatureModel
         : fallbackTemperatureModel
+    property int maxVisibleTemperatureItems: Math.max(
+        2,
+        Math.floor(heaterStrip.width / Math.max(42, root.fontSize * 2.8))
+    )
+
+    function updateClock() {
+        var nextText = Qt.formatTime(new Date(), "hh:mm")
+        if (nextText !== root.clockText) {
+            root.clockText = nextText
+        }
+    }
+
+    function scheduleNextClockTick() {
+        var now = new Date()
+        var nextMinuteDelay = 60000 - (now.getSeconds() * 1000 + now.getMilliseconds())
+        clockTimer.interval = Math.max(250, nextMinuteDelay)
+        clockTimer.restart()
+    }
 
     color: Theme.titleBarBg
 
@@ -32,7 +50,7 @@ Rectangle {
 
         Row {
             id: heaterStrip
-            width: parent.width * 0.35
+            width: parent.width * (root.width < 520 ? 0.25 : 0.35)
             height: parent.height
             spacing: Math.max(6, Math.round(root.fontSize * 0.5))
             clip: true
@@ -43,6 +61,7 @@ Rectangle {
                 Row {
                     property string resolvedIcon: typeof icon === "undefined" ? iconName : icon
 
+                    visible: index < root.maxVisibleTemperatureItems
                     height: heaterStrip.height
                     spacing: Math.max(2, Math.round(root.fontSize * 0.25))
 
@@ -73,7 +92,7 @@ Rectangle {
             font.pixelSize: Math.max(11, Math.round(root.fontSize * 0.9))
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
-            width: parent.width * 0.32
+            width: parent.width * (root.width < 520 ? 0.45 : 0.32)
             height: parent.height
             elide: Text.ElideRight
         }
@@ -92,9 +111,14 @@ Rectangle {
     }
 
     Timer {
-        interval: 1000
-        running: true
-        repeat: true
-        onTriggered: root.clockText = Qt.formatTime(new Date(), "hh:mm")
+        id: clockTimer
+        repeat: false
+        running: false
+        onTriggered: {
+            root.updateClock()
+            root.scheduleNextClockTick()
+        }
     }
+
+    Component.onCompleted: root.scheduleNextClockTick()
 }

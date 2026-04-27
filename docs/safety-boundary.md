@@ -30,6 +30,8 @@ HTTP GET endpoints currently allowed by the read-only policy:
 
 - `server/info`
 - `server/files/list`
+- `server/temperature_store`
+- `machine/update/status`
 - `printer/info`
 - `printer/objects/list`
 - `printer/objects/query`
@@ -39,6 +41,10 @@ JSON-RPC methods currently allowed by the read-only policy:
 - `server.info`
 - `printer.objects.query`
 - `printer.objects.subscribe`
+
+`printer.objects.query` may be sent through JSON-RPC for read-only object queries,
+including Unicode Klipper object names that are not reliable through HTTP query
+parameters. It must not be used for G-code or printer control methods.
 
 The WebSocket stream only subscribes to temperature/target fields for discovered temperature
 devices, read-only print status fields from `print_stats`, `display_status`, and
@@ -77,12 +83,13 @@ rg -n "tuna|tsinghua" uv.lock
 
 ## Real Printer Validation
 
-The current real-printer validation target is `192.168.123.117:7125`.
+The current real-printer validation target is `192.168.123.227:7125`.
 
 Allowed validation:
 
 - Read startup server/printer/object information.
 - Read G-code file metadata.
+- Read Unicode temperature objects through read-only JSON-RPC query.
 - Open the WebSocket and subscribe to read-only status updates.
 
 Forbidden validation:

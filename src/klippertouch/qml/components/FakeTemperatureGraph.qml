@@ -20,8 +20,9 @@ Rectangle {
     }
 
     function requestRedraw() {
-        graphContent.visible = false
-        graphContent.visible = true
+        if (graphCanvas) {
+            graphCanvas.requestPaint()
+        }
     }
 
     function visibleSeries(series) {
@@ -38,6 +39,10 @@ Rectangle {
             return points
         }
         for (var i = 0; i < currentSeries.length; i += 1) {
+            if (currentSeries[i] === null || typeof currentSeries[i] === "undefined") {
+                points.push(null)
+                continue
+            }
             var x = plotWidth * i / Math.max(1, currentSeries.length - 1)
             var y = plotHeight * root.normalizeTemperature(currentSeries[i])
             points.push({"x": x, "y": y})
@@ -45,47 +50,75 @@ Rectangle {
         return points
     }
 
-    function segmentModel(series, color, plotWidth, plotHeight) {
-        var model = []
-        var points = root.seriesPoints(series, plotWidth, plotHeight)
-        if (points.length === 1) {
-            model.push({
-                "x": points[0].x - Math.max(2, Math.round(root.fontSize * 0.18)),
-                "y": points[0].y - Math.max(2, Math.round(root.fontSize * 0.18)),
-                "width": Math.max(4, Math.round(root.fontSize * 0.36)),
-                "rotation": 0,
-                "color": color,
-                "round": true
-            })
-            return model
+    function drawSeries(ctx, item, plotWidth, plotHeight) {
+        if (!item || !item.series) {
+            return
         }
-        for (var i = 1; i < points.length; i += 1) {
-            var start = points[i - 1]
-            var end = points[i]
-            var dx = end.x - start.x
-            var dy = end.y - start.y
-            model.push({
-                "x": start.x,
-                "y": start.y,
-                "width": Math.max(1, Math.sqrt(dx * dx + dy * dy)),
-                "rotation": Math.atan2(dy, dx) * 180 / Math.PI,
-                "color": color,
-                "round": false
-            })
+        var points = root.seriesPoints(item.series, plotWidth, plotHeight)
+        if (points.length <= 0) {
+            return
         }
-        return model
+
+        ctx.save()
+        ctx.strokeStyle = item.color
+        ctx.fillStyle = item.color
+        ctx.globalAlpha = item.dashed ? 0.72 : 1.0
+        ctx.lineWidth = Math.max(2, Math.round(root.fontSize * 0.14))
+        ctx.lineCap = "round"
+        ctx.lineJoin = "round"
+        if (ctx.setLineDash) {
+            var dashLength = Math.max(5, root.fontSize * 0.45)
+            ctx.setLineDash(item.dashed ? [dashLength, dashLength] : [])
+        }
+
+        if (points.length === 1 && points[0] !== null) {
+            ctx.beginPath()
+            ctx.arc(
+                points[0].x,
+                points[0].y,
+                Math.max(2, Math.round(root.fontSize * 0.18)),
+                0,
+                Math.PI * 2
+            )
+            ctx.fill()
+            ctx.restore()
+            return
+        }
+
+        ctx.beginPath()
+        var hasActiveSegment = false
+        for (var i = 0; i < points.length; i += 1) {
+            if (points[i] === null) {
+                hasActiveSegment = false
+                continue
+            }
+            if (!hasActiveSegment) {
+                ctx.moveTo(points[i].x, points[i].y)
+                hasActiveSegment = true
+            } else {
+                ctx.lineTo(points[i].x, points[i].y)
+            }
+        }
+        ctx.stroke()
+        ctx.restore()
     }
+
+    onSeriesModelChanged: requestRedraw()
+    onMaxTemperatureChanged: requestRedraw()
+    onVisiblePointCountChanged: requestRedraw()
 
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: Math.max(8, Math.round(root.fontSize * 0.55))
         spacing: Math.max(6, Math.round(root.fontSize * 0.4))
 
-        RowLayout {
+        ColumnLayout {
             Layout.fillWidth: true
-            spacing: Math.max(10, Math.round(root.fontSize * 0.7))
+            spacing: Math.max(3, Math.round(root.fontSize * 0.18))
 
             Label {
+                id: historyTitle
+                Layout.fillWidth: true
                 color: Theme.text
                 text: "Temperature history"
                 font.bold: true
@@ -93,30 +126,42 @@ Rectangle {
             }
 
             Item {
+                id: legendViewport
                 Layout.fillWidth: true
-            }
+                Layout.minimumWidth: 0
+                Layout.preferredHeight: Math.max(root.fontSize, legendRow.implicitHeight)
+                clip: true
 
-            Row {
-                spacing: Math.max(8, Math.round(root.fontSize * 0.5))
+                Row {
+                    id: legendRow
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: Math.max(8, Math.round(root.fontSize * 0.5))
 
-                Repeater {
-                    model: root.seriesModel
+                    Repeater {
+                        model: root.seriesModel
 
-                    Row {
-                        visible: modelData.legendVisible === false ? false : true
-                        spacing: Math.max(4, Math.round(root.fontSize * 0.25))
+                        Row {
+                            visible: modelData.legendVisible === false ? false : true
+                            spacing: Math.max(4, Math.round(root.fontSize * 0.25))
 
-                        Rectangle {
-                            width: Math.max(10, Math.round(root.fontSize * 0.7))
-                            height: width
-                            radius: width / 2
-                            color: modelData.color
-                        }
+                            Rectangle {
+                                width: Math.max(10, Math.round(root.fontSize * 0.7))
+                                height: width
+                                radius: width / 2
+                                color: modelData.color
+                            }
 
-                        Label {
-                            color: Theme.mutedText
-                            text: modelData.displayName
-                            font.pixelSize: Math.max(11, Math.round(root.fontSize * 0.8))
+                            Label {
+                                width: Math.min(
+                                    implicitWidth,
+                                    Math.max(root.fontSize * 3, legendViewport.width * 0.32)
+                                )
+                                color: Theme.mutedText
+                                text: modelData.displayName
+                                elide: Text.ElideRight
+                                font.pixelSize: Math.max(11, Math.round(root.fontSize * 0.8))
+                            }
                         }
                     }
                 }
@@ -205,37 +250,19 @@ Rectangle {
                     }
                 }
 
-                Item {
-                    id: graphContent
+                Canvas {
+                    id: graphCanvas
                     anchors.fill: parent
+                    renderStrategy: Canvas.Threaded
 
-                    Repeater {
-                        model: root.seriesModel
-
-                        Item {
-                            anchors.fill: parent
-
-                            Repeater {
-                                model: root.segmentModel(
-                                    modelData.series,
-                                    modelData.color,
-                                    plotArea.width,
-                                    plotArea.height
-                                )
-
-                                Rectangle {
-                                    x: modelData.x
-                                    y: modelData.y
-                                    width: modelData.width
-                                    height: Math.max(2, Math.round(root.fontSize * 0.14))
-                                    radius: modelData.round ? width / 2 : height / 2
-                                    color: modelData.color
-                                    rotation: modelData.rotation
-                                    transformOrigin: Item.Left
-                                    visible: !modelData.dashed || index % 2 === 0
-                                    opacity: modelData.dashed ? 0.7 : 1.0
-                                }
-                            }
+                    onWidthChanged: requestPaint()
+                    onHeightChanged: requestPaint()
+                    onPaint: {
+                        var ctx = getContext("2d")
+                        ctx.clearRect(0, 0, width, height)
+                        for (var i = 0; i < root.seriesModel.length; i += 1) {
+                            var modelData = root.seriesModel[i]
+                            root.drawSeries(ctx, modelData, width, height)
                         }
                     }
                 }
