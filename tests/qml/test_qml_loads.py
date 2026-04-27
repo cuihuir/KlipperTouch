@@ -519,14 +519,14 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "function clearJobAction()" in qml
     assert "root.pendingJobAction = action" in qml
     assert "root.pendingJobObject = objectName || \"\"" in qml
-    assert 'root.pendingJobAction = "staged_" + action' in qml
+    assert 'root.pendingJobAction = "staged_" + action' not in qml
     assert "root.jobActionRequested(action, \"\")" in qml
     assert "id: jobActionPreview" in qml
     assert "visible: root.pendingJobAction.length > 0" in qml
     assert "function confirmationRequired()" in qml
     assert "root.pendingJobAction === \"cancel\"" in qml
     assert 'root.pendingJobAction === "skip"' in qml
-    assert 'root.pendingJobAction === "staged_pause"' in qml
+    assert 'root.pendingJobAction === "staged_pause"' not in qml
     assert 'root.confirmationRequired() ? "Confirmation preview only" : "Action staged"' in qml
     assert "readonly property bool confirmButtonVisible: root.confirmationRequired()" in qml
     assert "visible: previewRoot.confirmButtonVisible" in qml

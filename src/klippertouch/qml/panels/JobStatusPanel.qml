@@ -545,8 +545,7 @@ Item {
     }
 
     function stageImmediateJobAction(action) {
-        root.pendingJobAction = "staged_" + action
-        root.pendingJobObject = ""
+        root.clearJobAction()
         root.jobActionRequested(action, "")
     }
 
@@ -565,18 +564,6 @@ Item {
         }
         if (root.pendingJobAction === "skip") {
             return "Skip object " + (root.pendingJobObject.length > 0 ? root.pendingJobObject : "-")
-        }
-        if (root.pendingJobAction === "resume") {
-            return "Resume " + (root.printFilename.length > 0 ? root.printFilename : "current print")
-        }
-        if (root.pendingJobAction === "pause") {
-            return "Pause " + (root.printFilename.length > 0 ? root.printFilename : "current print")
-        }
-        if (root.pendingJobAction === "staged_resume") {
-            return "Resume staged for control layer"
-        }
-        if (root.pendingJobAction === "staged_pause") {
-            return "Pause staged for control layer"
         }
         return ""
     }
