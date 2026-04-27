@@ -432,6 +432,9 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "function stateHeadline" in qml
     assert "function stateMessage" in qml
     assert "function stateAccentColor" in qml
+    assert "Read-only job status" not in qml
+    assert "Read-only summary remains visible" not in qml
+    assert "Print status remains visible" in qml
     assert 'if (root.printState === "paused")' in qml
     assert 'if (root.printState === "complete")' in qml
     assert 'if (root.printState === "cancelled")' in qml

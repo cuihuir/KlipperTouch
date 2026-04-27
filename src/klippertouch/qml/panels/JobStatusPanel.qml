@@ -490,18 +490,18 @@ Item {
             return root.printMessage
         }
         if (root.printState === "paused") {
-            return "Print paused. Read-only status remains visible."
+            return "Print paused. Print status remains visible."
         }
         if (root.printState === "complete") {
-            return "Print completed. Read-only summary remains visible."
+            return "Print completed. Print status remains visible."
         }
         if (root.printState === "cancelled") {
-            return "Print cancelled. Read-only summary remains visible."
+            return "Print cancelled. Print status remains visible."
         }
         if (root.printState === "error") {
-            return "Printer error reported. Read-only summary remains visible."
+            return "Printer error reported. Print status remains visible."
         }
-        return "Read-only job status"
+        return root.printFilename.length > 0 ? root.printFilename : "Current print status"
     }
 
     function stateAccentColor() {
