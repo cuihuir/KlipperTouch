@@ -28,9 +28,14 @@ Item {
         {"label": "Disable Motors", "action": "disable_motors", "hint": "M84", "icon": "⏻"},
         {"label": "More", "action": "more", "hint": "settings", "icon": "⋯"}
     ]
+    property var portraitPlaceholders: [
+        {"placeholder": true},
+        {"placeholder": true}
+    ]
     property var distances: [".1", ".5", "1", "5", "10", "25", "50"]
     property string selectedDistance: "10"
     property bool moreVisible: false
+    property string detailPage: "main"
     property real positionX: 0
     property real positionY: 0
     property real positionZ: 0
@@ -40,6 +45,22 @@ Item {
 
     function selectDistance(distance) {
         root.selectedDistance = distance
+    }
+
+    function showMore() {
+        if (root.metrics.ultraWide) {
+            root.moreVisible = !root.moreVisible
+            return
+        }
+        root.detailPage = "more"
+    }
+
+    function goBack() {
+        if (root.detailPage !== "main") {
+            root.detailPage = "main"
+            return true
+        }
+        return false
     }
 
     function arrowGlyph(direction) {
@@ -206,16 +227,19 @@ Item {
     }
 
     GridLayout {
+        visible: root.detailPage === "main" || root.metrics.ultraWide
         anchors.fill: parent
         anchors.margins: root.metrics.margin
-        columns: 1
-        rows: 2
+        columns: root.metrics.ultraWide ? 3 : 1
+        rows: root.metrics.ultraWide ? 1 : 3
         rowSpacing: root.metrics.gap
+        columnSpacing: root.metrics.gap
 
         Rectangle {
             id: controlGroupGrid
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.preferredWidth: root.metrics.ultraWide ? Math.round(root.width * 0.48) : -1
             color: Theme.buttonsBg
             border.color: "#465456"
             border.width: 1
@@ -228,7 +252,7 @@ Item {
 
                 Item {
                     id: xyMovePad
-                    width: root.metrics.portrait ? parent.width : Math.round(parent.width * 0.48)
+                    width: root.metrics.portrait ? parent.width : Math.round(parent.width * 0.42)
                     height: root.metrics.portrait ? Math.round(parent.height * 0.48) : parent.height
                     anchors.left: parent.left
                     anchors.top: parent.top
@@ -265,13 +289,14 @@ Item {
 
                 Item {
                     id: zMovePad
-                    width: root.metrics.portrait ? Math.round(parent.width * 0.48) : Math.round(parent.width * 0.26)
+                    width: root.metrics.portrait ? Math.round(parent.width * 0.48) : Math.round(parent.width * 0.22)
                     height: root.metrics.portrait ? Math.round(parent.height * 0.46) : parent.height
-                    anchors.right: root.metrics.portrait ? undefined : parent.right
+                    anchors.right: undefined
                     anchors.horizontalCenter: undefined
-                    anchors.left: root.metrics.portrait ? parent.left : undefined
+                    anchors.leftMargin: root.metrics.portrait ? 0 : root.metrics.gap
                     anchors.top: root.metrics.portrait ? xyMovePad.bottom : parent.top
                     anchors.topMargin: root.metrics.portrait ? root.metrics.gap : 0
+                    anchors.left: root.metrics.portrait ? parent.left : xyMovePad.right
                     property int padSize: Math.max(58, Math.min(width, height))
                     property int arrowSize: Math.max(70, Math.round(padSize * 0.32))
                     property int homeSize: Math.max(88, Math.round(padSize * 0.31))
@@ -305,12 +330,11 @@ Item {
 
                 GridLayout {
                     id: motionActions
-                    width: root.metrics.portrait ? Math.round(parent.width * 0.52) : Math.round(parent.width * 0.2)
+                    width: root.metrics.portrait ? Math.round(parent.width * 0.52) : Math.round(parent.width * 0.24)
                     height: root.metrics.portrait ? zMovePad.height : Math.round(parent.height * 0.72)
-                    anchors.right: root.metrics.portrait ? parent.right : zMovePad.left
-                    anchors.rightMargin: root.metrics.portrait ? 0 : root.metrics.gap
-                    anchors.top: root.metrics.portrait ? zMovePad.top : undefined
-                    anchors.bottom: parent.bottom
+                    y: root.metrics.portrait ? zMovePad.y : Math.round((parent.height - height) / 2)
+                    anchors.right: parent.right
+                    anchors.rightMargin: 0
                     columns: root.metrics.portrait ? 2 : 1
                     rows: root.metrics.portrait ? 1 : 2
                     rowSpacing: root.metrics.gap
@@ -327,13 +351,14 @@ Item {
                             title: modelData.label
                             hint: modelData.hint
                             icon: modelData.icon
-                            selected: modelData.action === "more" && root.moreVisible
+                            selected: modelData.action === "more"
+                                && (root.moreVisible || root.detailPage === "more")
 
                             MouseArea {
                                 anchors.fill: parent
                                 onClicked: {
                                     if (modelData.action === "more") {
-                                        root.moreVisible = !root.moreVisible
+                                        root.showMore()
                                     } else {
                                         root.moveActionRequested(modelData.action)
                                     }
@@ -346,11 +371,15 @@ Item {
         }
 
         Rectangle {
-            id: auxiliaryPanel
+            id: positionPanel
             Layout.fillWidth: true
-            Layout.preferredHeight: root.moreVisible
-                ? Math.max(164, Math.round(root.metrics.fontSize * 10.2))
-                : Math.max(132, Math.round(root.metrics.fontSize * 8.2))
+            Layout.fillHeight: root.metrics.ultraWide
+            Layout.preferredWidth: root.metrics.ultraWide ? Math.round(root.width * 0.27) : -1
+            Layout.preferredHeight: root.metrics.ultraWide
+                ? -1
+                : root.moreVisible
+                    ? Math.max(118, Math.round(root.metrics.fontSize * 7.2))
+                    : Math.max(82, Math.round(root.metrics.fontSize * 5.1))
             color: "#0d1415"
             border.color: "#344044"
             border.width: 1
@@ -361,177 +390,146 @@ Item {
                 anchors.margins: root.metrics.gap
                 spacing: Math.max(5, Math.round(root.metrics.gap * 0.55))
 
-                ColumnLayout {
+                RowLayout {
                     Layout.fillWidth: true
-                    spacing: Math.max(4, Math.round(root.metrics.gap * 0.35))
+                    spacing: root.metrics.gap
 
-                    RowLayout {
+                    Label {
                         Layout.fillWidth: true
-                        spacing: root.metrics.gap
-
-                        Label {
-                            Layout.fillWidth: true
-                            color: Theme.text
-                            text: "Move"
-                            font.bold: true
-                            font.pixelSize: Math.max(15, Math.round(root.metrics.fontSize * 1.02))
-                        }
-
-                        Label {
-                            color: Theme.mutedText
-                            text: "Controls locked"
-                            font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.76))
-                        }
-
-                        RowLayout {
-                            id: moveActionBar
-                            visible: false
-                            spacing: Math.max(5, Math.round(root.metrics.gap * 0.55))
-
-                            Repeater {
-                                model: root.actionButtons
-
-                                Rectangle {
-                                    required property var modelData
-
-                                    Layout.preferredWidth: Math.max(82, Math.round(root.metrics.fontSize * 5.8))
-                                    Layout.preferredHeight: Math.max(30, Math.round(root.metrics.fontSize * 1.9))
-                                    color: modelData.action === "more" && root.moreVisible ? "#1b2b2e" : "#101617"
-                                    border.color: modelData.action === "more" && root.moreVisible ? Theme.color3 : "#48565a"
-                                    border.width: 1
-                                    radius: Math.round(height * 0.28)
-
-                                    ColumnLayout {
-                                        anchors.centerIn: parent
-                                        width: parent.width - Math.max(4, root.metrics.gap * 0.5)
-                                        spacing: 0
-
-                                        Label {
-                                            Layout.fillWidth: true
-                                            color: Theme.text
-                                            text: modelData.label
-                                            horizontalAlignment: Text.AlignHCenter
-                                            elide: Text.ElideRight
-                                            font.bold: true
-                                            font.pixelSize: Math.max(9, Math.round(root.metrics.fontSize * 0.62))
-                                        }
-
-                                        Label {
-                                            Layout.fillWidth: true
-                                            color: Theme.mutedText
-                                            text: modelData.hint
-                                            horizontalAlignment: Text.AlignHCenter
-                                            elide: Text.ElideRight
-                                            font.pixelSize: Math.max(8, Math.round(root.metrics.fontSize * 0.52))
-                                        }
-                                    }
-
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        onClicked: {
-                                            if (modelData.action === "more") {
-                                                root.moreVisible = !root.moreVisible
-                                            } else {
-                                                root.moveActionRequested(modelData.action)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        color: Theme.text
+                        text: "Position"
+                        font.bold: true
+                        font.pixelSize: Math.max(15, Math.round(root.metrics.fontSize * 1.02))
                     }
 
-                    Rectangle {
-                        id: moveMorePanel
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: root.moreVisible
-                            ? Math.max(46, Math.round(root.metrics.fontSize * 2.9))
-                            : 0
-                        visible: root.moreVisible
-                        color: "#101617"
-                        border.color: "#263233"
-                        border.width: 1
-                        radius: Math.round(root.metrics.fontSize * 0.22)
-
-                        GridLayout {
-                            anchors.fill: parent
-                            anchors.margins: Math.max(5, Math.round(root.metrics.gap * 0.5))
-                            columns: 5
-                            columnSpacing: Math.max(5, Math.round(root.metrics.gap * 0.5))
-
-                            Repeater {
-                                model: ["Invert X", "Invert Y", "Invert Z", "XY Speed", "Z Speed"]
-
-                                Rectangle {
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    color: "#0b1112"
-                                    border.color: "#263233"
-                                    border.width: 1
-                                    radius: Math.round(root.metrics.fontSize * 0.18)
-
-                                    Label {
-                                        anchors.centerIn: parent
-                                        width: parent.width - 4
-                                        color: Theme.mutedText
-                                        text: modelData
-                                        horizontalAlignment: Text.AlignHCenter
-                                        elide: Text.ElideRight
-                                        font.pixelSize: Math.max(9, Math.round(root.metrics.fontSize * 0.62))
-                                    }
-                                }
-                            }
-                        }
+                    Label {
+                        color: Theme.mutedText
+                        text: "Controls locked"
+                        font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.76))
                     }
+                }
+
+                Rectangle {
+                    id: moveMorePanel
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: root.moreVisible
+                        ? Math.max(46, Math.round(root.metrics.fontSize * 2.9))
+                        : 0
+                    visible: root.moreVisible && root.metrics.ultraWide
+                    color: "#101617"
+                    border.color: "#263233"
+                    border.width: 1
+                    radius: Math.round(root.metrics.fontSize * 0.22)
 
                     GridLayout {
-                        id: positionGrid
-                        Layout.fillWidth: true
-                        columns: 4
-                        columnSpacing: Math.max(5, Math.round(root.metrics.fontSize * 0.35))
+                        anchors.fill: parent
+                        anchors.margins: Math.max(5, Math.round(root.metrics.gap * 0.5))
+                        columns: root.metrics.ultraWide ? 1 : 5
+                        columnSpacing: Math.max(5, Math.round(root.metrics.gap * 0.5))
+                        rowSpacing: Math.max(5, Math.round(root.metrics.gap * 0.5))
 
                         Repeater {
-                            model: [
-                                {"label": "X", "value": root.positionX.toFixed(2)},
-                                {"label": "Y", "value": root.positionY.toFixed(2)},
-                                {"label": "Z", "value": root.positionZ.toFixed(2)},
-                                {"label": "E", "value": root.positionE.toFixed(2)}
-                            ]
+                            model: ["Invert X", "Invert Y", "Invert Z", "XY Speed", "Z Speed"]
 
                             Rectangle {
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: Math.max(28, Math.round(root.metrics.fontSize * 1.85))
-                                color: "#101617"
+                                Layout.fillHeight: true
+                                color: "#0b1112"
                                 border.color: "#263233"
                                 border.width: 1
                                 radius: Math.round(root.metrics.fontSize * 0.18)
 
                                 Label {
                                     anchors.centerIn: parent
-                                    color: Theme.text
-                                    text: modelData.label + " " + modelData.value
+                                    width: parent.width - 4
+                                    color: Theme.mutedText
+                                    text: modelData
                                     horizontalAlignment: Text.AlignHCenter
                                     elide: Text.ElideRight
-                                    font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                                    font.pixelSize: Math.max(9, Math.round(root.metrics.fontSize * 0.62))
                                 }
                             }
                         }
                     }
+                }
 
-                    Label {
-                        Layout.fillWidth: true
-                        color: Theme.mutedText
-                        text: root.homedAxes.length > 0 ? "Homed: " + root.homedAxes : "Homed: unknown"
-                        elide: Text.ElideRight
-                        font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                GridLayout {
+                    id: positionGrid
+                    Layout.fillWidth: true
+                    Layout.fillHeight: root.metrics.ultraWide
+                    columns: root.metrics.ultraWide ? 1 : 4
+                    rowSpacing: Math.max(5, Math.round(root.metrics.gap * 0.5))
+                    columnSpacing: Math.max(5, Math.round(root.metrics.fontSize * 0.35))
+
+                    Repeater {
+                        model: [
+                            {"label": "X", "value": root.positionX.toFixed(2)},
+                            {"label": "Y", "value": root.positionY.toFixed(2)},
+                            {"label": "Z", "value": root.positionZ.toFixed(2)},
+                            {"label": "E", "value": root.positionE.toFixed(2)}
+                        ]
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: root.metrics.ultraWide
+                            Layout.preferredHeight: Math.max(28, Math.round(root.metrics.fontSize * 1.85))
+                            color: "#101617"
+                            border.color: "#263233"
+                            border.width: 1
+                            radius: Math.round(root.metrics.fontSize * 0.18)
+
+                            Label {
+                                anchors.centerIn: parent
+                                color: Theme.text
+                                text: modelData.label + " " + modelData.value
+                                horizontalAlignment: Text.AlignHCenter
+                                elide: Text.ElideRight
+                                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                            }
+                        }
                     }
+                }
+
+                Label {
+                    Layout.fillWidth: true
+                    color: Theme.mutedText
+                    text: root.homedAxes.length > 0 ? "Homed: " + root.homedAxes : "Homed: unknown"
+                    elide: Text.ElideRight
+                    font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                }
+            }
+        }
+
+        Rectangle {
+            id: distancePanel
+            Layout.fillWidth: true
+            Layout.fillHeight: root.metrics.ultraWide
+            Layout.preferredWidth: root.metrics.ultraWide ? Math.round(root.width * 0.22) : -1
+            Layout.preferredHeight: root.metrics.ultraWide ? -1 : Math.max(70, Math.round(root.metrics.fontSize * 4.2))
+            color: "#0d1415"
+            border.color: "#344044"
+            border.width: 1
+            radius: Math.round(root.metrics.fontSize * 0.36)
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: root.metrics.gap
+                spacing: Math.max(5, Math.round(root.metrics.gap * 0.55))
+
+                Label {
+                    Layout.fillWidth: true
+                    color: Theme.text
+                    text: "Distance"
+                    font.bold: true
+                    font.pixelSize: Math.max(15, Math.round(root.metrics.fontSize * 1.02))
                 }
 
                 GridLayout {
                     id: distanceGrid
                     Layout.fillWidth: true
+                    Layout.fillHeight: root.metrics.ultraWide
                     Layout.preferredHeight: Math.max(30, Math.round(root.metrics.fontSize * 1.9))
-                    columns: 7
+                    columns: root.metrics.ultraWide ? 1 : 7
                     rowSpacing: Math.max(5, Math.round(root.metrics.gap * 0.5))
                     columnSpacing: Math.max(5, Math.round(root.metrics.gap * 0.5))
 
@@ -550,6 +548,75 @@ Item {
                                 anchors.fill: parent
                                 onClicked: root.selectDistance(modelData)
                             }
+                        }
+                    }
+
+                    Repeater {
+                        model: root.metrics.portrait ? root.portraitPlaceholders : []
+
+                        Rectangle {
+                            required property var modelData
+                            property bool placeholder: modelData.placeholder
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            visible: false
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        id: moveMorePage
+        anchors.fill: parent
+        anchors.margins: root.metrics.margin
+        visible: root.detailPage === "more" && !root.metrics.ultraWide
+        color: "#0d1415"
+        border.color: "#344044"
+        border.width: 1
+        radius: Math.round(root.metrics.fontSize * 0.36)
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: root.metrics.gap
+            spacing: root.metrics.gap
+
+            Label {
+                Layout.fillWidth: true
+                color: Theme.text
+                text: "Move Settings"
+                font.bold: true
+                font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.18))
+            }
+
+            GridLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                columns: root.metrics.portrait ? 1 : 2
+                rowSpacing: root.metrics.gap
+                columnSpacing: root.metrics.gap
+
+                Repeater {
+                    model: ["Invert X", "Invert Y", "Invert Z", "XY Speed", "Z Speed"]
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: Math.max(54, Math.round(root.metrics.fontSize * 3.2))
+                        color: "#101617"
+                        border.color: "#263233"
+                        border.width: 1
+                        radius: Math.round(root.metrics.fontSize * 0.28)
+
+                        Label {
+                            anchors.centerIn: parent
+                            width: parent.width - root.metrics.gap
+                            color: Theme.text
+                            text: modelData
+                            horizontalAlignment: Text.AlignHCenter
+                            elide: Text.ElideRight
+                            font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 0.9))
                         }
                     }
                 }
