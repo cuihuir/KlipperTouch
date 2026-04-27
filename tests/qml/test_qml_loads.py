@@ -501,16 +501,30 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "enabled: false" in qml
     assert "readonlyActionHint" in qml
     assert "property string detailPage" in qml
+    assert "property string pendingJobAction" in qml
+    assert "property string pendingJobObject" in qml
     assert 'root.detailPage = "advanced"' in qml
     assert 'root.detailPage = "summary"' in qml
+    assert "function requestJobAction(action, objectName)" in qml
+    assert "function clearJobAction()" in qml
+    assert "root.pendingJobAction = action" in qml
+    assert "root.pendingJobObject = objectName || \"\"" in qml
+    assert "id: jobActionPreview" in qml
+    assert "visible: root.pendingJobAction.length > 0" in qml
+    assert "root.pendingJobAction === \"cancel\"" in qml
+    assert 'text: "Confirmation preview only"' in qml
+    assert 'text: "Confirm disabled"' in qml
+    assert 'text: "Dismiss"' in qml
+    assert "onClicked: root.clearJobAction()" in qml
     assert "id: advancedPage" in qml
     assert "id: excludePage" in qml
     assert "root.currentObject" in qml
     assert "model: root.excludeObjectNames" in qml
     assert "root.excludedObjectNames.indexOf(modelData) >= 0" in qml
-    assert "root.objectExcludeRequested(modelData)" in qml
+    assert 'root.requestJobAction("skip", modelData)' in qml
     assert "qmllint disable missing-property" in qml
     assert "function goBack()" in qml
+    assert 'if (root.pendingJobAction.length > 0)' in qml
     assert 'if (root.detailPage !== "summary")' in qml
     assert "return true" in qml
     assert "return false" in qml

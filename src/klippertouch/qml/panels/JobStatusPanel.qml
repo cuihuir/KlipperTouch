@@ -33,6 +33,8 @@ Item {
     property var excludedObjectNames: []
     property string currentObject: ""
     property string detailPage: "summary"
+    property string pendingJobAction: ""
+    property string pendingJobObject: ""
     readonly property color neutralAccent: "#8b9496"
     readonly property color mutedDangerAccent: "#9a8582"
     readonly property color accentColor: root.stateAccentColor()
@@ -177,6 +179,74 @@ Item {
                 color: controlRoot.roleAccent
                 opacity: controlRoot.enabled ? 0.85 : 0.25
                 radius: parent.radius
+            }
+        }
+    }
+
+    component JobActionPreview: Rectangle {
+        id: previewRoot
+
+        Layout.fillWidth: true
+        Layout.preferredHeight: root.metrics.portrait
+            ? Math.max(78, Math.round(root.metrics.fontSize * 5.4))
+            : Math.max(62, Math.round(root.metrics.fontSize * 4.2))
+        Layout.fillHeight: false
+        visible: root.pendingJobAction.length > 0
+        color: root.pendingJobAction === "cancel" ? "#181311" : "#111819"
+        border.color: root.pendingJobAction === "cancel" ? "#4a3430" : "#354346"
+        border.width: 1
+        radius: Math.round(root.metrics.fontSize * 0.32)
+
+        GridLayout {
+            anchors.fill: parent
+            anchors.margins: root.metrics.gap
+            columns: root.metrics.portrait ? 1 : 2
+            rowSpacing: Math.max(4, Math.round(root.metrics.fontSize * 0.28))
+            columnSpacing: root.metrics.gap
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                spacing: 0
+
+                Label {
+                    Layout.fillWidth: true
+                    color: Theme.text
+                    text: "Confirmation preview only"
+                    font.bold: true
+                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.88))
+                }
+
+                Label {
+                    Layout.fillWidth: true
+                    color: Theme.mutedText
+                    text: root.pendingJobActionLabel()
+                    elide: Text.ElideMiddle
+                    font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: root.metrics.portrait
+                Layout.alignment: root.metrics.portrait ? Qt.AlignRight : Qt.AlignVCenter
+                Layout.preferredWidth: root.metrics.portrait
+                    ? -1
+                    : root.jobButtonWidth * 2 + root.metrics.gap
+                Layout.preferredHeight: root.jobButtonHeight
+                Layout.fillHeight: false
+                spacing: root.metrics.gap
+
+                JobButton {
+                    Layout.fillWidth: root.metrics.portrait
+                    text: "Confirm disabled"
+                    enabled: false
+                }
+
+                JobButton {
+                    Layout.fillWidth: root.metrics.portrait
+                    text: "Dismiss"
+                    onClicked: root.clearJobAction()
+                }
             }
         }
     }
@@ -459,6 +529,32 @@ Item {
         return actionName + " is staged for the control layer."
     }
 
+    function requestJobAction(action, objectName) {
+        root.pendingJobAction = action
+        root.pendingJobObject = objectName || ""
+    }
+
+    function clearJobAction() {
+        root.pendingJobAction = ""
+        root.pendingJobObject = ""
+    }
+
+    function pendingJobActionLabel() {
+        if (root.pendingJobAction === "cancel") {
+            return "Cancel " + (root.printFilename.length > 0 ? root.printFilename : "current print")
+        }
+        if (root.pendingJobAction === "skip") {
+            return "Skip object " + (root.pendingJobObject.length > 0 ? root.pendingJobObject : "-")
+        }
+        if (root.pendingJobAction === "resume") {
+            return "Resume " + (root.printFilename.length > 0 ? root.printFilename : "current print")
+        }
+        if (root.pendingJobAction === "pause") {
+            return "Pause " + (root.printFilename.length > 0 ? root.printFilename : "current print")
+        }
+        return ""
+    }
+
     function jobActionGridHeight() {
         var rows = root.metrics.portrait ? 2 : 1
         return root.jobButtonHeight * rows + root.metrics.gap * (rows - 1)
@@ -595,6 +691,10 @@ Item {
 
     // qmllint disable missing-property
     function goBack() {
+        if (root.pendingJobAction.length > 0) {
+            root.clearJobAction()
+            return true
+        }
         if (root.detailPage !== "summary") {
             root.detailPage = "summary"
             return true
@@ -840,9 +940,10 @@ Item {
                     text: root.primaryActionLabel()
                     iconText: "||"
                     buttonRole: "primary"
-                    enabled: false
+                    enabled: true
                     ToolTip.visible: hovered
                     ToolTip.text: root.readonlyActionHint(text)
+                    onClicked: root.requestJobAction(root.printState === "paused" ? "resume" : "pause", "")
                 }
 
                 JobButton {
@@ -852,9 +953,10 @@ Item {
                     iconText: "X"
                     buttonRole: "danger"
                     accent: root.mutedDangerAccent
-                    enabled: false
+                    enabled: true
                     ToolTip.visible: hovered
                     ToolTip.text: root.readonlyActionHint(text)
+                    onClicked: root.requestJobAction("cancel", "")
                 }
 
                 JobButton {
@@ -875,6 +977,11 @@ Item {
                     iconText: "ADV"
                     onClicked: root.detailPage = "advanced"
                 }
+            }
+
+            JobActionPreview {
+                id: jobActionPreview
+                visible: root.detailPage === "summary" && root.pendingJobAction.length > 0
             }
 
             Rectangle {
@@ -1306,10 +1413,14 @@ Item {
                                 Layout.alignment: Qt.AlignVCenter
                                 text: "Skip"
                                 enabled: root.excludedObjectNames.indexOf(modelData) < 0
-                                onClicked: root.objectExcludeRequested(modelData)
+                                onClicked: root.requestJobAction("skip", modelData)
                             }
                         }
                     }
+                }
+
+                JobActionPreview {
+                    visible: root.pendingJobAction.length > 0
                 }
 
             }

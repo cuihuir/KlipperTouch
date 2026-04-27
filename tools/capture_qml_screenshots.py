@@ -214,6 +214,7 @@ def capture(
     sample_status: bool = False,
     sample_state: str = "printing",
     job_detail_pages: tuple[str, ...] = (),
+    job_action_previews: tuple[str, ...] = (),
     file_detail_pages: tuple[str, ...] = (),
     file_action_previews: tuple[str, ...] = (),
 ) -> list[Path]:
@@ -271,13 +272,17 @@ def capture(
                     elif panel == "print":
                         _set_files_detail_page(root, detail_page)
                     app.processEvents()
-                for action_preview in _file_action_previews_for_panel(
+                for action_preview in _action_previews_for_panel(
                     panel,
                     detail_page,
+                    job_action_previews,
                     file_action_previews,
                 ):
                     if action_preview:
-                        _set_files_action_preview(root, action_preview)
+                        if panel == "job_status":
+                            _set_job_status_action_preview(root, action_preview)
+                        elif panel == "print":
+                            _set_files_action_preview(root, action_preview)
                         app.processEvents()
                     image = root.grabWindow()
                     target_name = f"{panel}_{detail_page}" if detail_page else panel
@@ -302,11 +307,14 @@ def _detail_pages_for_panel(
     return ("",)
 
 
-def _file_action_previews_for_panel(
+def _action_previews_for_panel(
     panel: str,
     detail_page: str,
+    job_action_previews: tuple[str, ...],
     file_action_previews: tuple[str, ...],
 ) -> tuple[str, ...]:
+    if panel == "job_status" and detail_page == "summary" and job_action_previews:
+        return job_action_previews
     if panel == "print" and detail_page == "detail" and file_action_previews:
         return file_action_previews
     return ("",)
@@ -320,6 +328,18 @@ def _set_job_status_detail_page(root: QObject, page: str) -> None:
     if panel is None:
         raise RuntimeError("Failed to find jobStatusPanel for detail screenshot")
     panel.setProperty("detailPage", page)
+
+
+def _set_job_status_action_preview(root: QObject, action: str) -> None:
+    panel = root.findChild(QObject, "jobStatusPanel")
+    if panel is None:
+        loader = root.findChild(QObject, "panelLoader")
+        panel = loader.property("item") if loader is not None else None
+    if panel is None:
+        raise RuntimeError("Failed to find jobStatusPanel for action preview screenshot")
+    panel.setProperty("pendingJobAction", action)
+    if action == "skip":
+        panel.setProperty("pendingJobObject", "part_b")
 
 
 def _set_files_detail_page(root: QObject, page: str) -> None:
@@ -433,6 +453,13 @@ def main(argv: list[str] | None = None) -> int:
         help="Capture specific Job Status subpages, for example summary time motion extrusion.",
     )
     parser.add_argument(
+        "--job-action-previews",
+        nargs="+",
+        choices=("pause", "resume", "cancel", "skip"),
+        default=(),
+        help="Capture specific read-only Job Status action preview states.",
+    )
+    parser.add_argument(
         "--file-detail-pages",
         nargs="+",
         choices=("detail",),
@@ -462,6 +489,7 @@ def main(argv: list[str] | None = None) -> int:
         sample_status=args.sample_status,
         sample_state=args.sample_state,
         job_detail_pages=tuple(args.job_detail_pages),
+        job_action_previews=tuple(args.job_action_previews),
         file_detail_pages=tuple(args.file_detail_pages),
         file_action_previews=tuple(args.file_action_previews),
     )
