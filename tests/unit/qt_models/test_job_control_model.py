@@ -61,6 +61,7 @@ def test_job_control_model_sends_pause_resume_cancel_requests(qtbot) -> None:
     assert client.calls == [("pause", ""), ("resume", ""), ("cancel", "")]
     assert statuses == ["Pause sent", "Resume sent", "Cancel sent"]
     assert model.lastError == ""
+    assert model.requestedPrintState == "cancelled"
 
 
 def test_job_control_model_starts_selected_file(qtbot) -> None:
@@ -71,6 +72,7 @@ def test_job_control_model_starts_selected_file(qtbot) -> None:
 
     assert client.calls == [("start", "cube.gcode")]
     assert model.lastStatus == "Print sent"
+    assert model.requestedPrintState == "printing"
 
 
 def test_job_control_model_reports_read_only_blocks(qtbot) -> None:
@@ -82,6 +84,20 @@ def test_job_control_model_reports_read_only_blocks(qtbot) -> None:
 
     assert errors == ["blocked"]
     assert model.lastStatus == ""
+    assert model.requestedPrintState == ""
+
+
+def test_job_control_model_exposes_successful_requested_print_states(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+    states: list[str] = []
+    model.requestedPrintStateChanged.connect(lambda: states.append(model.requestedPrintState))
+
+    model.requestPause()
+    model.requestResume()
+    model.requestCancel()
+
+    assert states == ["paused", "printing", "cancelled"]
 
 
 def test_job_control_model_sends_advanced_adjustments(qtbot) -> None:

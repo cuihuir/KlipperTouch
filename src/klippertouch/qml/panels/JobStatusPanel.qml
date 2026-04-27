@@ -37,6 +37,7 @@ Item {
     property string pendingJobObject: ""
     property string controlStatus: ""
     property string controlError: ""
+    property string requestedPrintState: ""
     readonly property color neutralAccent: "#8b9496"
     readonly property color mutedDangerAccent: "#9a8582"
     readonly property color accentColor: root.stateAccentColor()
@@ -245,7 +246,10 @@ Item {
                     visible: previewRoot.confirmButtonVisible
                     text: "Confirm"
                     enabled: true
-                    onClicked: root.jobActionRequested(root.pendingJobAction, root.pendingJobObject)
+                    onClicked: {
+                        root.jobActionRequested(root.pendingJobAction, root.pendingJobObject)
+                        root.clearJobAction()
+                    }
                 }
 
                 JobButton {
@@ -470,16 +474,17 @@ Item {
     }
 
     function stateHeadline() {
-        if (root.printState === "paused") {
+        var state = root.effectivePrintState()
+        if (state === "paused") {
             return "Paused"
         }
-        if (root.printState === "complete") {
+        if (state === "complete") {
             return "Completed"
         }
-        if (root.printState === "cancelled") {
+        if (state === "cancelled") {
             return "Cancelled"
         }
-        if (root.printState === "error") {
+        if (state === "error") {
             return "Printer error"
         }
         return "Printing"
@@ -489,32 +494,34 @@ Item {
         if (root.printMessage.length > 0) {
             return root.printMessage
         }
-        if (root.printState === "paused") {
+        var state = root.effectivePrintState()
+        if (state === "paused") {
             return "Print paused. Print status remains visible."
         }
-        if (root.printState === "complete") {
+        if (state === "complete") {
             return "Print completed. Print status remains visible."
         }
-        if (root.printState === "cancelled") {
+        if (state === "cancelled") {
             return "Print cancelled. Print status remains visible."
         }
-        if (root.printState === "error") {
+        if (state === "error") {
             return "Printer error reported. Print status remains visible."
         }
         return root.printFilename.length > 0 ? root.printFilename : "Current print status"
     }
 
     function stateAccentColor() {
-        if (root.printState === "paused") {
+        var state = root.effectivePrintState()
+        if (state === "paused") {
             return "#918a7f"
         }
-        if (root.printState === "complete") {
+        if (state === "complete") {
             return "#87908a"
         }
-        if (root.printState === "cancelled") {
+        if (state === "cancelled") {
             return "#837e7a"
         }
-        if (root.printState === "error") {
+        if (state === "error") {
             return root.mutedDangerAccent
         }
         return root.neutralAccent
@@ -528,7 +535,17 @@ Item {
     }
 
     function primaryActionLabel() {
-        return root.printState === "paused" ? "Resume" : "Pause"
+        return root.effectivePrintState() === "paused" ? "Resume" : "Pause"
+    }
+
+    function effectivePrintState() {
+        if (root.printState === "complete"
+                || root.printState === "cancelled"
+                || root.printState === "error"
+                || root.printState === "paused") {
+            return root.printState
+        }
+        return root.requestedPrintState.length > 0 ? root.requestedPrintState : root.printState
     }
 
     function readonlyActionHint(actionName) {
@@ -956,7 +973,7 @@ Item {
                     enabled: true
                     ToolTip.visible: hovered
                     ToolTip.text: root.readonlyActionHint(text)
-                    onClicked: root.stageImmediateJobAction(root.printState === "paused" ? "resume" : "pause")
+                    onClicked: root.stageImmediateJobAction(root.effectivePrintState() === "paused" ? "resume" : "pause")
                 }
 
                 JobButton {

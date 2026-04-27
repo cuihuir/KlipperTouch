@@ -436,10 +436,10 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "Read-only job status" not in qml
     assert "Read-only summary remains visible" not in qml
     assert "Print status remains visible" in qml
-    assert 'if (root.printState === "paused")' in qml
-    assert 'if (root.printState === "complete")' in qml
-    assert 'if (root.printState === "cancelled")' in qml
-    assert 'if (root.printState === "error")' in qml
+    assert 'if (state === "paused")' in qml
+    assert 'if (state === "complete")' in qml
+    assert 'if (state === "cancelled")' in qml
+    assert 'if (state === "error")' in qml
     assert "Paused" in qml
     assert "Cancelled" in qml
     assert "Completed" in qml
@@ -501,7 +501,7 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "Layout.preferredWidth: root.jobButtonWidth" in qml
     assert "Layout.alignment: Qt.AlignVCenter" in qml
     assert "root.primaryActionLabel()" in qml
-    assert 'root.printState === "paused" ? "Resume" : "Pause"' in qml
+    assert 'root.effectivePrintState() === "paused" ? "Resume" : "Pause"' in qml
     assert 'text: "Cancel"' in qml
     assert 'text: "Skip Object"' in qml
     assert 'root.detailPage = "exclude"' in qml
@@ -512,6 +512,8 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "property string pendingJobObject" in qml
     assert "property string controlStatus" in qml
     assert "property string controlError" in qml
+    assert "property string requestedPrintState" in qml
+    assert "function effectivePrintState()" in qml
     assert "function controlFeedbackText()" in qml
     assert "id: jobControlFeedback" in qml
     assert "visible: root.controlFeedbackText().length > 0" in qml
@@ -553,8 +555,13 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "Popup {" not in qml
     assert 'text: "Back"' not in qml
     assert 'root.requestJobAction(root.printState === "paused" ? "resume" : "pause", "")' not in qml
-    assert 'root.stageImmediateJobAction(root.printState === "paused" ? "resume" : "pause")' in qml
-    assert 'onClicked: root.jobActionRequested(root.pendingJobAction, root.pendingJobObject)' in qml
+    assert (
+        'root.stageImmediateJobAction('
+        'root.effectivePrintState() === "paused" ? "resume" : "pause")'
+        in qml
+    )
+    assert "root.clearJobAction()" in qml
+    assert "root.jobActionRequested(root.pendingJobAction, root.pendingJobObject)" in qml
     assert "root.zOffsetLabel()" in qml
     assert "root.percentLabel(root.speedFactor)" in qml
     assert "root.percentLabel(root.extrudeFactor)" in qml
@@ -614,6 +621,11 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
 
     assert "function clampControlPercent(value)" in main_qml
     assert 'window.showPanel("job_status")' in main_qml
+    assert (
+        'requestedPrintState: window.jobControlBridgeModel ? '
+        'window.jobControlBridgeModel.requestedPrintState : ""'
+        in main_qml
+    )
     assert "jobControlBridgeModel.requestZOffsetAdjust(delta)" in main_qml
     assert (
         "jobControlBridgeModel.requestSpeedFactor("

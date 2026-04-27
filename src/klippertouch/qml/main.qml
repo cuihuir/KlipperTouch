@@ -269,6 +269,7 @@ ApplicationWindow {
                 fileModel: window.gcodeFileBridgeModel
                 controlStatus: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastStatus : ""
                 controlError: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastError : ""
+                requestedPrintState: window.jobControlBridgeModel ? window.jobControlBridgeModel.requestedPrintState : ""
                 onJobActionRequested: function(action, objectName) {
                     window.requestJobControl(action, objectName)
                 }

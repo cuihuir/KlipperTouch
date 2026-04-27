@@ -27,12 +27,14 @@ class JobControlClient(Protocol):
 class JobControlModel(QObject):
     statusChanged = Signal()
     errorChanged = Signal()
+    requestedPrintStateChanged = Signal()
 
     def __init__(self, client: JobControlClient | None = None) -> None:
         super().__init__()
         self._client = client
         self._last_status = ""
         self._last_error = ""
+        self._requested_print_state = ""
 
     @Property(str, notify=statusChanged)
     def lastStatus(self) -> str:  # noqa: N802
@@ -42,21 +44,25 @@ class JobControlModel(QObject):
     def lastError(self) -> str:  # noqa: N802
         return self._last_error
 
+    @Property(str, notify=requestedPrintStateChanged)
+    def requestedPrintState(self) -> str:  # noqa: N802
+        return self._requested_print_state
+
     @Slot()
     def requestPause(self) -> None:  # noqa: N802
-        self._run_control("Pause", lambda client: client.pause_print())
+        self._run_control("Pause", lambda client: client.pause_print(), "paused")
 
     @Slot()
     def requestResume(self) -> None:  # noqa: N802
-        self._run_control("Resume", lambda client: client.resume_print())
+        self._run_control("Resume", lambda client: client.resume_print(), "printing")
 
     @Slot()
     def requestCancel(self) -> None:  # noqa: N802
-        self._run_control("Cancel", lambda client: client.cancel_print())
+        self._run_control("Cancel", lambda client: client.cancel_print(), "cancelled")
 
     @Slot(str)
     def requestStartPrint(self, filename: str) -> None:  # noqa: N802
-        self._run_control("Print", lambda client: client.start_print(filename))
+        self._run_control("Print", lambda client: client.start_print(filename), "printing")
 
     @Slot(str)
     def requestDeleteFile(self, filename: str) -> None:  # noqa: N802
@@ -90,6 +96,7 @@ class JobControlModel(QObject):
         self,
         label: str,
         command: Callable[[JobControlClient], dict[str, object]],
+        requested_print_state: str = "",
     ) -> None:
         if self._client is None:
             self._set_error("Job control client is unavailable")
@@ -99,6 +106,8 @@ class JobControlModel(QObject):
         except Exception as exc:
             self._set_error(str(exc))
             return
+        if requested_print_state:
+            self._set_requested_print_state(requested_print_state)
         self._set_status(f"{label} sent")
 
     def _set_status(self, value: str) -> None:
@@ -112,3 +121,9 @@ class JobControlModel(QObject):
         self._last_status = ""
         self.errorChanged.emit()
         self.statusChanged.emit()
+
+    def _set_requested_print_state(self, value: str) -> None:
+        if value == self._requested_print_state:
+            return
+        self._requested_print_state = value
+        self.requestedPrintStateChanged.emit()
