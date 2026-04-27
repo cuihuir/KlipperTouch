@@ -151,9 +151,13 @@ def test_fake_temperature_graph_matches_heater_graph_structure() -> None:
     assert "function drawSeries(ctx, item, plotWidth, plotHeight)" in qml
     assert "ctx.setLineDash" in qml
     assert "property int visiblePointCount" in qml
+    assert "property bool redrawPending" in qml
     assert "function visibleSeries(series)" in qml
     assert "property var seriesModel: []" in qml
     assert "function seriesPoints(series, plotWidth, plotHeight)" in qml
+    assert "id: redrawTimer" in qml
+    assert "interval: 1000" in qml
+    assert "redrawTimer.start()" in qml
     assert 'currentSeries[i] === null || typeof currentSeries[i] === "undefined"' in qml
     assert "points.push(null)" in qml
     assert "hasActiveSegment = false" in qml

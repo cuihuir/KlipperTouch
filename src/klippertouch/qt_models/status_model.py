@@ -14,6 +14,8 @@ from PySide6.QtCore import (
 from klippertouch.domain.printer import PrinterStatus, TemperatureDeviceStatus
 
 EMPTY_INDEX = QModelIndex()
+GRAPH_HISTORY_LIMIT = 240
+GRAPH_ACTIVE_PANELS = {"main", "temperature"}
 
 
 class TemperatureDeviceListModel(QAbstractListModel):
@@ -38,8 +40,10 @@ class TemperatureDeviceListModel(QAbstractListModel):
         self._graph_visible: dict[str, bool] = {}
         self._graph_series_cache: list[dict[str, object]] = []
         self._graph_series_dirty = True
+        self._graph_active = True
+        self._graph_signal_pending = False
         self._local_targets: dict[str, tuple[float, str]] = {}
-        self._history_limit = 60
+        self._history_limit = GRAPH_HISTORY_LIMIT
         self._settings = (
             settings if settings is not None else QSettings("KlipperTouch", "KlipperTouch")
         )
@@ -102,7 +106,7 @@ class TemperatureDeviceListModel(QAbstractListModel):
         if history_changed:
             self._invalidate_graph_series()
             self.historyChanged.emit()
-            self.graphSeriesChanged.emit()
+            self._emit_or_defer_graph_series_changed()
 
     @Property(list, notify=historyChanged)
     def extruderSeries(self) -> list[float]:
@@ -166,7 +170,7 @@ class TemperatureDeviceListModel(QAbstractListModel):
             normalized = [float(value) for value in temperatures if isinstance(value, (int, float))]
             if not normalized:
                 continue
-            history[name] = normalized
+            history[name] = _resample_series(normalized, GRAPH_HISTORY_LIMIT)
             max_length = max(max_length, len(normalized))
             targets = values.get("targets")
             if isinstance(targets, list):
@@ -174,17 +178,23 @@ class TemperatureDeviceListModel(QAbstractListModel):
                     float(value) for value in targets if isinstance(value, (int, float))
                 ]
                 if normalized_targets:
-                    target_history[name] = normalized_targets
+                    target_history[name] = _resample_series(
+                        normalized_targets,
+                        GRAPH_HISTORY_LIMIT,
+                    )
                     max_length = max(max_length, len(normalized_targets))
 
         if history:
             self._history.update(history)
             self._target_history.update(target_history)
-            self._history_limit = max(self._history_limit, max_length)
+            self._history_limit = min(
+                GRAPH_HISTORY_LIMIT,
+                max(self._history_limit, max_length),
+            )
             self._invalidate_graph_series()
             self.historyChanged.emit()
             self.graphSelectionChanged.emit()
-            self.graphSeriesChanged.emit()
+            self._emit_or_defer_graph_series_changed()
 
     def rowCount(  # noqa: N802
         self,
@@ -260,7 +270,15 @@ class TemperatureDeviceListModel(QAbstractListModel):
         self.dataChanged.emit(index, index, [self.GRAPH_VISIBLE_ROLE])
         self._invalidate_graph_series()
         self.graphSelectionChanged.emit()
-        self.graphSeriesChanged.emit()
+        self._emit_or_defer_graph_series_changed()
+
+    def set_graph_active(self, active: bool) -> None:
+        if active == self._graph_active:
+            return
+        self._graph_active = active
+        if active and self._graph_signal_pending:
+            self._graph_signal_pending = False
+            self.graphSeriesChanged.emit()
 
     @Slot(str, float)
     def setPendingTarget(self, name: str, target: float) -> None:  # noqa: N802
@@ -308,6 +326,12 @@ class TemperatureDeviceListModel(QAbstractListModel):
 
     def _invalidate_graph_series(self) -> None:
         self._graph_series_dirty = True
+
+    def _emit_or_defer_graph_series_changed(self) -> None:
+        if self._graph_active:
+            self.graphSeriesChanged.emit()
+            return
+        self._graph_signal_pending = True
 
     def _role_values_for_device(self, device: TemperatureDeviceStatus) -> dict[int, object]:
         return {
@@ -385,6 +409,15 @@ def _active_target_series(points: list[float]) -> list[float | None]:
     return [point if point > 0 else None for point in points]
 
 
+def _resample_series(points: list[float], limit: int) -> list[float]:
+    if len(points) <= limit:
+        return points
+    if limit <= 1:
+        return points[-limit:]
+    step = (len(points) - 1) / (limit - 1)
+    return [points[round(index * step)] for index in range(limit)]
+
+
 def _graph_scope_for_status(status: PrinterStatus) -> str | None:
     hostname = status.hostname.strip()
     if not hostname or hostname == "unknown":
@@ -410,6 +443,10 @@ class StatusModel(QObject):
         self._status = PrinterStatus()
         self._temperature_device_model = temperature_device_model
         self._active_panel = "main"
+        if self._temperature_device_model is not None:
+            self._temperature_device_model.set_graph_active(
+                _panel_has_temperature_graph(self._active_panel)
+            )
 
     def set_status(self, status: PrinterStatus) -> None:
         previous = self._status
@@ -446,6 +483,10 @@ class StatusModel(QObject):
             return
         previous_panel = self._active_panel
         self._active_panel = next_panel
+        if self._temperature_device_model is not None:
+            self._temperature_device_model.set_graph_active(
+                _panel_has_temperature_graph(next_panel)
+            )
         self.activePanelChanged.emit()
         if not _panel_needs_toolhead(previous_panel) and _panel_needs_toolhead(next_panel):
             self.toolheadChanged.emit()
@@ -688,3 +729,7 @@ def _primary_extruder_fields_changed(previous: PrinterStatus, current: PrinterSt
 
 def _panel_needs_toolhead(panel: str) -> bool:
     return panel in {"move", "extrude", "job_status"}
+
+
+def _panel_has_temperature_graph(panel: str) -> bool:
+    return panel in GRAPH_ACTIVE_PANELS

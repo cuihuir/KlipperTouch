@@ -9,6 +9,7 @@ Rectangle {
     property real maxTemperature: 300
     property var seriesModel: []
     property int visiblePointCount: Math.max(180, Math.round(plotArea.width))
+    property bool redrawPending: false
 
     color: Theme.buttonsBg
     border.color: "#465456"
@@ -21,7 +22,10 @@ Rectangle {
 
     function requestRedraw() {
         if (graphCanvas) {
-            graphCanvas.requestPaint()
+            root.redrawPending = true
+            if (!redrawTimer.running) {
+                redrawTimer.start()
+            }
         }
     }
 
@@ -106,6 +110,19 @@ Rectangle {
     onSeriesModelChanged: requestRedraw()
     onMaxTemperatureChanged: requestRedraw()
     onVisiblePointCountChanged: requestRedraw()
+
+    Timer {
+        id: redrawTimer
+        interval: 1000
+        repeat: false
+        onTriggered: {
+            if (!root.redrawPending) {
+                return
+            }
+            root.redrawPending = false
+            graphCanvas.requestPaint()
+        }
+    }
 
     ColumnLayout {
         anchors.fill: parent
