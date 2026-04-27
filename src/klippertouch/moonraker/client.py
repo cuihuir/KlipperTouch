@@ -173,6 +173,14 @@ class MoonrakerClient:
         )
         return self.run_gcode_script(script)
 
+    def home_axes(self, *axes: str) -> dict[str, Any]:
+        normalized_axes = tuple(axis.lower() for axis in axes)
+        if any(axis not in {"x", "y", "z"} for axis in normalized_axes):
+            raise ValueError("Invalid home axis")
+        suffix = " ".join(axis.upper() for axis in normalized_axes)
+        script = f"G28 {suffix}".strip()
+        return self.run_gcode_script(script)
+
     def delete_gcode_file(self, filename: str) -> dict[str, Any]:
         return self.delete(f"server/files/gcodes/{filename.strip('/')}")
 

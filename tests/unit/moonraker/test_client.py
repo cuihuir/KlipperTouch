@@ -341,12 +341,15 @@ def test_client_sends_print_control_when_controls_enabled(
             "G0 Z0.500 F600\n"
             "RESTORE_GCODE_STATE NAME=KLIPPERTOUCH_MOVE",
         ),
+        ("home_axes", ("x", "y"), "G28 X Y"),
+        ("home_axes", ("z",), "G28 Z"),
+        ("home_axes", (), "G28"),
     ],
 )
 def test_client_sends_gcode_control_scripts_when_controls_enabled(
     monkeypatch,
     client_method: str,
-    argument: float | str | tuple[str, float],
+    argument: float | str | tuple[object, ...],
     script: str,
 ) -> None:
     captured: dict[str, object] = {}

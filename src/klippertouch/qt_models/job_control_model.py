@@ -35,6 +35,8 @@ class JobControlClient(Protocol):
 
     def jog_toolhead(self, axis: str, distance: float) -> dict[str, object]: ...
 
+    def home_axes(self, *axes: str) -> dict[str, object]: ...
+
 
 class JobControlModel(QObject):
     statusChanged = Signal()
@@ -121,6 +123,19 @@ class JobControlModel(QObject):
             return
         axis, signed_distance = direction_map[clean_direction]
         self._run_control("Move", lambda client: client.jog_toolhead(axis, signed_distance))
+
+    @Slot(str)
+    def requestHome(self, target: str) -> None:  # noqa: N802
+        clean_target = target.strip().lower()
+        target_map = {
+            "all": (),
+            "xy": ("x", "y"),
+            "z": ("z",),
+        }
+        if clean_target not in target_map:
+            self._set_error("Invalid home target")
+            return
+        self._run_control("Home", lambda client: client.home_axes(*target_map[clean_target]))
 
     @Slot(str)
     def requestPlaceholderControl(self, label: str) -> None:  # noqa: N802

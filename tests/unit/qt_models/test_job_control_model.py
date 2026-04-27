@@ -66,6 +66,10 @@ class FakeClient:
         self.calls.append(("jog", f"{axis}:{distance}"))
         return {"ok": True}
 
+    def home_axes(self, *axes: str) -> dict[str, bool]:
+        self.calls.append(("home", ",".join(axes)))
+        return {"ok": True}
+
 
 class BlockingClient(FakeClient):
     def pause_print(self) -> dict[str, bool]:
@@ -212,6 +216,28 @@ def test_job_control_model_rejects_invalid_jog_requests(qtbot) -> None:
     model.requestMoveJog("x_plus", 0)
     assert client.calls == []
     assert model.lastError == "Move distance must be positive"
+
+
+def test_job_control_model_sends_home_requests(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestHome("xy")
+    model.requestHome("z")
+    model.requestHome("all")
+
+    assert client.calls == [("home", "x,y"), ("home", "z"), ("home", "")]
+    assert model.lastStatus == "Home sent"
+
+
+def test_job_control_model_rejects_invalid_home_requests(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestHome("bad")
+
+    assert client.calls == []
+    assert model.lastError == "Invalid home target"
 
 
 def test_job_control_model_reports_placeholder_recovery_actions(qtbot) -> None:

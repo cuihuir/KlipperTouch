@@ -289,7 +289,12 @@ Item {
                         height: xyMovePad.homeSize
                         anchors.centerIn: parent
                         title: "Home"
-                        hint: "locked"
+                        hint: "XY"
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: root.moveActionRequested("home_xy", 0)
+                        }
                     }
                 }
 
@@ -329,7 +334,12 @@ Item {
                         height: zMovePad.homeSize
                         anchors.centerIn: parent
                         title: "Z Home"
-                        hint: "locked"
+                        hint: "Z"
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: root.moveActionRequested("home_z", 0)
+                        }
                     }
 
                     DirectionButton {

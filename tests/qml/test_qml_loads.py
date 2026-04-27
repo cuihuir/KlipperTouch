@@ -707,6 +707,8 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert "placeholder" in qml
     assert 'title: "Home"' in qml
     assert 'title: "Z Home"' in qml
+    assert 'root.moveActionRequested("home_xy", 0)' in qml
+    assert 'root.moveActionRequested("home_z", 0)' in qml
     assert '"label": "Disable Motors"' in qml
     assert '"action": "disable_motors"' in qml
     assert '"hint": "M84"' in qml
@@ -1459,6 +1461,8 @@ def test_main_routes_move_and_extrude_to_locked_panels() -> None:
     assert "onMoveActionRequested: function(action, distance)" in main_qml
     assert "function requestMoveControl(action, distance)" in main_qml
     assert "jobControlBridgeModel.requestMoveJog(action, distance)" in main_qml
+    assert 'jobControlBridgeModel.requestHome("xy")' in main_qml
+    assert 'jobControlBridgeModel.requestHome("z")' in main_qml
     assert "jobControlBridgeModel.requestDisableMotors()" in main_qml
     assert "ExtrudePanel {" in main_qml
 

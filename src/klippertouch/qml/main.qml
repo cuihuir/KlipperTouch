@@ -225,6 +225,10 @@ ApplicationWindow {
         }
         if (action === "disable_motors") {
             jobControlBridgeModel.requestDisableMotors()
+        } else if (action === "home_xy") {
+            jobControlBridgeModel.requestHome("xy")
+        } else if (action === "home_z") {
+            jobControlBridgeModel.requestHome("z")
         } else if (action === "x_minus" || action === "x_plus"
                    || action === "y_minus" || action === "y_plus"
                    || action === "z_minus" || action === "z_plus") {
