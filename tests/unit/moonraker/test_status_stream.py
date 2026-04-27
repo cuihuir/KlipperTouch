@@ -8,6 +8,7 @@ from klippertouch.moonraker.status_stream import (
     build_temperature_subscription_message,
     build_websocket_request,
     status_from_websocket_message,
+    status_needs_recovery_polling,
 )
 
 
@@ -85,11 +86,46 @@ def test_status_stream_schedules_read_only_reconnects() -> None:
     assert "self._socket.disconnected.connect(self._schedule_reconnect)" in source
     assert "self._socket.errorOccurred.connect(self._schedule_reconnect)" in source
     assert "self._socket.connected.connect(self._reconnect_timer.stop)" in source
+    assert "self._socket.connected.connect(self._poll_timer.stop)" in source
     assert "self._reconnect_timer.timeout.connect(self.start)" in source
+    assert "self._poll_timer.setInterval(reconnect_interval_ms)" in source
+    assert "self._poll_timer.timeout.connect(self._poll_until_ready)" in source
+    assert "self._poll_until_ready()" in source
+    assert "if status_needs_recovery_polling(self._status)" in source
+    assert "return" in source
+    assert "if status_needs_recovery_polling(status)" in source
+    assert "build_status_from_client(self._client)" in source
+    assert "if status.klippy_state == \"ready\" and status.webhooks_state == \"ready\":" in source
+    assert "self._poll_timer.stop()" in source
+    assert "self.start()" in source
     assert "printer.objects.subscribe" in source
     assert "printer.gcode.script" not in source
     assert '_set_webhooks_state("disconnected", "Moonraker disconnected")' in source
     assert '_set_webhooks_state("startup", "Klipper is attempting to start")' in source
+
+
+def test_status_needs_recovery_polling_for_klippy_faults() -> None:
+    assert status_needs_recovery_polling(
+        PrinterStatus(
+            klippy_state="shutdown",
+            moonraker_version="v0.10.0",
+            webhooks_state="shutdown",
+        )
+    )
+    assert status_needs_recovery_polling(
+        PrinterStatus(
+            klippy_state="ready",
+            moonraker_version="v0.10.0",
+            webhooks_state="startup",
+        )
+    )
+    assert not status_needs_recovery_polling(
+        PrinterStatus(
+            klippy_state="ready",
+            moonraker_version="v0.10.0",
+            webhooks_state="ready",
+        )
+    )
 
 
 def test_status_from_websocket_message_applies_notification_temperature_delta() -> None:

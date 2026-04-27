@@ -318,6 +318,19 @@ def test_printer_status_marks_klippy_ready_when_webhooks_recovers() -> None:
     assert updated.webhooks_message == "Printer is ready"
 
 
+def test_printer_status_normalizes_probe_when_webhooks_is_ready() -> None:
+    status = PrinterStatus.from_probe(
+        server_info={"moonraker_version": "v0.10.0", "klippy_state": "startup"},
+        printer_info={"state": "startup", "hostname": "orangepi3b", "software_version": "v0.13.0"},
+        objects={"objects": ["webhooks"]},
+        object_status={"status": {"webhooks": {"state": "ready", "state_message": ""}}},
+    )
+
+    assert status.klippy_state == "ready"
+    assert status.webhooks_state == "ready"
+    assert status.webhooks_message == "Printer is ready"
+
+
 def test_printer_status_tracks_webhooks_startup_and_disconnected_states() -> None:
     status = PrinterStatus(
         klippy_state="shutdown",

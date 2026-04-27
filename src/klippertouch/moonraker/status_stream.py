@@ -7,6 +7,7 @@ from PySide6.QtWebSockets import QWebSocket
 
 from klippertouch.domain.printer import PrinterStatus
 from klippertouch.moonraker.client import MoonrakerClient
+from klippertouch.probe import build_status_from_client
 from klippertouch.qt_models.status_model import StatusModel
 
 SUBSCRIPTION_ID = 1
@@ -81,6 +82,14 @@ def status_from_websocket_message(
     return current_status.with_status_update(update)
 
 
+def status_needs_recovery_polling(status: PrinterStatus) -> bool:
+    if status.moonraker_version in {"", "unknown"}:
+        return True
+    if status.webhooks_state and status.webhooks_state != "ready":
+        return True
+    return status.klippy_state != "ready"
+
+
 def _status_update_from_payload(payload: dict[str, Any]) -> dict[str, Any] | None:
     method = payload.get("method")
     if method == "notify_status_update":
@@ -113,9 +122,13 @@ class MoonrakerStatusStream(QObject):
         self._reconnect_timer.setSingleShot(True)
         self._reconnect_timer.setInterval(reconnect_interval_ms)
         self._reconnect_timer.timeout.connect(self.start)
+        self._poll_timer = QTimer(self)
+        self._poll_timer.setInterval(reconnect_interval_ms)
+        self._poll_timer.timeout.connect(self._poll_until_ready)
         self._socket = QWebSocket()
         self._socket.connected.connect(self._send_subscription)
         self._socket.connected.connect(self._reconnect_timer.stop)
+        self._socket.connected.connect(self._poll_timer.stop)
         self._socket.disconnected.connect(self._schedule_reconnect)
         self._socket.errorOccurred.connect(self._schedule_reconnect)
         self._socket.textMessageReceived.connect(self._handle_text_message)
@@ -123,13 +136,19 @@ class MoonrakerStatusStream(QObject):
     def start(self) -> None:
         if not _subscription_objects(self._status):
             return
+        if status_needs_recovery_polling(self._status):
+            if not self._poll_timer.isActive():
+                self._poll_timer.start()
+                self._poll_until_ready()
+            return
         self._socket.open(build_websocket_request(self._client))
 
     def _schedule_reconnect(self, *_args: object) -> None:
-        if not _subscription_objects(self._status) or self._reconnect_timer.isActive():
+        if not _subscription_objects(self._status) or self._poll_timer.isActive():
             return
         self._set_webhooks_state("disconnected", "Moonraker disconnected")
-        self._reconnect_timer.start()
+        self._poll_timer.start()
+        self._poll_until_ready()
 
     @Slot()
     def _send_subscription(self) -> None:
@@ -145,6 +164,9 @@ class MoonrakerStatusStream(QObject):
             return
         self._status = status
         self._status_model.set_status(status)
+        if status_needs_recovery_polling(status) and not self._poll_timer.isActive():
+            self._poll_timer.start()
+            self._poll_until_ready()
 
     def _set_webhooks_state(self, state: str, message: str) -> None:
         if "webhooks" not in self._status.objects:
@@ -156,6 +178,22 @@ class MoonrakerStatusStream(QObject):
             return
         self._status = status
         self._status_model.set_status(status)
+
+    @Slot()
+    def _poll_until_ready(self) -> None:
+        try:
+            status = build_status_from_client(self._client)
+        except Exception:
+            self._set_webhooks_state("disconnected", "Moonraker disconnected")
+            return
+        if not status.objects:
+            self._set_webhooks_state("disconnected", "Moonraker disconnected")
+            return
+        self._status = status
+        self._status_model.set_status(status)
+        if status.klippy_state == "ready" and status.webhooks_state == "ready":
+            self._poll_timer.stop()
+            self.start()
 
 
 def _subscription_objects(status: PrinterStatus) -> dict[str, list[str]]:

@@ -212,9 +212,22 @@ class PrinterStatus:
         update_status: dict[str, Any] | None = None,
     ) -> "PrinterStatus":
         object_names = tuple(str(item) for item in objects.get("objects", ()))
+        webhooks_fields = _webhooks_fields_from_status(object_status or {})
+        klippy_state = str(server_info.get("klippy_state", printer_info.get("state", "unknown")))
+        if webhooks_fields.get("webhooks_state") == "ready":
+            klippy_state = "ready"
+            if not webhooks_fields.get("webhooks_message"):
+                webhooks_fields["webhooks_message"] = "Printer is ready"
+        elif webhooks_fields.get("webhooks_state") in {
+            "startup",
+            "shutdown",
+            "error",
+            "disconnected",
+        }:
+            klippy_state = str(webhooks_fields["webhooks_state"])
         return cls(
             hostname=str(printer_info.get("hostname", "unknown")),
-            klippy_state=str(server_info.get("klippy_state", printer_info.get("state", "unknown"))),
+            klippy_state=klippy_state,
             klipper_version=str(printer_info.get("software_version", "unknown")),
             moonraker_version=str(server_info.get("moonraker_version", "unknown")),
             mcu_statuses=_mcu_statuses_from_probe(mcu_status or {}),
@@ -224,7 +237,7 @@ class PrinterStatus:
             **_print_fields_from_status(object_status or {}),
             **_exclude_object_fields_from_status(object_status or {}),
             **_toolhead_fields_from_status(object_status or {}),
-            **_webhooks_fields_from_status(object_status or {}),
+            **webhooks_fields,
         )
 
     def with_temperature_status_update(self, status_update: dict[str, Any]) -> "PrinterStatus":
