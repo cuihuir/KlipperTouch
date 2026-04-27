@@ -229,6 +229,7 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     qml = Path("src/klippertouch/qml/panels/FilesPanel.qml").read_text(encoding="utf-8")
 
     assert "property var fileModel" in qml
+    assert 'objectName: "filesPanel"' in qml
     assert 'text: "G-Code files"' not in qml
     assert 'property string rootPath: "gcodes"' in qml
     assert '"label": "Name"' in qml
@@ -238,9 +239,9 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "Loading files..." in qml
     assert "function currentPathLabel" in qml
     assert "root.currentPathLabel()" in qml
-    assert "function fileListPreferredHeight()" in qml
-    assert "Layout.preferredHeight: root.fileListPreferredHeight()" in qml
     assert "function emptyTitle" in qml
+    assert "function goBack()" in qml
+    assert "property bool detailPage" in qml
     assert "Current folder is empty" in qml
     assert 'fileList.count + " items"' in qml
     assert "Search files" in qml
@@ -254,6 +255,7 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "property bool compactFileRows" in qml
     assert "root.compactFileRows ? 2 : 5" in qml
     assert "root.activeFileModel.selectPath(path, isDirectory)" in qml
+    assert "root.detailPage = true" in qml
     assert "selectedPath" in qml
     assert "selectedDisplayName" in qml
     assert "selectedSizeLabel" in qml
@@ -304,8 +306,13 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "required property string thumbnailUrl" in qml
     assert "source: thumbnailUrl" in qml
     assert "root.activeFileModel.selectedPreviewThumbnailUrl" in qml
-    assert "id: detailsPanel" in qml
-    assert "Read-only file details" in qml
+    assert "id: detailPageView" in qml
+    assert "visible: !root.detailPage" in qml
+    assert "visible: root.detailPage" in qml
+    assert "Read-only file actions" in qml
+    assert 'text: "Print"' in qml
+    assert 'text: "Delete"' in qml
+    assert "enabled: false" in qml
     assert "id: selectedMetadataFlickable" in qml
     assert "id: selectedMetadataGrid" in qml
     assert "contentHeight: selectedMetadataGrid.implicitHeight" in qml
@@ -324,6 +331,8 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert 'text: "Start"' not in qml
     assert 'text: "Pause"' not in qml
     assert 'text: "Cancel"' not in qml
+    assert "id: detailsPanel" not in qml
+    assert "columns: root.metrics.portrait ? 1 : 2" not in qml
 
 
 def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:

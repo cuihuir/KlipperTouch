@@ -189,6 +189,7 @@ def capture(
     sample_status: bool = False,
     sample_state: str = "printing",
     job_detail_pages: tuple[str, ...] = (),
+    file_detail_pages: tuple[str, ...] = (),
 ) -> list[Path]:
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     app = QGuiApplication.instance() or QGuiApplication([])
@@ -236,9 +237,12 @@ def capture(
             root.setProperty("panelStack", [panel])
             root.setProperty("currentPanel", panel)
             app.processEvents()
-            for detail_page in _detail_pages_for_panel(panel, job_detail_pages):
+            for detail_page in _detail_pages_for_panel(panel, job_detail_pages, file_detail_pages):
                 if detail_page:
-                    _set_job_status_detail_page(root, detail_page)
+                    if panel == "job_status":
+                        _set_job_status_detail_page(root, detail_page)
+                    elif panel == "print":
+                        _set_files_detail_page(root, detail_page)
                     app.processEvents()
                 image = root.grabWindow()
                 target_name = f"{panel}_{detail_page}" if detail_page else panel
@@ -249,10 +253,16 @@ def capture(
     return captured
 
 
-def _detail_pages_for_panel(panel: str, job_detail_pages: tuple[str, ...]) -> tuple[str, ...]:
-    if panel != "job_status" or not job_detail_pages:
-        return ("",)
-    return job_detail_pages
+def _detail_pages_for_panel(
+    panel: str,
+    job_detail_pages: tuple[str, ...],
+    file_detail_pages: tuple[str, ...],
+) -> tuple[str, ...]:
+    if panel == "job_status" and job_detail_pages:
+        return job_detail_pages
+    if panel == "print" and file_detail_pages:
+        return file_detail_pages
+    return ("",)
 
 
 def _set_job_status_detail_page(root: QObject, page: str) -> None:
@@ -263,6 +273,16 @@ def _set_job_status_detail_page(root: QObject, page: str) -> None:
     if panel is None:
         raise RuntimeError("Failed to find jobStatusPanel for detail screenshot")
     panel.setProperty("detailPage", page)
+
+
+def _set_files_detail_page(root: QObject, page: str) -> None:
+    panel = root.findChild(QObject, "filesPanel")
+    if panel is None:
+        loader = root.findChild(QObject, "panelLoader")
+        panel = loader.property("item") if loader is not None else None
+    if panel is None:
+        raise RuntimeError("Failed to find filesPanel for detail screenshot")
+    panel.setProperty("detailPage", page == "detail")
 
 
 def write_index(output_dir: Path, captured: list[Path]) -> Path:
@@ -356,6 +376,13 @@ def main(argv: list[str] | None = None) -> int:
         help="Capture specific Job Status subpages, for example summary time motion extrusion.",
     )
     parser.add_argument(
+        "--file-detail-pages",
+        nargs="+",
+        choices=("detail",),
+        default=(),
+        help='Capture specific Print subpages, for example "detail".',
+    )
+    parser.add_argument(
         "--no-index",
         action="store_true",
         help="Do not write index.html next to the captured screenshots.",
@@ -371,6 +398,7 @@ def main(argv: list[str] | None = None) -> int:
         sample_status=args.sample_status,
         sample_state=args.sample_state,
         job_detail_pages=tuple(args.job_detail_pages),
+        file_detail_pages=tuple(args.file_detail_pages),
     )
     if not args.no_index:
         print(write_index(args.output, captured))

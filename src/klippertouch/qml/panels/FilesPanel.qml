@@ -5,12 +5,14 @@ import "../Theme.js" as Theme
 
 Item {
     id: root
+    objectName: "filesPanel"
     required property var metrics
     property var fileModel: null
     property var activeFileModel: fileModel
     property string rootPath: "gcodes"
     property bool loading: false
     property bool compactFileRows: root.metrics.portrait || width < 920
+    property bool detailPage: false
 
     function currentPathLabel() {
         if (root.activeFileModel && root.activeFileModel.currentPath.length > 0) {
@@ -51,9 +53,19 @@ Item {
     function enterPath(path, isDirectory) {
         if (isDirectory && root.activeFileModel) {
             root.activeFileModel.setCurrentPath(path)
+            root.detailPage = false
         } else if (root.activeFileModel) {
             root.activeFileModel.selectPath(path, isDirectory)
+            root.detailPage = true
         }
+    }
+
+    function goBack() {
+        if (root.detailPage) {
+            root.detailPage = false
+            return true
+        }
+        return false
     }
 
     function emptyTitle() {
@@ -115,15 +127,6 @@ Item {
         ]
     }
 
-    function fileListPreferredHeight() {
-        if (!root.metrics.portrait) {
-            return -1
-        }
-        var visibleRows = Math.max(1, Math.min(fileList.count, 3))
-        var rowHeight = Math.max(46, Math.round(root.metrics.fontSize * 4.2))
-        return visibleRows * rowHeight + Math.max(0, visibleRows - 1) * fileList.spacing
-    }
-
     Rectangle {
         anchors.fill: parent
         anchors.margins: root.metrics.margin
@@ -139,6 +142,7 @@ Item {
 
             RowLayout {
                 id: compactControlRow
+                visible: !root.detailPage
                 Layout.fillWidth: true
                 Layout.preferredHeight: Math.max(34, Math.round(root.metrics.fontSize * 2.45))
                 spacing: Math.max(6, Math.round(root.metrics.fontSize * 0.45))
@@ -195,6 +199,7 @@ Item {
 
             RowLayout {
                 id: compactMetaRow
+                visible: !root.detailPage
                 Layout.fillWidth: true
                 Layout.preferredHeight: Math.max(24, Math.round(root.metrics.fontSize * 1.7))
                 spacing: root.metrics.gap
@@ -223,138 +228,134 @@ Item {
                 }
             }
 
-            GridLayout {
+            ListView {
+                id: fileList
+                visible: !root.detailPage && fileList.count > 0
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                columns: root.metrics.portrait ? 1 : 2
-                rows: root.metrics.portrait ? 2 : 1
-                rowSpacing: root.metrics.gap
-                columnSpacing: root.metrics.gap
-                visible: fileList.count > 0
-
-                ListView {
-                    id: fileList
-                    Layout.fillWidth: true
-                    Layout.fillHeight: !root.metrics.portrait
-                    Layout.preferredHeight: root.fileListPreferredHeight()
-                    Layout.minimumWidth: 0
-                    clip: true
-                    spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.35))
-                    model: root.activeFileModel
-                    boundsBehavior: Flickable.StopAtBounds
-                    flickDeceleration: 2600
-                    ScrollBar.vertical: ScrollBar {
-                        policy: ScrollBar.AsNeeded
-                    }
-
-                    delegate: Rectangle {
-                        required property string path
-                        required property string displayName
-                        required property string sizeLabel
-                        required property real modified
-                        required property bool isDirectory
-                        required property string modifiedLabel
-                        required property string permissions
-                        required property string thumbnailUrl
-
-                        width: fileList.width
-                        height: Math.max(46, Math.round(root.metrics.fontSize * (root.metrics.portrait ? 4.2 : 3.3)))
-                        color: !isDirectory && root.activeFileModel && root.activeFileModel.selectedPath === path
-                            ? "#17282b"
-                            : "#101617"
-                        border.color: !isDirectory && root.activeFileModel && root.activeFileModel.selectedPath === path
-                            ? Theme.color4
-                            : "#263233"
-                        border.width: 1
-                        radius: Math.round(root.metrics.fontSize * 0.32)
-
-                        GridLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: root.metrics.gap
-                            anchors.rightMargin: root.metrics.gap
-                            columns: root.compactFileRows ? 2 : 5
-                            rowSpacing: 0
-                            columnSpacing: root.metrics.gap
-
-                            Rectangle {
-                                Layout.preferredWidth: Math.max(40, Math.round(root.metrics.fontSize * 2.8))
-                                Layout.preferredHeight: Layout.preferredWidth
-                                Layout.rowSpan: 2
-                                color: "#0b1112"
-                                border.color: "#263233"
-                                border.width: 1
-                                radius: Math.round(root.metrics.fontSize * 0.22)
-
-                                Image {
-                                    anchors.fill: parent
-                                    anchors.margins: 2
-                                    source: thumbnailUrl
-                                    fillMode: Image.PreserveAspectFit
-                                    visible: !isDirectory && thumbnailUrl.length > 0
-                                }
-
-                                Label {
-                                    anchors.centerIn: parent
-                                    color: Theme.mutedText
-                                    text: isDirectory ? "DIR" : "G"
-                                    visible: isDirectory || thumbnailUrl.length <= 0
-                                    font.bold: true
-                                    font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
-                                }
-                            }
-
-                            Label {
-                                Layout.fillWidth: true
-                                color: Theme.text
-                                text: isDirectory ? "Folder  " + displayName : displayName
-                                elide: Text.ElideMiddle
-                                font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize))
-                            }
-
-                            Label {
-                                Layout.preferredWidth: root.compactFileRows
-                                    ? fileList.width - root.metrics.gap * 2
-                                    : Math.max(72, Math.round(root.metrics.fontSize * 5.2))
-                                color: Theme.mutedText
-                                text: root.compactFileRows
-                                    ? path + " | " + sizeLabel + " | " + modifiedLabel
-                                    : sizeLabel
-                                elide: Text.ElideMiddle
-                                horizontalAlignment: root.compactFileRows ? Text.AlignLeft : Text.AlignRight
-                                font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
-                            }
-
-                            Label {
-                                Layout.preferredWidth: Math.max(112, Math.round(root.metrics.fontSize * 8.2))
-                                visible: !root.compactFileRows
-                                color: Theme.mutedText
-                                text: modifiedLabel
-                                horizontalAlignment: Text.AlignRight
-                                font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
-                            }
-
-                            Label {
-                                Layout.preferredWidth: Math.max(76, Math.round(root.metrics.fontSize * 5.4))
-                                visible: !root.compactFileRows
-                                color: Theme.mutedText
-                                text: permissions
-                                horizontalAlignment: Text.AlignRight
-                                font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
-                            }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: root.enterPath(path, isDirectory)
-                        }
-                    }
+                Layout.minimumWidth: 0
+                clip: true
+                spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.35))
+                model: root.activeFileModel
+                boundsBehavior: Flickable.StopAtBounds
+                flickDeceleration: 2600
+                ScrollBar.vertical: ScrollBar {
+                    policy: ScrollBar.AsNeeded
                 }
 
+                delegate: Rectangle {
+                    required property string path
+                    required property string displayName
+                    required property string sizeLabel
+                    required property real modified
+                    required property bool isDirectory
+                    required property string modifiedLabel
+                    required property string permissions
+                    required property string thumbnailUrl
+
+                    width: fileList.width
+                    height: Math.max(46, Math.round(root.metrics.fontSize * (root.metrics.portrait ? 4.2 : 3.3)))
+                    color: !isDirectory && root.activeFileModel && root.activeFileModel.selectedPath === path
+                        ? "#17282b"
+                        : "#101617"
+                    border.color: !isDirectory && root.activeFileModel && root.activeFileModel.selectedPath === path
+                        ? Theme.color4
+                        : "#263233"
+                    border.width: 1
+                    radius: Math.round(root.metrics.fontSize * 0.32)
+
+                    GridLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: root.metrics.gap
+                        anchors.rightMargin: root.metrics.gap
+                        columns: root.compactFileRows ? 2 : 5
+                        rowSpacing: 0
+                        columnSpacing: root.metrics.gap
+
+                        Rectangle {
+                            Layout.preferredWidth: Math.max(40, Math.round(root.metrics.fontSize * 2.8))
+                            Layout.preferredHeight: Layout.preferredWidth
+                            Layout.rowSpan: 2
+                            color: "#0b1112"
+                            border.color: "#263233"
+                            border.width: 1
+                            radius: Math.round(root.metrics.fontSize * 0.22)
+
+                            Image {
+                                anchors.fill: parent
+                                anchors.margins: 2
+                                source: thumbnailUrl
+                                fillMode: Image.PreserveAspectFit
+                                visible: !isDirectory && thumbnailUrl.length > 0
+                            }
+
+                            Label {
+                                anchors.centerIn: parent
+                                color: Theme.mutedText
+                                text: isDirectory ? "DIR" : "G"
+                                visible: isDirectory || thumbnailUrl.length <= 0
+                                font.bold: true
+                                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                            }
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.text
+                            text: isDirectory ? "Folder  " + displayName : displayName
+                            elide: Text.ElideMiddle
+                            font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize))
+                        }
+
+                        Label {
+                            Layout.preferredWidth: root.compactFileRows
+                                ? fileList.width - root.metrics.gap * 2
+                                : Math.max(72, Math.round(root.metrics.fontSize * 5.2))
+                            color: Theme.mutedText
+                            text: root.compactFileRows
+                                ? path + " | " + sizeLabel + " | " + modifiedLabel
+                                : sizeLabel
+                            elide: Text.ElideMiddle
+                            horizontalAlignment: root.compactFileRows ? Text.AlignLeft : Text.AlignRight
+                            font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                        }
+
+                        Label {
+                            Layout.preferredWidth: Math.max(112, Math.round(root.metrics.fontSize * 8.2))
+                            visible: !root.compactFileRows
+                            color: Theme.mutedText
+                            text: modifiedLabel
+                            horizontalAlignment: Text.AlignRight
+                            font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                        }
+
+                        Label {
+                            Layout.preferredWidth: Math.max(76, Math.round(root.metrics.fontSize * 5.4))
+                            visible: !root.compactFileRows
+                            color: Theme.mutedText
+                            text: permissions
+                            horizontalAlignment: Text.AlignRight
+                            font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: root.enterPath(path, isDirectory)
+                    }
+                }
+            }
+
+            ColumnLayout {
+                id: detailPageView
+                visible: root.detailPage
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                spacing: root.metrics.gap
+
                 Rectangle {
-                    id: detailsPanel
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    Layout.minimumWidth: 0
                     color: "#101617"
                     border.color: "#263233"
                     border.width: 1
@@ -463,12 +464,54 @@ Item {
                         }
                     }
                 }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Math.max(44, Math.round(root.metrics.fontSize * 3.0))
+                    Layout.maximumHeight: Math.max(44, Math.round(root.metrics.fontSize * 3.0))
+                    Layout.fillHeight: false
+                    spacing: root.metrics.gap
+
+                    Label {
+                        Layout.fillWidth: true
+                        color: Theme.mutedText
+                        text: "Read-only file actions"
+                        verticalAlignment: Text.AlignVCenter
+                        font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                    }
+
+                    Button {
+                        Layout.preferredWidth: Math.max(108, Math.round(root.metrics.fontSize * 7.5))
+                        Layout.preferredHeight: Math.max(44, Math.round(root.metrics.fontSize * 3.0))
+                        text: "Print"
+                        enabled: false
+                        background: Rectangle {
+                            color: "#101617"
+                            border.color: "#263233"
+                            border.width: 1
+                            radius: Math.round(root.metrics.fontSize * 0.28)
+                        }
+                    }
+
+                    Button {
+                        Layout.preferredWidth: Math.max(108, Math.round(root.metrics.fontSize * 7.5))
+                        Layout.preferredHeight: Math.max(44, Math.round(root.metrics.fontSize * 3.0))
+                        text: "Delete"
+                        enabled: false
+                        background: Rectangle {
+                            color: "#101617"
+                            border.color: "#263233"
+                            border.width: 1
+                            radius: Math.round(root.metrics.fontSize * 0.28)
+                        }
+                    }
+                }
             }
 
             Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                visible: fileList.count === 0
+                visible: !root.detailPage && fileList.count === 0
                 color: "#101617"
                 border.color: "#263233"
                 border.width: 1
