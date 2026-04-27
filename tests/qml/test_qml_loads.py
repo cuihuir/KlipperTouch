@@ -690,6 +690,8 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert "Theme.color3" in qml
     assert "id: xyMovePad" in qml
     assert "id: zMovePad" in qml
+    assert "id: motionPad" in qml
+    assert "id: motionActions" in qml
     assert 'title: "Home"' in qml
     assert 'title: "Z Home"' in qml
     assert '"label": "Disable Motors"' in qml
@@ -698,6 +700,8 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert '"label": "More"' in qml
     assert '"action": "more"' in qml
     assert "id: moveActionBar" in qml
+    assert "visible: false" in qml
+    assert "property string icon" in qml
     assert "id: moveMorePanel" in qml
     assert "root.moreVisible = !root.moreVisible" in qml
     assert "root.moveActionRequested(modelData.action)" in qml
@@ -1391,6 +1395,8 @@ def test_move_panel_is_locked_and_responsive() -> None:
     assert "id: moveActionBar" in qml
     assert "id: moveMorePanel" in qml
     assert "id: controlGroupGrid" in qml
+    assert "id: motionPad" in qml
+    assert "id: motionActions" in qml
     assert "id: xyMovePad" in qml
     assert "id: zMovePad" in qml
     assert "direction: modelData.direction" in qml

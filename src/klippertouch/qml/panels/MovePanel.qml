@@ -25,8 +25,8 @@ Item {
         {"label": "Z-", "direction": "down"}
     ]
     property var actionButtons: [
-        {"label": "Disable Motors", "action": "disable_motors", "hint": "M84"},
-        {"label": "More", "action": "more", "hint": "settings"}
+        {"label": "Disable Motors", "action": "disable_motors", "hint": "M84", "icon": "⏻"},
+        {"label": "More", "action": "more", "hint": "settings", "icon": "⋯"}
     ]
     property var distances: [".1", ".5", "1", "5", "10", "25", "50"]
     property string selectedDistance: "10"
@@ -148,6 +148,63 @@ Item {
         }
     }
 
+    component ActionIconButton: Rectangle {
+        id: actionRoot
+        property string title: ""
+        property string hint: ""
+        property string icon: ""
+        property bool selected: false
+
+        color: selected ? "#1b2b2e" : "#101819"
+        border.color: selected ? Theme.color3 : "#536165"
+        border.width: 1
+        radius: Math.round(Math.min(width, height) * 0.22)
+
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: Math.max(3, Math.round(root.metrics.fontSize * 0.2))
+            color: "transparent"
+            border.color: "#1f2a2c"
+            border.width: 1
+            radius: Math.round(parent.radius * 0.72)
+        }
+
+        ColumnLayout {
+            anchors.centerIn: parent
+            width: parent.width - root.metrics.gap
+            spacing: 0
+
+            Label {
+                Layout.fillWidth: true
+                text: actionRoot.icon
+                color: Theme.text
+                font.pixelSize: Math.max(22, Math.round(root.metrics.fontSize * 1.6))
+                horizontalAlignment: Text.AlignHCenter
+            }
+
+            Label {
+                Layout.fillWidth: true
+                text: actionRoot.title
+                color: Theme.text
+                font.bold: true
+                font.pixelSize: Math.max(9, Math.round(root.metrics.fontSize * 0.6))
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.WordWrap
+                maximumLineCount: 2
+                elide: Text.ElideRight
+            }
+
+            Label {
+                Layout.fillWidth: true
+                text: actionRoot.hint
+                color: Theme.mutedText
+                font.pixelSize: Math.max(8, Math.round(root.metrics.fontSize * 0.52))
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
+            }
+        }
+    }
+
     GridLayout {
         anchors.fill: parent
         anchors.margins: root.metrics.margin
@@ -155,27 +212,26 @@ Item {
         rows: 2
         rowSpacing: root.metrics.gap
 
-        GridLayout {
+        Rectangle {
             id: controlGroupGrid
             Layout.fillWidth: true
             Layout.fillHeight: true
-            columns: root.metrics.portrait ? 1 : 2
-            rows: root.metrics.portrait ? 2 : 1
-            rowSpacing: root.metrics.gap
-            columnSpacing: root.metrics.gap
+            color: Theme.buttonsBg
+            border.color: "#465456"
+            border.width: 1
+            radius: Math.round(root.metrics.fontSize * 0.45)
 
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                color: Theme.buttonsBg
-                border.color: "#465456"
-                border.width: 1
-                radius: Math.round(root.metrics.fontSize * 0.45)
+            Item {
+                id: motionPad
+                anchors.fill: parent
+                anchors.margins: root.metrics.gap
 
                 Item {
                     id: xyMovePad
-                    anchors.fill: parent
-                    anchors.margins: root.metrics.gap
+                    width: root.metrics.portrait ? parent.width : Math.round(parent.width * 0.48)
+                    height: root.metrics.portrait ? Math.round(parent.height * 0.48) : parent.height
+                    anchors.left: parent.left
+                    anchors.top: parent.top
                     property int padSize: Math.max(58, Math.min(width, height))
                     property int arrowSize: Math.max(64, Math.round(padSize * 0.32))
                     property int homeSize: Math.max(76, Math.round(padSize * 0.29))
@@ -206,20 +262,16 @@ Item {
                         hint: "locked"
                     }
                 }
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                color: Theme.buttonsBg
-                border.color: "#465456"
-                border.width: 1
-                radius: Math.round(root.metrics.fontSize * 0.45)
 
                 Item {
                     id: zMovePad
-                    anchors.fill: parent
-                    anchors.margins: root.metrics.gap
+                    width: root.metrics.portrait ? Math.round(parent.width * 0.48) : Math.round(parent.width * 0.26)
+                    height: root.metrics.portrait ? Math.round(parent.height * 0.46) : parent.height
+                    anchors.right: root.metrics.portrait ? undefined : parent.right
+                    anchors.horizontalCenter: undefined
+                    anchors.left: root.metrics.portrait ? parent.left : undefined
+                    anchors.top: root.metrics.portrait ? xyMovePad.bottom : parent.top
+                    anchors.topMargin: root.metrics.portrait ? root.metrics.gap : 0
                     property int padSize: Math.max(58, Math.min(width, height))
                     property int arrowSize: Math.max(70, Math.round(padSize * 0.32))
                     property int homeSize: Math.max(88, Math.round(padSize * 0.31))
@@ -248,6 +300,46 @@ Item {
                         direction: "down"
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.bottom: parent.bottom
+                    }
+                }
+
+                GridLayout {
+                    id: motionActions
+                    width: root.metrics.portrait ? Math.round(parent.width * 0.52) : Math.round(parent.width * 0.2)
+                    height: root.metrics.portrait ? zMovePad.height : Math.round(parent.height * 0.72)
+                    anchors.right: root.metrics.portrait ? parent.right : zMovePad.left
+                    anchors.rightMargin: root.metrics.portrait ? 0 : root.metrics.gap
+                    anchors.top: root.metrics.portrait ? zMovePad.top : undefined
+                    anchors.bottom: parent.bottom
+                    columns: root.metrics.portrait ? 2 : 1
+                    rows: root.metrics.portrait ? 1 : 2
+                    rowSpacing: root.metrics.gap
+                    columnSpacing: root.metrics.gap
+
+                    Repeater {
+                        model: root.actionButtons
+
+                        ActionIconButton {
+                            required property var modelData
+
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            title: modelData.label
+                            hint: modelData.hint
+                            icon: modelData.icon
+                            selected: modelData.action === "more" && root.moreVisible
+
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    if (modelData.action === "more") {
+                                        root.moreVisible = !root.moreVisible
+                                    } else {
+                                        root.moveActionRequested(modelData.action)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -293,6 +385,7 @@ Item {
 
                         RowLayout {
                             id: moveActionBar
+                            visible: false
                             spacing: Math.max(5, Math.round(root.metrics.gap * 0.55))
 
                             Repeater {
