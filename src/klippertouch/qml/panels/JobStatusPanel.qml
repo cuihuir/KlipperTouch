@@ -148,6 +148,15 @@ Item {
         return actionName + " is staged for the control layer."
     }
 
+    // qmllint disable missing-property
+    function goBack() {
+        if (root.detailPage !== "summary") {
+            root.detailPage = "summary"
+            return true
+        }
+        return false
+    }
+
     Rectangle {
         anchors.fill: parent
         anchors.margins: root.metrics.margin
@@ -174,12 +183,6 @@ Item {
                     elide: Text.ElideMiddle
                     font.bold: true
                     font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.15))
-                }
-
-                Button {
-                    visible: root.detailPage === "advanced"
-                    text: "Back"
-                    onClicked: root.detailPage = "summary"
                 }
 
                 Label {

@@ -340,7 +340,13 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert 'root.detailPage = "advanced"' in qml
     assert 'root.detailPage = "summary"' in qml
     assert "id: advancedPage" in qml
+    assert "qmllint disable missing-property" in qml
+    assert "function goBack()" in qml
+    assert 'if (root.detailPage !== "summary")' in qml
+    assert "return true" in qml
+    assert "return false" in qml
     assert "Popup {" not in qml
+    assert 'text: "Back"' not in qml
     assert "root.zOffsetLabel()" in qml
     assert "root.percentLabel(root.speedFactor)" in qml
     assert "root.percentLabel(root.extrudeFactor)" in qml
@@ -553,6 +559,9 @@ def test_action_bar_requests_safe_local_navigation() -> None:
     assert "case \"stop\":" in shell_qml
     assert "break" in shell_qml
     assert "function goBack()" in main_qml
+    assert "id: panelLoader" in main_qml
+    assert 'typeof panelLoader.item.goBack === "function"' in main_qml
+    assert "if (panelLoader.item.goBack())" in main_qml
     assert "onBackRequested: window.goBack()" in main_qml
     assert "onHomeRequested: window.goHome()" in main_qml
     assert 'onMenuRequested: window.showPanel("more")' in main_qml

@@ -85,6 +85,11 @@ ApplicationWindow {
     }
 
     function goBack() {
+        if (panelLoader.item && typeof panelLoader.item.goBack === "function") {
+            if (panelLoader.item.goBack()) {
+                return
+            }
+        }
         if (panelStack.length > 1) {
             var nextStack = panelStack.slice(0, panelStack.length - 1)
             panelStack = nextStack
@@ -150,6 +155,7 @@ ApplicationWindow {
         onMenuRequested: window.showPanel("more")
 
         Loader {
+            id: panelLoader
             anchors.fill: parent
             sourceComponent: window.componentForPanel(window.currentPanel)
         }
