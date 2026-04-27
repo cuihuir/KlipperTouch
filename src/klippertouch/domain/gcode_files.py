@@ -111,9 +111,13 @@ def browser_entries_for_directory(
     directory: str = "",
     sort_key: str = "name",
     filter_text: str = "",
+    sort_descending: bool | None = None,
 ) -> tuple[GCodeFileEntry, ...]:
     current = _normalize_directory(directory)
     normalized_filter = filter_text.strip().casefold()
+    effective_sort_descending = (
+        sort_key in {"date", "size"} if sort_descending is None else sort_descending
+    )
     directories: dict[str, GCodeFileEntry] = {}
     direct_files: list[GCodeFile] = []
 
@@ -138,10 +142,15 @@ def browser_entries_for_directory(
             directories[child_path] = GCodeFileEntry.directory(child_path)
 
     sorted_directories = tuple(
-        sorted(directories.values(), key=lambda entry: entry.display_name.casefold())
+        sorted(
+            directories.values(),
+            key=lambda entry: entry.display_name.casefold(),
+            reverse=sort_key == "name" and effective_sort_descending,
+        )
     )
     sorted_files = tuple(
-        GCodeFileEntry.file(file) for file in _sorted_files(direct_files, sort_key)
+        GCodeFileEntry.file(file)
+        for file in _sorted_files(direct_files, sort_key, effective_sort_descending)
     )
     return sorted_directories + sorted_files
 
@@ -152,12 +161,28 @@ def _matches_filter(path: str, display_name: str, filter_text: str) -> bool:
     return filter_text in path.casefold() or filter_text in display_name.casefold()
 
 
-def _sorted_files(files: list[GCodeFile], sort_key: str) -> list[GCodeFile]:
+def _sorted_files(
+    files: list[GCodeFile],
+    sort_key: str,
+    sort_descending: bool = False,
+) -> list[GCodeFile]:
     if sort_key == "date":
-        return sorted(files, key=lambda file: (-file.modified, file.display_name.casefold()))
+        return sorted(
+            files,
+            key=lambda file: (file.modified, file.display_name.casefold()),
+            reverse=sort_descending,
+        )
     if sort_key == "size":
-        return sorted(files, key=lambda file: (-file.size, file.display_name.casefold()))
-    return sorted(files, key=lambda file: file.display_name.casefold())
+        return sorted(
+            files,
+            key=lambda file: (file.size, file.display_name.casefold()),
+            reverse=sort_descending,
+        )
+    return sorted(
+        files,
+        key=lambda file: file.display_name.casefold(),
+        reverse=sort_descending,
+    )
 
 
 def _normalize_directory(path: str) -> str:

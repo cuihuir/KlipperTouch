@@ -222,7 +222,7 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     qml = Path("src/klippertouch/qml/panels/FilesPanel.qml").read_text(encoding="utf-8")
 
     assert "property var fileModel" in qml
-    assert "G-Code files" in qml
+    assert 'text: "G-Code files"' not in qml
     assert 'property string rootPath: "gcodes"' in qml
     assert '"label": "Name"' in qml
     assert '"label": "Date"' in qml
@@ -230,14 +230,15 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "No G-Code files found" in qml
     assert "Loading files..." in qml
     assert "function currentPathLabel" in qml
+    assert "root.currentPathLabel()" in qml
     assert "function emptyTitle" in qml
     assert "Current folder is empty" in qml
     assert 'fileList.count + " items"' in qml
     assert "Search files" in qml
     assert "activeFileModel.setFilterText(text)" in qml
-    assert "id: compactTitleRow" in qml
     assert "id: compactControlRow" in qml
     assert "id: pathLabel" in qml
+    assert "sortDescending" in qml
     assert "Layout.fillWidth: true" in qml
     assert "activeFileModel.breadcrumbs" not in qml
     assert "breadcrumbText" not in qml

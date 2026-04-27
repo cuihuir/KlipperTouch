@@ -37,7 +37,9 @@ Item {
         if (sortKey === "up") {
             return label
         }
-        return root.isSortActive(sortKey) ? label + "  v" : label
+        return root.isSortActive(sortKey)
+            ? label + (root.activeFileModel && root.activeFileModel.sortDescending ? "  v" : "  ^")
+            : label
     }
 
     function goUp() {
@@ -76,43 +78,6 @@ Item {
             anchors.fill: parent
             anchors.margins: root.metrics.gap
             spacing: root.metrics.gap
-
-            RowLayout {
-                id: compactTitleRow
-                Layout.fillWidth: true
-                Layout.preferredHeight: Math.max(30, Math.round(root.metrics.fontSize * 2.1))
-                spacing: root.metrics.gap
-
-                Label {
-                    color: Theme.text
-                    text: "G-Code files"
-                    font.bold: true
-                    font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.15))
-                }
-
-                Label {
-                    id: pathLabel
-                    Layout.fillWidth: true
-                    color: Theme.mutedText
-                    text: root.currentPathLabel()
-                    elide: Text.ElideMiddle
-                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
-                }
-
-                Label {
-                    color: Theme.mutedText
-                    text: root.loading ? "Loading files..." : fileList.count + " items"
-                    horizontalAlignment: Text.AlignRight
-                    font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.8))
-                }
-
-                Label {
-                    color: Theme.mutedText
-                    text: "readonly"
-                    horizontalAlignment: Text.AlignRight
-                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
-                }
-            }
 
             RowLayout {
                 id: compactControlRow
@@ -154,20 +119,50 @@ Item {
                 }
 
                 TextField {
-                Layout.fillWidth: true
-                Layout.preferredHeight: Math.max(34, Math.round(root.metrics.fontSize * 2.45))
-                placeholderText: "Search files"
-                color: Theme.text
-                placeholderTextColor: Theme.mutedText
-                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
-                background: Rectangle {
-                    color: "#101617"
-                    border.color: "#263233"
-                    border.width: 1
-                    radius: Math.round(root.metrics.fontSize * 0.32)
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Math.max(34, Math.round(root.metrics.fontSize * 2.45))
+                    placeholderText: "Search files"
+                    color: Theme.text
+                    placeholderTextColor: Theme.mutedText
+                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
+                    background: Rectangle {
+                        color: "#101617"
+                        border.color: "#263233"
+                        border.width: 1
+                        radius: Math.round(root.metrics.fontSize * 0.32)
+                    }
+                    onTextChanged: if (root.activeFileModel) root.activeFileModel.setFilterText(text)
                 }
-                onTextChanged: if (root.activeFileModel) root.activeFileModel.setFilterText(text)
             }
+
+            RowLayout {
+                id: compactMetaRow
+                Layout.fillWidth: true
+                Layout.preferredHeight: Math.max(24, Math.round(root.metrics.fontSize * 1.7))
+                spacing: root.metrics.gap
+
+                Label {
+                    id: pathLabel
+                    Layout.fillWidth: true
+                    color: Theme.mutedText
+                    text: root.currentPathLabel()
+                    elide: Text.ElideMiddle
+                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
+                }
+
+                Label {
+                    color: Theme.mutedText
+                    text: root.loading ? "Loading files..." : fileList.count + " items"
+                    horizontalAlignment: Text.AlignRight
+                    font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.8))
+                }
+
+                Label {
+                    color: Theme.mutedText
+                    text: "readonly"
+                    horizontalAlignment: Text.AlignRight
+                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
+                }
             }
 
             GridLayout {

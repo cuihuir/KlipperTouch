@@ -38,6 +38,7 @@ class GCodeFileListModel(QAbstractListModel):
         self._entries: tuple[GCodeFileEntry, ...] = ()
         self._current_path = ""
         self._sort_key = "name"
+        self._sort_descending = False
         self._filter_text = ""
         self._selected_path = ""
 
@@ -52,6 +53,7 @@ class GCodeFileListModel(QAbstractListModel):
             directory=self._current_path,
             sort_key=self._sort_key,
             filter_text=self._filter_text,
+            sort_descending=self._sort_descending,
         )
         selection_removed = bool(self._selected_path) and self._file_for_name(
             self._selected_path
@@ -69,6 +71,10 @@ class GCodeFileListModel(QAbstractListModel):
     @Property(str, notify=sortKeyChanged)
     def sortKey(self) -> str:
         return self._sort_key
+
+    @Property(bool, notify=sortKeyChanged)
+    def sortDescending(self) -> bool:
+        return self._sort_descending
 
     @Property(str, notify=filterTextChanged)
     def filterText(self) -> str:
@@ -115,8 +121,13 @@ class GCodeFileListModel(QAbstractListModel):
 
     @Slot(str)
     def setSortKey(self, sort_key: str) -> None:  # noqa: N802
-        if sort_key not in {"name", "date", "size"} or sort_key == self._sort_key:
+        if sort_key not in {"name", "date", "size"}:
             return
+        if sort_key == self._sort_key:
+            self._sort_descending = not self._sort_descending
+        else:
+            self._sort_key = sort_key
+            self._sort_descending = True
         self._sort_key = sort_key
         self._reset_entries()
         self.sortKeyChanged.emit()
@@ -171,6 +182,7 @@ class GCodeFileListModel(QAbstractListModel):
             directory=self._current_path,
             sort_key=self._sort_key,
             filter_text=self._filter_text,
+            sort_descending=self._sort_descending,
         )
         self.endResetModel()
 

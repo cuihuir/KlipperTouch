@@ -69,6 +69,7 @@ def test_gcode_file_list_model_exposes_directory_entries_and_sorting(qtbot) -> N
         model.setSortKey("size")
 
     assert model.sortKey == "size"
+    assert model.sortDescending is True
 
     with qtbot.waitSignal(model.currentPathChanged, timeout=1000):
         model.goUp()
@@ -76,6 +77,34 @@ def test_gcode_file_list_model_exposes_directory_entries_and_sorting(qtbot) -> N
     assert model.currentPath == ""
     assert model.breadcrumbs == ["gcodes"]
     assert model.canGoUp is False
+
+
+def test_gcode_file_list_model_toggles_sort_direction_for_active_sort_key(qtbot) -> None:
+    model = GCodeFileListModel()
+    model.set_files(
+        (
+            GCodeFile(path="b.gcode", display_name="b.gcode", modified=2, size=200),
+            GCodeFile(path="a.gcode", display_name="a.gcode", modified=3, size=100),
+        )
+    )
+    roles = {bytes(value).decode(): key for key, value in model.roleNames().items()}
+
+    assert model.sortKey == "name"
+    assert model.sortDescending is False
+    assert model.data(model.index(0, 0), roles["displayName"]) == "a.gcode"
+
+    with qtbot.waitSignal(model.sortKeyChanged, timeout=1000):
+        model.setSortKey("name")
+
+    assert model.sortKey == "name"
+    assert model.sortDescending is True
+    assert model.data(model.index(0, 0), roles["displayName"]) == "b.gcode"
+
+    with qtbot.waitSignal(model.sortKeyChanged, timeout=1000):
+        model.setSortKey("name")
+
+    assert model.sortDescending is False
+    assert model.data(model.index(0, 0), roles["displayName"]) == "a.gcode"
 
 
 def test_gcode_file_list_model_skips_reset_when_file_snapshot_is_unchanged(qtbot) -> None:
