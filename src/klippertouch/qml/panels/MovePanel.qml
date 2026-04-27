@@ -36,6 +36,19 @@ Item {
         root.selectedDistance = distance
     }
 
+    function arrowGlyph(direction) {
+        if (direction === "up") {
+            return "▲"
+        }
+        if (direction === "down") {
+            return "▼"
+        }
+        if (direction === "left") {
+            return "◀"
+        }
+        return "▶"
+    }
+
     component LockedTile: Rectangle {
         id: tileRoot
         property string title: ""
@@ -46,7 +59,16 @@ Item {
         opacity: selected ? 1.0 : 0.9
         border.color: selected ? Theme.color3 : "#48565a"
         border.width: 1
-        radius: Math.round(root.metrics.fontSize * 0.26)
+        radius: Math.round(Math.min(width, height) * 0.2)
+
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: Math.max(3, Math.round(root.metrics.fontSize * 0.2))
+            color: "transparent"
+            border.color: "#1f2a2c"
+            border.width: 1
+            radius: Math.round(parent.radius * 0.72)
+        }
 
         ColumnLayout {
             anchors.centerIn: parent
@@ -75,72 +97,48 @@ Item {
         }
     }
 
-    component DirectionButton: Item {
+    component DirectionButton: Rectangle {
         id: directionRoot
         property string title: ""
         property string direction: "up"
 
-        Canvas {
-            id: triangleCanvas
+        color: "#101819"
+        border.color: "#536165"
+        border.width: 1
+        radius: Math.round(Math.min(width, height) * 0.22)
+
+        Rectangle {
             anchors.fill: parent
-            antialiasing: true
-            onWidthChanged: requestPaint()
-            onHeightChanged: requestPaint()
-
-            onPaint: {
-                var ctx = getContext("2d")
-                var pad = Math.max(3, Math.round(Math.min(width, height) * 0.08))
-                ctx.reset()
-                ctx.clearRect(0, 0, width, height)
-                ctx.beginPath()
-                if (directionRoot.direction === "up") {
-                    ctx.moveTo(width / 2, pad)
-                    ctx.lineTo(width - pad, height - pad)
-                    ctx.lineTo(pad, height - pad)
-                } else if (directionRoot.direction === "down") {
-                    ctx.moveTo(pad, pad)
-                    ctx.lineTo(width - pad, pad)
-                    ctx.lineTo(width / 2, height - pad)
-                } else if (directionRoot.direction === "left") {
-                    ctx.moveTo(pad, height / 2)
-                    ctx.lineTo(width - pad, pad)
-                    ctx.lineTo(width - pad, height - pad)
-                } else {
-                    ctx.moveTo(width - pad, height / 2)
-                    ctx.lineTo(pad, pad)
-                    ctx.lineTo(pad, height - pad)
-                }
-                ctx.closePath()
-                ctx.fillStyle = "#eef3fb"
-                ctx.strokeStyle = "#0a0d0e"
-                ctx.lineWidth = Math.max(2, Math.round(root.metrics.fontSize * 0.14))
-                ctx.fill()
-                ctx.stroke()
-            }
-
-            Connections {
-                target: root
-                function onWidthChanged() {
-                    triangleCanvas.requestPaint()
-                }
-                function onHeightChanged() {
-                    triangleCanvas.requestPaint()
-                }
-            }
+            anchors.margins: Math.max(3, Math.round(root.metrics.fontSize * 0.2))
+            color: "transparent"
+            border.color: "#1f2a2c"
+            border.width: 1
+            radius: Math.round(directionRoot.radius * 0.72)
         }
 
-        Label {
+        ColumnLayout {
             anchors.centerIn: parent
-            width: directionRoot.direction === "left" || directionRoot.direction === "right" ? parent.height : parent.width
-            height: directionRoot.direction === "left" || directionRoot.direction === "right" ? parent.width : parent.height
-            text: directionRoot.title
-            color: "#182025"
-            font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.95))
-            font.bold: true
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            wrapMode: Text.NoWrap
-            rotation: directionRoot.direction === "left" ? -90 : directionRoot.direction === "right" ? 90 : 0
+            width: parent.width - root.metrics.gap
+            spacing: 0
+
+            Label {
+                Layout.fillWidth: true
+                text: root.arrowGlyph(directionRoot.direction)
+                color: "#d9e0e2"
+                font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.35))
+                horizontalAlignment: Text.AlignHCenter
+            }
+
+            Label {
+                Layout.fillWidth: true
+                text: directionRoot.title
+                color: Theme.text
+                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.78))
+                font.bold: true
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
+                wrapMode: Text.NoWrap
+            }
         }
     }
 

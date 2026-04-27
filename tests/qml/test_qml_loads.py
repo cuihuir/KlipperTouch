@@ -675,7 +675,10 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert '"label": "Z+"' in qml
     assert '"label": "Z-"' in qml
     assert "component LockedTile: Rectangle" in qml
-    assert "component DirectionButton: Item" in qml
+    assert "component DirectionButton: Rectangle" in qml
+    assert "function arrowGlyph(direction)" in qml
+    assert "Canvas {" not in qml
+    assert '"#eef3fb"' not in qml
     assert "root.positionX.toFixed(2)" in qml
     assert "root.homedAxes.length > 0" in qml
     assert "property string selectedDistance" in qml
@@ -1370,7 +1373,9 @@ def test_move_panel_is_locked_and_responsive() -> None:
     assert "property var moveButtons" in qml
     assert "property var distances" in qml
     assert "component LockedTile: Rectangle" in qml
-    assert "component DirectionButton: Item" in qml
+    assert "component DirectionButton: Rectangle" in qml
+    assert "function arrowGlyph(direction)" in qml
+    assert "Canvas {" not in qml
     assert "id: controlGroupGrid" in qml
     assert "id: xyMovePad" in qml
     assert "id: zMovePad" in qml
