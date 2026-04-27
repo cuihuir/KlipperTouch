@@ -331,7 +331,7 @@ Item {
                             Layout.fillWidth: true
                             Layout.preferredHeight: Math.max(120, Math.round(root.metrics.fontSize * 8.5))
                             visible: root.activeFileModel
-                                && root.activeFileModel.selectedThumbnailUrl.length > 0
+                                && root.activeFileModel.selectedPreviewThumbnailUrl.length > 0
                             color: "#0b1112"
                             border.color: "#263233"
                             border.width: 1
@@ -341,7 +341,7 @@ Item {
                                 anchors.fill: parent
                                 anchors.margins: root.metrics.gap
                                 source: root.activeFileModel
-                                    ? root.activeFileModel.selectedThumbnailUrl
+                                    ? root.activeFileModel.selectedPreviewThumbnailUrl
                                     : ""
                                 fillMode: Image.PreserveAspectFit
                             }

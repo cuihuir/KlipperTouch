@@ -198,7 +198,7 @@ Item {
                             anchors.fill: parent
                             anchors.margins: 2
                             source: root.fileModel && root.fileModel.thumbnailRevision >= 0
-                                ? root.fileModel.fileThumbnailUrlFor(root.printFilename)
+                                ? root.fileModel.filePreviewThumbnailUrlFor(root.printFilename)
                                 : ""
                             fillMode: Image.PreserveAspectFit
                         }

@@ -286,6 +286,12 @@ def test_gcode_file_list_model_updates_single_file_thumbnail_from_metadata(qtbot
             {
                 "thumbnails": [
                     {
+                        "width": 300,
+                        "height": 300,
+                        "size": 5000,
+                        "relative_path": ".thumbs/cube-300x300.png",
+                    },
+                    {
                         "width": 32,
                         "height": 32,
                         "size": 1200,
@@ -299,6 +305,9 @@ def test_gcode_file_list_model_updates_single_file_thumbnail_from_metadata(qtbot
     assert (
         model.data(model.index(0, 0), roles["thumbnailUrl"])
         == "http://host:7125/server/files/gcodes/.thumbs/cube-32x32.png"
+    )
+    assert model.filePreviewThumbnailUrlFor("cube.gcode") == (
+        "http://host:7125/server/files/gcodes/.thumbs/cube-300x300.png"
     )
     assert model.data(model.index(1, 0), roles["thumbnailUrl"]) == ""
 
@@ -316,6 +325,12 @@ def test_gcode_file_list_model_preserves_loaded_thumbnail_on_refresh(qtbot) -> N
         "cube.gcode",
         {
             "thumbnails": [
+                {
+                    "width": 300,
+                    "height": 300,
+                    "size": 5000,
+                    "relative_path": ".thumbs/cube-300x300.png",
+                },
                 {
                     "width": 32,
                     "height": 32,
@@ -341,6 +356,9 @@ def test_gcode_file_list_model_preserves_loaded_thumbnail_on_refresh(qtbot) -> N
     assert model.fileThumbnailUrlFor("cube.gcode") == (
         "http://host:7125/server/files/gcodes/.thumbs/cube-32x32.png"
     )
+    assert model.filePreviewThumbnailUrlFor("cube.gcode") == (
+        "http://host:7125/server/files/gcodes/.thumbs/cube-300x300.png"
+    )
 
 
 def test_gcode_file_list_model_exposes_selected_thumbnail_url(qtbot) -> None:
@@ -354,6 +372,12 @@ def test_gcode_file_list_model_exposes_selected_thumbnail_url(qtbot) -> None:
             {
                 "thumbnails": [
                     {
+                        "width": 300,
+                        "height": 300,
+                        "size": 5000,
+                        "relative_path": ".thumbs/cube-300x300.png",
+                    },
+                    {
                         "size": 1200,
                         "relative_path": ".thumbs/cube-32x32.png",
                     }
@@ -363,7 +387,14 @@ def test_gcode_file_list_model_exposes_selected_thumbnail_url(qtbot) -> None:
         )
 
     assert model.selectedThumbnailUrl == "http://host:7125/server/files/gcodes/.thumbs/cube-32x32.png"
+    assert (
+        model.selectedPreviewThumbnailUrl
+        == "http://host:7125/server/files/gcodes/.thumbs/cube-300x300.png"
+    )
     assert model.fileThumbnailUrlFor("cube.gcode") == (
         "http://host:7125/server/files/gcodes/.thumbs/cube-32x32.png"
+    )
+    assert model.filePreviewThumbnailUrlFor("cube.gcode") == (
+        "http://host:7125/server/files/gcodes/.thumbs/cube-300x300.png"
     )
     assert model.thumbnailRevision == 1

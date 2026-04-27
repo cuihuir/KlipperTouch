@@ -15,6 +15,8 @@ def test_files_from_moonraker_normalizes_file_entries() -> None:
                 "modified": 1710000000.5,
                 "size": 2048,
                 "permissions": "rw",
+                "thumbnail_url": "http://host/small.png",
+                "preview_thumbnail_url": "http://host/large.png",
             },
             {"path": ""},
             "bad",
@@ -28,6 +30,8 @@ def test_files_from_moonraker_normalizes_file_entries() -> None:
             modified=1710000000.5,
             size=2048,
             permissions="rw",
+            thumbnail_url="http://host/small.png",
+            preview_thumbnail_url="http://host/large.png",
         ),
     )
     assert files[0].size_label == "2.0 KB"

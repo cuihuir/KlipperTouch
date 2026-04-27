@@ -12,6 +12,7 @@ class GCodeFile:
     size: int = 0
     permissions: str = ""
     thumbnail_url: str = ""
+    preview_thumbnail_url: str = ""
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "path", str(self.path))
@@ -20,6 +21,7 @@ class GCodeFile:
         object.__setattr__(self, "size", max(0, int(self.size)))
         object.__setattr__(self, "permissions", str(self.permissions))
         object.__setattr__(self, "thumbnail_url", str(self.thumbnail_url))
+        object.__setattr__(self, "preview_thumbnail_url", str(self.preview_thumbnail_url))
 
     @property
     def size_label(self) -> str:
@@ -104,6 +106,7 @@ def files_from_moonraker(items: Any) -> tuple[GCodeFile, ...]:
                 size=_int_or_default(item.get("size")),
             permissions=str(item.get("permissions", "")),
             thumbnail_url=str(item.get("thumbnail_url", "")),
+            preview_thumbnail_url=str(item.get("preview_thumbnail_url", "")),
         )
     )
     return tuple(files)

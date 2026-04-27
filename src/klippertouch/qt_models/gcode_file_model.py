@@ -114,6 +114,11 @@ class GCodeFileListModel(QAbstractListModel):
         file = self._file_for_name(self._selected_path)
         return file.thumbnail_url if file is not None else ""
 
+    @Property(str, notify=selectedPathChanged)
+    def selectedPreviewThumbnailUrl(self) -> str:
+        file = self._file_for_name(self._selected_path)
+        return file.preview_thumbnail_url if file is not None else ""
+
     @Property(int, notify=thumbnailChanged)
     def thumbnailRevision(self) -> int:
         return self._thumbnail_revision
@@ -200,17 +205,28 @@ class GCodeFileListModel(QAbstractListModel):
     ) -> None:
         clean = path.strip().strip("/")
         thumbnail_path = thumbnail_from_metadata(clean, metadata)
-        if not thumbnail_path:
+        preview_thumbnail_path = thumbnail_from_metadata(clean, metadata, prefer_small=False)
+        if not thumbnail_path and not preview_thumbnail_path:
             return
         separator = "" if thumbnail_base_url.endswith("/") else "/"
-        thumbnail_url = f"{thumbnail_base_url}{separator}{thumbnail_path}"
+        thumbnail_url = (
+            f"{thumbnail_base_url}{separator}{thumbnail_path}" if thumbnail_path else ""
+        )
+        preview_thumbnail_url = (
+            f"{thumbnail_base_url}{separator}{preview_thumbnail_path}"
+            if preview_thumbnail_path
+            else thumbnail_url
+        )
         files = []
         changed_index = -1
         for index, file in enumerate(self._files):
             if file.path != clean:
                 files.append(file)
                 continue
-            if file.thumbnail_url == thumbnail_url:
+            if (
+                file.thumbnail_url == thumbnail_url
+                and file.preview_thumbnail_url == preview_thumbnail_url
+            ):
                 return
             files.append(
                 GCodeFile(
@@ -220,6 +236,7 @@ class GCodeFileListModel(QAbstractListModel):
                     size=file.size,
                     permissions=file.permissions,
                     thumbnail_url=thumbnail_url,
+                    preview_thumbnail_url=preview_thumbnail_url,
                 )
             )
             changed_index = index
@@ -265,6 +282,11 @@ class GCodeFileListModel(QAbstractListModel):
     def fileThumbnailUrlFor(self, filename: str) -> str:  # noqa: N802
         file = self._file_for_name(filename)
         return file.thumbnail_url if file is not None else ""
+
+    @Slot(str, result=str)
+    def filePreviewThumbnailUrlFor(self, filename: str) -> str:  # noqa: N802
+        file = self._file_for_name(filename)
+        return file.preview_thumbnail_url if file is not None else ""
 
     def _file_for_name(self, filename: str) -> GCodeFile | None:
         clean = filename.strip().strip("/")
@@ -341,13 +363,21 @@ def _preserve_loaded_thumbnails(
     previous_files: tuple[GCodeFile, ...],
 ) -> tuple[GCodeFile, ...]:
     previous_by_path = {
-        file.path: file.thumbnail_url for file in previous_files if file.thumbnail_url
+        file.path: (file.thumbnail_url, file.preview_thumbnail_url)
+        for file in previous_files
+        if file.thumbnail_url or file.preview_thumbnail_url
     }
     if not previous_by_path:
         return files
     return tuple(
-        replace(file, thumbnail_url=previous_by_path[file.path])
-        if not file.thumbnail_url and file.path in previous_by_path
+        replace(
+            file,
+            thumbnail_url=file.thumbnail_url or previous_by_path[file.path][0],
+            preview_thumbnail_url=(
+                file.preview_thumbnail_url or previous_by_path[file.path][1]
+            ),
+        )
+        if file.path in previous_by_path
         else file
         for file in files
     )

@@ -250,10 +250,10 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "selectedSizeLabel" in qml
     assert "selectedModifiedLabel" in qml
     assert "selectedPermissions" in qml
-    assert "selectedThumbnailUrl" in qml
+    assert "selectedPreviewThumbnailUrl" in qml
     assert "required property string thumbnailUrl" in qml
     assert "source: thumbnailUrl" in qml
-    assert "root.activeFileModel.selectedThumbnailUrl" in qml
+    assert "root.activeFileModel.selectedPreviewThumbnailUrl" in qml
     assert "id: detailsPanel" in qml
     assert "Read-only file details" in qml
     assert "ScrollBar.vertical: ScrollBar" in qml
@@ -296,7 +296,7 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "root.fileModel.fileSizeLabelFor(root.printFilename)" in qml
     assert "root.fileModel.fileModifiedLabelFor(root.printFilename)" in qml
     assert "root.fileModel.filePathFor(root.printFilename)" in qml
-    assert "root.fileModel.fileThumbnailUrlFor(root.printFilename)" in qml
+    assert "root.fileModel.filePreviewThumbnailUrlFor(root.printFilename)" in qml
     assert "root.fileModel.thumbnailRevision" in qml
     assert "id: jobThumbnail" in qml
     assert "source: root.fileModel && root.fileModel.thumbnailRevision >= 0" in qml
