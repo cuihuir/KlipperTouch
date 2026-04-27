@@ -336,10 +336,24 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert 'text: "Advanced"' in qml
     assert "enabled: false" in qml
     assert "readonlyActionHint" in qml
-    assert "id: advancedPopup" in qml
+    assert "property string detailPage" in qml
+    assert 'root.detailPage = "advanced"' in qml
+    assert 'root.detailPage = "summary"' in qml
+    assert "id: advancedPage" in qml
+    assert "Popup {" not in qml
     assert "root.zOffsetLabel()" in qml
     assert "root.percentLabel(root.speedFactor)" in qml
     assert "root.percentLabel(root.extrudeFactor)" in qml
+    assert "signal zOffsetAdjustRequested(real delta)" in qml
+    assert "signal speedFactorAdjustRequested(real delta)" in qml
+    assert "signal extrudeFactorAdjustRequested(real delta)" in qml
+    assert "root.zOffsetAdjustRequested(modelData.delta)" in qml
+    assert "root.speedFactorAdjustRequested(modelData.delta)" in qml
+    assert "root.extrudeFactorAdjustRequested(modelData.delta)" in qml
+    assert '"minus": "-0.05"' in qml
+    assert '"plus": "+0.05"' in qml
+    assert '"minus": "-5%"' in qml
+    assert '"plus": "+5%"' in qml
     assert "printer.print.pause" not in qml
     assert "printer.print.cancel" not in qml
     assert "exclude_object" not in qml

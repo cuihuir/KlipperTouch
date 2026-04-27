@@ -23,6 +23,10 @@ Item {
     property real maxVelocity: 0
     property var temperatureModel: null
     property var fileModel: null
+    property string detailPage: "summary"
+    signal zOffsetAdjustRequested(real delta)
+    signal speedFactorAdjustRequested(real delta)
+    signal extrudeFactorAdjustRequested(real delta)
 
     function durationLabel(seconds) {
         var safeSeconds = Math.max(0, Math.round(seconds))
@@ -164,13 +168,22 @@ Item {
                 Label {
                     Layout.fillWidth: true
                     color: Theme.text
-                    text: root.printFilename.length > 0 ? root.printFilename : "Job Status"
+                    text: root.detailPage === "advanced"
+                        ? "Advanced tuning"
+                        : root.printFilename.length > 0 ? root.printFilename : "Job Status"
                     elide: Text.ElideMiddle
                     font.bold: true
                     font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.15))
                 }
 
+                Button {
+                    visible: root.detailPage === "advanced"
+                    text: "Back"
+                    onClicked: root.detailPage = "summary"
+                }
+
                 Label {
+                    visible: root.detailPage === "summary"
                     color: root.stateAccentColor()
                     text: root.stateHeadline()
                     horizontalAlignment: Text.AlignRight
@@ -180,6 +193,7 @@ Item {
             }
 
             Rectangle {
+                visible: root.detailPage === "summary"
                 Layout.fillWidth: true
                 Layout.preferredHeight: Math.max(118, Math.round(root.metrics.fontSize * 8.2))
                 color: "#101617"
@@ -304,6 +318,7 @@ Item {
 
             GridLayout {
                 id: jobActionGrid
+                visible: root.detailPage === "summary"
                 Layout.fillWidth: true
                 Layout.preferredHeight: Math.max(54, Math.round(root.metrics.fontSize * 3.7))
                 columns: 4
@@ -341,14 +356,15 @@ Item {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     text: "Advanced"
-                    onClicked: advancedPopup.open()
+                    onClicked: root.detailPage = "advanced"
                 }
             }
 
             Rectangle {
+                visible: root.detailPage === "summary"
+                    && root.temperatureModel && root.temperatureModel.rowCount() > 0
                 Layout.fillWidth: true
                 Layout.preferredHeight: Math.max(58, Math.round(root.metrics.fontSize * 4.1))
-                visible: root.temperatureModel && root.temperatureModel.rowCount() > 0
                 color: "#101617"
                 border.color: "#263233"
                 border.width: 1
@@ -419,6 +435,7 @@ Item {
 
             GridView {
                 id: cardGrid
+                visible: root.detailPage === "summary"
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 clip: true
@@ -480,95 +497,162 @@ Item {
                     }
                 }
             }
-        }
-    }
 
-    Popup {
-        id: advancedPopup
-        parent: Overlay.overlay
-        modal: true
-        focus: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-        width: Math.min(parent ? parent.width - root.metrics.margin * 2 : root.width, Math.max(320, Math.round(root.metrics.fontSize * 26)))
-        height: Math.min(parent ? parent.height - root.metrics.margin * 2 : root.height, Math.max(260, Math.round(root.metrics.fontSize * 18)))
-        x: parent ? Math.round((parent.width - width) / 2) : root.metrics.margin
-        y: parent ? Math.round((parent.height - height) / 2) : root.metrics.margin
-        padding: root.metrics.gap
-
-        background: Rectangle {
-            color: "#101617"
-            border.color: Theme.color4
-            border.width: 2
-            radius: Math.round(root.metrics.fontSize * 0.45)
-        }
-
-        ColumnLayout {
-            anchors.fill: parent
-            spacing: root.metrics.gap
-
-            Label {
-                Layout.fillWidth: true
-                color: Theme.text
-                text: "Advanced"
-                font.bold: true
-                font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.15))
-            }
-
-            GridLayout {
+            ColumnLayout {
+                id: advancedPage
+                visible: root.detailPage === "advanced"
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                columns: 2
-                rowSpacing: root.metrics.gap
-                columnSpacing: root.metrics.gap
+                spacing: root.metrics.gap
 
                 Repeater {
                     model: [
-                        {"label": "Z offset", "value": root.zOffsetLabel()},
-                        {"label": "Speed factor", "value": root.percentLabel(root.speedFactor)},
-                        {"label": "Extrude factor", "value": root.percentLabel(root.extrudeFactor)},
-                        {"label": "Requested speed", "value": root.speedLabel(root.requestedSpeed)},
-                        {"label": "Max accel", "value": root.accelLabel()},
-                        {"label": "Max velocity", "value": root.speedLabel(root.maxVelocity)}
+                        {
+                            "label": "Z offset",
+                            "value": root.zOffsetLabel(),
+                            "minus": "-0.05",
+                            "plus": "+0.05",
+                            "negativeDelta": -0.05,
+                            "positiveDelta": 0.05,
+                            "target": "z"
+                        },
+                        {
+                            "label": "Speed factor",
+                            "value": root.percentLabel(root.speedFactor),
+                            "minus": "-5%",
+                            "plus": "+5%",
+                            "negativeDelta": -5,
+                            "positiveDelta": 5,
+                            "target": "speed"
+                        },
+                        {
+                            "label": "Extrude factor",
+                            "value": root.percentLabel(root.extrudeFactor),
+                            "minus": "-5%",
+                            "plus": "+5%",
+                            "negativeDelta": -5,
+                            "positiveDelta": 5,
+                            "target": "extrude"
+                        }
                     ]
 
                     Rectangle {
+                        id: adjustmentCard
+                        property string adjustmentTarget: modelData.target
+
                         Layout.fillWidth: true
-                        Layout.preferredHeight: Math.max(54, Math.round(root.metrics.fontSize * 3.6))
-                        color: "#0b1112"
+                        Layout.preferredHeight: Math.max(78, Math.round(root.metrics.fontSize * 5.6))
+                        color: "#101617"
                         border.color: "#263233"
                         border.width: 1
                         radius: Math.round(root.metrics.fontSize * 0.32)
 
-                        ColumnLayout {
+                        RowLayout {
                             anchors.fill: parent
                             anchors.margins: root.metrics.gap
-                            spacing: 0
+                            spacing: root.metrics.gap
 
-                            Label {
+                            ColumnLayout {
                                 Layout.fillWidth: true
-                                color: Theme.mutedText
-                                text: modelData.label
-                                font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                                Layout.fillHeight: true
+                                spacing: 0
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    color: Theme.mutedText
+                                    text: modelData.label
+                                    font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                                }
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    color: Theme.text
+                                    text: modelData.value
+                                    verticalAlignment: Text.AlignVCenter
+                                    font.bold: true
+                                    font.pixelSize: Math.max(20, Math.round(root.metrics.fontSize * 1.45))
+                                }
                             }
 
-                            Label {
-                                Layout.fillWidth: true
-                                color: Theme.text
-                                text: modelData.value
-                                elide: Text.ElideRight
-                                font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
+                            Repeater {
+                                model: [
+                                    {"text": modelData.minus, "delta": modelData.negativeDelta},
+                                    {"text": modelData.plus, "delta": modelData.positiveDelta}
+                                ]
+
+                                Button {
+                                    Layout.preferredWidth: Math.max(74, Math.round(root.metrics.fontSize * 5.2))
+                                    Layout.fillHeight: true
+                                    text: modelData.text
+                                    onClicked: {
+                                        if (adjustmentCard.adjustmentTarget === "z") {
+                                            root.zOffsetAdjustRequested(modelData.delta)
+                                        } else if (adjustmentCard.adjustmentTarget === "speed") {
+                                            root.speedFactorAdjustRequested(modelData.delta)
+                                        } else if (adjustmentCard.adjustmentTarget === "extrude") {
+                                            root.extrudeFactorAdjustRequested(modelData.delta)
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            Label {
-                Layout.fillWidth: true
-                color: Theme.mutedText
-                text: "Pause, cancel, object skip, Z offset and tuning controls are read-only placeholders until the control policy is reviewed."
-                wrapMode: Text.WordWrap
-                font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                GridLayout {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Math.max(80, Math.round(root.metrics.fontSize * 5.4))
+                    columns: root.metrics.portrait ? 1 : 3
+                    rowSpacing: root.metrics.gap
+                    columnSpacing: root.metrics.gap
+
+                    Repeater {
+                        model: [
+                            {"label": "Requested speed", "value": root.speedLabel(root.requestedSpeed)},
+                            {"label": "Max accel", "value": root.accelLabel()},
+                            {"label": "Max velocity", "value": root.speedLabel(root.maxVelocity)}
+                        ]
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            color: "#0b1112"
+                            border.color: "#263233"
+                            border.width: 1
+                            radius: Math.round(root.metrics.fontSize * 0.32)
+
+                            ColumnLayout {
+                                anchors.fill: parent
+                                anchors.margins: root.metrics.gap
+                                spacing: 0
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    color: Theme.mutedText
+                                    text: modelData.label
+                                    font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                                }
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    color: Theme.text
+                                    text: modelData.value
+                                    elide: Text.ElideRight
+                                    font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Label {
+                    Layout.fillWidth: true
+                    color: Theme.mutedText
+                    text: "Buttons emit adjustment requests only; Moonraker control commands are intentionally not connected yet."
+                    wrapMode: Text.WordWrap
+                    font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                }
             }
         }
     }
