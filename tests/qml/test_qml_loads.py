@@ -186,6 +186,9 @@ def test_shell_has_responsive_orientation_hooks() -> None:
     )
 
     assert "property bool portrait" in metrics_qml
+    assert "property bool ultraWide" in metrics_qml
+    assert "viewportWidth / viewportHeight >= 3.0" in metrics_qml
+    assert "viewportHeight <= 520" in metrics_qml
     assert "property real fontSize" in metrics_qml
     assert "property int actionBarWidth" in metrics_qml
     assert "property int contentHeight" in metrics_qml
@@ -364,6 +367,10 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "Completed" in qml
     assert "Printer error" in qml
     assert "Remaining" in qml
+    assert "id: summaryContentGrid" in qml
+    assert "columns: root.metrics.ultraWide ? 2 : 1" in qml
+    assert "root.metrics.ultraWide ? root.parent.height" in qml
+    assert "id: summarySidePanel" in qml
     assert "id: jobActionGrid" in qml
     assert "component StatusCard: Rectangle" in qml
     assert "component MetricPill: Rectangle" in qml
@@ -388,9 +395,13 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "function detailTitle()" in qml
     assert "function detailInfoModel(page)" in qml
     assert "function positionLabel()" in qml
-    assert "Layout.preferredHeight: root.jobHeroHeight()" in qml
+    assert (
+        "Layout.preferredHeight: root.metrics.ultraWide ? root.parent.height : "
+        "root.jobHeroHeight()"
+    ) in qml
     assert "Layout.preferredHeight: root.temperatureStripHeight()" in qml
     assert "id: summaryZoneGrid" in qml
+    assert "columns: root.metrics.ultraWide ? 3 : root.metrics.portrait ? 1 : 3" in qml
     assert "id: timeSummaryZone" in qml
     assert "id: motionSummaryZone" in qml
     assert "id: materialSummaryZone" in qml
@@ -416,6 +427,7 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "Layout.preferredWidth: root.jobActionGridWidth()" in qml
     assert "Layout.preferredWidth: root.jobActionButtonWidth()" in qml
     assert "columns: root.metrics.portrait ? 2 : 4" in qml
+    assert "root.metrics.ultraWide ? 4 : root.metrics.portrait ? 1 : 2" in qml
     assert "Layout.preferredHeight: root.jobButtonHeight" in qml
     assert "Layout.preferredWidth: root.jobButtonWidth" in qml
     assert "Layout.alignment: Qt.AlignVCenter" in qml

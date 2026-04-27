@@ -6,6 +6,7 @@ QtObject {
     property int viewportWidth: 1024
     property int viewportHeight: 600
     property bool portrait: viewportHeight > viewportWidth
+    property bool ultraWide: !portrait && viewportHeight <= 520 && viewportWidth / viewportHeight >= 3.0
     property int shortSide: Math.min(viewportWidth, viewportHeight)
     property real fontSize: Math.min(
         viewportWidth / (portrait ? 28 : 40),
