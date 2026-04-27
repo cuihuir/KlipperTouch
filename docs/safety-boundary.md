@@ -30,6 +30,7 @@ HTTP GET endpoints currently allowed by the read-only policy:
 
 - `server/info`
 - `server/files/list`
+- `server/files/metadata`
 - `server/temperature_store`
 - `machine/update/status`
 - `printer/info`

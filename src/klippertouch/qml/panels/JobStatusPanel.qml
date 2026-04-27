@@ -179,46 +179,72 @@ Item {
                 border.width: 1
                 radius: Math.round(root.metrics.fontSize * 0.32)
 
-                ColumnLayout {
+                RowLayout {
                     anchors.fill: parent
                     anchors.margins: root.metrics.gap
                     spacing: Math.max(6, Math.round(root.metrics.fontSize * 0.45))
 
-                    Label {
-                        Layout.fillWidth: true
-                        color: Theme.mutedText
-                        text: root.stateMessage()
-                        elide: Text.ElideRight
-                        font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
+                    Rectangle {
+                        Layout.preferredWidth: Math.max(96, Math.round(root.metrics.fontSize * 6.8))
+                        Layout.fillHeight: true
+                        visible: jobThumbnail.source.toString().length > 0
+                        color: "#0b1112"
+                        border.color: "#263233"
+                        border.width: 1
+                        radius: Math.round(root.metrics.fontSize * 0.25)
+
+                        Image {
+                            id: jobThumbnail
+                            anchors.fill: parent
+                            anchors.margins: 2
+                            source: root.fileModel && root.fileModel.thumbnailRevision >= 0
+                                ? root.fileModel.fileThumbnailUrlFor(root.printFilename)
+                                : ""
+                            fillMode: Image.PreserveAspectFit
+                        }
                     }
 
-                    ProgressBar {
+                    ColumnLayout {
                         Layout.fillWidth: true
-                        value: root.stateProgressValue()
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: root.metrics.gap
+                        Layout.fillHeight: true
+                        spacing: Math.max(6, Math.round(root.metrics.fontSize * 0.45))
 
                         Label {
                             Layout.fillWidth: true
-                            color: root.stateAccentColor()
-                            text: root.stateHeadline()
-                            font.pixelSize: Math.max(20, Math.round(root.metrics.fontSize * 1.5))
+                            color: Theme.mutedText
+                            text: root.stateMessage()
+                            elide: Text.ElideRight
+                            font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
                         }
 
-                        Label {
-                            color: Theme.mutedText
-                            text: root.printState === "complete"
-                                ? "Done"
-                                : root.printState === "cancelled"
-                                    ? "Stopped"
-                                    : root.printState === "error"
-                                        ? "Check printer"
-                                        : root.remainingLabel() + " remaining"
-                            horizontalAlignment: Text.AlignRight
-                            font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
+                        ProgressBar {
+                            Layout.fillWidth: true
+                            value: root.stateProgressValue()
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: root.metrics.gap
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: root.stateAccentColor()
+                                text: root.stateHeadline()
+                                font.pixelSize: Math.max(20, Math.round(root.metrics.fontSize * 1.5))
+                            }
+
+                            Label {
+                                color: Theme.mutedText
+                                text: root.printState === "complete"
+                                    ? "Done"
+                                    : root.printState === "cancelled"
+                                        ? "Stopped"
+                                        : root.printState === "error"
+                                            ? "Check printer"
+                                            : root.remainingLabel() + " remaining"
+                                horizontalAlignment: Text.AlignRight
+                                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
+                            }
                         }
                     }
                 }

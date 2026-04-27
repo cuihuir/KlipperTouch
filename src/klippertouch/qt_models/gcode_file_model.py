@@ -13,6 +13,7 @@ from klippertouch.domain.gcode_files import (
     GCodeFile,
     GCodeFileEntry,
     browser_entries_for_directory,
+    thumbnail_from_metadata,
 )
 
 EMPTY_INDEX = QModelIndex()
@@ -23,6 +24,7 @@ class GCodeFileListModel(QAbstractListModel):
     sortKeyChanged = Signal()
     filterTextChanged = Signal()
     selectedPathChanged = Signal()
+    thumbnailChanged = Signal()
 
     PATH_ROLE = int(Qt.ItemDataRole.UserRole) + 1
     DISPLAY_NAME_ROLE = int(Qt.ItemDataRole.UserRole) + 2
@@ -31,6 +33,7 @@ class GCodeFileListModel(QAbstractListModel):
     PERMISSIONS_ROLE = int(Qt.ItemDataRole.UserRole) + 5
     IS_DIRECTORY_ROLE = int(Qt.ItemDataRole.UserRole) + 6
     MODIFIED_LABEL_ROLE = int(Qt.ItemDataRole.UserRole) + 7
+    THUMBNAIL_URL_ROLE = int(Qt.ItemDataRole.UserRole) + 8
 
     def __init__(self) -> None:
         super().__init__()
@@ -41,6 +44,7 @@ class GCodeFileListModel(QAbstractListModel):
         self._sort_descending = False
         self._filter_text = ""
         self._selected_path = ""
+        self._thumbnail_revision = 0
 
     def set_files(self, files: tuple[GCodeFile, ...]) -> None:
         files = _normalized_file_snapshot(files)
@@ -101,6 +105,15 @@ class GCodeFileListModel(QAbstractListModel):
     def selectedPermissions(self) -> str:
         file = self._file_for_name(self._selected_path)
         return file.permissions if file is not None else ""
+
+    @Property(str, notify=selectedPathChanged)
+    def selectedThumbnailUrl(self) -> str:
+        file = self._file_for_name(self._selected_path)
+        return file.thumbnail_url if file is not None else ""
+
+    @Property(int, notify=thumbnailChanged)
+    def thumbnailRevision(self) -> int:
+        return self._thumbnail_revision
 
     @Property(bool, notify=currentPathChanged)
     def canGoUp(self) -> bool:
@@ -175,6 +188,50 @@ class GCodeFileListModel(QAbstractListModel):
         self._selected_path = ""
         self.selectedPathChanged.emit()
 
+    @Slot(str, dict, str)
+    def setFileMetadata(  # noqa: N802
+        self,
+        path: str,
+        metadata: dict[str, object],
+        thumbnail_base_url: str,
+    ) -> None:
+        clean = path.strip().strip("/")
+        thumbnail_path = thumbnail_from_metadata(clean, metadata)
+        if not thumbnail_path:
+            return
+        separator = "" if thumbnail_base_url.endswith("/") else "/"
+        thumbnail_url = f"{thumbnail_base_url}{separator}{thumbnail_path}"
+        files = []
+        changed_index = -1
+        for index, file in enumerate(self._files):
+            if file.path != clean:
+                files.append(file)
+                continue
+            if file.thumbnail_url == thumbnail_url:
+                return
+            files.append(
+                GCodeFile(
+                    path=file.path,
+                    display_name=file.display_name,
+                    modified=file.modified,
+                    size=file.size,
+                    permissions=file.permissions,
+                    thumbnail_url=thumbnail_url,
+                )
+            )
+            changed_index = index
+        if changed_index < 0:
+            return
+        self._files = tuple(files)
+        self._thumbnail_revision += 1
+        row = self._row_for_path(clean)
+        if row >= 0:
+            item_index = self.index(row, 0)
+            self.dataChanged.emit(item_index, item_index, [self.THUMBNAIL_URL_ROLE])
+        self.thumbnailChanged.emit()
+        if clean == self._selected_path:
+            self.selectedPathChanged.emit()
+
     def _reset_entries(self) -> None:
         self.beginResetModel()
         self._entries = browser_entries_for_directory(
@@ -200,6 +257,11 @@ class GCodeFileListModel(QAbstractListModel):
     def filePathFor(self, filename: str) -> str:  # noqa: N802
         file = self._file_for_name(filename)
         return file.path if file is not None else ""
+
+    @Slot(str, result=str)
+    def fileThumbnailUrlFor(self, filename: str) -> str:  # noqa: N802
+        file = self._file_for_name(filename)
+        return file.thumbnail_url if file is not None else ""
 
     def _file_for_name(self, filename: str) -> GCodeFile | None:
         clean = filename.strip().strip("/")
@@ -241,6 +303,11 @@ class GCodeFileListModel(QAbstractListModel):
             return item.is_directory
         if role == self.MODIFIED_LABEL_ROLE:
             return item.modified_label
+        if role == self.THUMBNAIL_URL_ROLE:
+            if item.is_directory:
+                return ""
+            file = self._file_for_name(item.path)
+            return file.thumbnail_url if file is not None else ""
         return None
 
     def roleNames(self) -> dict[int, QByteArray]:  # noqa: N802
@@ -252,7 +319,14 @@ class GCodeFileListModel(QAbstractListModel):
             self.PERMISSIONS_ROLE: QByteArray(b"permissions"),
             self.IS_DIRECTORY_ROLE: QByteArray(b"isDirectory"),
             self.MODIFIED_LABEL_ROLE: QByteArray(b"modifiedLabel"),
+            self.THUMBNAIL_URL_ROLE: QByteArray(b"thumbnailUrl"),
         }
+
+    def _row_for_path(self, path: str) -> int:
+        for row, entry in enumerate(self._entries):
+            if entry.path == path:
+                return row
+        return -1
 
 
 def _normalized_file_snapshot(files: tuple[GCodeFile, ...]) -> tuple[GCodeFile, ...]:

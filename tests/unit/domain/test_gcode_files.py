@@ -3,6 +3,7 @@ from klippertouch.domain.gcode_files import (
     GCodeFileEntry,
     browser_entries_for_directory,
     files_from_moonraker,
+    thumbnail_from_metadata,
 )
 
 
@@ -73,3 +74,33 @@ def test_browser_entries_for_directory_sorts_files_by_name_date_or_size() -> Non
         "b.gcode",
         "a.gcode",
     ]
+
+
+def test_thumbnail_from_metadata_uses_small_or_largest_relative_path() -> None:
+    metadata = {
+        "thumbnails": [
+            {
+                "width": 300,
+                "height": 300,
+                "size": 5000,
+                "relative_path": ".thumbs/cube-300x300.png",
+            },
+            {
+                "width": 32,
+                "height": 32,
+                "size": 1200,
+                "relative_path": ".thumbs/cube-32x32.png",
+            },
+        ]
+    }
+
+    assert thumbnail_from_metadata(
+        "calibration/cube.gcode", metadata, prefer_small=True
+    ) == "calibration/.thumbs/cube-32x32.png"
+    assert thumbnail_from_metadata(
+        "calibration/cube.gcode", metadata, prefer_small=False
+    ) == "calibration/.thumbs/cube-300x300.png"
+
+
+def test_thumbnail_from_metadata_returns_empty_string_without_thumbnail() -> None:
+    assert thumbnail_from_metadata("cube.gcode", {}) == ""

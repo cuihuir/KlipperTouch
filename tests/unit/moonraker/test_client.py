@@ -241,3 +241,55 @@ def test_client_gets_gcode_file_list(monkeypatch) -> None:
     assert client.get_gcode_file_list() == [{"path": "cube.gcode", "size": 1234}]
     assert captured["url"] == "http://host:7125/server/files/list"
     assert captured["params"] == {"root": "gcodes"}
+
+
+def test_client_gets_gcode_file_metadata(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            pass
+
+        def json(self) -> dict[str, object]:
+            return {
+                "result": {
+                    "filename": "cube.gcode",
+                    "thumbnails": [
+                        {
+                            "width": 32,
+                            "height": 32,
+                            "size": 1234,
+                            "relative_path": ".thumbs/cube-32x32.png",
+                        }
+                    ],
+                }
+            }
+
+    def fake_get(
+        url: str,
+        *,
+        headers: dict[str, str],
+        params: dict[str, str] | None,
+        timeout: float,
+    ) -> FakeResponse:
+        captured["url"] = url
+        captured["params"] = params
+        return FakeResponse()
+
+    monkeypatch.setattr("klippertouch.moonraker.client.requests.get", fake_get)
+
+    client = MoonrakerClient(PrinterConfig(name="p", moonraker_host="host"))
+
+    assert client.get_gcode_file_metadata("cube.gcode") == {
+        "filename": "cube.gcode",
+        "thumbnails": [
+            {
+                "width": 32,
+                "height": 32,
+                "size": 1234,
+                "relative_path": ".thumbs/cube-32x32.png",
+            }
+        ],
+    }
+    assert captured["url"] == "http://host:7125/server/files/metadata"
+    assert captured["params"] == {"filename": "cube.gcode"}

@@ -107,6 +107,9 @@ class MoonrakerClient:
             return [item for item in result if isinstance(item, dict)]
         return []
 
+    def get_gcode_file_metadata(self, filename: str) -> dict[str, Any]:
+        return self.get("server/files/metadata", params={"filename": filename})
+
     def get_temperature_store(self) -> dict[str, Any]:
         return self.get("server/temperature_store")
 

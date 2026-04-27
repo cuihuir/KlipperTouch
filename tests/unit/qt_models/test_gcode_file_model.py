@@ -31,12 +31,14 @@ def test_gcode_file_list_model_exposes_qml_roles(qtbot) -> None:
         "permissions": Qt.ItemDataRole.UserRole + 5,
         "isDirectory": Qt.ItemDataRole.UserRole + 6,
         "modifiedLabel": Qt.ItemDataRole.UserRole + 7,
+        "thumbnailUrl": Qt.ItemDataRole.UserRole + 8,
     }
     assert model.data(first_index, roles["path"]) == "cube.gcode"
     assert model.data(first_index, roles["displayName"]) == "cube.gcode"
     assert model.data(first_index, roles["sizeLabel"]) == "2.0 KB"
     assert model.data(first_index, roles["isDirectory"]) is False
     assert model.data(first_index, roles["modifiedLabel"]) == "2024-03-09 16:00"
+    assert model.data(first_index, roles["thumbnailUrl"]) == ""
 
 
 def test_gcode_file_list_model_exposes_directory_entries_and_sorting(qtbot) -> None:
@@ -213,6 +215,7 @@ def test_gcode_file_list_model_returns_metadata_for_print_filename() -> None:
     assert model.fileSizeLabelFor("cube.gcode") == "2.0 KB"
     assert model.fileModifiedLabelFor("cube.gcode") == "2024-03-09 16:00"
     assert model.filePathFor("cube.gcode") == "calibration/cube.gcode"
+    assert model.fileThumbnailUrlFor("cube.gcode") == ""
     assert model.fileSizeLabelFor("missing.gcode") == "-"
 
 
@@ -265,3 +268,62 @@ def test_gcode_file_list_model_clears_selected_file_when_snapshot_removes_it(qtb
 
     assert model.selectedPath == ""
     assert model.selectedSizeLabel == "-"
+
+
+def test_gcode_file_list_model_updates_single_file_thumbnail_from_metadata(qtbot) -> None:
+    model = GCodeFileListModel()
+    model.set_files(
+        (
+            GCodeFile(path="cube.gcode", display_name="cube.gcode", size=2048),
+            GCodeFile(path="other.gcode", display_name="other.gcode", size=1024),
+        )
+    )
+    roles = {bytes(value).decode(): key for key, value in model.roleNames().items()}
+
+    with qtbot.waitSignal(model.dataChanged, timeout=1000):
+        model.setFileMetadata(
+            "cube.gcode",
+            {
+                "thumbnails": [
+                    {
+                        "width": 32,
+                        "height": 32,
+                        "size": 1200,
+                        "relative_path": ".thumbs/cube-32x32.png",
+                    }
+                ]
+            },
+            "http://host:7125/server/files/gcodes/",
+        )
+
+    assert (
+        model.data(model.index(0, 0), roles["thumbnailUrl"])
+        == "http://host:7125/server/files/gcodes/.thumbs/cube-32x32.png"
+    )
+    assert model.data(model.index(1, 0), roles["thumbnailUrl"]) == ""
+
+
+def test_gcode_file_list_model_exposes_selected_thumbnail_url(qtbot) -> None:
+    model = GCodeFileListModel()
+    model.set_files((GCodeFile(path="cube.gcode", display_name="cube.gcode", size=2048),))
+    model.selectPath("cube.gcode", False)
+
+    with qtbot.waitSignal(model.selectedPathChanged, timeout=1000):
+        model.setFileMetadata(
+            "cube.gcode",
+            {
+                "thumbnails": [
+                    {
+                        "size": 1200,
+                        "relative_path": ".thumbs/cube-32x32.png",
+                    }
+                ]
+            },
+            "http://host:7125/server/files/gcodes/",
+        )
+
+    assert model.selectedThumbnailUrl == "http://host:7125/server/files/gcodes/.thumbs/cube-32x32.png"
+    assert model.fileThumbnailUrlFor("cube.gcode") == (
+        "http://host:7125/server/files/gcodes/.thumbs/cube-32x32.png"
+    )
+    assert model.thumbnailRevision == 1

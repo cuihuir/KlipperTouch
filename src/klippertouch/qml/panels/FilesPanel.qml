@@ -196,6 +196,7 @@ Item {
                         required property bool isDirectory
                         required property string modifiedLabel
                         required property string permissions
+                        required property string thumbnailUrl
 
                         width: fileList.width
                         height: Math.max(46, Math.round(root.metrics.fontSize * (root.metrics.portrait ? 4.2 : 3.3)))
@@ -212,9 +213,36 @@ Item {
                             anchors.fill: parent
                             anchors.leftMargin: root.metrics.gap
                             anchors.rightMargin: root.metrics.gap
-                            columns: root.compactFileRows ? 1 : 4
+                            columns: root.compactFileRows ? 2 : 5
                             rowSpacing: 0
                             columnSpacing: root.metrics.gap
+
+                            Rectangle {
+                                Layout.preferredWidth: Math.max(40, Math.round(root.metrics.fontSize * 2.8))
+                                Layout.preferredHeight: Layout.preferredWidth
+                                Layout.rowSpan: 2
+                                color: "#0b1112"
+                                border.color: "#263233"
+                                border.width: 1
+                                radius: Math.round(root.metrics.fontSize * 0.22)
+
+                                Image {
+                                    anchors.fill: parent
+                                    anchors.margins: 2
+                                    source: thumbnailUrl
+                                    fillMode: Image.PreserveAspectFit
+                                    visible: !isDirectory && thumbnailUrl.length > 0
+                                }
+
+                                Label {
+                                    anchors.centerIn: parent
+                                    color: Theme.mutedText
+                                    text: isDirectory ? "DIR" : "G"
+                                    visible: isDirectory || thumbnailUrl.length <= 0
+                                    font.bold: true
+                                    font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                                }
+                            }
 
                             Label {
                                 Layout.fillWidth: true
@@ -297,6 +325,26 @@ Item {
                                 : "Select a G-Code file to inspect metadata."
                             wrapMode: Text.WordWrap
                             font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: Math.max(120, Math.round(root.metrics.fontSize * 8.5))
+                            visible: root.activeFileModel
+                                && root.activeFileModel.selectedThumbnailUrl.length > 0
+                            color: "#0b1112"
+                            border.color: "#263233"
+                            border.width: 1
+                            radius: Math.round(root.metrics.fontSize * 0.25)
+
+                            Image {
+                                anchors.fill: parent
+                                anchors.margins: root.metrics.gap
+                                source: root.activeFileModel
+                                    ? root.activeFileModel.selectedThumbnailUrl
+                                    : ""
+                                fillMode: Image.PreserveAspectFit
+                            }
                         }
 
                         GridLayout {

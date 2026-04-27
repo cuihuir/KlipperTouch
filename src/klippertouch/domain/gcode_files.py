@@ -11,6 +11,7 @@ class GCodeFile:
     modified: float = 0.0
     size: int = 0
     permissions: str = ""
+    thumbnail_url: str = ""
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "path", str(self.path))
@@ -18,6 +19,7 @@ class GCodeFile:
         object.__setattr__(self, "modified", float(self.modified))
         object.__setattr__(self, "size", max(0, int(self.size)))
         object.__setattr__(self, "permissions", str(self.permissions))
+        object.__setattr__(self, "thumbnail_url", str(self.thumbnail_url))
 
     @property
     def size_label(self) -> str:
@@ -100,10 +102,33 @@ def files_from_moonraker(items: Any) -> tuple[GCodeFile, ...]:
                 display_name=PurePosixPath(path).name,
                 modified=_float_or_default(item.get("modified")),
                 size=_int_or_default(item.get("size")),
-                permissions=str(item.get("permissions", "")),
-            )
+            permissions=str(item.get("permissions", "")),
+            thumbnail_url=str(item.get("thumbnail_url", "")),
         )
+    )
     return tuple(files)
+
+
+def thumbnail_from_metadata(
+    filename: str,
+    metadata: dict[str, Any],
+    *,
+    prefer_small: bool = True,
+) -> str:
+    thumbnails = metadata.get("thumbnails", ())
+    if not isinstance(thumbnails, list) or not thumbnails:
+        return ""
+    valid = [item for item in thumbnails if isinstance(item, dict) and item.get("relative_path")]
+    if not valid:
+        return ""
+    selected = sorted(valid, key=_thumbnail_area)[0 if prefer_small else -1]
+    relative_path = str(selected.get("relative_path", "")).strip().strip("/")
+    if not relative_path:
+        return ""
+    parent = PurePosixPath(filename).parent
+    if str(parent) == ".":
+        return relative_path
+    return str(parent / relative_path)
 
 
 def browser_entries_for_directory(
@@ -159,6 +184,14 @@ def _matches_filter(path: str, display_name: str, filter_text: str) -> bool:
     if not filter_text:
         return True
     return filter_text in path.casefold() or filter_text in display_name.casefold()
+
+
+def _thumbnail_area(thumbnail: dict[str, Any]) -> int:
+    width = _int_or_default(thumbnail.get("width"))
+    height = _int_or_default(thumbnail.get("height"))
+    if width > 0 and height > 0:
+        return width * height
+    return _int_or_default(thumbnail.get("size"))
 
 
 def _sorted_files(

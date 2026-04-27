@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from klippertouch.config.models import PrinterConfig
+from klippertouch.domain.printer import PrinterStatus
 from klippertouch.moonraker.client import MoonrakerClient
 from klippertouch.moonraker.file_refresh import GCodeFileRefresh
 from klippertouch.qt_models.gcode_file_model import GCodeFileListModel
@@ -79,6 +80,7 @@ def test_file_refresh_only_runs_while_files_panel_is_active(qtbot) -> None:
     client = FakeClient()
     model = GCodeFileListModel()
     status_model = StatusModel()
+    status_model.set_status(PrinterStatus(print_filename="cube.gcode"))
     refresh = GCodeFileRefresh(client, model, status_model=status_model)
 
     refresh.start()
@@ -92,12 +94,79 @@ def test_file_refresh_only_runs_while_files_panel_is_active(qtbot) -> None:
     assert client.calls == 1
     assert model.rowCount() == 1
 
+
+def test_file_refresh_lazily_loads_one_metadata_entry_per_tick(qtbot) -> None:
+    class FakeClient(MoonrakerClient):
+        def __init__(self) -> None:
+            super().__init__(PrinterConfig(name="p", moonraker_host="host"))
+            self.metadata_calls: list[str] = []
+
+        def get_gcode_file_list(self) -> list[dict[str, object]]:
+            return [
+                {"path": "a.gcode", "size": 2048, "permissions": "rw"},
+                {"path": "b.gcode", "size": 4096, "permissions": "rw"},
+            ]
+
+        def get_gcode_file_metadata(self, filename: str) -> dict[str, object]:
+            self.metadata_calls.append(filename)
+            return {
+                "thumbnails": [
+                    {
+                        "size": 1200,
+                        "relative_path": f".thumbs/{filename}.png",
+                    }
+                ]
+            }
+
+    client = FakeClient()
+    model = GCodeFileListModel()
+    refresh = GCodeFileRefresh(client, model)
+
+    refresh.refresh_once()
+
+    assert client.metadata_calls == []
+
+    with qtbot.waitSignal(model.dataChanged, timeout=1000):
+        refresh.refresh_metadata_once()
+
+    assert client.metadata_calls == ["a.gcode"]
+
+    with qtbot.waitSignal(model.dataChanged, timeout=1000):
+        refresh.refresh_metadata_once()
+
+    assert client.metadata_calls == ["a.gcode", "b.gcode"]
+
+
+def test_file_refresh_loads_metadata_while_print_or_job_status_is_active(qtbot) -> None:
+    class FakeClient(MoonrakerClient):
+        def __init__(self) -> None:
+            super().__init__(PrinterConfig(name="p", moonraker_host="host"))
+            self.metadata_calls = 0
+
+        def get_gcode_file_list(self) -> list[dict[str, object]]:
+            return [{"path": "cube.gcode", "size": 2048, "permissions": "rw"}]
+
+        def get_gcode_file_metadata(self, filename: str) -> dict[str, object]:
+            self.metadata_calls += 1
+            return {"thumbnails": [{"size": 1200, "relative_path": ".thumbs/cube.png"}]}
+
+    client = FakeClient()
+    model = GCodeFileListModel()
+    status_model = StatusModel()
+    status_model.set_status(PrinterStatus(print_filename="cube.gcode"))
+    refresh = GCodeFileRefresh(client, model, status_model=status_model)
+
+    refresh.start()
+    refresh.refresh_metadata_once()
+
+    assert client.metadata_calls == 0
+
+    status_model.setActivePanel("job_status")
+    refresh.refresh_metadata_once()
+
+    assert client.metadata_calls == 1
+
     status_model.setActivePanel("main")
-    refresh.refresh_once()
+    refresh.refresh_metadata_once()
 
-    assert client.calls == 1
-
-    refresh._client.fail = True
-    refresh.refresh_once()
-
-    assert model.rowCount() == 1
+    assert client.metadata_calls == 1
