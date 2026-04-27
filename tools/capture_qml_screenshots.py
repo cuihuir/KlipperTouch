@@ -63,7 +63,13 @@ SAMPLE_METADATA = {
     "filament_type": "PLA",
     "filament_name": "Matte Black",
     "filament_weight_total": 12.35,
-    "thumbnails": (),
+    "thumbnails": [
+        {
+            "width": 300,
+            "height": 300,
+            "relative_path": ".thumbs/OrcaCube_PLA_27m41s-300x300.svg",
+        },
+    ],
 }
 SAMPLE_STATUS = {
     "hostname": "orangepi3b",
@@ -179,6 +185,25 @@ def parse_size(value: str) -> tuple[int, int]:
     return parsed
 
 
+def _write_sample_thumbnail(output_dir: Path) -> Path:
+    thumbnail_root = output_dir / "sample_files" / "gcodes"
+    thumbnail_dir = thumbnail_root / ".thumbs"
+    thumbnail_dir.mkdir(parents=True, exist_ok=True)
+    thumbnail_path = thumbnail_dir / "OrcaCube_PLA_27m41s-300x300.svg"
+    if not thumbnail_path.exists():
+        thumbnail_path.write_text(
+            """<svg xmlns="http://www.w3.org/2000/svg"
+    width="300" height="300" viewBox="0 0 300 300">
+<rect width="300" height="300" rx="18" fill="#111819"/>
+<path d="M74 211h152l-19-101-35 24-23-50-28 63-28-17z" fill="#5c6b6f"/>
+<rect x="82" y="219" width="136" height="12" rx="6" fill="#8b9496"/>
+</svg>
+""",
+            encoding="utf-8",
+        )
+    return thumbnail_root
+
+
 def capture(
     *,
     qml_path: Path,
@@ -194,6 +219,7 @@ def capture(
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     app = QGuiApplication.instance() or QGuiApplication([])
     output_dir.mkdir(parents=True, exist_ok=True)
+    thumbnail_base = _write_sample_thumbnail(output_dir).as_uri()
     captured: list[Path] = []
     for width, height in sizes:
         for panel in panels:
@@ -203,7 +229,7 @@ def capture(
                 file_model.setFileMetadata(
                     "OrcaCube_PLA_27m41s.gcode",
                     SAMPLE_METADATA,
-                    "http://127.0.0.1:7125/server/files/gcodes/",
+                    thumbnail_base,
                 )
                 engine.rootContext().setContextProperty("gcodeFileModel", file_model)
                 engine.gcode_file_model = file_model  # type: ignore[attr-defined]

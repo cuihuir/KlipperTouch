@@ -307,6 +307,12 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "source: thumbnailUrl" in qml
     assert "root.activeFileModel.selectedPreviewThumbnailUrl" in qml
     assert "id: detailPageView" in qml
+    assert "id: selectedPreviewAndMetadataLayout" in qml
+    assert "id: selectedPreviewFrame" in qml
+    assert "function selectedPreviewSize()" in qml
+    assert "Math.min(300" in qml
+    assert "Layout.preferredWidth: root.selectedPreviewSize()" in qml
+    assert "Layout.preferredHeight: root.selectedPreviewSize()" in qml
     assert "visible: !root.detailPage" in qml
     assert "visible: root.detailPage" in qml
     assert "Read-only file actions" in qml

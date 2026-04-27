@@ -39,6 +39,9 @@ def test_screenshot_tool_captures_common_panels_and_sizes() -> None:
     assert "OrcaCube_PLA_27m41s.gcode" in source
     assert "SAMPLE_METADATA" in source
     assert '"estimated_time": 1661.0' in source
+    assert '"relative_path": ".thumbs/OrcaCube_PLA_27m41s-300x300.svg"' in source
+    assert "_write_sample_thumbnail" in source
+    assert "thumbnail_base = _write_sample_thumbnail(output_dir).as_uri()" in source
     assert "setFileMetadata" in source
     assert "write_index" in source
     assert "index.html" in source

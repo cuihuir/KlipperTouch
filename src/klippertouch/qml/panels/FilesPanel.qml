@@ -127,6 +127,17 @@ Item {
         ]
     }
 
+    function selectedPreviewSize() {
+        var availableWidth = Math.max(96, root.width - root.metrics.margin * 4 - root.metrics.gap * 4)
+        var availableHeight = Math.max(96, root.height - root.metrics.margin * 4 - root.metrics.gap * 8 - 96)
+        return Math.round(Math.max(96, Math.min(300, availableWidth, availableHeight)))
+    }
+
+    function selectedPreviewColumns() {
+        var previewAndGap = root.selectedPreviewSize() + root.metrics.gap + Math.max(280, root.metrics.fontSize * 18)
+        return width >= previewAndGap ? 2 : 1
+    }
+
     Rectangle {
         anchors.fill: parent
         anchors.margins: root.metrics.margin
@@ -387,75 +398,88 @@ Item {
                             font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
                         }
 
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: Math.max(120, Math.round(root.metrics.fontSize * 8.5))
-                            visible: root.activeFileModel
-                                && root.activeFileModel.selectedPreviewThumbnailUrl.length > 0
-                            color: "#0b1112"
-                            border.color: "#263233"
-                            border.width: 1
-                            radius: Math.round(root.metrics.fontSize * 0.25)
-
-                            Image {
-                                anchors.fill: parent
-                                anchors.margins: root.metrics.gap
-                                source: root.activeFileModel
-                                    ? root.activeFileModel.selectedPreviewThumbnailUrl
-                                    : ""
-                                fillMode: Image.PreserveAspectFit
-                            }
-                        }
-
-                        Flickable {
-                            id: selectedMetadataFlickable
+                        GridLayout {
+                            id: selectedPreviewAndMetadataLayout
                             Layout.fillWidth: true
                             Layout.fillHeight: true
-                            clip: true
-                            boundsBehavior: Flickable.StopAtBounds
-                            contentWidth: width
-                            contentHeight: selectedMetadataGrid.implicitHeight
+                            columns: root.selectedPreviewColumns()
+                            rowSpacing: root.metrics.gap
+                            columnSpacing: root.metrics.gap
 
-                            ScrollBar.vertical: ScrollBar {
-                                policy: ScrollBar.AsNeeded
+                            Rectangle {
+                                id: selectedPreviewFrame
+                                Layout.preferredWidth: root.selectedPreviewSize()
+                                Layout.preferredHeight: root.selectedPreviewSize()
+                                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                                visible: root.activeFileModel
+                                    && root.activeFileModel.selectedPreviewThumbnailUrl.length > 0
+                                color: "#0b1112"
+                                border.color: "#263233"
+                                border.width: 1
+                                radius: Math.round(root.metrics.fontSize * 0.25)
+
+                                Image {
+                                    anchors.fill: parent
+                                    anchors.margins: root.metrics.gap
+                                    source: root.activeFileModel
+                                        ? root.activeFileModel.selectedPreviewThumbnailUrl
+                                        : ""
+                                    fillMode: Image.PreserveAspectFit
+                                }
                             }
 
-                            GridLayout {
-                                id: selectedMetadataGrid
-                                width: selectedMetadataFlickable.width
-                                columns: 2
-                                rowSpacing: Math.max(6, Math.round(root.metrics.fontSize * 0.45))
-                                columnSpacing: root.metrics.gap
+                            Flickable {
+                                id: selectedMetadataFlickable
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                Layout.minimumWidth: 0
+                                Layout.columnSpan: selectedPreviewFrame.visible ? 1 : selectedPreviewAndMetadataLayout.columns
+                                clip: true
+                                boundsBehavior: Flickable.StopAtBounds
+                                contentWidth: width
+                                contentHeight: selectedMetadataGrid.implicitHeight
 
-                                Repeater {
-                                    model: root.selectedMetadataModel()
+                                ScrollBar.vertical: ScrollBar {
+                                    policy: ScrollBar.AsNeeded
+                                }
 
-                                    Rectangle {
-                                        Layout.fillWidth: true
-                                        Layout.preferredHeight: Math.max(44, Math.round(root.metrics.fontSize * 3.0))
-                                        color: "#0b1112"
-                                        border.color: "#263233"
-                                        border.width: 1
-                                        radius: Math.round(root.metrics.fontSize * 0.25)
+                                GridLayout {
+                                    id: selectedMetadataGrid
+                                    width: selectedMetadataFlickable.width
+                                    columns: selectedMetadataFlickable.width >= 360 ? 2 : 1
+                                    rowSpacing: Math.max(6, Math.round(root.metrics.fontSize * 0.45))
+                                    columnSpacing: root.metrics.gap
 
-                                        ColumnLayout {
-                                            anchors.fill: parent
-                                            anchors.margins: Math.max(5, Math.round(root.metrics.fontSize * 0.35))
-                                            spacing: 0
+                                    Repeater {
+                                        model: root.selectedMetadataModel()
 
-                                            Label {
-                                                Layout.fillWidth: true
-                                                color: Theme.mutedText
-                                                text: modelData.label
-                                                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
-                                            }
+                                        Rectangle {
+                                            Layout.fillWidth: true
+                                            Layout.preferredHeight: Math.max(44, Math.round(root.metrics.fontSize * 3.0))
+                                            color: "#0b1112"
+                                            border.color: "#263233"
+                                            border.width: 1
+                                            radius: Math.round(root.metrics.fontSize * 0.25)
 
-                                            Label {
-                                                Layout.fillWidth: true
-                                                color: Theme.text
-                                                text: modelData.value.length > 0 ? modelData.value : "-"
-                                                elide: Text.ElideRight
-                                                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
+                                            ColumnLayout {
+                                                anchors.fill: parent
+                                                anchors.margins: Math.max(5, Math.round(root.metrics.fontSize * 0.35))
+                                                spacing: 0
+
+                                                Label {
+                                                    Layout.fillWidth: true
+                                                    color: Theme.mutedText
+                                                    text: modelData.label
+                                                    font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                                                }
+
+                                                Label {
+                                                    Layout.fillWidth: true
+                                                    color: Theme.text
+                                                    text: modelData.value.length > 0 ? modelData.value : "-"
+                                                    elide: Text.ElideRight
+                                                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
+                                                }
                                             }
                                         }
                                     }
