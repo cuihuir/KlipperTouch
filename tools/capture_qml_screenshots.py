@@ -57,6 +57,12 @@ SAMPLE_METADATA = {
     "filament_total": 2234.0,
     "object_height": 12.35,
     "layer_height": 0.2,
+    "slicer": "OrcaSlicer",
+    "slicer_version": "2.2.0",
+    "nozzle_diameter": 0.4,
+    "filament_type": "PLA",
+    "filament_name": "Matte Black",
+    "filament_weight_total": 12.35,
     "thumbnails": (),
 }
 SAMPLE_STATUS = {

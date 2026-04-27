@@ -1,4 +1,5 @@
 from dataclasses import replace
+from typing import Any
 
 from PySide6.QtCore import (
     Property,
@@ -246,6 +247,12 @@ class GCodeFileListModel(QAbstractListModel):
                 or file.filament_total != next_file.filament_total
                 or file.object_height != next_file.object_height
                 or file.layer_height != next_file.layer_height
+                or file.slicer != next_file.slicer
+                or file.slicer_version != next_file.slicer_version
+                or file.nozzle_diameter != next_file.nozzle_diameter
+                or file.filament_type != next_file.filament_type
+                or file.filament_name != next_file.filament_name
+                or file.filament_weight_total != next_file.filament_weight_total
             ):
                 metadata_changed = True
             if file == next_file:
@@ -287,6 +294,31 @@ class GCodeFileListModel(QAbstractListModel):
     def fileLayerHeightLabelFor(self, filename: str) -> str:  # noqa: N802
         file = self._file_for_name(filename)
         return file.layer_height_label if file is not None else "-"
+
+    @Slot(str, result=str)
+    def fileSlicerLabelFor(self, filename: str) -> str:  # noqa: N802
+        file = self._file_for_name(filename)
+        return file.slicer_label if file is not None else "-"
+
+    @Slot(str, result=str)
+    def fileNozzleDiameterLabelFor(self, filename: str) -> str:  # noqa: N802
+        file = self._file_for_name(filename)
+        return file.nozzle_diameter_label if file is not None else "-"
+
+    @Slot(str, result=str)
+    def fileFilamentTypeLabelFor(self, filename: str) -> str:  # noqa: N802
+        file = self._file_for_name(filename)
+        return file.filament_type_label if file is not None else "-"
+
+    @Slot(str, result=str)
+    def fileFilamentNameLabelFor(self, filename: str) -> str:  # noqa: N802
+        file = self._file_for_name(filename)
+        return file.filament_name_label if file is not None else "-"
+
+    @Slot(str, result=str)
+    def fileFilamentWeightTotalLabelFor(self, filename: str) -> str:  # noqa: N802
+        file = self._file_for_name(filename)
+        return file.filament_weight_total_label if file is not None else "-"
 
     def _reset_entries(self) -> None:
         previous_selection = self._selected_path
@@ -423,6 +455,12 @@ def _preserve_loaded_thumbnails(
             or file.filament_total > 0
             or file.object_height > 0
             or file.layer_height > 0
+            or file.slicer
+            or file.slicer_version
+            or file.nozzle_diameter > 0
+            or file.filament_type
+            or file.filament_name
+            or file.filament_weight_total > 0
         )
     }
     if not previous_by_path:
@@ -437,6 +475,14 @@ def _preserve_loaded_thumbnails(
             filament_total=file.filament_total or previous_by_path[file.path].filament_total,
             object_height=file.object_height or previous_by_path[file.path].object_height,
             layer_height=file.layer_height or previous_by_path[file.path].layer_height,
+            slicer=file.slicer or previous_by_path[file.path].slicer,
+            slicer_version=file.slicer_version or previous_by_path[file.path].slicer_version,
+            nozzle_diameter=file.nozzle_diameter
+            or previous_by_path[file.path].nozzle_diameter,
+            filament_type=file.filament_type or previous_by_path[file.path].filament_type,
+            filament_name=file.filament_name or previous_by_path[file.path].filament_name,
+            filament_weight_total=file.filament_weight_total
+            or previous_by_path[file.path].filament_weight_total,
         )
         if file.path in previous_by_path
         else file
@@ -444,12 +490,26 @@ def _preserve_loaded_thumbnails(
     )
 
 
-def _metadata_fields(metadata: dict[str, object], file: GCodeFile) -> dict[str, float]:
+def _metadata_fields(metadata: dict[str, object], file: GCodeFile) -> dict[str, Any]:
     return {
         "estimated_time": _metadata_float(metadata, "estimated_time", file.estimated_time),
         "filament_total": _metadata_float(metadata, "filament_total", file.filament_total),
         "object_height": _metadata_float(metadata, "object_height", file.object_height),
         "layer_height": _metadata_float(metadata, "layer_height", file.layer_height),
+        "slicer": _metadata_string(metadata, "slicer", file.slicer),
+        "slicer_version": _metadata_string(metadata, "slicer_version", file.slicer_version),
+        "nozzle_diameter": _metadata_float(
+            metadata,
+            "nozzle_diameter",
+            file.nozzle_diameter,
+        ),
+        "filament_type": _metadata_string(metadata, "filament_type", file.filament_type),
+        "filament_name": _metadata_string(metadata, "filament_name", file.filament_name),
+        "filament_weight_total": _metadata_float(
+            metadata,
+            "filament_weight_total",
+            file.filament_weight_total,
+        ),
     }
 
 
@@ -463,3 +523,10 @@ def _metadata_float(metadata: dict[str, object], key: str, fallback: float) -> f
         return max(0.0, float(value))
     except (TypeError, ValueError):
         return fallback
+
+
+def _metadata_string(metadata: dict[str, object], key: str, fallback: str) -> str:
+    value = metadata.get(key, fallback)
+    if isinstance(value, bool) or value is None:
+        return fallback
+    return str(value).strip()

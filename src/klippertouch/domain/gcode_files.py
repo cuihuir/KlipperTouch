@@ -17,6 +17,12 @@ class GCodeFile:
     filament_total: float = 0.0
     object_height: float = 0.0
     layer_height: float = 0.0
+    slicer: str = ""
+    slicer_version: str = ""
+    nozzle_diameter: float = 0.0
+    filament_type: str = ""
+    filament_name: str = ""
+    filament_weight_total: float = 0.0
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "path", str(self.path))
@@ -30,6 +36,20 @@ class GCodeFile:
         object.__setattr__(self, "filament_total", max(0.0, _float_or_default(self.filament_total)))
         object.__setattr__(self, "object_height", max(0.0, _float_or_default(self.object_height)))
         object.__setattr__(self, "layer_height", max(0.0, _float_or_default(self.layer_height)))
+        object.__setattr__(self, "slicer", str(self.slicer).strip())
+        object.__setattr__(self, "slicer_version", str(self.slicer_version).strip())
+        object.__setattr__(
+            self,
+            "nozzle_diameter",
+            max(0.0, _float_or_default(self.nozzle_diameter)),
+        )
+        object.__setattr__(self, "filament_type", str(self.filament_type).strip())
+        object.__setattr__(self, "filament_name", str(self.filament_name).strip())
+        object.__setattr__(
+            self,
+            "filament_weight_total",
+            max(0.0, _float_or_default(self.filament_weight_total)),
+        )
 
     @property
     def size_label(self) -> str:
@@ -62,6 +82,30 @@ class GCodeFile:
     @property
     def layer_height_label(self) -> str:
         return _millimeter_label(self.layer_height)
+
+    @property
+    def slicer_label(self) -> str:
+        if self.slicer and self.slicer_version:
+            return f"{self.slicer} {self.slicer_version}"
+        return self.slicer or self.slicer_version or "-"
+
+    @property
+    def nozzle_diameter_label(self) -> str:
+        return _millimeter_label(self.nozzle_diameter)
+
+    @property
+    def filament_type_label(self) -> str:
+        return self.filament_type or "-"
+
+    @property
+    def filament_name_label(self) -> str:
+        return self.filament_name or "-"
+
+    @property
+    def filament_weight_total_label(self) -> str:
+        if self.filament_weight_total <= 0:
+            return "-"
+        return f"{self.filament_weight_total:.2f} g"
 
 
 @dataclass(frozen=True)

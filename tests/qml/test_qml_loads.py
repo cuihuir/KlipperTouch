@@ -272,15 +272,43 @@ def test_files_panel_is_only_read_only_file_management() -> None:
         "root.activeFileModel.fileFilamentTotalLabelFor(root.activeFileModel.selectedPath)"
         in qml
     )
+    assert (
+        "root.activeFileModel.fileSlicerLabelFor(root.activeFileModel.selectedPath)"
+        in qml
+    )
+    assert (
+        "root.activeFileModel.fileNozzleDiameterLabelFor(root.activeFileModel.selectedPath)"
+        in qml
+    )
+    assert (
+        "root.activeFileModel.fileFilamentTypeLabelFor(root.activeFileModel.selectedPath)"
+        in qml
+    )
+    assert (
+        "root.activeFileModel.fileFilamentNameLabelFor(root.activeFileModel.selectedPath)"
+        in qml
+    )
+    assert (
+        "root.activeFileModel.fileFilamentWeightTotalLabelFor(root.activeFileModel.selectedPath)"
+        in qml
+    )
     assert '"label": "Estimated time"' in qml
     assert '"label": "Layer height"' in qml
     assert '"label": "Object height"' in qml
     assert '"label": "Filament total"' in qml
+    assert '"label": "Slicer"' in qml
+    assert '"label": "Nozzle"' in qml
+    assert '"label": "Filament type"' in qml
+    assert '"label": "Filament name"' in qml
+    assert '"label": "Filament weight"' in qml
     assert "required property string thumbnailUrl" in qml
     assert "source: thumbnailUrl" in qml
     assert "root.activeFileModel.selectedPreviewThumbnailUrl" in qml
     assert "id: detailsPanel" in qml
     assert "Read-only file details" in qml
+    assert "id: selectedMetadataFlickable" in qml
+    assert "id: selectedMetadataGrid" in qml
+    assert "contentHeight: selectedMetadataGrid.implicitHeight" in qml
     assert "ScrollBar.vertical: ScrollBar" in qml
     assert "policy: ScrollBar.AsNeeded" in qml
     assert "required property bool isDirectory" in qml

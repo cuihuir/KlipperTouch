@@ -37,6 +37,25 @@ def test_files_from_moonraker_normalizes_file_entries() -> None:
     assert files[0].size_label == "2.0 KB"
 
 
+def test_gcode_file_formats_extended_slicer_and_filament_metadata() -> None:
+    file = GCodeFile(
+        path="cube.gcode",
+        display_name="cube.gcode",
+        slicer="OrcaSlicer",
+        slicer_version="2.2.0",
+        nozzle_diameter=0.4,
+        filament_type="PLA",
+        filament_name="Matte Black",
+        filament_weight_total=12.345,
+    )
+
+    assert file.slicer_label == "OrcaSlicer 2.2.0"
+    assert file.nozzle_diameter_label == "0.40 mm"
+    assert file.filament_type_label == "PLA"
+    assert file.filament_name_label == "Matte Black"
+    assert file.filament_weight_total_label == "12.35 g"
+
+
 def test_browser_entries_for_directory_groups_immediate_dirs_and_files() -> None:
     files = (
         GCodeFile(path="cube.gcode", display_name="cube.gcode", modified=1710000100, size=2048),

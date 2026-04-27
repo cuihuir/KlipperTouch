@@ -90,6 +90,26 @@ Item {
                 "label": "Filament total",
                 "value": root.activeFileModel.fileFilamentTotalLabelFor(root.activeFileModel.selectedPath)
             },
+            {
+                "label": "Slicer",
+                "value": root.activeFileModel.fileSlicerLabelFor(root.activeFileModel.selectedPath)
+            },
+            {
+                "label": "Nozzle",
+                "value": root.activeFileModel.fileNozzleDiameterLabelFor(root.activeFileModel.selectedPath)
+            },
+            {
+                "label": "Filament type",
+                "value": root.activeFileModel.fileFilamentTypeLabelFor(root.activeFileModel.selectedPath)
+            },
+            {
+                "label": "Filament name",
+                "value": root.activeFileModel.fileFilamentNameLabelFor(root.activeFileModel.selectedPath)
+            },
+            {
+                "label": "Filament weight",
+                "value": root.activeFileModel.fileFilamentWeightTotalLabelFor(root.activeFileModel.selectedPath)
+            },
             {"label": "Permissions", "value": root.activeFileModel.selectedPermissions},
             {"label": "Mode", "value": "readonly"}
         ]
@@ -386,49 +406,60 @@ Item {
                             }
                         }
 
-                        GridLayout {
+                        Flickable {
+                            id: selectedMetadataFlickable
                             Layout.fillWidth: true
-                            columns: 2
-                            rowSpacing: Math.max(6, Math.round(root.metrics.fontSize * 0.45))
-                            columnSpacing: root.metrics.gap
+                            Layout.fillHeight: true
+                            clip: true
+                            boundsBehavior: Flickable.StopAtBounds
+                            contentWidth: width
+                            contentHeight: selectedMetadataGrid.implicitHeight
 
-                            Repeater {
-                                model: root.selectedMetadataModel()
+                            ScrollBar.vertical: ScrollBar {
+                                policy: ScrollBar.AsNeeded
+                            }
 
-                                Rectangle {
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: Math.max(44, Math.round(root.metrics.fontSize * 3.0))
-                                    color: "#0b1112"
-                                    border.color: "#263233"
-                                    border.width: 1
-                                    radius: Math.round(root.metrics.fontSize * 0.25)
+                            GridLayout {
+                                id: selectedMetadataGrid
+                                width: selectedMetadataFlickable.width
+                                columns: 2
+                                rowSpacing: Math.max(6, Math.round(root.metrics.fontSize * 0.45))
+                                columnSpacing: root.metrics.gap
 
-                                    ColumnLayout {
-                                        anchors.fill: parent
-                                        anchors.margins: Math.max(5, Math.round(root.metrics.fontSize * 0.35))
-                                        spacing: 0
+                                Repeater {
+                                    model: root.selectedMetadataModel()
 
-                                        Label {
-                                            Layout.fillWidth: true
-                                            color: Theme.mutedText
-                                            text: modelData.label
-                                            font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
-                                        }
+                                    Rectangle {
+                                        Layout.fillWidth: true
+                                        Layout.preferredHeight: Math.max(44, Math.round(root.metrics.fontSize * 3.0))
+                                        color: "#0b1112"
+                                        border.color: "#263233"
+                                        border.width: 1
+                                        radius: Math.round(root.metrics.fontSize * 0.25)
 
-                                        Label {
-                                            Layout.fillWidth: true
-                                            color: Theme.text
-                                            text: modelData.value.length > 0 ? modelData.value : "-"
-                                            elide: Text.ElideRight
-                                            font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
+                                        ColumnLayout {
+                                            anchors.fill: parent
+                                            anchors.margins: Math.max(5, Math.round(root.metrics.fontSize * 0.35))
+                                            spacing: 0
+
+                                            Label {
+                                                Layout.fillWidth: true
+                                                color: Theme.mutedText
+                                                text: modelData.label
+                                                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                                            }
+
+                                            Label {
+                                                Layout.fillWidth: true
+                                                color: Theme.text
+                                                text: modelData.value.length > 0 ? modelData.value : "-"
+                                                elide: Text.ElideRight
+                                                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
+                                            }
                                         }
                                     }
                                 }
                             }
-                        }
-
-                        Item {
-                            Layout.fillHeight: true
                         }
                     }
                 }

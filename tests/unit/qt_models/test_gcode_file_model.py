@@ -248,6 +248,36 @@ def test_gcode_file_list_model_exposes_loaded_gcode_metadata_labels(qtbot) -> No
     assert model.fileFilamentTotalLabelFor("cube.gcode") == "2.2 m"
 
 
+def test_gcode_file_list_model_exposes_extended_file_metadata_labels(qtbot) -> None:
+    model = GCodeFileListModel()
+    model.set_files((GCodeFile(path="cube.gcode", display_name="cube.gcode", size=2048),))
+
+    with qtbot.waitSignal(model.metadataChanged, timeout=1000):
+        model.setFileMetadata(
+            "cube.gcode",
+            {
+                "slicer": "OrcaSlicer",
+                "slicer_version": "2.2.0",
+                "nozzle_diameter": 0.4,
+                "filament_type": "PLA",
+                "filament_name": "Matte Black",
+                "filament_weight_total": 12.345,
+            },
+            "http://host:7125/server/files/gcodes/",
+        )
+
+    assert model.fileSlicerLabelFor("cube.gcode") == "OrcaSlicer 2.2.0"
+    assert model.fileNozzleDiameterLabelFor("cube.gcode") == "0.40 mm"
+    assert model.fileFilamentTypeLabelFor("cube.gcode") == "PLA"
+    assert model.fileFilamentNameLabelFor("cube.gcode") == "Matte Black"
+    assert model.fileFilamentWeightTotalLabelFor("cube.gcode") == "12.35 g"
+
+    model.set_files((GCodeFile(path="cube.gcode", display_name="cube.gcode", size=2048),))
+
+    assert model.fileSlicerLabelFor("cube.gcode") == "OrcaSlicer 2.2.0"
+    assert model.fileFilamentWeightTotalLabelFor("cube.gcode") == "12.35 g"
+
+
 def test_gcode_file_list_model_tracks_read_only_selected_file(qtbot) -> None:
     model = GCodeFileListModel()
     model.set_files(
