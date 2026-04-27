@@ -1,10 +1,13 @@
 import json
 import sys
+from argparse import Namespace
+from dataclasses import replace
 from pathlib import Path
 
 from klippertouch.app import run_app
 from klippertouch.cli import parse_args
 from klippertouch.config.loader import load_config
+from klippertouch.config.models import AppSettings
 from klippertouch.moonraker.client import MoonrakerClient
 from klippertouch.moonraker.safety import CommandPolicy
 from klippertouch.probe import build_status_from_client, status_to_dict
@@ -30,6 +33,7 @@ def main() -> int:
     args = parse_args()
     config_path = resolve_config_path(args.config)
     settings = load_config(config_path)
+    settings = _apply_control_override(settings, args)
 
     if args.probe:
         printer = settings.printers[settings.default_printer]
@@ -41,6 +45,10 @@ def main() -> int:
     if args.debug:
         print("Debug logging enabled", flush=True)
         print(f"Config path: {config_path}", flush=True)
+        print(
+            f"Control mode: {'read-only' if settings.read_only else 'controls enabled'}",
+            flush=True,
+        )
 
     initial_status = None
     initial_temperature_store = None
@@ -69,6 +77,14 @@ def main() -> int:
         file_refresh_client=client,
         job_control_client=client,
     )
+
+
+def _apply_control_override(settings: AppSettings, args: Namespace) -> AppSettings:
+    if getattr(args, "allow_controls", False):
+        return replace(settings, read_only=False)
+    if getattr(args, "read_only", False):
+        return replace(settings, read_only=True)
+    return settings
 
 
 if __name__ == "__main__":

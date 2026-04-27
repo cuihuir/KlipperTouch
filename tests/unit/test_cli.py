@@ -4,12 +4,18 @@ from klippertouch.__main__ import resolve_config_path
 from klippertouch.cli import parse_args
 
 
-def test_parse_args_defaults_to_read_only() -> None:
+def test_parse_args_defaults_to_configured_control_policy() -> None:
     args = parse_args([])
-    assert args.read_only is True
+    assert args.read_only is False
+    assert args.allow_controls is False
     assert args.config is None
     assert args.debug is False
     assert args.probe is False
+
+
+def test_parse_args_accepts_control_policy_overrides() -> None:
+    assert parse_args(["--read-only"]).read_only is True
+    assert parse_args(["--allow-controls"]).allow_controls is True
 
 
 def test_parse_args_accepts_config_and_debug() -> None:
@@ -23,9 +29,11 @@ def test_main_attempts_read_only_status_before_gui() -> None:
 
     assert "initial_status = None" in source
     assert "Config path:" in source
+    assert "Control mode:" in source
     assert "Moonraker endpoint:" in source
     assert "Initial G-Code files:" in source
     assert "policy = CommandPolicy(read_only=settings.read_only)" in source
+    assert "settings = _apply_control_override(settings, args)" in source
     assert "client = MoonrakerClient(printer, policy=policy)" in source
     assert "initial_status = build_status_from_client(client)" in source
     assert "initial_temperature_store = client.get_temperature_store()" in source

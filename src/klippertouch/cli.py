@@ -6,7 +6,9 @@ def parse_args(argv: list[str] | None = None) -> Namespace:
     parser = ArgumentParser(prog="klippertouch")
     parser.add_argument("--config", type=Path, default=None)
     parser.add_argument("--debug", action="store_true")
-    parser.add_argument("--read-only", action="store_true", default=True)
+    control_group = parser.add_mutually_exclusive_group()
+    control_group.add_argument("--read-only", action="store_true")
+    control_group.add_argument("--allow-controls", action="store_true")
     parser.add_argument(
         "--probe",
         action="store_true",
