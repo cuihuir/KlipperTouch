@@ -977,7 +977,7 @@ Item {
                 visible: root.detailPage === "summary"
                 Layout.preferredWidth: root.jobActionGridWidth()
                 Layout.preferredHeight: root.jobActionGridHeight()
-                Layout.alignment: Qt.AlignHCenter
+                Layout.alignment: root.terminalJobState() ? Qt.AlignRight : Qt.AlignHCenter
                 columns: root.metrics.portrait ? 2 : 4
                 rowSpacing: root.metrics.gap
                 columnSpacing: root.metrics.gap

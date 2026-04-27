@@ -499,6 +499,7 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "implicitHeight: root.jobButtonHeight" in qml
     assert "Layout.preferredHeight: root.jobActionGridHeight()" in qml
     assert "Layout.preferredWidth: root.jobActionGridWidth()" in qml
+    assert "Layout.alignment: root.terminalJobState() ? Qt.AlignRight : Qt.AlignHCenter" in qml
     assert "Layout.preferredWidth: root.jobActionButtonWidth()" in qml
     assert "columns: root.metrics.portrait ? 2 : 4" in qml
     assert "Layout.preferredHeight: root.jobButtonHeight" in qml
