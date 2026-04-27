@@ -100,6 +100,12 @@ Item {
         }
     }
 
+    function handleFilePrintStarted(path) {
+        if (root.activeFileModel && root.activeFileModel.selectedPath === path) {
+            root.pendingFileAction = ""
+        }
+    }
+
     function emptyTitle() {
         if (root.loading) {
             return "Loading files..."

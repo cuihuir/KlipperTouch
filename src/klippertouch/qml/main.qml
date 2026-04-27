@@ -155,7 +155,13 @@ ApplicationWindow {
         }
         if (action === "print") {
             jobControlBridgeModel.requestStartPrint(path)
-            window.showPanel("job_status")
+            if (window.jobControlBridgeModel.lastError.length <= 0) {
+                if (panelLoader.item
+                        && typeof panelLoader.item.handleFilePrintStarted === "function") {
+                    panelLoader.item.handleFilePrintStarted(path)
+                }
+                window.showPanel("job_status")
+            }
         } else if (action === "delete") {
             jobControlBridgeModel.requestDeleteFile(path)
         }
