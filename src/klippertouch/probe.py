@@ -13,6 +13,7 @@ TEMPERATURE_OBJECT_PREFIXES = (
 PRINT_STATUS_OBJECTS = ("print_stats", "display_status", "virtual_sdcard")
 TOOLHEAD_STATUS_OBJECTS = ("toolhead", "gcode_move")
 EXCLUDE_OBJECT_OBJECTS = ("exclude_object",)
+WEBHOOKS_OBJECTS = ("webhooks",)
 
 
 class ReadOnlyProbeClient(Protocol):
@@ -83,6 +84,7 @@ def _read_only_status_object_names(object_names: tuple[str, ...]) -> tuple[str, 
     wanted.update(name for name in PRINT_STATUS_OBJECTS if name in object_names)
     wanted.update(name for name in TOOLHEAD_STATUS_OBJECTS if name in object_names)
     wanted.update(name for name in EXCLUDE_OBJECT_OBJECTS if name in object_names)
+    wanted.update(name for name in WEBHOOKS_OBJECTS if name in object_names)
     return tuple(name for name in object_names if name in wanted)
 
 

@@ -817,6 +817,31 @@ def test_job_control_events_are_forwarded_to_notifications() -> None:
     assert 'window.notify("error", "Command failed"' in main_qml
 
 
+def test_splash_panel_handles_system_fault_states() -> None:
+    main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
+    panel_qml = Path("src/klippertouch/qml/panels/SplashPanel.qml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "property string webhooksState" in main_qml
+    assert "property string webhooksMessage" in main_qml
+    assert "function systemFaultActive()" in main_qml
+    assert "function moonrakerFaultActive()" in main_qml
+    assert "function klippyFaultActive()" in main_qml
+    assert "function webhooksFaultActive()" in main_qml
+    assert "sourceComponent: window.systemFaultActive()" in main_qml
+    assert "return splashComponent" in main_qml
+    assert "SplashPanel {" in main_qml
+    assert "klippyState: window.klippyState" in main_qml
+    assert "moonrakerVersion: window.moonrakerVersion" in main_qml
+    assert "webhooksState: window.webhooksState" in main_qml
+    assert "webhooksMessage: window.webhooksMessage" in main_qml
+    assert "Moonraker offline" in panel_qml
+    assert "Klippy not ready" in panel_qml
+    assert "Shutdown due to webhooks" in panel_qml
+    assert "No printer controls are available while this screen is active." in panel_qml
+
+
 def test_main_menu_matches_klipperscreen_split_and_autogrid_contract() -> None:
     qml = Path("src/klippertouch/qml/panels/MainMenuPanel.qml").read_text(encoding="utf-8")
 
@@ -1078,7 +1103,8 @@ def test_main_routes_temperature_to_read_only_temperature_panel() -> None:
     assert 'case "temperature":' in main_qml
     assert "return temperatureComponent" in main_qml
     assert "return placeholderComponent" in main_qml
-    assert "sourceComponent: window.componentForPanel(window.currentPanel)" in main_qml
+    assert "sourceComponent: window.systemFaultActive()" in main_qml
+    assert "window.componentForPanel(window.currentPanel)" in main_qml
     assert "TemperaturePanel {" in main_qml
     assert "temperatureModel: window.temperatureBridgeModel" in main_qml
 
@@ -1338,9 +1364,8 @@ def test_main_uses_responsive_base_shell_and_main_panel() -> None:
     assert "bridgeModel.setActivePanel(window.currentPanel)" in main_qml
     assert 'property var panelTitles: ({"main": "Home"' in main_qml
     assert "panelTitle: window.panelTitles[window.currentPanel]" in main_qml
-    assert (
-        "sourceComponent: window.componentForPanel(window.currentPanel)"
-    ) in main_qml
+    assert "sourceComponent: window.systemFaultActive()" in main_qml
+    assert "window.componentForPanel(window.currentPanel)" in main_qml
 
 
 def test_placeholder_panel_supports_safe_empty_pages() -> None:

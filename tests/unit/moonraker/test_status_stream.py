@@ -22,6 +22,7 @@ def test_build_temperature_subscription_message_uses_read_only_objects_method() 
             "toolhead",
             "gcode_move",
             "exclude_object",
+            "webhooks",
         )
     )
     client = MoonrakerClient(PrinterConfig(name="p", moonraker_host="host"))
@@ -45,6 +46,7 @@ def test_build_temperature_subscription_message_uses_read_only_objects_method() 
                 ],
                 "display_status": ["progress", "message"],
                 "exclude_object": ["objects", "excluded_objects", "current_object"],
+                "webhooks": ["state", "state_message"],
                 "toolhead": ["position", "homed_axes", "max_accel", "max_velocity"],
                 "gcode_move": [
                     "gcode_position",

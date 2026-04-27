@@ -32,6 +32,7 @@ DEFAULT_PANELS = (
     "extrude",
     "more",
     "notifications",
+    "splash",
     "system",
     "network",
     "logs",

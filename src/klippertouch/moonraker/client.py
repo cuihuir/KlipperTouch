@@ -209,6 +209,8 @@ def _query_fields_for_object(name: str) -> str:
         return "position,homed_axes,max_accel,max_velocity"
     if name == "gcode_move":
         return "gcode_position,homing_origin,speed,speed_factor,extrude_factor"
+    if name == "webhooks":
+        return "state,state_message"
     return "temperature,target"
 
 

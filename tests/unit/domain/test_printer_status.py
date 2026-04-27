@@ -268,6 +268,40 @@ def test_printer_status_populates_read_only_job_state_from_status_query() -> Non
     assert status.total_layers == 12
 
 
+def test_printer_status_populates_webhooks_shutdown_state() -> None:
+    status = PrinterStatus.from_probe(
+        server_info={"moonraker_version": "v0.10.0", "klippy_state": "shutdown"},
+        printer_info={"state": "shutdown", "hostname": "orangepi3b", "software_version": "v0.13.0"},
+        objects={"objects": ["webhooks"]},
+        object_status={
+            "status": {
+                "webhooks": {
+                    "state": "shutdown",
+                    "state_message": "Shutdown due to webhooks request",
+                }
+            }
+        },
+    )
+
+    assert status.webhooks_state == "shutdown"
+    assert status.webhooks_message == "Shutdown due to webhooks request"
+
+
+def test_printer_status_applies_webhooks_state_from_websocket_update() -> None:
+    status = PrinterStatus(
+        klippy_state="ready",
+        moonraker_version="v0.10.0",
+        objects=("webhooks",),
+    )
+
+    updated = status.with_status_update(
+        {"webhooks": {"state": "shutdown", "state_message": "Shutdown due to webhooks"}}
+    )
+
+    assert updated.webhooks_state == "shutdown"
+    assert updated.webhooks_message == "Shutdown due to webhooks"
+
+
 def test_printer_status_applies_read_only_print_update() -> None:
     status = PrinterStatus(
         objects=("print_stats", "display_status", "virtual_sdcard"),

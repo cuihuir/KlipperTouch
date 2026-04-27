@@ -124,6 +124,36 @@ def test_client_gets_printer_objects_query(monkeypatch) -> None:
     }
 
 
+def test_client_queries_webhooks_state_fields(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            pass
+
+        def json(self) -> dict[str, object]:
+            return {"result": {"status": {"webhooks": {"state": "ready"}}}}
+
+    def fake_get(
+        _url: str,
+        *,
+        headers: dict[str, str],
+        params: dict[str, str] | None,
+        timeout: float,
+    ) -> FakeResponse:
+        captured["params"] = params
+        return FakeResponse()
+
+    monkeypatch.setattr("klippertouch.moonraker.client.requests.get", fake_get)
+
+    client = MoonrakerClient(PrinterConfig(name="p", moonraker_host="host"))
+
+    assert client.get_printer_objects_query(("webhooks",)) == {
+        "status": {"webhooks": {"state": "ready"}}
+    }
+    assert captured["params"] == {"webhooks": "state,state_message"}
+
+
 def test_client_gets_printer_objects_query_with_jsonrpc(monkeypatch) -> None:
     captured: dict[str, object] = {}
 

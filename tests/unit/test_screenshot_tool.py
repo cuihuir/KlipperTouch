@@ -12,6 +12,7 @@ def test_screenshot_tool_captures_common_panels_and_sizes() -> None:
     assert '"print"' in source
     assert '"more"' in source
     assert '"notifications"' in source
+    assert '"splash"' in source
     assert '"system"' in source
     assert '"network"' in source
     assert '"logs"' in source

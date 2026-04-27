@@ -34,6 +34,11 @@ class ExcludeObjectStatusFields(TypedDict, total=False):
     current_object: str
 
 
+class WebhooksStatusFields(TypedDict, total=False):
+    webhooks_state: str
+    webhooks_message: str
+
+
 @dataclass(frozen=True)
 class TemperatureDeviceStatus:
     name: str
@@ -105,6 +110,8 @@ class PrinterStatus:
     z_offset: float = 0.0
     max_accel: float = 0.0
     max_velocity: float = 0.0
+    webhooks_state: str = ""
+    webhooks_message: str = ""
 
     def __post_init__(self) -> None:
         objects = tuple(str(item) for item in self.objects)
@@ -150,6 +157,8 @@ class PrinterStatus:
         object.__setattr__(self, "z_offset", _optional_float(self.z_offset) or 0.0)
         object.__setattr__(self, "max_accel", _optional_float(self.max_accel) or 0.0)
         object.__setattr__(self, "max_velocity", _optional_float(self.max_velocity) or 0.0)
+        object.__setattr__(self, "webhooks_state", str(self.webhooks_state or ""))
+        object.__setattr__(self, "webhooks_message", str(self.webhooks_message or ""))
 
     @property
     def object_count(self) -> int:
@@ -215,6 +224,7 @@ class PrinterStatus:
             **_print_fields_from_status(object_status or {}),
             **_exclude_object_fields_from_status(object_status or {}),
             **_toolhead_fields_from_status(object_status or {}),
+            **_webhooks_fields_from_status(object_status or {}),
         )
 
     def with_temperature_status_update(self, status_update: dict[str, Any]) -> "PrinterStatus":
@@ -268,6 +278,11 @@ class PrinterStatus:
             "max_velocity": self.max_velocity,
         }
         toolhead_fields.update(_toolhead_fields_from_status({"status": status_update}))
+        webhooks_fields: WebhooksStatusFields = {
+            "webhooks_state": self.webhooks_state,
+            "webhooks_message": self.webhooks_message,
+        }
+        webhooks_fields.update(_webhooks_fields_from_status({"status": status_update}))
 
         return PrinterStatus(
             hostname=self.hostname,
@@ -284,6 +299,7 @@ class PrinterStatus:
             **print_fields,
             **exclude_object_fields,
             **toolhead_fields,
+            **webhooks_fields,
         )
 
 
@@ -481,6 +497,22 @@ def _exclude_object_fields_from_status(
         fields["excluded_object_names"] = _string_tuple(exclude_object["excluded_objects"])
     if "current_object" in exclude_object:
         fields["current_object"] = str(exclude_object.get("current_object") or "")
+    return fields
+
+
+def _webhooks_fields_from_status(object_status: dict[str, Any]) -> WebhooksStatusFields:
+    status = object_status.get("status", {})
+    if not isinstance(status, dict):
+        status = {}
+    webhooks = status.get("webhooks", {})
+    if not isinstance(webhooks, dict):
+        return WebhooksStatusFields()
+
+    fields = WebhooksStatusFields()
+    if "state" in webhooks:
+        fields["webhooks_state"] = str(webhooks.get("state") or "")
+    if "state_message" in webhooks:
+        fields["webhooks_message"] = str(webhooks.get("state_message") or "")
     return fields
 
 

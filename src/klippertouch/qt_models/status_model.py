@@ -502,6 +502,14 @@ class StatusModel(QObject):
     def klippyState(self) -> str:
         return self._status.klippy_state
 
+    @Property(str, notify=hostChanged)
+    def webhooksState(self) -> str:
+        return self._status.webhooks_state
+
+    @Property(str, notify=hostChanged)
+    def webhooksMessage(self) -> str:
+        return self._status.webhooks_message
+
     @Property(str, notify=infoChanged)
     def klipperVersion(self) -> str:
         return self._status.klipper_version
@@ -662,7 +670,17 @@ class StatusModel(QObject):
 
 
 def _host_fields_changed(previous: PrinterStatus, current: PrinterStatus) -> bool:
-    return (previous.hostname, previous.klippy_state) != (current.hostname, current.klippy_state)
+    return (
+        previous.hostname,
+        previous.klippy_state,
+        previous.webhooks_state,
+        previous.webhooks_message,
+    ) != (
+        current.hostname,
+        current.klippy_state,
+        current.webhooks_state,
+        current.webhooks_message,
+    )
 
 
 def _info_fields_changed(previous: PrinterStatus, current: PrinterStatus) -> bool:

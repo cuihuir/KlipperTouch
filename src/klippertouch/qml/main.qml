@@ -18,6 +18,8 @@ ApplicationWindow {
     property string requestedPrintState: jobControlBridgeModel ? jobControlBridgeModel.requestedPrintState : ""
     property string hostname: bridgeModel ? bridgeModel.hostname : "offline"
     property string klippyState: bridgeModel ? bridgeModel.klippyState : "disconnected"
+    property string webhooksState: bridgeModel ? bridgeModel.webhooksState : ""
+    property string webhooksMessage: bridgeModel ? bridgeModel.webhooksMessage : ""
     property string klipperVersion: bridgeModel ? bridgeModel.klipperVersion : "unknown"
     property string moonrakerVersion: bridgeModel ? bridgeModel.moonrakerVersion : "unknown"
     property var mcuInfos: bridgeModel ? bridgeModel.mcuInfos : []
@@ -51,8 +53,8 @@ ApplicationWindow {
     property string currentObject: bridgeModel ? bridgeModel.currentObject : ""
     property string currentPanel: "main"
     property var panelStack: ["main"]
-    property var panelTitles: ({"main": "Home", "move": "Move", "temperature": "Temperature", "extrude": "Extrude", "more": "More", "system": "System", "network": "Network", "logs": "Logs", "language": "Language", "update": "Update", "print": "Print", "job_status": "Job Status", "notifications": "Notifications"})
-    property var panelIcons: ({"main": "main", "move": "move", "temperature": "heat-up", "extrude": "extrude", "more": "settings", "system": "settings", "network": "main", "logs": "printer", "language": "settings", "update": "printer", "print": "printer", "job_status": "printer", "notifications": "printer"})
+    property var panelTitles: ({"main": "Home", "move": "Move", "temperature": "Temperature", "extrude": "Extrude", "more": "More", "system": "System", "network": "Network", "logs": "Logs", "language": "Language", "update": "Update", "print": "Print", "job_status": "Job Status", "notifications": "Notifications", "splash": "Printer Status"})
+    property var panelIcons: ({"main": "main", "move": "move", "temperature": "heat-up", "extrude": "extrude", "more": "settings", "system": "settings", "network": "main", "logs": "printer", "language": "settings", "update": "printer", "print": "printer", "job_status": "printer", "notifications": "printer", "splash": "printer"})
 
     function shouldAutoEnterJobStatus() {
         return window.printState === "printing" || window.printState === "paused"
@@ -63,6 +65,25 @@ ApplicationWindow {
             || window.printState === "complete"
             || window.printState === "cancelled"
             || window.printState === "error"
+    }
+
+    function moonrakerFaultActive() {
+        return !bridgeModel || window.moonrakerVersion.length <= 0 || window.moonrakerVersion === "unknown"
+    }
+
+    function klippyFaultActive() {
+        return window.klippyState.length <= 0 || window.klippyState !== "ready"
+    }
+
+    function webhooksFaultActive() {
+        return window.webhooksState === "shutdown"
+            || window.webhooksMessage.indexOf("Shutdown due to webhooks") >= 0
+    }
+
+    function systemFaultActive() {
+        return window.moonrakerFaultActive()
+            || window.webhooksFaultActive()
+            || window.klippyFaultActive()
     }
 
     function syncJobStatusPanel() {
@@ -122,6 +143,8 @@ ApplicationWindow {
             return jobStatusComponent
         case "notifications":
             return notificationCenterComponent
+        case "splash":
+            return splashComponent
         case "more":
             return moreMenuComponent
         case "system":
@@ -141,6 +164,13 @@ ApplicationWindow {
         default:
             return placeholderComponent
         }
+    }
+
+    function effectiveComponentForPanel(panelName) {
+        if (window.systemFaultActive()) {
+            return splashComponent
+        }
+        return window.componentForPanel(panelName)
     }
 
     function requestJobControl(action, objectName) {
@@ -249,7 +279,9 @@ ApplicationWindow {
             id: panelLoader
             objectName: "panelLoader"
             anchors.fill: parent
-            sourceComponent: window.componentForPanel(window.currentPanel)
+            sourceComponent: window.systemFaultActive()
+                ? splashComponent
+                : window.componentForPanel(window.currentPanel)
         }
 
         Component {
@@ -269,6 +301,19 @@ ApplicationWindow {
                 metrics: appMetrics
                 title: window.panelTitles[window.currentPanel]
                 iconName: window.panelIcons[window.currentPanel]
+            }
+        }
+
+        Component {
+            id: splashComponent
+
+            SplashPanel {
+                metrics: appMetrics
+                hostname: window.hostname
+                klippyState: window.klippyState
+                moonrakerVersion: window.moonrakerVersion
+                webhooksState: window.webhooksState
+                webhooksMessage: window.webhooksMessage
             }
         }
 

@@ -24,6 +24,7 @@ class FakeClient:
                 "toolhead",
                 "gcode_move",
                 "exclude_object",
+                "webhooks",
             ]
         }
 
@@ -36,6 +37,7 @@ class FakeClient:
             "toolhead",
             "gcode_move",
             "exclude_object",
+            "webhooks",
         )
         return {
             "status": {
@@ -50,6 +52,7 @@ class FakeClient:
                     "excluded_objects": ["part_a"],
                     "current_object": "part_b",
                 },
+                "webhooks": {"state": "ready", "state_message": ""},
             }
         }
 
@@ -80,7 +83,7 @@ def test_build_status_from_client() -> None:
     status = build_status_from_client(FakeClient())
     assert isinstance(status, PrinterStatus)
     assert status.hostname == "orangepi3b"
-    assert status.object_count == 8
+    assert status.object_count == 9
     assert tuple(device.temperature for device in status.temperature_devices) == (24.3, 26.7)
     assert tuple(device.target for device in status.temperature_devices) == (0.0, 60.0)
     assert status.print_state == "printing"
@@ -91,6 +94,7 @@ def test_build_status_from_client() -> None:
     assert status.exclude_object_names == ("part_a", "part_b")
     assert status.excluded_object_names == ("part_a",)
     assert status.current_object == "part_b"
+    assert status.webhooks_state == "ready"
     assert status.mcu_statuses[0].version == "v0.13.0-main"
     assert tuple(item.name for item in status.service_versions) == ("klipper", "moonraker")
 

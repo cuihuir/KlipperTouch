@@ -102,6 +102,24 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
     assert model.extruderTarget == 215.0
 
 
+def test_status_model_exposes_webhooks_shutdown_fields(qtbot) -> None:
+    model = StatusModel()
+    changes: list[bool] = []
+    model.hostChanged.connect(lambda: changes.append(True))
+
+    model.set_status(
+        PrinterStatus(
+            klippy_state="shutdown",
+            webhooks_state="shutdown",
+            webhooks_message="Shutdown due to webhooks request",
+        )
+    )
+
+    assert model.webhooksState == "shutdown"
+    assert model.webhooksMessage == "Shutdown due to webhooks request"
+    assert changes == [True]
+
+
 def test_status_model_can_notify_temperature_device_model(qtbot) -> None:
     temperature_model = TemperatureDeviceListModel()
     model = StatusModel(temperature_device_model=temperature_model)
