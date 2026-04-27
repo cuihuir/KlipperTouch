@@ -13,6 +13,7 @@ ApplicationWindow {
     property var bridgeModel: typeof statusModel === "undefined" ? null : statusModel
     property var temperatureBridgeModel: typeof temperatureDeviceModel === "undefined" ? null : temperatureDeviceModel
     property var gcodeFileBridgeModel: typeof gcodeFileModel === "undefined" ? null : gcodeFileModel
+    property var jobControlBridgeModel: typeof jobControlModel === "undefined" ? null : jobControlModel
     property string hostname: bridgeModel ? bridgeModel.hostname : "offline"
     property string klippyState: bridgeModel ? bridgeModel.klippyState : "disconnected"
     property string klipperVersion: bridgeModel ? bridgeModel.klipperVersion : "unknown"
@@ -131,6 +132,32 @@ ApplicationWindow {
         }
     }
 
+    function requestJobControl(action, objectName) {
+        if (!jobControlBridgeModel) {
+            return
+        }
+        if (action === "pause") {
+            jobControlBridgeModel.requestPause()
+        } else if (action === "resume") {
+            jobControlBridgeModel.requestResume()
+        } else if (action === "cancel") {
+            jobControlBridgeModel.requestCancel()
+        } else if (action === "skip") {
+            jobControlBridgeModel.requestSkipObject(objectName)
+        }
+    }
+
+    function requestFileControl(action, path) {
+        if (!jobControlBridgeModel) {
+            return
+        }
+        if (action === "print") {
+            jobControlBridgeModel.requestStartPrint(path)
+        } else if (action === "delete") {
+            jobControlBridgeModel.requestDeleteFile(path)
+        }
+    }
+
     Metrics {
         id: appMetrics
         viewportWidth: window.width
@@ -199,6 +226,9 @@ ApplicationWindow {
             FilesPanel {
                 metrics: appMetrics
                 fileModel: window.gcodeFileBridgeModel
+                onFileActionRequested: function(action, path) {
+                    window.requestFileControl(action, path)
+                }
             }
         }
 
@@ -232,6 +262,11 @@ ApplicationWindow {
                 currentObject: window.currentObject
                 temperatureModel: window.temperatureBridgeModel
                 fileModel: window.gcodeFileBridgeModel
+                controlStatus: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastStatus : ""
+                controlError: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastError : ""
+                onJobActionRequested: function(action, objectName) {
+                    window.requestJobControl(action, objectName)
+                }
             }
         }
 

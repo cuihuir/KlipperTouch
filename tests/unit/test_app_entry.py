@@ -30,6 +30,14 @@ def test_app_registers_gcode_file_model_context() -> None:
     assert 'setContextProperty("gcodeFileModel", gcode_file_model)' in source
 
 
+def test_app_registers_job_control_context() -> None:
+    source = app.Path(app.__file__).read_text(encoding="utf-8")
+
+    assert "JobControlModel" in source
+    assert "job_control_model = JobControlModel(job_control_client)" in source
+    assert 'setContextProperty("jobControlModel", job_control_model)' in source
+
+
 def test_create_status_models_applies_initial_status(qtbot) -> None:
     status = PrinterStatus(objects=("extruder", "heater_bed"))
 

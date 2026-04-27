@@ -35,6 +35,8 @@ Item {
     property string detailPage: "summary"
     property string pendingJobAction: ""
     property string pendingJobObject: ""
+    property string controlStatus: ""
+    property string controlError: ""
     readonly property color neutralAccent: "#8b9496"
     readonly property color mutedDangerAccent: "#9a8582"
     readonly property color accentColor: root.stateAccentColor()
@@ -44,6 +46,7 @@ Item {
     signal speedFactorAdjustRequested(real delta)
     signal extrudeFactorAdjustRequested(real delta)
     signal objectExcludeRequested(string objectName)
+    signal jobActionRequested(string action, string objectName)
 
     component StatusCard: Rectangle {
         id: statusCard
@@ -240,8 +243,9 @@ Item {
                 JobButton {
                     Layout.fillWidth: root.metrics.portrait
                     visible: previewRoot.confirmButtonVisible
-                    text: "Confirm disabled"
-                    enabled: false
+                    text: "Confirm"
+                    enabled: true
+                    onClicked: root.jobActionRequested(root.pendingJobAction, root.pendingJobObject)
                 }
 
                 JobButton {
@@ -531,6 +535,10 @@ Item {
         return actionName + " is staged for the control layer."
     }
 
+    function controlFeedbackText() {
+        return root.controlError.length > 0 ? root.controlError : root.controlStatus
+    }
+
     function requestJobAction(action, objectName) {
         root.pendingJobAction = action
         root.pendingJobObject = objectName || ""
@@ -539,6 +547,7 @@ Item {
     function stageImmediateJobAction(action) {
         root.pendingJobAction = "staged_" + action
         root.pendingJobObject = ""
+        root.jobActionRequested(action, "")
     }
 
     function clearJobAction() {
@@ -999,6 +1008,29 @@ Item {
             JobActionPreview {
                 id: jobActionPreview
                 visible: root.detailPage === "summary" && root.pendingJobAction.length > 0
+            }
+
+            Rectangle {
+                id: jobControlFeedback
+                visible: root.controlFeedbackText().length > 0
+                Layout.fillWidth: true
+                Layout.preferredHeight: visible ? Math.max(34, Math.round(root.metrics.fontSize * 2.35)) : 0
+                Layout.fillHeight: false
+                color: root.controlError.length > 0 ? "#181311" : "#111819"
+                border.color: root.controlError.length > 0 ? "#4a3430" : "#354346"
+                border.width: 1
+                radius: Math.round(root.metrics.fontSize * 0.28)
+
+                Label {
+                    anchors.fill: parent
+                    anchors.leftMargin: root.metrics.gap
+                    anchors.rightMargin: root.metrics.gap
+                    color: Theme.text
+                    text: root.controlFeedbackText()
+                    elide: Text.ElideRight
+                    verticalAlignment: Text.AlignVCenter
+                    font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                }
             }
 
             Rectangle {

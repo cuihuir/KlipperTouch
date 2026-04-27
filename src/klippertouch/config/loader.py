@@ -14,7 +14,11 @@ def load_config(path: Path) -> AppSettings:
     ]
     if not printer_sections:
         default = PrinterConfig(name="Printer")
-        return AppSettings(default_printer="Printer", printers={"Printer": default})
+        return AppSettings(
+            default_printer="Printer",
+            printers={"Printer": default},
+            read_only=parser.getboolean("main", "read_only", fallback=True),
+        )
 
     printers: dict[str, PrinterConfig] = {}
     for section in printer_sections:
@@ -36,4 +40,8 @@ def load_config(path: Path) -> AppSettings:
     if default_printer not in printers:
         default_printer = next(iter(printers))
 
-    return AppSettings(default_printer=default_printer, printers=printers)
+    return AppSettings(
+        default_printer=default_printer,
+        printers=printers,
+        read_only=parser.getboolean("main", "read_only", fallback=True),
+    )

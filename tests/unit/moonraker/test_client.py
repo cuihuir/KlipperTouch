@@ -2,7 +2,7 @@ import pytest
 
 from klippertouch.config.models import PrinterConfig
 from klippertouch.moonraker.client import MoonrakerClient
-from klippertouch.moonraker.safety import UnsafeCommandError
+from klippertouch.moonraker.safety import CommandPolicy, UnsafeCommandError
 
 
 def test_client_builds_plain_http_endpoint() -> None:
@@ -190,6 +190,117 @@ def test_client_blocks_unsafe_jsonrpc_before_network(monkeypatch) -> None:
 
     with pytest.raises(UnsafeCommandError):
         client.post_jsonrpc("printer.gcode.script", params={"script": "M112"})
+
+    assert calls == []
+
+
+def test_client_starts_gcode_print_when_controls_enabled(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            pass
+
+        def json(self) -> dict[str, object]:
+            return {"result": {"ok": True}}
+
+    def fake_post(
+        url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, object],
+        timeout: float,
+    ) -> FakeResponse:
+        captured["url"] = url
+        captured["json"] = json
+        captured["timeout"] = timeout
+        return FakeResponse()
+
+    monkeypatch.setattr("klippertouch.moonraker.client.requests.post", fake_post)
+
+    client = MoonrakerClient(
+        PrinterConfig(name="p", moonraker_host="host"),
+        policy=CommandPolicy(read_only=False),
+    )
+
+    assert client.start_print("cube.gcode") == {"ok": True}
+    assert captured["url"] == "http://host:7125/server/jsonrpc"
+    assert captured["json"] == {
+        "jsonrpc": "2.0",
+        "method": "printer.print.start",
+        "params": {"filename": "cube.gcode"},
+        "id": 1,
+    }
+    assert captured["timeout"] == 4.0
+
+
+@pytest.mark.parametrize(
+    ("client_method", "jsonrpc_method"),
+    [
+        ("pause_print", "printer.print.pause"),
+        ("resume_print", "printer.print.resume"),
+        ("cancel_print", "printer.print.cancel"),
+    ],
+)
+def test_client_sends_print_control_when_controls_enabled(
+    monkeypatch,
+    client_method: str,
+    jsonrpc_method: str,
+) -> None:
+    captured: dict[str, object] = {}
+
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            pass
+
+        def json(self) -> dict[str, object]:
+            return {"result": {"ok": True}}
+
+    def fake_post(
+        _url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, object],
+        timeout: float,
+    ) -> FakeResponse:
+        captured["json"] = json
+        return FakeResponse()
+
+    monkeypatch.setattr("klippertouch.moonraker.client.requests.post", fake_post)
+
+    client = MoonrakerClient(
+        PrinterConfig(name="p", moonraker_host="host"),
+        policy=CommandPolicy(read_only=False),
+    )
+
+    assert getattr(client, client_method)() == {"ok": True}
+    assert captured["json"] == {
+        "jsonrpc": "2.0",
+        "method": jsonrpc_method,
+        "params": {},
+        "id": 1,
+    }
+
+
+def test_client_blocks_print_control_in_read_only_mode(monkeypatch) -> None:
+    calls: list[bool] = []
+
+    def fake_post(*_args: object, **_kwargs: object) -> object:
+        calls.append(True)
+        raise AssertionError("network should not be called")
+
+    monkeypatch.setattr("klippertouch.moonraker.client.requests.post", fake_post)
+
+    client = MoonrakerClient(PrinterConfig(name="p", moonraker_host="host"))
+
+    with pytest.raises(UnsafeCommandError):
+        client.start_print("cube.gcode")
+    with pytest.raises(UnsafeCommandError):
+        client.pause_print()
+    with pytest.raises(UnsafeCommandError):
+        client.resume_print()
+    with pytest.raises(UnsafeCommandError):
+        client.cancel_print()
 
     assert calls == []
 

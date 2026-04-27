@@ -23,6 +23,23 @@ def test_load_config_reads_default_printer(tmp_path: Path) -> None:
     assert settings.read_only is True
 
 
+def test_load_config_parses_read_only_control_switch(tmp_path: Path) -> None:
+    config = tmp_path / "KlipperTouch.conf"
+    config.write_text(
+        "[main]\n"
+        "default_printer = TestPrinter\n"
+        "read_only = false\n"
+        "\n"
+        "[printer TestPrinter]\n"
+        "moonraker_host = printer.local\n",
+        encoding="utf-8",
+    )
+
+    settings = load_config(config)
+
+    assert settings.read_only is False
+
+
 def test_load_config_provides_local_default_when_missing(tmp_path: Path) -> None:
     missing = tmp_path / "missing.conf"
 

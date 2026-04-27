@@ -6,6 +6,7 @@ from klippertouch.app import run_app
 from klippertouch.cli import parse_args
 from klippertouch.config.loader import load_config
 from klippertouch.moonraker.client import MoonrakerClient
+from klippertouch.moonraker.safety import CommandPolicy
 from klippertouch.probe import build_status_from_client, status_to_dict
 
 
@@ -32,7 +33,8 @@ def main() -> int:
 
     if args.probe:
         printer = settings.printers[settings.default_printer]
-        status = build_status_from_client(MoonrakerClient(printer))
+        policy = CommandPolicy(read_only=settings.read_only)
+        status = build_status_from_client(MoonrakerClient(printer, policy=policy))
         print(json.dumps(status_to_dict(status), ensure_ascii=False, indent=2))
         return 0
 
@@ -46,7 +48,8 @@ def main() -> int:
     client = None
     try:
         printer = settings.printers[settings.default_printer]
-        client = MoonrakerClient(printer)
+        policy = CommandPolicy(read_only=settings.read_only)
+        client = MoonrakerClient(printer, policy=policy)
         if args.debug:
             print(f"Moonraker endpoint: {client.endpoint}", flush=True)
         initial_status = build_status_from_client(client)
@@ -64,6 +67,7 @@ def main() -> int:
         initial_files=initial_files,
         status_stream_client=client,
         file_refresh_client=client,
+        job_control_client=client,
     )
 
 

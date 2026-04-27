@@ -14,6 +14,7 @@ Item {
     property bool compactFileRows: root.metrics.portrait || width < 920
     property bool detailPage: false
     property string pendingFileAction: ""
+    signal fileActionRequested(string action, string path)
 
     function currentPathLabel() {
         if (root.activeFileModel && root.activeFileModel.currentPath.length > 0) {
@@ -719,8 +720,12 @@ Item {
                         }
 
                         FileActionButton {
-                            text: "Confirm disabled"
-                            enabled: false
+                            text: "Confirm"
+                            enabled: true
+                            onClicked: root.fileActionRequested(
+                                root.pendingFileAction,
+                                root.activeFileModel ? root.activeFileModel.selectedPath : ""
+                            )
                         }
 
                         FileActionButton {

@@ -245,6 +245,7 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "function clearFileAction()" in qml
     assert "property bool detailPage" in qml
     assert "property string pendingFileAction" in qml
+    assert "signal fileActionRequested(string action, string path)" in qml
     assert "Current folder is empty" in qml
     assert 'fileList.count + " items"' in qml
     assert "Search files" in qml
@@ -343,7 +344,9 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "visible: root.pendingFileAction.length > 0" in qml
     assert 'root.pendingFileAction === "delete"' in qml
     assert 'text: "Confirmation preview only"' in qml
-    assert 'text: "Confirm disabled"' in qml
+    assert 'text: "Confirm"' in qml
+    assert 'text: "Confirm disabled"' not in qml
+    assert "onClicked: root.fileActionRequested(" in qml
     assert 'text: "Dismiss"' in qml
     assert "onClicked: root.clearFileAction()" in qml
     assert "contentItem: Label" in qml
@@ -398,6 +401,7 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "property var excludedObjectNames: []" in qml
     assert "property string currentObject" in qml
     assert "signal objectExcludeRequested(string objectName)" in qml
+    assert "signal jobActionRequested(string action, string objectName)" in qml
     assert "root.fileModel.fileSizeLabelFor(root.printFilename)" in qml
     assert "root.fileModel.fileModifiedLabelFor(root.printFilename)" in qml
     assert "root.fileModel.filePathFor(root.printFilename)" in qml
@@ -498,11 +502,16 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert 'text: "Skip Object"' in qml
     assert 'root.detailPage = "exclude"' in qml
     assert 'text: "Advanced"' in qml
-    assert "enabled: false" in qml
     assert "readonlyActionHint" in qml
     assert "property string detailPage" in qml
     assert "property string pendingJobAction" in qml
     assert "property string pendingJobObject" in qml
+    assert "property string controlStatus" in qml
+    assert "property string controlError" in qml
+    assert "function controlFeedbackText()" in qml
+    assert "id: jobControlFeedback" in qml
+    assert "visible: root.controlFeedbackText().length > 0" in qml
+    assert "root.controlError.length > 0 ? root.controlError : root.controlStatus" in qml
     assert 'root.detailPage = "advanced"' in qml
     assert 'root.detailPage = "summary"' in qml
     assert "function requestJobAction(action, objectName)" in qml
@@ -511,6 +520,7 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "root.pendingJobAction = action" in qml
     assert "root.pendingJobObject = objectName || \"\"" in qml
     assert 'root.pendingJobAction = "staged_" + action' in qml
+    assert "root.jobActionRequested(action, \"\")" in qml
     assert "id: jobActionPreview" in qml
     assert "visible: root.pendingJobAction.length > 0" in qml
     assert "function confirmationRequired()" in qml
@@ -520,7 +530,8 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert 'root.confirmationRequired() ? "Confirmation preview only" : "Action staged"' in qml
     assert "readonly property bool confirmButtonVisible: root.confirmationRequired()" in qml
     assert "visible: previewRoot.confirmButtonVisible" in qml
-    assert 'text: "Confirm disabled"' in qml
+    assert 'text: "Confirm"' in qml
+    assert 'text: "Confirm disabled"' not in qml
     assert 'text: "Dismiss"' in qml
     assert "onClicked: root.clearJobAction()" in qml
     assert "id: advancedPage" in qml
@@ -539,6 +550,7 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert 'text: "Back"' not in qml
     assert 'root.requestJobAction(root.printState === "paused" ? "resume" : "pause", "")' not in qml
     assert 'root.stageImmediateJobAction(root.printState === "paused" ? "resume" : "pause")' in qml
+    assert 'onClicked: root.jobActionRequested(root.pendingJobAction, root.pendingJobObject)' in qml
     assert "root.zOffsetLabel()" in qml
     assert "root.percentLabel(root.speedFactor)" in qml
     assert "root.percentLabel(root.extrudeFactor)" in qml
@@ -982,6 +994,26 @@ def test_main_keeps_files_and_job_status_as_separate_routes() -> None:
     assert "return filesComponent" in main_qml
     assert 'case "job_status":' in main_qml
     assert "return jobStatusComponent" in main_qml
+    assert "property var jobControlBridgeModel" in main_qml
+    assert "typeof jobControlModel === \"undefined\" ? null : jobControlModel" in main_qml
+    assert "function requestJobControl(action, objectName)" in main_qml
+    assert "jobControlBridgeModel.requestPause()" in main_qml
+    assert "jobControlBridgeModel.requestResume()" in main_qml
+    assert "jobControlBridgeModel.requestCancel()" in main_qml
+    assert "jobControlBridgeModel.requestSkipObject(objectName)" in main_qml
+    assert "function requestFileControl(action, path)" in main_qml
+    assert "jobControlBridgeModel.requestStartPrint(path)" in main_qml
+    assert "jobControlBridgeModel.requestDeleteFile(path)" in main_qml
+    assert (
+        "controlStatus: window.jobControlBridgeModel ? "
+        'window.jobControlBridgeModel.lastStatus : ""'
+    ) in main_qml
+    assert (
+        "controlError: window.jobControlBridgeModel ? "
+        'window.jobControlBridgeModel.lastError : ""'
+    )
+    assert "onJobActionRequested: function(action, objectName)" in main_qml
+    assert "onFileActionRequested: function(action, path)" in main_qml
     assert "FilesPanel {" in main_qml
     assert "JobStatusPanel {" in main_qml
     assert "fileModel: window.gcodeFileBridgeModel" in main_qml

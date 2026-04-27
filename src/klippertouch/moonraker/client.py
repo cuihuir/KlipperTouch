@@ -101,6 +101,18 @@ class MoonrakerClient:
             params={"objects": objects},
         )
 
+    def start_print(self, filename: str) -> dict[str, Any]:
+        return self.post_jsonrpc("printer.print.start", params={"filename": filename})
+
+    def pause_print(self) -> dict[str, Any]:
+        return self.post_jsonrpc("printer.print.pause")
+
+    def resume_print(self) -> dict[str, Any]:
+        return self.post_jsonrpc("printer.print.resume")
+
+    def cancel_print(self) -> dict[str, Any]:
+        return self.post_jsonrpc("printer.print.cancel")
+
     def get_gcode_file_list(self) -> list[dict[str, Any]]:
         result = self.get("server/files/list", params={"root": "gcodes"})
         if isinstance(result, list):
