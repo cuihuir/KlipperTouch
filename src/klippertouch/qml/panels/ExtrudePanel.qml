@@ -8,6 +8,18 @@ Item {
     required property var metrics
     property var distances: ["5", "10", "15", "25"]
     property var speeds: ["1", "2", "5", "25"]
+    property var actionButtons: [
+        {"label": "Extrude"},
+        {"label": "Retract"},
+        {"label": "Load"},
+        {"label": "Unload"}
+    ]
+    property var settingsButtons: [
+        {"label": "Temperature"},
+        {"label": "Pressure Advance"},
+        {"label": "Retraction"},
+        {"label": "Spoolman"}
+    ]
     property string selectedDistance: "10"
     property string selectedSpeed: "5"
     property real actionFraction: 0.42
@@ -15,6 +27,43 @@ Item {
     property real extruderTemperature: 0
     property real extruderTarget: 0
     property real positionE: 0
+
+    component LockedTile: Rectangle {
+        id: tileRoot
+        property string title: ""
+        property string hint: "locked"
+
+        color: "#101617"
+        opacity: 0.58
+        border.color: "#263233"
+        border.width: 1
+        radius: Math.round(root.metrics.fontSize * 0.32)
+
+        ColumnLayout {
+            anchors.centerIn: parent
+            width: parent.width - root.metrics.gap
+            spacing: 0
+
+            Label {
+                Layout.fillWidth: true
+                color: Theme.mutedText
+                text: tileRoot.title
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
+                font.bold: true
+                font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
+            }
+
+            Label {
+                Layout.fillWidth: true
+                color: Theme.mutedText
+                text: tileRoot.hint
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
+                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+            }
+        }
+    }
 
     function selectDistance(distance) {
         root.selectedDistance = distance
@@ -34,8 +83,11 @@ Item {
 
         Rectangle {
             Layout.fillWidth: true
-            Layout.fillHeight: true
+            Layout.fillHeight: !root.metrics.portrait
             Layout.preferredWidth: root.metrics.portrait ? parent.width : parent.width * root.actionFraction
+            Layout.preferredHeight: root.metrics.portrait
+                ? Math.max(308, Math.round(root.metrics.fontSize * 19.2))
+                : -1
             Layout.minimumWidth: 0
             color: Theme.buttonsBg
             border.color: "#465456"
@@ -109,24 +161,12 @@ Item {
                     columnSpacing: root.metrics.gap
 
                     Repeater {
-                        model: ["Retract", "Extrude"]
+                        model: root.actionButtons
 
-                        Rectangle {
+                        LockedTile {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
-                            color: "#101617"
-                            opacity: 0.55
-                            border.color: "#263233"
-                            border.width: 1
-                            radius: Math.round(root.metrics.fontSize * 0.32)
-
-                            Label {
-                                anchors.centerIn: parent
-                                color: Theme.mutedText
-                                text: modelData
-                                font.bold: true
-                                font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.25))
-                            }
+                            title: modelData.label
                         }
                     }
                 }
@@ -141,6 +181,26 @@ Item {
             columns: 2
             rowSpacing: root.metrics.gap
             columnSpacing: root.metrics.gap
+
+            GridLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: false
+                Layout.preferredHeight: Math.max(78, Math.round(root.metrics.fontSize * 5.2))
+                Layout.columnSpan: 2
+                columns: 4
+                rowSpacing: root.metrics.gap
+                columnSpacing: root.metrics.gap
+
+                Repeater {
+                    model: root.settingsButtons
+
+                    LockedTile {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: Math.max(64, Math.round(root.metrics.fontSize * 4.2))
+                        title: modelData.label
+                    }
+                }
+            }
 
             Rectangle {
                 Layout.fillWidth: true
@@ -164,29 +224,38 @@ Item {
                         font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
                     }
 
-                    Repeater {
-                        model: root.distances
+                    GridLayout {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        columns: root.metrics.portrait ? 2 : 1
+                        rowSpacing: root.metrics.gap
+                        columnSpacing: root.metrics.gap
 
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: Math.max(42, Math.round(root.metrics.fontSize * 3.0))
-                            color: root.selectedDistance === modelData ? "#182b20" : "#101617"
-                            border.color: root.selectedDistance === modelData ? Theme.color3 : "#263233"
-                            border.width: 1
-                            radius: Math.round(root.metrics.fontSize * 0.28)
+                        Repeater {
+                            model: root.distances
 
-                            Label {
-                                anchors.centerIn: parent
-                                color: root.selectedDistance === modelData ? Theme.text : Theme.mutedText
-                                text: modelData + " mm"
-                                horizontalAlignment: Text.AlignHCenter
-                                font.bold: root.selectedDistance === modelData
-                                font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.92))
-                            }
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                Layout.minimumHeight: Math.max(42, Math.round(root.metrics.fontSize * 3.0))
+                                color: root.selectedDistance === modelData ? "#182b20" : "#101617"
+                                border.color: root.selectedDistance === modelData ? Theme.color3 : "#263233"
+                                border.width: 1
+                                radius: Math.round(root.metrics.fontSize * 0.28)
 
-                            MouseArea {
-                                anchors.fill: parent
-                                onClicked: root.selectDistance(modelData)
+                                Label {
+                                    anchors.centerIn: parent
+                                    color: root.selectedDistance === modelData ? Theme.text : Theme.mutedText
+                                    text: modelData + " mm"
+                                    horizontalAlignment: Text.AlignHCenter
+                                    font.bold: root.selectedDistance === modelData
+                                    font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.92))
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: root.selectDistance(modelData)
+                                }
                             }
                         }
                     }
@@ -215,29 +284,38 @@ Item {
                         font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
                     }
 
-                    Repeater {
-                        model: root.speeds
+                    GridLayout {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        columns: root.metrics.portrait ? 2 : 1
+                        rowSpacing: root.metrics.gap
+                        columnSpacing: root.metrics.gap
 
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: Math.max(42, Math.round(root.metrics.fontSize * 3.0))
-                            color: root.selectedSpeed === modelData ? "#182b20" : "#101617"
-                            border.color: root.selectedSpeed === modelData ? Theme.color3 : "#263233"
-                            border.width: 1
-                            radius: Math.round(root.metrics.fontSize * 0.28)
+                        Repeater {
+                            model: root.speeds
 
-                            Label {
-                                anchors.centerIn: parent
-                                color: root.selectedSpeed === modelData ? Theme.text : Theme.mutedText
-                                text: modelData + " mm/s"
-                                horizontalAlignment: Text.AlignHCenter
-                                font.bold: root.selectedSpeed === modelData
-                                font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.92))
-                            }
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                Layout.minimumHeight: Math.max(42, Math.round(root.metrics.fontSize * 3.0))
+                                color: root.selectedSpeed === modelData ? "#182b20" : "#101617"
+                                border.color: root.selectedSpeed === modelData ? Theme.color3 : "#263233"
+                                border.width: 1
+                                radius: Math.round(root.metrics.fontSize * 0.28)
 
-                            MouseArea {
-                                anchors.fill: parent
-                                onClicked: root.selectSpeed(modelData)
+                                Label {
+                                    anchors.centerIn: parent
+                                    color: root.selectedSpeed === modelData ? Theme.text : Theme.mutedText
+                                    text: modelData + " mm/s"
+                                    horizontalAlignment: Text.AlignHCenter
+                                    font.bold: root.selectedSpeed === modelData
+                                    font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.92))
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: root.selectSpeed(modelData)
+                                }
                             }
                         }
                     }

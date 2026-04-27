@@ -526,6 +526,15 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "property real positionE" in qml
     assert "property string selectedDistance" in qml
     assert "property string selectedSpeed" in qml
+    assert "property var actionButtons" in qml
+    assert "property var settingsButtons" in qml
+    assert '"label": "Load"' in qml
+    assert '"label": "Unload"' in qml
+    assert '"label": "Temperature"' in qml
+    assert '"label": "Pressure Advance"' in qml
+    assert '"label": "Retraction"' in qml
+    assert '"label": "Spoolman"' in qml
+    assert "component LockedTile: Rectangle" in qml
     assert "function selectDistance(distance)" in qml
     assert "function selectSpeed(speed)" in qml
     assert "root.selectedDistance === modelData" in qml
@@ -1037,6 +1046,8 @@ def test_extrude_panel_is_locked_and_responsive() -> None:
     assert "required property var metrics" in qml
     assert "property var distances" in qml
     assert "property var speeds" in qml
+    assert "property var actionButtons" in qml
+    assert "property var settingsButtons" in qml
     assert "property real actionFraction: 0.42" in qml
     assert "property real settingsFraction: 0.58" in qml
     assert "Layout.preferredWidth: root.metrics.portrait" in qml
