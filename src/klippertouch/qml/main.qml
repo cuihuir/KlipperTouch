@@ -53,6 +53,9 @@ ApplicationWindow {
     property string currentObject: bridgeModel ? bridgeModel.currentObject : ""
     property string currentPanel: "main"
     property var panelStack: ["main"]
+    property bool systemFaultVisible: window.moonrakerFaultActive()
+        || window.webhooksFaultActive()
+        || window.klippyFaultActive()
     property var panelTitles: ({"main": "Home", "move": "Move", "temperature": "Temperature", "extrude": "Extrude", "more": "More", "system": "System", "network": "Network", "logs": "Logs", "language": "Language", "update": "Update", "print": "Print", "job_status": "Job Status", "notifications": "Notifications", "splash": "Printer Status"})
     property var panelIcons: ({"main": "main", "move": "move", "temperature": "heat-up", "extrude": "extrude", "more": "settings", "system": "settings", "network": "main", "logs": "printer", "language": "settings", "update": "printer", "print": "printer", "job_status": "printer", "notifications": "printer", "splash": "printer"})
 
@@ -87,9 +90,7 @@ ApplicationWindow {
     }
 
     function systemFaultActive() {
-        return window.moonrakerFaultActive()
-            || window.webhooksFaultActive()
-            || window.klippyFaultActive()
+        return window.systemFaultVisible
     }
 
     function syncJobStatusPanel() {
@@ -308,7 +309,7 @@ ApplicationWindow {
             id: panelLoader
             objectName: "panelLoader"
             anchors.fill: parent
-            sourceComponent: window.systemFaultActive()
+            sourceComponent: window.systemFaultVisible
                 ? splashComponent
                 : window.componentForPanel(window.currentPanel)
         }
@@ -343,6 +344,8 @@ ApplicationWindow {
                 moonrakerVersion: window.moonrakerVersion
                 webhooksState: window.webhooksState
                 webhooksMessage: window.webhooksMessage
+                controlStatus: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastStatus : ""
+                controlError: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastError : ""
                 onRecoveryActionRequested: function(action) {
                     window.requestRecoveryControl(action)
                 }

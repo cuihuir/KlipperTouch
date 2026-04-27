@@ -88,6 +88,8 @@ def test_status_stream_schedules_read_only_reconnects() -> None:
     assert "self._reconnect_timer.timeout.connect(self.start)" in source
     assert "printer.objects.subscribe" in source
     assert "printer.gcode.script" not in source
+    assert '_set_webhooks_state("disconnected", "Moonraker disconnected")' in source
+    assert '_set_webhooks_state("startup", "Klipper is attempting to start")' in source
 
 
 def test_status_from_websocket_message_applies_notification_temperature_delta() -> None:

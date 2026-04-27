@@ -128,10 +128,12 @@ class MoonrakerStatusStream(QObject):
     def _schedule_reconnect(self, *_args: object) -> None:
         if not _subscription_objects(self._status) or self._reconnect_timer.isActive():
             return
+        self._set_webhooks_state("disconnected", "Moonraker disconnected")
         self._reconnect_timer.start()
 
     @Slot()
     def _send_subscription(self) -> None:
+        self._set_webhooks_state("startup", "Klipper is attempting to start")
         self._socket.sendTextMessage(
             build_temperature_subscription_message(self._client, self._status)
         )
@@ -140,6 +142,17 @@ class MoonrakerStatusStream(QObject):
     def _handle_text_message(self, message: str) -> None:
         status = status_from_websocket_message(self._status, message)
         if status is None:
+            return
+        self._status = status
+        self._status_model.set_status(status)
+
+    def _set_webhooks_state(self, state: str, message: str) -> None:
+        if "webhooks" not in self._status.objects:
+            return
+        status = self._status.with_status_update(
+            {"webhooks": {"state": state, "state_message": message}}
+        )
+        if status == self._status:
             return
         self._status = status
         self._status_model.set_status(status)

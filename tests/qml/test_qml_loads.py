@@ -825,19 +825,22 @@ def test_splash_panel_handles_system_fault_states() -> None:
 
     assert "property string webhooksState" in main_qml
     assert "property string webhooksMessage" in main_qml
+    assert "property bool systemFaultVisible:" in main_qml
     assert "function systemFaultActive()" in main_qml
     assert "function moonrakerFaultActive()" in main_qml
     assert "function klippyFaultActive()" in main_qml
     assert "function webhooksFaultActive()" in main_qml
     assert 'if (window.webhooksState === "ready") {' in main_qml
     assert 'if (window.webhooksState === "ready")' in main_qml
-    assert "sourceComponent: window.systemFaultActive()" in main_qml
+    assert "sourceComponent: window.systemFaultVisible" in main_qml
     assert "return splashComponent" in main_qml
     assert "SplashPanel {" in main_qml
     assert "klippyState: window.klippyState" in main_qml
     assert "moonrakerVersion: window.moonrakerVersion" in main_qml
     assert "webhooksState: window.webhooksState" in main_qml
     assert "webhooksMessage: window.webhooksMessage" in main_qml
+    assert "controlStatus: window.jobControlBridgeModel" in main_qml
+    assert "controlError: window.jobControlBridgeModel" in main_qml
     assert "onRecoveryActionRequested: function(action)" in main_qml
     assert "function requestRecoveryControl(action)" in main_qml
     assert "jobControlBridgeModel.requestFirmwareRestart()" in main_qml
@@ -845,8 +848,13 @@ def test_splash_panel_handles_system_fault_states() -> None:
     assert 'jobControlBridgeModel.requestPlaceholderControl("Restart Moonraker")' in main_qml
     assert "jobControlBridgeModel.requestEmergencyStop()" in main_qml
     assert "Moonraker offline" in panel_qml
+    assert "Moonraker disconnected" in panel_qml
+    assert "Klipper is attempting to start" in panel_qml
     assert "Klippy not ready" in panel_qml
     assert "Shutdown due to webhooks" in panel_qml
+    assert "property string controlStatus" in panel_qml
+    assert "property string controlError" in panel_qml
+    assert "function recoveryStatusText()" in panel_qml
     assert "signal recoveryActionRequested(string action)" in panel_qml
     assert '"Firmware Restart"' in panel_qml
     assert '"Restart Klipper"' in panel_qml
@@ -1124,7 +1132,7 @@ def test_main_routes_temperature_to_read_only_temperature_panel() -> None:
     assert 'case "temperature":' in main_qml
     assert "return temperatureComponent" in main_qml
     assert "return placeholderComponent" in main_qml
-    assert "sourceComponent: window.systemFaultActive()" in main_qml
+    assert "sourceComponent: window.systemFaultVisible" in main_qml
     assert "window.componentForPanel(window.currentPanel)" in main_qml
     assert "TemperaturePanel {" in main_qml
     assert "temperatureModel: window.temperatureBridgeModel" in main_qml
@@ -1385,7 +1393,7 @@ def test_main_uses_responsive_base_shell_and_main_panel() -> None:
     assert "bridgeModel.setActivePanel(window.currentPanel)" in main_qml
     assert 'property var panelTitles: ({"main": "Home"' in main_qml
     assert "panelTitle: window.panelTitles[window.currentPanel]" in main_qml
-    assert "sourceComponent: window.systemFaultActive()" in main_qml
+    assert "sourceComponent: window.systemFaultVisible" in main_qml
     assert "window.componentForPanel(window.currentPanel)" in main_qml
 
 

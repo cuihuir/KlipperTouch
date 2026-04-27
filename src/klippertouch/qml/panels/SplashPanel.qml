@@ -11,6 +11,8 @@ Item {
     property string moonrakerVersion: "unknown"
     property string webhooksState: ""
     property string webhooksMessage: ""
+    property string controlStatus: ""
+    property string controlError: ""
     signal recoveryActionRequested(string action)
 
     function moonrakerOffline() {
@@ -22,9 +24,34 @@ Item {
             || root.webhooksMessage.indexOf("Shutdown due to webhooks") >= 0
     }
 
+    function recoveryStatusText() {
+        if (root.controlError.length > 0) {
+            return root.controlError
+        }
+        if (root.controlStatus.length > 0) {
+            return root.controlStatus
+        }
+        if (root.webhooksState === "disconnected") {
+            return "Moonraker disconnected"
+        }
+        if (root.webhooksState === "startup") {
+            return "Klipper is attempting to start"
+        }
+        if (root.webhooksState === "ready") {
+            return "Printer is ready"
+        }
+        return root.webhooksMessage
+    }
+
     function headline() {
         if (root.moonrakerOffline()) {
             return "Moonraker offline"
+        }
+        if (root.webhooksState === "disconnected") {
+            return "Moonraker disconnected"
+        }
+        if (root.webhooksState === "startup") {
+            return "Klipper is attempting to start"
         }
         if (root.webhooksShutdown()) {
             return "Shutdown due to webhooks"
@@ -35,6 +62,9 @@ Item {
     function detail() {
         if (root.moonrakerOffline()) {
             return "KlipperTouch cannot reach Moonraker. Check host, network, and Moonraker service."
+        }
+        if (root.webhooksState === "disconnected" || root.webhooksState === "startup") {
+            return root.recoveryStatusText()
         }
         if (root.webhooksShutdown()) {
             return root.webhooksMessage.length > 0
@@ -134,6 +164,27 @@ Item {
                     Layout.fillWidth: true
                     elide: Text.ElideRight
                 }
+            }
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: Math.max(40, recoveryLabel.implicitHeight + root.metrics.gap)
+            radius: Math.round(root.metrics.fontSize * 0.28)
+            color: root.controlError.length > 0 ? "#221719" : "#121b1d"
+            border.color: root.controlError.length > 0 ? "#80676a" : "#344044"
+            border.width: 1
+            visible: root.recoveryStatusText().length > 0
+
+            Label {
+                id: recoveryLabel
+                anchors.centerIn: parent
+                width: parent.width - root.metrics.gap * 2
+                text: root.recoveryStatusText()
+                color: Theme.text
+                font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.76))
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
             }
         }
 

@@ -288,7 +288,12 @@ class PrinterStatus:
             klippy_state = "ready"
             if webhooks_fields.get("webhooks_message") != "Printer is ready":
                 webhooks_fields["webhooks_message"] = "Printer is ready"
-        elif webhooks_fields.get("webhooks_state") in {"shutdown", "error", "disconnected"}:
+        elif webhooks_fields.get("webhooks_state") in {
+            "startup",
+            "shutdown",
+            "error",
+            "disconnected",
+        }:
             klippy_state = str(webhooks_fields["webhooks_state"])
 
         return PrinterStatus(

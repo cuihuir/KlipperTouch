@@ -318,6 +318,29 @@ def test_printer_status_marks_klippy_ready_when_webhooks_recovers() -> None:
     assert updated.webhooks_message == "Printer is ready"
 
 
+def test_printer_status_tracks_webhooks_startup_and_disconnected_states() -> None:
+    status = PrinterStatus(
+        klippy_state="shutdown",
+        moonraker_version="v0.10.0",
+        objects=("webhooks",),
+        webhooks_state="shutdown",
+    )
+
+    startup = status.with_status_update(
+        {"webhooks": {"state": "startup", "state_message": "Klipper is attempting to start"}}
+    )
+    disconnected = startup.with_status_update(
+        {"webhooks": {"state": "disconnected", "state_message": "Moonraker disconnected"}}
+    )
+
+    assert startup.klippy_state == "startup"
+    assert startup.webhooks_state == "startup"
+    assert startup.webhooks_message == "Klipper is attempting to start"
+    assert disconnected.klippy_state == "disconnected"
+    assert disconnected.webhooks_state == "disconnected"
+    assert disconnected.webhooks_message == "Moonraker disconnected"
+
+
 def test_printer_status_applies_read_only_print_update() -> None:
     status = PrinterStatus(
         objects=("print_stats", "display_status", "virtual_sdcard"),
