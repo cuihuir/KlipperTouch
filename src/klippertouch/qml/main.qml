@@ -219,12 +219,16 @@ ApplicationWindow {
         jobControlBridgeModel.requestEmergencyStop()
     }
 
-    function requestMoveControl(action) {
+    function requestMoveControl(action, distance) {
         if (!jobControlBridgeModel) {
             return
         }
         if (action === "disable_motors") {
             jobControlBridgeModel.requestDisableMotors()
+        } else if (action === "x_minus" || action === "x_plus"
+                   || action === "y_minus" || action === "y_plus"
+                   || action === "z_minus" || action === "z_plus") {
+            jobControlBridgeModel.requestMoveJog(action, distance)
         }
     }
 
@@ -480,8 +484,8 @@ ApplicationWindow {
                 positionZ: window.positionZ
                 positionE: window.positionE
                 homedAxes: window.homedAxes
-                onMoveActionRequested: function(action) {
-                    window.requestMoveControl(action)
+                onMoveActionRequested: function(action, distance) {
+                    window.requestMoveControl(action, distance)
                 }
             }
         }

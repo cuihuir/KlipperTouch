@@ -325,12 +325,28 @@ def test_client_sends_print_control_when_controls_enabled(
         ("exclude_object", "part_a", "EXCLUDE_OBJECT NAME=part_a"),
         ("clear_sdcard_file", None, "SDCARD_RESET_FILE"),
         ("disable_motors", None, "M84"),
+        (
+            "jog_toolhead",
+            ("x", -10.0),
+            "SAVE_GCODE_STATE NAME=KLIPPERTOUCH_MOVE\n"
+            "G91\n"
+            "G0 X-10.000 F3000\n"
+            "RESTORE_GCODE_STATE NAME=KLIPPERTOUCH_MOVE",
+        ),
+        (
+            "jog_toolhead",
+            ("z", 0.5),
+            "SAVE_GCODE_STATE NAME=KLIPPERTOUCH_MOVE\n"
+            "G91\n"
+            "G0 Z0.500 F600\n"
+            "RESTORE_GCODE_STATE NAME=KLIPPERTOUCH_MOVE",
+        ),
     ],
 )
 def test_client_sends_gcode_control_scripts_when_controls_enabled(
     monkeypatch,
     client_method: str,
-    argument: float | str,
+    argument: float | str | tuple[str, float],
     script: str,
 ) -> None:
     captured: dict[str, object] = {}
@@ -359,7 +375,9 @@ def test_client_sends_gcode_control_scripts_when_controls_enabled(
         policy=CommandPolicy(read_only=False),
     )
 
-    if argument is None:
+    if isinstance(argument, tuple):
+        assert getattr(client, client_method)(*argument) == {"ok": True}
+    elif argument is None:
         assert getattr(client, client_method)() == {"ok": True}
     else:
         assert getattr(client, client_method)(argument) == {"ok": True}

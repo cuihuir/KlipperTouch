@@ -160,6 +160,19 @@ class MoonrakerClient:
     def disable_motors(self) -> dict[str, Any]:
         return self.run_gcode_script("M84")
 
+    def jog_toolhead(self, axis: str, distance: float) -> dict[str, Any]:
+        normalized_axis = axis.lower()
+        if normalized_axis not in {"x", "y", "z"}:
+            raise ValueError("Invalid jog axis")
+        speed = 600 if normalized_axis == "z" else 3000
+        script = (
+            "SAVE_GCODE_STATE NAME=KLIPPERTOUCH_MOVE\n"
+            "G91\n"
+            f"G0 {normalized_axis.upper()}{distance:.3f} F{speed}\n"
+            "RESTORE_GCODE_STATE NAME=KLIPPERTOUCH_MOVE"
+        )
+        return self.run_gcode_script(script)
+
     def delete_gcode_file(self, filename: str) -> dict[str, Any]:
         return self.delete(f"server/files/gcodes/{filename.strip('/')}")
 

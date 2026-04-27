@@ -62,6 +62,10 @@ class FakeClient:
         self.calls.append(("disable_motors", ""))
         return {"ok": True}
 
+    def jog_toolhead(self, axis: str, distance: float) -> dict[str, bool]:
+        self.calls.append(("jog", f"{axis}:{distance}"))
+        return {"ok": True}
+
 
 class BlockingClient(FakeClient):
     def pause_print(self) -> dict[str, bool]:
@@ -184,6 +188,30 @@ def test_job_control_model_sends_disable_motors(qtbot) -> None:
 
     assert client.calls == [("disable_motors", "")]
     assert model.lastStatus == "Disable motors sent"
+
+
+def test_job_control_model_sends_validated_jog_requests(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestMoveJog("x_minus", 10)
+    model.requestMoveJog("z_plus", 0.5)
+
+    assert client.calls == [("jog", "x:-10.0"), ("jog", "z:0.5")]
+    assert model.lastStatus == "Move sent"
+
+
+def test_job_control_model_rejects_invalid_jog_requests(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestMoveJog("bad", 10)
+    assert client.calls == []
+    assert model.lastError == "Invalid move direction"
+
+    model.requestMoveJog("x_plus", 0)
+    assert client.calls == []
+    assert model.lastError == "Move distance must be positive"
 
 
 def test_job_control_model_reports_placeholder_recovery_actions(qtbot) -> None:

@@ -671,7 +671,13 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert 'property var actionButtons' in qml
     assert 'property bool moreVisible' in qml
     assert 'property string detailPage: "main"' in qml
-    assert 'signal moveActionRequested(string action)' in qml
+    assert 'signal moveActionRequested(string action, real distance)' in qml
+    assert '"action": "y_plus"' in qml
+    assert '"action": "x_minus"' in qml
+    assert '"action": "x_plus"' in qml
+    assert '"action": "y_minus"' in qml
+    assert '"action": "z_plus"' in qml
+    assert '"action": "z_minus"' in qml
     assert '"label": "Y+"' in qml
     assert '"label": "X-"' in qml
     assert '"label": "X+"' in qml
@@ -713,7 +719,7 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert 'root.detailPage = "more"' in qml
     assert "function goBack()" in qml
     assert "visible: root.moreVisible && root.metrics.ultraWide" in qml
-    assert "root.moveActionRequested(modelData.action)" in qml
+    assert "root.moveActionRequested(modelData.action, parseFloat(root.selectedDistance))" in qml
     assert "id: distanceGrid" in qml
     assert "id: positionGrid" in qml
     assert "M18" not in qml
@@ -1411,12 +1417,12 @@ def test_move_panel_is_locked_and_responsive() -> None:
     assert "id: zMovePad" in qml
     assert "direction: modelData.direction" in qml
     assert "id: distanceGrid" in qml
-    assert "Controls locked" in qml
+    assert "Controls ready" in qml
     assert "root.metrics.portrait" in qml
     assert "Repeater {" in qml
     assert "root.selectDistance(modelData)" in qml
     assert "printer.gcode.script" not in qml
-    assert "G1" not in qml
+    assert "G0" not in qml
     assert "G28" not in qml
 
 
@@ -1439,7 +1445,7 @@ def test_extrude_panel_is_locked_and_responsive() -> None:
     assert "root.selectSpeed(modelData)" in qml
     assert "printer.gcode.script" not in qml
     assert "M83" not in qml
-    assert "G1" not in qml
+    assert "G0" not in qml
 
 
 def test_main_routes_move_and_extrude_to_locked_panels() -> None:
@@ -1450,8 +1456,9 @@ def test_main_routes_move_and_extrude_to_locked_panels() -> None:
     assert 'case "extrude":' in main_qml
     assert "return extrudeComponent" in main_qml
     assert "MovePanel {" in main_qml
-    assert "onMoveActionRequested: function(action)" in main_qml
-    assert "function requestMoveControl(action)" in main_qml
+    assert "onMoveActionRequested: function(action, distance)" in main_qml
+    assert "function requestMoveControl(action, distance)" in main_qml
+    assert "jobControlBridgeModel.requestMoveJog(action, distance)" in main_qml
     assert "jobControlBridgeModel.requestDisableMotors()" in main_qml
     assert "ExtrudePanel {" in main_qml
 

@@ -33,6 +33,8 @@ class JobControlClient(Protocol):
 
     def disable_motors(self) -> dict[str, object]: ...
 
+    def jog_toolhead(self, axis: str, distance: float) -> dict[str, object]: ...
+
 
 class JobControlModel(QObject):
     statusChanged = Signal()
@@ -98,6 +100,27 @@ class JobControlModel(QObject):
     @Slot()
     def requestDisableMotors(self) -> None:  # noqa: N802
         self._run_control("Disable motors", lambda client: client.disable_motors())
+
+    @Slot(str, float)
+    def requestMoveJog(self, direction: str, distance: float) -> None:  # noqa: N802
+        clean_direction = direction.strip().lower()
+        if distance <= 0:
+            self._set_error("Move distance must be positive")
+            return
+        move_distance = float(distance)
+        direction_map = {
+            "x_minus": ("x", -move_distance),
+            "x_plus": ("x", move_distance),
+            "y_minus": ("y", -move_distance),
+            "y_plus": ("y", move_distance),
+            "z_minus": ("z", -move_distance),
+            "z_plus": ("z", move_distance),
+        }
+        if clean_direction not in direction_map:
+            self._set_error("Invalid move direction")
+            return
+        axis, signed_distance = direction_map[clean_direction]
+        self._run_control("Move", lambda client: client.jog_toolhead(axis, signed_distance))
 
     @Slot(str)
     def requestPlaceholderControl(self, label: str) -> None:  # noqa: N802

@@ -7,22 +7,22 @@ Item {
     id: root
     required property var metrics
     property var moveButtons: [
-        {"label": "Y+", "direction": "up"},
-        {"label": "X-", "direction": "left"},
-        {"label": "X+", "direction": "right"},
-        {"label": "Y-", "direction": "down"},
-        {"label": "Z+", "direction": "up"},
-        {"label": "Z-", "direction": "down"}
+        {"label": "Y+", "direction": "up", "action": "y_plus"},
+        {"label": "X-", "direction": "left", "action": "x_minus"},
+        {"label": "X+", "direction": "right", "action": "x_plus"},
+        {"label": "Y-", "direction": "down", "action": "y_minus"},
+        {"label": "Z+", "direction": "up", "action": "z_plus"},
+        {"label": "Z-", "direction": "down", "action": "z_minus"}
     ]
     property var xyButtons: [
-        {"label": "Y+", "direction": "up"},
-        {"label": "X-", "direction": "left"},
-        {"label": "X+", "direction": "right"},
-        {"label": "Y-", "direction": "down"}
+        {"label": "Y+", "direction": "up", "action": "y_plus"},
+        {"label": "X-", "direction": "left", "action": "x_minus"},
+        {"label": "X+", "direction": "right", "action": "x_plus"},
+        {"label": "Y-", "direction": "down", "action": "y_minus"}
     ]
     property var zButtons: [
-        {"label": "Z+", "direction": "up"},
-        {"label": "Z-", "direction": "down"}
+        {"label": "Z+", "direction": "up", "action": "z_plus"},
+        {"label": "Z-", "direction": "down", "action": "z_minus"}
     ]
     property var actionButtons: [
         {"label": "Disable Motors", "action": "disable_motors", "hint": "M84", "icon": "⏻"},
@@ -42,7 +42,7 @@ Item {
     property real positionE: 0
     property string homedAxes: ""
     readonly property color selectedAccent: "#7f9298"
-    signal moveActionRequested(string action)
+    signal moveActionRequested(string action, real distance)
 
     function selectDistance(distance) {
         root.selectedDistance = distance
@@ -276,6 +276,11 @@ Item {
                             anchors.bottom: modelData.direction === "down" ? parent.bottom : undefined
                             anchors.left: modelData.direction === "left" ? parent.left : undefined
                             anchors.right: modelData.direction === "right" ? parent.right : undefined
+
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: root.moveActionRequested(modelData.action, parseFloat(root.selectedDistance))
+                            }
                         }
                     }
 
@@ -309,6 +314,14 @@ Item {
                         direction: "up"
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.top: parent.top
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: root.moveActionRequested(
+                                "z_plus",
+                                parseFloat(root.selectedDistance)
+                            )
+                        }
                     }
 
                     LockedTile {
@@ -326,6 +339,14 @@ Item {
                         direction: "down"
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.bottom: parent.bottom
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: root.moveActionRequested(
+                                "z_minus",
+                                parseFloat(root.selectedDistance)
+                            )
+                        }
                     }
                 }
 
@@ -361,7 +382,7 @@ Item {
                                     if (modelData.action === "more") {
                                         root.showMore()
                                     } else {
-                                        root.moveActionRequested(modelData.action)
+                                        root.moveActionRequested(modelData.action, 0)
                                     }
                                 }
                             }
@@ -405,7 +426,7 @@ Item {
 
                     Label {
                         color: Theme.mutedText
-                        text: "Controls locked"
+                        text: "Controls ready"
                         font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.76))
                     }
                 }
