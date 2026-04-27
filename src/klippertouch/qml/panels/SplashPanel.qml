@@ -13,6 +13,7 @@ Item {
     property string webhooksMessage: ""
     property string controlStatus: ""
     property string controlError: ""
+    property bool compactVertical: root.height < 380
     signal recoveryActionRequested(string action)
 
     function moonrakerOffline() {
@@ -40,7 +41,7 @@ Item {
         if (root.webhooksState === "ready") {
             return "Printer is ready"
         }
-        return root.webhooksMessage
+        return ""
     }
 
     function headline() {
@@ -86,14 +87,16 @@ Item {
     }
 
     ColumnLayout {
-        anchors.centerIn: parent
+        anchors.fill: parent
+        anchors.margins: root.metrics.margin
         width: Math.min(parent.width - root.metrics.margin * 2, Math.max(360, parent.width * 0.72))
-        spacing: Math.max(12, root.metrics.gap * 1.2)
+        spacing: root.compactVertical ? Math.max(5, Math.round(root.metrics.gap * 0.45)) : Math.max(8, root.metrics.gap * 0.85)
 
         Rectangle {
             Layout.alignment: Qt.AlignHCenter
-            Layout.preferredWidth: Math.max(64, Math.round(root.metrics.fontSize * 4.4))
-            Layout.preferredHeight: Math.max(64, Math.round(root.metrics.fontSize * 4.4))
+            Layout.preferredWidth: Math.max(48, Math.round(root.metrics.fontSize * 3.2))
+            Layout.preferredHeight: Math.max(48, Math.round(root.metrics.fontSize * 3.2))
+            visible: !root.compactVertical
             radius: width / 2
             color: "#151f22"
             border.color: "#637075"
@@ -111,17 +114,10 @@ Item {
         Label {
             text: root.headline()
             color: Theme.text
-            font.pixelSize: Math.max(24, Math.round(root.metrics.fontSize * 1.75))
+            font.pixelSize: root.compactVertical
+                ? Math.max(18, Math.round(root.metrics.fontSize * 1.05))
+                : Math.max(20, Math.round(root.metrics.fontSize * 1.35))
             font.bold: true
-            horizontalAlignment: Text.AlignHCenter
-            Layout.fillWidth: true
-            wrapMode: Text.WordWrap
-        }
-
-        Label {
-            text: root.detail()
-            color: Theme.mutedText
-            font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 0.95))
             horizontalAlignment: Text.AlignHCenter
             Layout.fillWidth: true
             wrapMode: Text.WordWrap
@@ -129,7 +125,53 @@ Item {
 
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: Math.max(72, statusColumn.implicitHeight + root.metrics.gap * 1.2)
+            Layout.fillHeight: true
+            Layout.minimumHeight: root.compactVertical
+                ? Math.max(48, Math.round(root.metrics.fontSize * 2.6))
+                : Math.max(76, Math.round(root.metrics.fontSize * 4.7))
+            Layout.maximumHeight: root.compactVertical
+                ? Math.max(58, Math.round(parent.height * 0.24))
+                : Math.max(120, Math.round(parent.height * 0.36))
+            radius: Math.round(root.metrics.fontSize * 0.35)
+            color: "#0b1416"
+            border.color: "#2f3a3e"
+            border.width: 1
+            clip: true
+
+            Flickable {
+                id: detailScroller
+                anchors.fill: parent
+                anchors.margins: root.metrics.gap
+                contentWidth: width
+                contentHeight: detailLabel.implicitHeight
+                boundsBehavior: Flickable.StopAtBounds
+                clip: true
+
+                Label {
+                    id: detailLabel
+                    width: detailScroller.width
+                    text: root.detail()
+                    color: Theme.mutedText
+                    font.pixelSize: root.compactVertical
+                        ? Math.max(10, Math.round(root.metrics.fontSize * 0.64))
+                        : Math.max(12, Math.round(root.metrics.fontSize * 0.82))
+                    horizontalAlignment: Text.AlignLeft
+                    wrapMode: Text.WordWrap
+                }
+
+                ScrollBar.vertical: ScrollBar {
+                    policy: detailScroller.contentHeight > detailScroller.height
+                        ? ScrollBar.AlwaysOn
+                        : ScrollBar.AsNeeded
+                }
+            }
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: root.compactVertical
+                ? Math.max(54, statusColumn.implicitHeight + root.metrics.gap * 0.6)
+                : Math.max(72, statusColumn.implicitHeight + root.metrics.gap * 1.2)
             radius: Math.round(root.metrics.fontSize * 0.35)
             color: "#0c1517"
             border.color: "#2f3a3e"
@@ -138,8 +180,8 @@ Item {
             ColumnLayout {
                 id: statusColumn
                 anchors.fill: parent
-                anchors.margins: root.metrics.gap
-                spacing: Math.max(3, Math.round(root.metrics.gap * 0.35))
+                anchors.margins: root.compactVertical ? Math.max(4, Math.round(root.metrics.gap * 0.5)) : root.metrics.gap
+                spacing: root.compactVertical ? 1 : Math.max(3, Math.round(root.metrics.gap * 0.35))
 
                 Label {
                     text: "Host: " + root.hostname
@@ -189,9 +231,10 @@ Item {
         }
 
         GridLayout {
+            id: recoveryActions
             Layout.fillWidth: true
             columns: root.width > 720 ? 4 : 2
-            rowSpacing: root.metrics.gap
+            rowSpacing: root.compactVertical ? Math.max(5, Math.round(root.metrics.gap * 0.5)) : root.metrics.gap
             columnSpacing: root.metrics.gap
 
             Repeater {
@@ -208,8 +251,12 @@ Item {
                     required property bool placeholder
 
                     Layout.fillWidth: true
-                    Layout.minimumHeight: Math.max(54, Math.round(root.metrics.fontSize * 3.2))
-                    Layout.preferredHeight: Math.max(54, Math.round(root.metrics.fontSize * 3.2))
+                    Layout.minimumHeight: root.compactVertical
+                        ? Math.max(42, Math.round(root.metrics.fontSize * 2.35))
+                        : Math.max(54, Math.round(root.metrics.fontSize * 3.2))
+                    Layout.preferredHeight: root.compactVertical
+                        ? Math.max(42, Math.round(root.metrics.fontSize * 2.35))
+                        : Math.max(54, Math.round(root.metrics.fontSize * 3.2))
                     radius: Math.round(height * 0.18)
                     color: placeholder ? "#141b1d" : "#1a2528"
                     border.color: placeholder ? "#3d474a" : "#667276"
@@ -255,6 +302,7 @@ Item {
             horizontalAlignment: Text.AlignHCenter
             Layout.fillWidth: true
             wrapMode: Text.WordWrap
+            visible: !root.compactVertical
         }
     }
 }

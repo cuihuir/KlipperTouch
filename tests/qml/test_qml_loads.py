@@ -854,7 +854,19 @@ def test_splash_panel_handles_system_fault_states() -> None:
     assert "Shutdown due to webhooks" in panel_qml
     assert "property string controlStatus" in panel_qml
     assert "property string controlError" in panel_qml
+    assert "property bool compactVertical" in panel_qml
+    assert "root.height < 380" in panel_qml
     assert "function recoveryStatusText()" in panel_qml
+    assert 'return ""' in panel_qml
+    assert "return root.webhooksMessage\n" not in panel_qml
+    assert "Flickable {" in panel_qml
+    assert "id: detailScroller" in panel_qml
+    assert "Layout.maximumHeight" in panel_qml
+    assert "clip: true" in panel_qml
+    assert "ScrollBar.vertical" in panel_qml
+    assert "id: recoveryActions" in panel_qml
+    assert "visible: !root.compactVertical" in panel_qml
+    assert "Layout.preferredHeight: root.compactVertical" in panel_qml
     assert "signal recoveryActionRequested(string action)" in panel_qml
     assert '"Firmware Restart"' in panel_qml
     assert '"Restart Klipper"' in panel_qml
