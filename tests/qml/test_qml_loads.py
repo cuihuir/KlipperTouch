@@ -339,6 +339,7 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "ScrollBar.vertical: ScrollBar" in qml
     assert "policy: ScrollBar.AsNeeded" in qml
     assert "id: selectedActionBar" in qml
+    assert "visible: root.pendingFileAction.length === 0" in qml
     assert 'text: "Actions"' in qml
     assert "component FileActionButton: Button" in qml
     assert "id: selectedActionPreview" in qml

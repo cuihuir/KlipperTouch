@@ -633,9 +633,10 @@ Item {
 
                 Rectangle {
                     id: selectedActionBar
+                    visible: root.pendingFileAction.length === 0
                     Layout.fillWidth: true
-                    Layout.preferredHeight: Math.max(52, Math.round(root.metrics.fontSize * 3.6))
-                    Layout.maximumHeight: Math.max(52, Math.round(root.metrics.fontSize * 3.6))
+                    Layout.preferredHeight: visible ? Math.max(52, Math.round(root.metrics.fontSize * 3.6)) : 0
+                    Layout.maximumHeight: Layout.preferredHeight
                     Layout.fillHeight: false
                     color: "#0b1112"
                     border.color: "#263233"
