@@ -28,33 +28,149 @@ Item {
     property var excludedObjectNames: []
     property string currentObject: ""
     property string detailPage: "summary"
+    readonly property color accentColor: root.stateAccentColor()
     property int jobButtonHeight: Math.min(52, Math.max(44, Math.round(root.metrics.fontSize * 2.45)))
-    property int jobButtonWidth: Math.min(112, Math.max(86, Math.round(root.metrics.fontSize * 5.3)))
+    property int jobButtonWidth: Math.min(150, Math.max(124, Math.round(root.metrics.fontSize * 7.4)))
     signal zOffsetAdjustRequested(real delta)
     signal speedFactorAdjustRequested(real delta)
     signal extrudeFactorAdjustRequested(real delta)
     signal objectExcludeRequested(string objectName)
 
+    component StatusCard: Rectangle {
+        id: statusCard
+        property color accent: root.accentColor
+        default property alias contentData: statusContent.data
+
+        color: "#081112"
+        border.color: statusCard.accent
+        border.width: 1
+        radius: Math.round(root.metrics.fontSize * 0.42)
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: "#101b1e" }
+            GradientStop { position: 0.58; color: "#081112" }
+            GradientStop { position: 1.0; color: "#050809" }
+        }
+
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            height: 2
+            color: statusCard.accent
+            opacity: 0.8
+        }
+
+        ColumnLayout {
+            id: statusContent
+            anchors.fill: parent
+            anchors.margins: root.metrics.gap
+            spacing: root.metrics.gap
+        }
+    }
+
+    component MetricPill: Rectangle {
+        id: metricRoot
+        property string label: ""
+        property string value: ""
+        property color accent: "#263233"
+
+        implicitHeight: Math.max(32, Math.round(root.metrics.fontSize * 2.1))
+        color: "#091314"
+        border.color: metricRoot.accent
+        border.width: 1
+        radius: Math.round(root.metrics.fontSize * 0.28)
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: "#101a1c" }
+            GradientStop { position: 1.0; color: "#071011" }
+        }
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: Math.max(7, Math.round(root.metrics.fontSize * 0.45))
+            anchors.rightMargin: anchors.leftMargin
+            spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.3))
+
+            Label {
+                color: Theme.mutedText
+                text: metricRoot.label
+                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+            }
+
+            Label {
+                Layout.fillWidth: true
+                color: Theme.text
+                text: metricRoot.value
+                horizontalAlignment: Text.AlignRight
+                elide: Text.ElideRight
+                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.86))
+            }
+        }
+    }
+
     component JobButton: Button {
         id: controlRoot
         property color accent: Theme.color4
+        property string buttonRole: "normal"
+        property string iconText: ""
+        readonly property color roleAccent: buttonRole === "danger"
+            ? "#d8615b"
+            : buttonRole === "primary" ? root.accentColor : accent
         implicitHeight: root.jobButtonHeight
+        implicitWidth: root.jobButtonWidth
 
-        contentItem: Label {
-            color: controlRoot.enabled ? Theme.text : Theme.mutedText
-            text: controlRoot.text
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            elide: Text.ElideRight
-            font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.82))
+        contentItem: RowLayout {
+            spacing: Math.max(5, Math.round(root.metrics.fontSize * 0.32))
+
+            Label {
+                visible: controlRoot.iconText.length > 0
+                Layout.preferredWidth: Math.max(24, Math.round(root.metrics.fontSize * 1.55))
+                Layout.fillHeight: true
+                color: controlRoot.enabled ? controlRoot.roleAccent : Theme.mutedText
+                text: controlRoot.iconText
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                font.bold: true
+                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+            }
+
+            Label {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                color: controlRoot.enabled ? Theme.text : Theme.mutedText
+                text: controlRoot.text
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                elide: Text.ElideRight
+                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.82))
+            }
         }
 
         background: Rectangle {
             color: controlRoot.enabled ? "#101617" : "#151a1b"
-            border.color: controlRoot.enabled ? controlRoot.accent : "#263233"
+            border.color: controlRoot.enabled ? controlRoot.roleAccent : "#263233"
             border.width: controlRoot.enabled ? 2 : 1
             radius: Math.round(root.metrics.fontSize * 0.32)
             opacity: controlRoot.enabled ? 1.0 : 0.72
+            gradient: Gradient {
+                GradientStop {
+                    position: 0.0
+                    color: controlRoot.enabled ? "#142126" : "#151a1b"
+                }
+                GradientStop {
+                    position: 1.0
+                    color: controlRoot.enabled ? "#091112" : "#101415"
+                }
+            }
+
+            Rectangle {
+                anchors.left: parent.left
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                width: controlRoot.enabled ? 3 : 1
+                color: controlRoot.roleAccent
+                opacity: controlRoot.enabled ? 0.85 : 0.25
+                radius: parent.radius
+            }
         }
     }
 
@@ -204,10 +320,15 @@ Item {
     Rectangle {
         anchors.fill: parent
         anchors.margins: root.metrics.margin
-        color: Theme.buttonsBg
-        border.color: "#465456"
+        color: "#050909"
+        border.color: "#31464a"
         border.width: 1
         radius: Math.round(root.metrics.fontSize * 0.45)
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: "#0d1517" }
+            GradientStop { position: 0.45; color: "#070b0c" }
+            GradientStop { position: 1.0; color: "#030506" }
+        }
 
         ColumnLayout {
             anchors.fill: parent
@@ -231,28 +352,37 @@ Item {
                     font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.15))
                 }
 
-                Label {
+                Rectangle {
+                    id: statusPill
                     visible: root.detailPage === "summary"
-                    color: root.stateAccentColor()
-                    text: root.stateHeadline()
-                    horizontalAlignment: Text.AlignRight
-                    font.bold: true
-                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.86))
+                    Layout.preferredWidth: Math.max(92, Math.round(root.metrics.fontSize * 6.2))
+                    Layout.preferredHeight: Math.max(26, Math.round(root.metrics.fontSize * 1.75))
+                    color: "#101617"
+                    border.color: root.accentColor
+                    border.width: 1
+                    radius: height / 2
+
+                    Label {
+                        anchors.centerIn: parent
+                        color: root.accentColor
+                        text: root.stateHeadline()
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.bold: true
+                        font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.78))
+                    }
                 }
             }
 
-            Rectangle {
+            StatusCard {
                 visible: root.detailPage === "summary"
                 Layout.fillWidth: true
-                Layout.preferredHeight: Math.max(118, Math.round(root.metrics.fontSize * 8.2))
-                color: "#101617"
-                border.color: root.stateAccentColor()
-                border.width: 1
-                radius: Math.round(root.metrics.fontSize * 0.32)
+                Layout.preferredHeight: Math.max(126, Math.round(root.metrics.fontSize * 8.7))
+                accent: root.accentColor
 
                 RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: root.metrics.gap
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
                     spacing: Math.max(6, Math.round(root.metrics.fontSize * 0.45))
 
                     Rectangle {
@@ -289,8 +419,38 @@ Item {
                         }
 
                         ProgressBar {
+                            id: jobProgressBar
                             Layout.fillWidth: true
+                            Layout.preferredHeight: Math.max(18, Math.round(root.metrics.fontSize * 1.15))
                             value: root.stateProgressValue()
+                            background: Rectangle {
+                                color: "#050809"
+                                border.color: "#2c3b3e"
+                                border.width: 1
+                                radius: height / 2
+                            }
+                            contentItem: Item {
+                                Rectangle {
+                                    id: progressRail
+                                    anchors.fill: parent
+                                    anchors.margins: 2
+                                    color: "#071112"
+                                    radius: height / 2
+
+                                    Rectangle {
+                                        id: progressFill
+                                        anchors.left: parent.left
+                                        anchors.top: parent.top
+                                        anchors.bottom: parent.bottom
+                                        width: Math.max(height, jobProgressBar.visualPosition * parent.width)
+                                        radius: height / 2
+                                        gradient: Gradient {
+                                            GradientStop { position: 0.0; color: "#28a7df" }
+                                            GradientStop { position: 1.0; color: root.accentColor }
+                                        }
+                                    }
+                                }
+                            }
                         }
 
                         RowLayout {
@@ -304,35 +464,11 @@ Item {
                                     {"label": "Flow", "value": root.percentLabel(root.extrudeFactor)}
                                 ]
 
-                                Rectangle {
+                                MetricPill {
                                     Layout.fillWidth: true
-                                    Layout.preferredHeight: Math.max(28, Math.round(root.metrics.fontSize * 1.9))
-                                    color: "#0b1112"
-                                    border.color: "#263233"
-                                    border.width: 1
-                                    radius: Math.round(root.metrics.fontSize * 0.22)
-
-                                    RowLayout {
-                                        anchors.fill: parent
-                                        anchors.leftMargin: Math.max(5, Math.round(root.metrics.fontSize * 0.35))
-                                        anchors.rightMargin: anchors.leftMargin
-                                        spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.25))
-
-                                        Label {
-                                            color: Theme.mutedText
-                                            text: modelData.label
-                                            font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
-                                        }
-
-                                        Label {
-                                            Layout.fillWidth: true
-                                            color: Theme.text
-                                            text: modelData.value
-                                            horizontalAlignment: Text.AlignRight
-                                            elide: Text.ElideRight
-                                            font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.8))
-                                        }
-                                    }
+                                    label: modelData.label
+                                    value: modelData.value
+                                    accent: "#263233"
                                 }
                             }
                         }
@@ -379,6 +515,8 @@ Item {
                     Layout.preferredWidth: root.jobActionButtonWidth()
                     Layout.preferredHeight: root.jobButtonHeight
                     text: root.primaryActionLabel()
+                    iconText: "||"
+                    buttonRole: "primary"
                     enabled: false
                     ToolTip.visible: hovered
                     ToolTip.text: root.readonlyActionHint(text)
@@ -388,6 +526,8 @@ Item {
                     Layout.preferredWidth: root.jobActionButtonWidth()
                     Layout.preferredHeight: root.jobButtonHeight
                     text: "Cancel"
+                    iconText: "X"
+                    buttonRole: "danger"
                     accent: "#d8615b"
                     enabled: false
                     ToolTip.visible: hovered
@@ -398,6 +538,7 @@ Item {
                     Layout.preferredWidth: root.jobActionButtonWidth()
                     Layout.preferredHeight: root.jobButtonHeight
                     text: "Skip Object"
+                    iconText: "OBJ"
                     enabled: root.excludeObjectNames.length > 0
                     ToolTip.visible: hovered
                     ToolTip.text: enabled ? "Open object exclusion list" : "No object data"
@@ -408,6 +549,7 @@ Item {
                     Layout.preferredWidth: root.jobActionButtonWidth()
                     Layout.preferredHeight: root.jobButtonHeight
                     text: "Advanced"
+                    iconText: "ADV"
                     onClicked: root.detailPage = "advanced"
                 }
             }
@@ -421,6 +563,10 @@ Item {
                 border.color: "#263233"
                 border.width: 1
                 radius: Math.round(root.metrics.fontSize * 0.32)
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: "#10191b" }
+                    GradientStop { position: 1.0; color: "#081112" }
+                }
 
                 RowLayout {
                     anchors.fill: parent
@@ -526,6 +672,10 @@ Item {
                     border.color: "#263233"
                     border.width: 1
                     radius: Math.round(root.metrics.fontSize * 0.32)
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: "#111a1c" }
+                        GradientStop { position: 1.0; color: "#081112" }
+                    }
 
                     ColumnLayout {
                         anchors.fill: parent
@@ -602,6 +752,20 @@ Item {
                         border.color: "#263233"
                         border.width: 1
                         radius: Math.round(root.metrics.fontSize * 0.32)
+                        gradient: Gradient {
+                            GradientStop { position: 0.0; color: "#101a1d" }
+                            GradientStop { position: 1.0; color: "#071011" }
+                        }
+
+                        Rectangle {
+                            anchors.left: parent.left
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            width: 3
+                            color: root.accentColor
+                            opacity: 0.7
+                            radius: parent.radius
+                        }
 
                         RowLayout {
                             anchors.fill: parent
@@ -679,6 +843,10 @@ Item {
                     border.color: root.currentObject.length > 0 ? Theme.color4 : "#263233"
                     border.width: 1
                     radius: Math.round(root.metrics.fontSize * 0.32)
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: "#101a1d" }
+                        GradientStop { position: 1.0; color: "#071011" }
+                    }
 
                     ColumnLayout {
                         anchors.fill: parent
@@ -723,6 +891,13 @@ Item {
                         border.color: modelData === root.currentObject ? Theme.color4 : "#263233"
                         border.width: modelData === root.currentObject ? 2 : 1
                         radius: Math.round(root.metrics.fontSize * 0.32)
+                        gradient: Gradient {
+                            GradientStop {
+                                position: 0.0
+                                color: modelData === root.currentObject ? "#102129" : "#101a1d"
+                            }
+                            GradientStop { position: 1.0; color: "#071011" }
+                        }
 
                         RowLayout {
                             anchors.fill: parent

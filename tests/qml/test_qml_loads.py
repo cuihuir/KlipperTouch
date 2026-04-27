@@ -334,12 +334,25 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "Printer error" in qml
     assert "Remaining" in qml
     assert "id: jobActionGrid" in qml
+    assert "component StatusCard: Rectangle" in qml
+    assert "component MetricPill: Rectangle" in qml
     assert "component JobButton: Button" in qml
     assert "property int jobButtonHeight" in qml
     assert "property int jobButtonWidth" in qml
+    assert "property string buttonRole" in qml
+    assert "property string iconText" in qml
     assert "function jobActionGridHeight()" in qml
     assert "function jobActionGridWidth()" in qml
     assert "function jobActionButtonWidth()" in qml
+    assert "gradient: Gradient" in qml
+    assert "id: statusPill" in qml
+    assert "id: progressRail" in qml
+    assert "id: progressFill" in qml
+    assert 'iconText: "||"' in qml
+    assert 'iconText: "X"' in qml
+    assert 'iconText: "OBJ"' in qml
+    assert 'iconText: "ADV"' in qml
+    assert 'buttonRole: "danger"' in qml
     assert "background: Rectangle" in qml
     assert "color: controlRoot.enabled ? \"#101617\" : \"#151a1b\"" in qml
     assert "implicitHeight: root.jobButtonHeight" in qml
