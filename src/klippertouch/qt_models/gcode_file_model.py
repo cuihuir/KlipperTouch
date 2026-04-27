@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 from PySide6.QtCore import (
     Property,
     QAbstractListModel,
@@ -48,6 +50,7 @@ class GCodeFileListModel(QAbstractListModel):
 
     def set_files(self, files: tuple[GCodeFile, ...]) -> None:
         files = _normalized_file_snapshot(files)
+        files = _preserve_loaded_thumbnails(files, self._files)
         if files == self._files:
             return
         self.beginResetModel()
@@ -331,3 +334,20 @@ class GCodeFileListModel(QAbstractListModel):
 
 def _normalized_file_snapshot(files: tuple[GCodeFile, ...]) -> tuple[GCodeFile, ...]:
     return tuple(sorted(tuple(files), key=lambda file: file.path))
+
+
+def _preserve_loaded_thumbnails(
+    files: tuple[GCodeFile, ...],
+    previous_files: tuple[GCodeFile, ...],
+) -> tuple[GCodeFile, ...]:
+    previous_by_path = {
+        file.path: file.thumbnail_url for file in previous_files if file.thumbnail_url
+    }
+    if not previous_by_path:
+        return files
+    return tuple(
+        replace(file, thumbnail_url=previous_by_path[file.path])
+        if not file.thumbnail_url and file.path in previous_by_path
+        else file
+        for file in files
+    )

@@ -303,6 +303,46 @@ def test_gcode_file_list_model_updates_single_file_thumbnail_from_metadata(qtbot
     assert model.data(model.index(1, 0), roles["thumbnailUrl"]) == ""
 
 
+def test_gcode_file_list_model_preserves_loaded_thumbnail_on_refresh(qtbot) -> None:
+    model = GCodeFileListModel()
+    model.set_files(
+        (
+            GCodeFile(path="cube.gcode", display_name="cube.gcode", modified=2, size=2048),
+            GCodeFile(path="other.gcode", display_name="other.gcode", modified=3, size=1024),
+        )
+    )
+    roles = {bytes(value).decode(): key for key, value in model.roleNames().items()}
+    model.setFileMetadata(
+        "cube.gcode",
+        {
+            "thumbnails": [
+                {
+                    "width": 32,
+                    "height": 32,
+                    "size": 1200,
+                    "relative_path": ".thumbs/cube-32x32.png",
+                }
+            ]
+        },
+        "http://host:7125/server/files/gcodes/",
+    )
+
+    model.set_files(
+        (
+            GCodeFile(path="cube.gcode", display_name="cube.gcode", modified=2, size=2048),
+            GCodeFile(path="other.gcode", display_name="other.gcode", modified=3, size=1024),
+        )
+    )
+
+    assert (
+        model.data(model.index(0, 0), roles["thumbnailUrl"])
+        == "http://host:7125/server/files/gcodes/.thumbs/cube-32x32.png"
+    )
+    assert model.fileThumbnailUrlFor("cube.gcode") == (
+        "http://host:7125/server/files/gcodes/.thumbs/cube-32x32.png"
+    )
+
+
 def test_gcode_file_list_model_exposes_selected_thumbnail_url(qtbot) -> None:
     model = GCodeFileListModel()
     model.set_files((GCodeFile(path="cube.gcode", display_name="cube.gcode", size=2048),))
