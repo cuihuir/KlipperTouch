@@ -383,16 +383,24 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "id: compactProgressBox" in qml
     assert "function jobHeroHeight()" in qml
     assert "function temperatureStripHeight()" in qml
-    assert "function quickInfoLimit()" in qml
+    assert "function groupedSummaryModel()" in qml
+    assert "function summaryZoneRows(zone)" in qml
     assert "function detailTitle()" in qml
     assert "function detailInfoModel(page)" in qml
     assert "function positionLabel()" in qml
     assert "Layout.preferredHeight: root.jobHeroHeight()" in qml
     assert "Layout.preferredHeight: root.temperatureStripHeight()" in qml
-    assert "root.summaryInfoModel().slice(0, root.quickInfoLimit())" in qml
+    assert "id: summaryZoneGrid" in qml
+    assert "id: timeSummaryZone" in qml
+    assert "id: motionSummaryZone" in qml
+    assert "id: materialSummaryZone" in qml
+    assert "root.groupedSummaryModel()" in qml
+    assert 'root.detailPage = "time"' in qml
+    assert 'root.detailPage = "motion"' in qml
+    assert 'root.detailPage = "extrusion"' in qml
     assert "return Math.max(146" in qml
-    assert "root.metrics.portrait && root.temperatureModel" in qml
-    assert "root.metrics.portrait ? 6 : 8" in qml
+    assert "root.metrics.portrait && root.height > 760" in qml
+    assert "&& root.temperatureModel" in qml
     assert "Layout.maximumWidth: Math.max(160" in qml
     assert "id: progressRail" in qml
     assert "id: progressFill" in qml
@@ -458,10 +466,6 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "exclude_object" not in qml
     assert "root.percentLabel(root.speedFactor)" in qml
     assert "root.zOffsetLabel()" in qml
-    assert '"target": "time"' in qml
-    assert '"target": "motion"' in qml
-    assert '"target": "extrusion"' in qml
-    assert 'onClicked: root.detailPage = modelData.target' in qml
     assert "id: detailInfoPage" in qml
     assert "id: detailInfoGrid" in qml
     assert 'root.detailPage === "time"' in qml
@@ -475,9 +479,11 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert '"label": "Homed axes"' in qml
     assert '"label": "Filament used"' in qml
     assert '"label": "Flow factor"' in qml
-    assert "id: quickInfoGrid" in qml
-    assert "function summaryInfoModel()" in qml
-    assert "root.summaryInfoModel()" in qml
+    assert "id: quickInfoGrid" not in qml
+    assert "function quickInfoLimit()" not in qml
+    assert "function summaryInfoModel()" not in qml
+    assert "root.summaryInfoModel()" not in qml
+    assert 'onClicked: root.detailPage = modelData.target' not in qml
     assert "id: cardGrid" not in qml
     assert "#ed3c63" not in qml
     assert "#28a7df" not in qml

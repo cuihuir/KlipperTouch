@@ -181,6 +181,126 @@ Item {
         }
     }
 
+    component SummaryZone: Rectangle {
+        id: zoneRoot
+        property string title: ""
+        property string primaryLabel: ""
+        property string primaryValue: ""
+        property var rows: []
+        signal activated()
+
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.minimumHeight: Math.max(64, Math.round(root.metrics.fontSize * 4.1))
+        color: "#101617"
+        border.color: summaryTap.pressed ? root.accentColor : "#354043"
+        border.width: 1
+        radius: Math.round(root.metrics.fontSize * 0.34)
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: "#111a1c" }
+            GradientStop { position: 0.64; color: "#0b1314" }
+            GradientStop { position: 1.0; color: "#070d0e" }
+        }
+
+        Rectangle {
+            anchors.left: parent.left
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            width: 3
+            color: root.neutralAccent
+            opacity: 0.62
+            radius: parent.radius
+        }
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: Math.max(8, Math.round(root.metrics.fontSize * 0.55))
+            spacing: Math.max(3, Math.round(root.metrics.fontSize * 0.22))
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: root.metrics.gap
+
+                Label {
+                    Layout.fillWidth: true
+                    color: Theme.text
+                    text: zoneRoot.title
+                    elide: Text.ElideRight
+                    font.bold: true
+                    font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.96))
+                }
+
+                Label {
+                    color: Theme.mutedText
+                    text: "Details"
+                    font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                spacing: root.metrics.gap
+
+                Label {
+                    color: Theme.mutedText
+                    text: zoneRoot.primaryLabel
+                    elide: Text.ElideRight
+                    font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                }
+
+                Label {
+                    Layout.fillWidth: true
+                    color: Theme.text
+                    text: zoneRoot.primaryValue
+                    horizontalAlignment: Text.AlignRight
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                    font.bold: true
+                    font.pixelSize: Math.max(20, Math.round(root.metrics.fontSize * 1.38))
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: Math.max(1, Math.round(root.metrics.fontSize * 0.08))
+
+                Repeater {
+                    model: zoneRoot.rows
+
+                    RowLayout {
+                        required property var modelData
+
+                        Layout.fillWidth: true
+                        spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.28))
+
+                        Label {
+                            color: Theme.mutedText
+                            text: modelData.label
+                            elide: Text.ElideRight
+                            font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.text
+                            text: modelData.value
+                            horizontalAlignment: Text.AlignRight
+                            elide: Text.ElideRight
+                            font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.78))
+                        }
+                    }
+                }
+            }
+        }
+
+        MouseArea {
+            id: summaryTap
+            anchors.fill: parent
+            onClicked: zoneRoot.activated()
+        }
+    }
+
     function durationLabel(seconds) {
         var safeSeconds = Math.max(0, Math.round(seconds))
         var minutes = Math.floor(safeSeconds / 60)
@@ -355,7 +475,7 @@ Item {
 
     function jobHeroHeight() {
         if (root.metrics.portrait) {
-            return Math.max(220, Math.round(root.metrics.fontSize * 13.8))
+            return Math.max(196, Math.round(root.metrics.fontSize * 12.2))
         }
         return Math.max(146, Math.round(root.metrics.fontSize * 9.2))
     }
@@ -367,23 +487,48 @@ Item {
         )
     }
 
-    function quickInfoLimit() {
-        return root.metrics.portrait ? 6 : 8
+    function summaryZoneRows(zone) {
+        if (zone === "time") {
+            return [
+                {"label": "Elapsed", "value": root.durationLabel(root.printDuration)},
+                {"label": "Total", "value": root.durationLabel(root.totalDuration)}
+            ]
+        }
+        if (zone === "motion") {
+            return [
+                {"label": "Speed", "value": root.speedLabel(root.requestedSpeed)},
+                {"label": "Z offset", "value": root.zOffsetLabel()}
+            ]
+        }
+        if (zone === "extrusion") {
+            return [
+                {"label": "Flow", "value": root.percentLabel(root.extrudeFactor)},
+                {"label": "Total", "value": root.fileFilamentTotalLabel()}
+            ]
+        }
+        return []
     }
 
-    function summaryInfoModel() {
+    function groupedSummaryModel() {
         return [
-            {"label": "Elapsed", "value": root.durationLabel(root.printDuration), "target": "time"},
-            {"label": "Remaining", "value": root.remainingLabel(), "target": "time"},
-            {"label": "Total", "value": root.durationLabel(root.totalDuration), "target": "time"},
-            {"label": "Layer", "value": root.layerLabel(), "target": "motion"},
-            {"label": "Filament", "value": root.filamentLabel(), "target": "extrusion"},
-            {"label": "Speed", "value": root.speedLabel(root.requestedSpeed), "target": "motion"},
-            {"label": "Flow", "value": root.percentLabel(root.extrudeFactor), "target": "extrusion"},
-            {"label": "Z offset", "value": root.zOffsetLabel(), "target": "motion"},
-            {"label": "File size", "value": root.fileModel ? root.fileModel.fileSizeLabelFor(root.printFilename) : "-"},
-            {"label": "Modified", "value": root.fileModel ? root.fileModel.fileModifiedLabelFor(root.printFilename) : "-"},
-            {"label": "Path", "value": root.fileModel ? root.fileModel.filePathFor(root.printFilename) : ""}
+            {
+                "title": "Time",
+                "primaryLabel": "Remaining",
+                "primaryValue": root.remainingLabel(),
+                "rows": root.summaryZoneRows("time")
+            },
+            {
+                "title": "Motion",
+                "primaryLabel": "Layer",
+                "primaryValue": root.layerLabel(),
+                "rows": root.summaryZoneRows("motion")
+            },
+            {
+                "title": "Material",
+                "primaryLabel": "Used",
+                "primaryValue": root.filamentLabel(),
+                "rows": root.summaryZoneRows("extrusion")
+            }
         ]
     }
 
@@ -414,7 +559,10 @@ Item {
                 {"label": "Estimated total", "value": root.durationLabel(root.totalDuration)},
                 {"label": "Slicer estimate", "value": root.fileEstimatedTimeLabel()},
                 {"label": "File estimate", "value": "-"},
-                {"label": "Filament estimate", "value": "-"}
+                {"label": "Filament estimate", "value": "-"},
+                {"label": "File size", "value": root.fileModel ? root.fileModel.fileSizeLabelFor(root.printFilename) : "-"},
+                {"label": "Modified", "value": root.fileModel ? root.fileModel.fileModifiedLabelFor(root.printFilename) : "-"},
+                {"label": "Path", "value": root.fileModel ? root.fileModel.filePathFor(root.printFilename) : ""}
             ]
         }
         if (page === "motion") {
@@ -653,6 +801,7 @@ Item {
                         }
 
                         RowLayout {
+                            visible: !root.metrics.portrait
                             Layout.fillWidth: true
                             spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.35))
 
@@ -730,7 +879,8 @@ Item {
 
             Rectangle {
                 visible: root.detailPage === "summary"
-                    && root.metrics.portrait && root.temperatureModel
+                    && root.metrics.portrait && root.height > 760
+                    && root.temperatureModel
                     && root.temperatureModel.rowCount() > 0
                 Layout.fillWidth: true
                 Layout.preferredHeight: root.temperatureStripHeight()
@@ -807,76 +957,42 @@ Item {
             }
 
             GridLayout {
-                id: quickInfoGrid
+                id: summaryZoneGrid
                 visible: root.detailPage === "summary"
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                columns: root.metrics.portrait ? 2 : 4
+                columns: root.metrics.portrait ? 1 : 3
                 rowSpacing: root.metrics.gap
                 columnSpacing: root.metrics.gap
 
-                Repeater {
-                    model: root.summaryInfoModel().slice(0, root.quickInfoLimit())
+                SummaryZone {
+                    id: timeSummaryZone
+                    property var zoneData: root.groupedSummaryModel()[0]
+                    title: zoneData.title
+                    primaryLabel: zoneData.primaryLabel
+                    primaryValue: zoneData.primaryValue
+                    rows: zoneData.rows
+                    onActivated: root.detailPage = "time"
+                }
 
-                    delegate: Rectangle {
-                        required property var modelData
-                        property bool openable: typeof modelData.target !== "undefined"
-                            && modelData.target.length > 0
+                SummaryZone {
+                    id: motionSummaryZone
+                    property var zoneData: root.groupedSummaryModel()[1]
+                    title: zoneData.title
+                    primaryLabel: zoneData.primaryLabel
+                    primaryValue: zoneData.primaryValue
+                    rows: zoneData.rows
+                    onActivated: root.detailPage = "motion"
+                }
 
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        Layout.minimumHeight: Math.max(48, Math.round(root.metrics.fontSize * 3.05))
-                        color: "#101617"
-                        border.color: openable ? "#4b5a5d" : "#263233"
-                        border.width: 1
-                        radius: Math.round(root.metrics.fontSize * 0.32)
-                        gradient: Gradient {
-                            GradientStop { position: 0.0; color: "#111a1c" }
-                            GradientStop { position: 1.0; color: "#081112" }
-                        }
-
-                        ColumnLayout {
-                            anchors.fill: parent
-                            anchors.margins: Math.max(7, Math.round(root.metrics.fontSize * 0.48))
-                            spacing: 0
-
-                            Label {
-                                Layout.fillWidth: true
-                                color: Theme.mutedText
-                                text: modelData.label
-                                elide: Text.ElideRight
-                                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.74))
-                            }
-
-                            Label {
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                color: Theme.text
-                                text: modelData.value
-                                verticalAlignment: Text.AlignVCenter
-                                elide: Text.ElideRight
-                                font.bold: true
-                                font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.94))
-                            }
-                        }
-
-                        Label {
-                            visible: parent.openable
-                            anchors.right: parent.right
-                            anchors.top: parent.top
-                            anchors.margins: Math.max(5, Math.round(root.metrics.fontSize * 0.35))
-                            color: Theme.mutedText
-                            text: ">"
-                            font.bold: true
-                            font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            enabled: parent.openable
-                            onClicked: root.detailPage = modelData.target
-                        }
-                    }
+                SummaryZone {
+                    id: materialSummaryZone
+                    property var zoneData: root.groupedSummaryModel()[2]
+                    title: zoneData.title
+                    primaryLabel: zoneData.primaryLabel
+                    primaryValue: zoneData.primaryValue
+                    rows: zoneData.rows
+                    onActivated: root.detailPage = "extrusion"
                 }
             }
 
@@ -889,54 +1005,67 @@ Item {
                 Layout.fillHeight: true
                 spacing: root.metrics.gap
 
-                GridLayout {
-                    id: detailInfoGrid
+                Flickable {
+                    id: detailInfoFlickable
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    columns: 2
-                    rowSpacing: root.metrics.gap
-                    columnSpacing: root.metrics.gap
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+                    contentWidth: width
+                    contentHeight: detailInfoGrid.implicitHeight
 
-                    Repeater {
-                        model: root.detailInfoModel(root.detailPage)
+                    ScrollBar.vertical: ScrollBar {
+                        policy: ScrollBar.AsNeeded
+                    }
 
-                        delegate: Rectangle {
-                            required property var modelData
+                    GridLayout {
+                        id: detailInfoGrid
+                        width: detailInfoFlickable.width
+                        columns: root.metrics.portrait ? 1 : 2
+                        rowSpacing: root.metrics.gap
+                        columnSpacing: root.metrics.gap
 
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            Layout.minimumHeight: Math.max(54, Math.round(root.metrics.fontSize * 3.5))
-                            color: "#101617"
-                            border.color: "#263233"
-                            border.width: 1
-                            radius: Math.round(root.metrics.fontSize * 0.32)
-                            gradient: Gradient {
-                                GradientStop { position: 0.0; color: "#111a1c" }
-                                GradientStop { position: 1.0; color: "#081112" }
-                            }
+                        Repeater {
+                            model: root.detailInfoModel(root.detailPage)
 
-                            ColumnLayout {
-                                anchors.fill: parent
-                                anchors.margins: root.metrics.gap
-                                spacing: 0
+                            delegate: Rectangle {
+                                required property var modelData
 
-                                Label {
-                                    Layout.fillWidth: true
-                                    color: Theme.mutedText
-                                    text: modelData.label
-                                    elide: Text.ElideRight
-                                    font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                Layout.minimumHeight: Math.max(54, Math.round(root.metrics.fontSize * 3.5))
+                                color: "#101617"
+                                border.color: "#263233"
+                                border.width: 1
+                                radius: Math.round(root.metrics.fontSize * 0.32)
+                                gradient: Gradient {
+                                    GradientStop { position: 0.0; color: "#111a1c" }
+                                    GradientStop { position: 1.0; color: "#081112" }
                                 }
 
-                                Label {
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    color: Theme.text
-                                    text: modelData.value
-                                    verticalAlignment: Text.AlignVCenter
-                                    elide: Text.ElideRight
-                                    font.bold: true
-                                    font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.18))
+                                ColumnLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: root.metrics.gap
+                                    spacing: 0
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        color: Theme.mutedText
+                                        text: modelData.label
+                                        elide: Text.ElideRight
+                                        font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                                    }
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        Layout.fillHeight: true
+                                        color: Theme.text
+                                        text: modelData.value
+                                        verticalAlignment: Text.AlignVCenter
+                                        elide: Text.ElideRight
+                                        font.bold: true
+                                        font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.18))
+                                    }
                                 }
                             }
                         }
