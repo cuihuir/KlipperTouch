@@ -829,6 +829,7 @@ def test_splash_panel_handles_system_fault_states() -> None:
     assert "function moonrakerFaultActive()" in main_qml
     assert "function klippyFaultActive()" in main_qml
     assert "function webhooksFaultActive()" in main_qml
+    assert 'if (window.webhooksState === "ready")' in main_qml
     assert "sourceComponent: window.systemFaultActive()" in main_qml
     assert "return splashComponent" in main_qml
     assert "SplashPanel {" in main_qml
@@ -841,7 +842,7 @@ def test_splash_panel_handles_system_fault_states() -> None:
     assert "jobControlBridgeModel.requestFirmwareRestart()" in main_qml
     assert "jobControlBridgeModel.requestKlipperRestart()" in main_qml
     assert 'jobControlBridgeModel.requestPlaceholderControl("Restart Moonraker")' in main_qml
-    assert 'jobControlBridgeModel.requestPlaceholderControl("Emergency Stop")' in main_qml
+    assert "jobControlBridgeModel.requestEmergencyStop()" in main_qml
     assert "Moonraker offline" in panel_qml
     assert "Klippy not ready" in panel_qml
     assert "Shutdown due to webhooks" in panel_qml
@@ -850,6 +851,9 @@ def test_splash_panel_handles_system_fault_states() -> None:
     assert '"Restart Klipper"' in panel_qml
     assert '"Restart Moonraker"' in panel_qml
     assert '"Emergency Stop"' in panel_qml
+    assert (
+        '{"label": "Emergency Stop", "action": "emergency_stop", "placeholder": false}'
+    ) in panel_qml
     assert "root.recoveryActionRequested(action)" in panel_qml
     assert "No printer controls are available while this screen is active." in panel_qml
 
@@ -939,6 +943,7 @@ def test_action_bar_requests_safe_local_navigation() -> None:
     assert "signal backRequested()" in shell_qml
     assert "signal homeRequested()" in shell_qml
     assert "signal menuRequested()" in shell_qml
+    assert "signal stopRequested()" in shell_qml
     assert "onActionRequested:" in shell_qml
     assert "case \"back\":" in shell_qml
     assert "case \"home\":" in shell_qml
@@ -953,8 +958,10 @@ def test_action_bar_requests_safe_local_navigation() -> None:
     assert "onBackRequested: window.goBack()" in main_qml
     assert "onHomeRequested: window.goHome()" in main_qml
     assert 'onMenuRequested: window.showPanel("more")' in main_qml
-    assert "printer.emergency_stop" not in main_qml
     assert "printer.emergency_stop" not in shell_qml
+    assert "onStopRequested: window.requestEmergencyStop()" in main_qml
+    assert "function requestEmergencyStop()" in main_qml
+    assert "jobControlBridgeModel.requestEmergencyStop()" in main_qml
     assert "printer.gcode.script" not in shell_qml
 
 

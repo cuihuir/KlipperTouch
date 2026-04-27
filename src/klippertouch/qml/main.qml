@@ -76,6 +76,9 @@ ApplicationWindow {
     }
 
     function webhooksFaultActive() {
+        if (window.webhooksState === "ready") {
+            return false
+        }
         return window.webhooksState === "shutdown"
             || window.webhooksMessage.indexOf("Shutdown due to webhooks") >= 0
     }
@@ -201,8 +204,15 @@ ApplicationWindow {
         } else if (action === "restart_moonraker") {
             jobControlBridgeModel.requestPlaceholderControl("Restart Moonraker")
         } else if (action === "emergency_stop") {
-            jobControlBridgeModel.requestPlaceholderControl("Emergency Stop")
+            jobControlBridgeModel.requestEmergencyStop()
         }
+    }
+
+    function requestEmergencyStop() {
+        if (!jobControlBridgeModel) {
+            return
+        }
+        jobControlBridgeModel.requestEmergencyStop()
     }
 
     function requestFileControl(action, path) {
@@ -289,6 +299,7 @@ ApplicationWindow {
         onHomeRequested: window.goHome()
         onMenuRequested: window.showPanel("more")
         onNotificationsRequested: window.showPanel("notifications")
+        onStopRequested: window.requestEmergencyStop()
 
         Loader {
             id: panelLoader

@@ -29,6 +29,8 @@ class JobControlClient(Protocol):
 
     def restart_klipper(self) -> dict[str, object]: ...
 
+    def emergency_stop(self) -> dict[str, object]: ...
+
 
 class JobControlModel(QObject):
     statusChanged = Signal()
@@ -86,6 +88,10 @@ class JobControlModel(QObject):
     @Slot()
     def requestKlipperRestart(self) -> None:  # noqa: N802
         self._run_control("Restart Klipper", lambda client: client.restart_klipper())
+
+    @Slot()
+    def requestEmergencyStop(self) -> None:  # noqa: N802
+        self._run_control("Emergency Stop", lambda client: client.emergency_stop())
 
     @Slot(str)
     def requestPlaceholderControl(self, label: str) -> None:  # noqa: N802

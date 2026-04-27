@@ -54,6 +54,10 @@ class FakeClient:
         self.calls.append(("restart_klipper", ""))
         return {"ok": True}
 
+    def emergency_stop(self) -> dict[str, bool]:
+        self.calls.append(("emergency_stop", ""))
+        return {"ok": True}
+
 
 class BlockingClient(FakeClient):
     def pause_print(self) -> dict[str, bool]:
@@ -156,6 +160,16 @@ def test_job_control_model_sends_recovery_restart_commands(qtbot) -> None:
 
     assert client.calls == [("firmware_restart", ""), ("restart_klipper", "")]
     assert model.lastStatus == "Restart Klipper sent"
+
+
+def test_job_control_model_sends_emergency_stop(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestEmergencyStop()
+
+    assert client.calls == [("emergency_stop", "")]
+    assert model.lastStatus == "Emergency Stop sent"
 
 
 def test_job_control_model_reports_placeholder_recovery_actions(qtbot) -> None:

@@ -148,7 +148,7 @@ Item {
                     {"label": "Firmware Restart", "action": "firmware_restart", "placeholder": false},
                     {"label": "Restart Klipper", "action": "restart_klipper", "placeholder": false},
                     {"label": "Restart Moonraker", "action": "restart_moonraker", "placeholder": true},
-                    {"label": "Emergency Stop", "action": "emergency_stop", "placeholder": true}
+                    {"label": "Emergency Stop", "action": "emergency_stop", "placeholder": false}
                 ]
 
                 Rectangle {

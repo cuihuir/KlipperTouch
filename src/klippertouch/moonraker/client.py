@@ -136,6 +136,9 @@ class MoonrakerClient:
     def restart_klipper(self) -> dict[str, Any]:
         return self.post_jsonrpc("printer.restart")
 
+    def emergency_stop(self) -> dict[str, Any]:
+        return self.post_jsonrpc("printer.emergency_stop")
+
     def run_gcode_script(self, script: str) -> dict[str, Any]:
         return self.post_jsonrpc("printer.gcode.script", params={"script": script})
 

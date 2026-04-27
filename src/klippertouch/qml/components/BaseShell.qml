@@ -15,6 +15,7 @@ Rectangle {
     signal homeRequested()
     signal menuRequested()
     signal notificationsRequested()
+    signal stopRequested()
 
     color: Theme.bg
 
@@ -38,6 +39,7 @@ Rectangle {
                 root.menuRequested()
                 break
             case "stop":
+                root.stopRequested()
                 break
             }
         }
