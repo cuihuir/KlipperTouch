@@ -609,6 +609,7 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
 
     assert "function clampControlPercent(value)" in main_qml
+    assert 'window.showPanel("job_status")' in main_qml
     assert "jobControlBridgeModel.requestZOffsetAdjust(delta)" in main_qml
     assert (
         "jobControlBridgeModel.requestSpeedFactor("

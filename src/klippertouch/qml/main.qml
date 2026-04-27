@@ -153,6 +153,7 @@ ApplicationWindow {
         }
         if (action === "print") {
             jobControlBridgeModel.requestStartPrint(path)
+            window.showPanel("job_status")
         } else if (action === "delete") {
             jobControlBridgeModel.requestDeleteFile(path)
         }
