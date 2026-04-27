@@ -79,6 +79,25 @@ def test_job_control_model_starts_selected_file(qtbot) -> None:
     assert model.requestedPrintState == "printing"
 
 
+def test_job_control_model_normalizes_absolute_gcodes_path_before_start(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestStartPrint("/home/tope/printer_data/gcodes/folder/cube.gcode")
+
+    assert client.calls == [("start", "folder/cube.gcode")]
+
+
+def test_job_control_model_rejects_empty_start_filename(qtbot) -> None:
+    model = JobControlModel(FakeClient())
+    errors: list[str] = []
+    model.errorChanged.connect(lambda: errors.append(model.lastError))
+
+    model.requestStartPrint("   ")
+
+    assert errors == ["Filename is required"]
+
+
 def test_job_control_model_reports_read_only_blocks(qtbot) -> None:
     model = JobControlModel(BlockingClient())
     errors: list[str] = []
@@ -153,6 +172,18 @@ def test_job_control_model_deletes_selected_file(qtbot) -> None:
     assert model.lastStatus == "Delete sent"
 
 
+def test_job_control_model_normalizes_absolute_gcodes_path_before_delete(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+    deleted: list[str] = []
+    model.fileDeleted.connect(lambda path: deleted.append(path))
+
+    model.requestDeleteFile("/home/tope/printer_data/gcodes/folder/cube.gcode")
+
+    assert client.calls == [("delete", "folder/cube.gcode")]
+    assert deleted == ["folder/cube.gcode"]
+
+
 def test_job_control_model_rejects_empty_delete(qtbot) -> None:
     model = JobControlModel(FakeClient())
     errors: list[str] = []
@@ -172,3 +203,15 @@ def test_job_control_model_clears_terminal_job_file(qtbot) -> None:
     assert client.calls == [("clear", "")]
     assert model.lastStatus == "Clear sent"
     assert model.requestedPrintState == "standby"
+
+
+def test_job_control_model_emits_duplicate_requested_state_for_repeated_controls(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+    states: list[str] = []
+    model.requestedPrintStateChanged.connect(lambda: states.append(model.requestedPrintState))
+
+    model.requestClearJob()
+    model.requestClearJob()
+
+    assert states == ["standby", "standby"]

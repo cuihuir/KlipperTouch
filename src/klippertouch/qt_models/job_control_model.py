@@ -65,7 +65,11 @@ class JobControlModel(QObject):
 
     @Slot(str)
     def requestStartPrint(self, filename: str) -> None:  # noqa: N802
-        self._run_control("Print", lambda client: client.start_print(filename), "printing")
+        clean_filename = _normalize_gcode_filename(filename)
+        if not clean_filename:
+            self._set_error("Filename is required")
+            return
+        self._run_control("Print", lambda client: client.start_print(clean_filename), "printing")
 
     @Slot()
     def requestClearJob(self) -> None:  # noqa: N802
@@ -73,7 +77,7 @@ class JobControlModel(QObject):
 
     @Slot(str)
     def requestDeleteFile(self, filename: str) -> None:  # noqa: N802
-        clean_filename = filename.strip().strip("/")
+        clean_filename = _normalize_gcode_filename(filename)
         if not clean_filename:
             self._set_error("Filename is required")
             return
@@ -132,7 +136,13 @@ class JobControlModel(QObject):
         self.statusChanged.emit()
 
     def _set_requested_print_state(self, value: str) -> None:
-        if value == self._requested_print_state:
-            return
         self._requested_print_state = value
         self.requestedPrintStateChanged.emit()
+
+
+def _normalize_gcode_filename(filename: str) -> str:
+    clean_filename = filename.strip().replace("\\", "/")
+    marker = "/gcodes/"
+    if marker in clean_filename:
+        clean_filename = clean_filename.rsplit(marker, 1)[1]
+    return clean_filename.strip("/")

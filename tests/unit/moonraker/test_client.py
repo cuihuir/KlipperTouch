@@ -415,6 +415,70 @@ def test_client_deletes_gcode_file_when_controls_enabled(monkeypatch) -> None:
     }
 
 
+def test_client_uploads_gcode_file_when_controls_enabled(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            pass
+
+        def json(self) -> dict[str, object]:
+            return {"result": {"item": {"path": "smoke/kt_smoke.gcode"}}}
+
+    def fake_post(
+        url: str,
+        *,
+        headers: dict[str, str],
+        data: dict[str, str],
+        files: dict[str, tuple[str, bytes, str]],
+        timeout: float,
+    ) -> FakeResponse:
+        captured["url"] = url
+        captured["headers"] = headers
+        captured["data"] = data
+        captured["files"] = files
+        captured["timeout"] = timeout
+        return FakeResponse()
+
+    monkeypatch.setattr("klippertouch.moonraker.client.requests.post", fake_post)
+
+    client = MoonrakerClient(
+        PrinterConfig(name="p", moonraker_host="host", moonraker_api_key="secret"),
+        policy=CommandPolicy(read_only=False),
+    )
+
+    assert client.upload_gcode_file(
+        "kt_smoke.gcode",
+        b"; smoke\nM117 KT\n",
+        path="smoke",
+        print_after_upload=False,
+    ) == {"item": {"path": "smoke/kt_smoke.gcode"}}
+    assert captured == {
+        "url": "http://host:7125/server/files/upload",
+        "headers": {"x-api-key": "secret"},
+        "data": {"root": "gcodes", "path": "smoke", "print": "false"},
+        "files": {"file": ("kt_smoke.gcode", b"; smoke\nM117 KT\n", "text/plain")},
+        "timeout": 8.0,
+    }
+
+
+def test_client_blocks_gcode_upload_in_read_only_mode(monkeypatch) -> None:
+    calls: list[str] = []
+
+    def fake_post(*_args: object, **_kwargs: object) -> object:
+        calls.append("post")
+        raise AssertionError("network should not be called")
+
+    monkeypatch.setattr("klippertouch.moonraker.client.requests.post", fake_post)
+
+    client = MoonrakerClient(PrinterConfig(name="p", moonraker_host="host"))
+
+    with pytest.raises(UnsafeCommandError):
+        client.upload_gcode_file("kt_smoke.gcode", b"; smoke\n")
+
+    assert calls == []
+
+
 def test_client_raises_on_jsonrpc_error(monkeypatch) -> None:
     class FakeResponse:
         def raise_for_status(self) -> None:
