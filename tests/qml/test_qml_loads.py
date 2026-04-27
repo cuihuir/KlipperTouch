@@ -501,13 +501,20 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert "property real positionZ" in qml
     assert "property real positionE" in qml
     assert "property string homedAxes" in qml
+    assert 'property var distances: [".1", ".5", "1", "5", "10", "25", "50"]' in qml
+    assert '"label": "Home"' in qml
+    assert '"label": "Motors Off"' in qml
+    assert "component LockedTile: Rectangle" in qml
     assert "root.positionX.toFixed(2)" in qml
     assert "root.homedAxes.length > 0" in qml
     assert "property string selectedDistance" in qml
     assert "function selectDistance(distance)" in qml
     assert "root.selectedDistance === modelData" in qml
     assert "Theme.color3" in qml
+    assert "id: movePadGrid" in qml
+    assert "id: distanceGrid" in qml
     assert "id: positionGrid" in qml
+    assert "M18" not in qml
     assert "printer.gcode.script" not in qml
 
 
@@ -1010,8 +1017,11 @@ def test_move_panel_is_locked_and_responsive() -> None:
     qml = Path("src/klippertouch/qml/panels/MovePanel.qml").read_text(encoding="utf-8")
 
     assert "required property var metrics" in qml
-    assert "property var axes" in qml
+    assert "property var moveButtons" in qml
     assert "property var distances" in qml
+    assert "component LockedTile: Rectangle" in qml
+    assert "id: movePadGrid" in qml
+    assert "id: distanceGrid" in qml
     assert "Controls locked" in qml
     assert "root.metrics.portrait" in qml
     assert "Repeater {" in qml
