@@ -127,6 +127,75 @@ Item {
         ]
     }
 
+    function selectedMetadataSections() {
+        if (!root.activeFileModel || root.activeFileModel.selectedPath.length <= 0) {
+            return []
+        }
+        root.activeFileModel.metadataRevision
+        return [
+            {
+                "section": "File",
+                "items": [
+                    {"label": "Size", "value": root.activeFileModel.selectedSizeLabel},
+                    {"label": "Modified", "value": root.activeFileModel.selectedModifiedLabel}
+                ]
+            },
+            {
+                "section": "Print",
+                "items": [
+                    {
+                        "label": "Estimated time",
+                        "value": root.activeFileModel.fileEstimatedTimeLabelFor(root.activeFileModel.selectedPath)
+                    },
+                    {
+                        "label": "Layer height",
+                        "value": root.activeFileModel.fileLayerHeightLabelFor(root.activeFileModel.selectedPath)
+                    },
+                    {
+                        "label": "Object height",
+                        "value": root.activeFileModel.fileObjectHeightLabelFor(root.activeFileModel.selectedPath)
+                    }
+                ]
+            },
+            {
+                "section": "Filament",
+                "items": [
+                    {
+                        "label": "Filament total",
+                        "value": root.activeFileModel.fileFilamentTotalLabelFor(root.activeFileModel.selectedPath)
+                    },
+                    {
+                        "label": "Filament type",
+                        "value": root.activeFileModel.fileFilamentTypeLabelFor(root.activeFileModel.selectedPath)
+                    },
+                    {
+                        "label": "Filament name",
+                        "value": root.activeFileModel.fileFilamentNameLabelFor(root.activeFileModel.selectedPath)
+                    },
+                    {
+                        "label": "Filament weight",
+                        "value": root.activeFileModel.fileFilamentWeightTotalLabelFor(root.activeFileModel.selectedPath)
+                    }
+                ]
+            },
+            {
+                "section": "Access",
+                "items": [
+                    {
+                        "label": "Slicer",
+                        "value": root.activeFileModel.fileSlicerLabelFor(root.activeFileModel.selectedPath)
+                    },
+                    {
+                        "label": "Nozzle",
+                        "value": root.activeFileModel.fileNozzleDiameterLabelFor(root.activeFileModel.selectedPath)
+                    },
+                    {"label": "Permissions", "value": root.activeFileModel.selectedPermissions},
+                    {"label": "Mode", "value": "readonly"}
+                ]
+            }
+        ]
+    }
+
     function selectedPreviewSize() {
         var availableWidth = Math.max(96, root.width - root.metrics.margin * 4 - root.metrics.gap * 4)
         var availableHeight = Math.max(96, root.height - root.metrics.margin * 4 - root.metrics.gap * 8 - 96)
@@ -136,6 +205,73 @@ Item {
     function selectedPreviewColumns() {
         var previewAndGap = root.selectedPreviewSize() + root.metrics.gap + Math.max(280, root.metrics.fontSize * 18)
         return width >= previewAndGap ? 2 : 1
+    }
+
+    component MetadataGroupCard: Rectangle {
+        id: metadataGroupCard
+        property string sectionTitle: ""
+        property var sectionItems: []
+
+        implicitHeight: metadataGroupColumn.implicitHeight + root.metrics.gap * 1.2
+        color: "#0b1112"
+        border.color: "#263233"
+        border.width: 1
+        radius: Math.round(root.metrics.fontSize * 0.25)
+
+        ColumnLayout {
+            id: metadataGroupColumn
+            anchors.fill: parent
+            anchors.margins: Math.max(5, Math.round(root.metrics.fontSize * 0.38))
+            spacing: Math.max(3, Math.round(root.metrics.fontSize * 0.22))
+
+            Label {
+                Layout.fillWidth: true
+                color: Theme.mutedText
+                text: metadataGroupCard.sectionTitle
+                font.bold: true
+                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+            }
+
+            Repeater {
+                model: metadataGroupCard.sectionItems
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: root.metrics.gap
+
+                    Label {
+                        Layout.preferredWidth: Math.max(82, Math.round(root.metrics.fontSize * 6.0))
+                        color: Theme.mutedText
+                        text: modelData.label
+                        elide: Text.ElideRight
+                        font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        color: Theme.text
+                        text: modelData.value.length > 0 ? modelData.value : "-"
+                        elide: Text.ElideRight
+                        horizontalAlignment: Text.AlignRight
+                        font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
+                    }
+                }
+            }
+        }
+    }
+
+    component FileActionButton: Button {
+        Layout.preferredWidth: Math.max(126, Math.round(root.metrics.fontSize * 8.8))
+        Layout.preferredHeight: Math.max(44, Math.round(root.metrics.fontSize * 3.0))
+        enabled: false
+        opacity: 0.9
+        font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+        background: Rectangle {
+            color: "#121b1d"
+            border.color: "#354346"
+            border.width: 1
+            radius: Math.round(root.metrics.fontSize * 0.28)
+        }
     }
 
     Rectangle {
@@ -451,36 +587,13 @@ Item {
                                     columnSpacing: root.metrics.gap
 
                                     Repeater {
-                                        model: root.selectedMetadataModel()
+                                        model: root.selectedMetadataSections()
 
-                                        Rectangle {
+                                        MetadataGroupCard {
                                             Layout.fillWidth: true
-                                            Layout.preferredHeight: Math.max(44, Math.round(root.metrics.fontSize * 3.0))
-                                            color: "#0b1112"
-                                            border.color: "#263233"
-                                            border.width: 1
-                                            radius: Math.round(root.metrics.fontSize * 0.25)
-
-                                            ColumnLayout {
-                                                anchors.fill: parent
-                                                anchors.margins: Math.max(5, Math.round(root.metrics.fontSize * 0.35))
-                                                spacing: 0
-
-                                                Label {
-                                                    Layout.fillWidth: true
-                                                    color: Theme.mutedText
-                                                    text: modelData.label
-                                                    font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
-                                                }
-
-                                                Label {
-                                                    Layout.fillWidth: true
-                                                    color: Theme.text
-                                                    text: modelData.value.length > 0 ? modelData.value : "-"
-                                                    elide: Text.ElideRight
-                                                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
-                                                }
-                                            }
+                                            Layout.preferredHeight: implicitHeight
+                                            sectionTitle: modelData.section
+                                            sectionItems: modelData.items
                                         }
                                     }
                                 }
@@ -489,44 +602,49 @@ Item {
                     }
                 }
 
-                RowLayout {
+                Rectangle {
+                    id: selectedActionBar
                     Layout.fillWidth: true
-                    Layout.preferredHeight: Math.max(44, Math.round(root.metrics.fontSize * 3.0))
-                    Layout.maximumHeight: Math.max(44, Math.round(root.metrics.fontSize * 3.0))
+                    Layout.preferredHeight: Math.max(52, Math.round(root.metrics.fontSize * 3.6))
+                    Layout.maximumHeight: Math.max(52, Math.round(root.metrics.fontSize * 3.6))
                     Layout.fillHeight: false
-                    spacing: root.metrics.gap
+                    color: "#0b1112"
+                    border.color: "#263233"
+                    border.width: 1
+                    radius: Math.round(root.metrics.fontSize * 0.32)
 
-                    Label {
-                        Layout.fillWidth: true
-                        color: Theme.mutedText
-                        text: "Read-only file actions"
-                        verticalAlignment: Text.AlignVCenter
-                        font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
-                    }
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.margins: Math.max(5, Math.round(root.metrics.fontSize * 0.35))
+                        spacing: root.metrics.gap
 
-                    Button {
-                        Layout.preferredWidth: Math.max(108, Math.round(root.metrics.fontSize * 7.5))
-                        Layout.preferredHeight: Math.max(44, Math.round(root.metrics.fontSize * 3.0))
-                        text: "Print"
-                        enabled: false
-                        background: Rectangle {
-                            color: "#101617"
-                            border.color: "#263233"
-                            border.width: 1
-                            radius: Math.round(root.metrics.fontSize * 0.28)
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 0
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: Theme.text
+                                text: "Actions"
+                                font.bold: true
+                                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.88))
+                            }
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: Theme.mutedText
+                                text: "Read-only file actions"
+                                elide: Text.ElideRight
+                                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                            }
                         }
-                    }
 
-                    Button {
-                        Layout.preferredWidth: Math.max(108, Math.round(root.metrics.fontSize * 7.5))
-                        Layout.preferredHeight: Math.max(44, Math.round(root.metrics.fontSize * 3.0))
-                        text: "Delete"
-                        enabled: false
-                        background: Rectangle {
-                            color: "#101617"
-                            border.color: "#263233"
-                            border.width: 1
-                            radius: Math.round(root.metrics.fontSize * 0.28)
+                        FileActionButton {
+                            text: "Print disabled"
+                        }
+
+                        FileActionButton {
+                            text: "Delete disabled"
                         }
                     }
                 }

@@ -263,6 +263,7 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "selectedPermissions" in qml
     assert "selectedPreviewThumbnailUrl" in qml
     assert "function selectedMetadataModel()" in qml
+    assert "function selectedMetadataSections()" in qml
     assert "activeFileModel.metadataRevision" in qml
     assert (
         "root.activeFileModel.fileEstimatedTimeLabelFor(root.activeFileModel.selectedPath)"
@@ -316,14 +317,22 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "visible: !root.detailPage" in qml
     assert "visible: root.detailPage" in qml
     assert "Read-only file actions" in qml
-    assert 'text: "Print"' in qml
-    assert 'text: "Delete"' in qml
+    assert 'text: "Print disabled"' in qml
+    assert 'text: "Delete disabled"' in qml
     assert "enabled: false" in qml
     assert "id: selectedMetadataFlickable" in qml
     assert "id: selectedMetadataGrid" in qml
+    assert "component MetadataGroupCard: Rectangle" in qml
+    assert '"section": "File"' in qml
+    assert '"section": "Print"' in qml
+    assert '"section": "Filament"' in qml
+    assert '"section": "Access"' in qml
     assert "contentHeight: selectedMetadataGrid.implicitHeight" in qml
     assert "ScrollBar.vertical: ScrollBar" in qml
     assert "policy: ScrollBar.AsNeeded" in qml
+    assert "id: selectedActionBar" in qml
+    assert 'text: "Actions"' in qml
+    assert "component FileActionButton: Button" in qml
     assert "required property bool isDirectory" in qml
     assert "required property string modifiedLabel" in qml
     assert "activeFileModel.canGoUp" in qml
