@@ -461,6 +461,7 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "function jobActionGridHeight()" in qml
     assert "function jobActionGridWidth()" in qml
     assert "function jobActionButtonWidth()" in qml
+    assert "function clearActionButtonWidth()" in qml
     assert "gradient: Gradient" in qml
     assert "id: statusPill" in qml
     assert "id: jobHeroLayout" in qml
@@ -506,7 +507,9 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "root.primaryActionLabel()" in qml
     assert 'root.effectivePrintState() === "paused" ? "Resume" : "Pause"' in qml
     assert 'text: "Cancel"' in qml
-    assert 'text: "Clear"' in qml
+    assert 'text: "Clear Status"' in qml
+    assert 'iconText: ""' in qml
+    assert "Layout.preferredWidth: root.clearActionButtonWidth()" in qml
     assert "function terminalJobState()" in qml
     assert "visible: root.terminalJobState()" in qml
     assert 'root.stageImmediateJobAction("clear")' in qml

@@ -598,12 +598,23 @@ Item {
     }
 
     function jobActionGridWidth() {
+        if (root.terminalJobState()) {
+            return root.clearActionButtonWidth()
+        }
         var columns = root.metrics.portrait ? 2 : 4
         return root.jobButtonWidth * columns + root.metrics.gap * (columns - 1)
     }
 
     function jobActionButtonWidth() {
         return root.jobButtonWidth
+    }
+
+    function clearActionButtonWidth() {
+        var minWidth = Math.max(196, Math.round(root.metrics.fontSize * 12.5))
+        var maxWidth = root.metrics.portrait
+            ? Math.max(minWidth, root.width - root.metrics.gap * 4)
+            : root.jobButtonWidth * 2 + root.metrics.gap
+        return Math.min(maxWidth, Math.max(minWidth, root.jobButtonWidth))
     }
 
     function jobHeroHeight() {
@@ -1000,10 +1011,10 @@ Item {
 
                 JobButton {
                     visible: root.terminalJobState()
-                    Layout.preferredWidth: root.jobActionButtonWidth()
+                    Layout.preferredWidth: root.clearActionButtonWidth()
                     Layout.preferredHeight: root.jobButtonHeight
-                    text: "Clear"
-                    iconText: "CLR"
+                    text: "Clear Status"
+                    iconText: ""
                     buttonRole: "primary"
                     enabled: true
                     ToolTip.visible: hovered
