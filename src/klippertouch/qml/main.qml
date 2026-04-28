@@ -253,6 +253,18 @@ ApplicationWindow {
         }
     }
 
+    function requestTemperatureTarget(deviceName, target) {
+        if (!jobControlBridgeModel) {
+            return
+        }
+        jobControlBridgeModel.requestTemperatureTarget(deviceName, target)
+        if (jobControlBridgeModel.lastError.length > 0
+                && temperatureBridgeModel
+                && typeof temperatureBridgeModel.setFailedTarget === "function") {
+            temperatureBridgeModel.setFailedTarget(deviceName, target)
+        }
+    }
+
     function requestFileControl(action, path) {
         if (!jobControlBridgeModel) {
             return
@@ -392,6 +404,9 @@ ApplicationWindow {
             TemperaturePanel {
                 metrics: appMetrics
                 temperatureModel: window.temperatureBridgeModel
+                onTargetTemperatureRequested: function(deviceName, target) {
+                    window.requestTemperatureTarget(deviceName, target)
+                }
             }
         }
 

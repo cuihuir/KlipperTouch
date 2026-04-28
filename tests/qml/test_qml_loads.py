@@ -1198,11 +1198,14 @@ def test_temperature_panel_is_read_only_and_responsive() -> None:
 
     assert "required property var metrics" in qml
     assert "property var temperatureModel: null" in qml
+    assert "signal targetTemperatureRequested(string deviceName, real target)" in qml
     assert "property bool hasExternalTemperatureModel" in qml
     assert "TemperatureSummary {" not in qml
     assert "FakeTemperatureGraph {" in qml
     assert "property int deviceColumns" in qml
     assert "TemperatureDevicePager {" in qml
+    assert "onTargetTemperatureRequested: function(deviceName, target)" in qml
+    assert "root.targetTemperatureRequested(deviceName, target)" in qml
     assert "deviceColumns: root.deviceColumns" in qml
     assert 'typeof temperatureModel !== "undefined"' in qml
     assert "root.hasExternalTemperatureModel" in qml
@@ -1210,7 +1213,7 @@ def test_temperature_panel_is_read_only_and_responsive() -> None:
     assert "Layout.minimumWidth: 0" in qml
     assert "Layout.minimumHeight: 0" in qml
     assert "root.metrics.portrait" in qml
-    assert "readonly" in qml
+    assert "target control" in qml
     assert "graph.requestRedraw()" not in qml
     assert "printer.gcode.script" not in qml
     assert "sendTextMessage" not in qml
@@ -1228,6 +1231,10 @@ def test_main_routes_temperature_to_read_only_temperature_panel() -> None:
     assert "window.componentForPanel(window.currentPanel)" in main_qml
     assert "TemperaturePanel {" in main_qml
     assert "temperatureModel: window.temperatureBridgeModel" in main_qml
+    assert "function requestTemperatureTarget(deviceName, target)" in main_qml
+    assert "jobControlBridgeModel.requestTemperatureTarget(deviceName, target)" in main_qml
+    assert "temperatureBridgeModel.setFailedTarget(deviceName, target)" in main_qml
+    assert "onTargetTemperatureRequested: function(deviceName, target)" in main_qml
 
 
 def test_main_keeps_files_and_job_status_as_separate_routes() -> None:

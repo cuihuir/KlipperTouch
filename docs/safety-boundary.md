@@ -66,12 +66,13 @@ Currently enabled groups:
 - Move: `M84`, `G28`, bounded relative jog using `SAVE_GCODE_STATE`, `G91`, `G0`, and `RESTORE_GCODE_STATE`.
 - Extrude: relative extrusion/retraction using `SAVE_GCODE_STATE`, `M83`, `G1`, and `RESTORE_GCODE_STATE`.
 - Filament macros: `LOAD_FILAMENT SPEED=...` and `UNLOAD_FILAMENT SPEED=...`.
+- Temperature targets: `SET_HEATER_TEMPERATURE` and `SET_TEMPERATURE_FAN_TARGET` with UI-clamped `0..350` values.
 
 ## Explicitly Forbidden Until Reviewed
 
 Do not add or call any of these without a separate reviewed implementation plan:
 
-- Heating, cooling, PID tuning, or temperature target changes.
+- PID tuning and temperature commands outside the audited target setter.
 - Service restart, host reboot, or power control.
 - Direct `printer.gcode.script` calls from QML or UI components.
 - Any new macro execution path that bypasses `JobControlModel`.

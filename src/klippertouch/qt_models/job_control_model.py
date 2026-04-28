@@ -43,6 +43,8 @@ class JobControlClient(Protocol):
 
     def unload_filament(self, speed: float) -> dict[str, object]: ...
 
+    def set_temperature_target(self, device_name: str, target: float) -> dict[str, object]: ...
+
 
 class JobControlModel(QObject):
     statusChanged = Signal()
@@ -172,6 +174,20 @@ class JobControlModel(QObject):
     @Slot(float)
     def requestUnloadFilament(self, speed: float) -> None:  # noqa: N802
         self._run_filament_macro("Unload filament", speed, lambda client: client.unload_filament)
+
+    @Slot(str, float)
+    def requestTemperatureTarget(self, device_name: str, target: float) -> None:  # noqa: N802
+        clean_name = device_name.strip()
+        if not clean_name:
+            self._set_error("Temperature device is required")
+            return
+        if target < 0 or target > 350:
+            self._set_error("Temperature target must be between 0 and 350")
+            return
+        self._run_control(
+            "Temperature target",
+            lambda client: client.set_temperature_target(clean_name, float(target)),
+        )
 
     @Slot(str)
     def requestPlaceholderControl(self, label: str) -> None:  # noqa: N802

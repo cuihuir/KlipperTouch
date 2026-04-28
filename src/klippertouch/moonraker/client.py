@@ -196,6 +196,17 @@ class MoonrakerClient:
     def unload_filament(self, speed: float) -> dict[str, Any]:
         return self.run_gcode_script(f"UNLOAD_FILAMENT SPEED={speed * 60:.0f}")
 
+    def set_temperature_target(self, device_name: str, target: float) -> dict[str, Any]:
+        clean_name = device_name.strip()
+        if clean_name.startswith("temperature_fan "):
+            fan_name = clean_name.removeprefix("temperature_fan ").strip()
+            return self.run_gcode_script(
+                f'SET_TEMPERATURE_FAN_TARGET temperature_fan="{fan_name}" target={target:.0f}'
+            )
+        return self.run_gcode_script(
+            f'SET_HEATER_TEMPERATURE heater="{clean_name}" target={target:.0f}'
+        )
+
     def delete_gcode_file(self, filename: str) -> dict[str, Any]:
         return self.delete(f"server/files/gcodes/{filename.strip('/')}")
 

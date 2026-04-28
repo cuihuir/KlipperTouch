@@ -362,6 +362,21 @@ def test_client_sends_print_control_when_controls_enabled(
         ),
         ("load_filament", 5.0, "LOAD_FILAMENT SPEED=300"),
         ("unload_filament", 2.0, "UNLOAD_FILAMENT SPEED=120"),
+        (
+            "set_temperature_target",
+            ("extruder", 0.0),
+            'SET_HEATER_TEMPERATURE heater="extruder" target=0',
+        ),
+        (
+            "set_temperature_target",
+            ("heater_bed", 60.0),
+            'SET_HEATER_TEMPERATURE heater="heater_bed" target=60',
+        ),
+        (
+            "set_temperature_target",
+            ("temperature_fan SOC散热", 40.0),
+            'SET_TEMPERATURE_FAN_TARGET temperature_fan="SOC散热" target=40',
+        ),
     ],
 )
 def test_client_sends_gcode_control_scripts_when_controls_enabled(

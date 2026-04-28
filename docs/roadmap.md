@@ -146,7 +146,7 @@ Recommended order:
 - Completed: movement, homing, disable motors, extrusion/retraction, filament load/unload macros.
 - In progress: user-visible command feedback on Move and Extrude pages.
 - Planned: fan controls with bounded values.
-- Planned: temperature controls with target limits and confirmation.
+- Completed: temperature target controls with `0..350` bounds and pending/failed UI state.
 - Planned: stronger printer-state guards for movement and extrusion on real motion hardware.
 
 Exit criteria:

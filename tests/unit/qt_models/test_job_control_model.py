@@ -82,6 +82,10 @@ class FakeClient:
         self.calls.append(("unload_filament", speed))
         return {"ok": True}
 
+    def set_temperature_target(self, device_name: str, target: float) -> dict[str, bool]:
+        self.calls.append(("temperature_target", f"{device_name}:{target}"))
+        return {"ok": True}
+
 
 class BlockingClient(FakeClient):
     def pause_print(self) -> dict[str, bool]:
@@ -305,6 +309,37 @@ def test_job_control_model_rejects_invalid_load_unload_speed(qtbot) -> None:
     model.requestUnloadFilament(-1)
     assert client.calls == []
     assert model.lastError == "Filament speed must be positive"
+
+
+def test_job_control_model_sends_temperature_target_requests(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestTemperatureTarget("extruder", 0)
+    model.requestTemperatureTarget("heater_bed", 60)
+
+    assert client.calls == [
+        ("temperature_target", "extruder:0.0"),
+        ("temperature_target", "heater_bed:60.0"),
+    ]
+    assert model.lastStatus == "Temperature target sent"
+
+
+def test_job_control_model_rejects_invalid_temperature_targets(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestTemperatureTarget("", 0)
+    assert client.calls == []
+    assert model.lastError == "Temperature device is required"
+
+    model.requestTemperatureTarget("extruder", -1)
+    assert client.calls == []
+    assert model.lastError == "Temperature target must be between 0 and 350"
+
+    model.requestTemperatureTarget("extruder", 351)
+    assert client.calls == []
+    assert model.lastError == "Temperature target must be between 0 and 350"
 
 
 def test_job_control_model_reports_placeholder_recovery_actions(qtbot) -> None:
