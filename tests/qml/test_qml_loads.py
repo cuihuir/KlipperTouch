@@ -446,14 +446,27 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "function stateHeadline" in qml
     assert "function stateMessage" in qml
     assert "function stateAccentColor" in qml
+    assert "function isTerminalState(state)" in qml
+    assert "function isTransitionalState(state)" in qml
+    assert "function stateFamily(state)" in qml
     assert "Read-only job status" not in qml
     assert "Read-only summary remains visible" not in qml
     assert "Print status remains visible" in qml
+    assert 'if (state === "starting")' in qml
+    assert 'if (state === "pausing")' in qml
     assert 'if (state === "paused")' in qml
+    assert 'if (state === "resuming")' in qml
+    assert 'if (state === "cancelling")' in qml
+    assert 'if (state === "clearing")' in qml
     assert 'if (state === "complete")' in qml
     assert 'if (state === "cancelled")' in qml
     assert 'if (state === "error")' in qml
+    assert "Starting" in qml
+    assert "Pausing" in qml
     assert "Paused" in qml
+    assert "Resuming" in qml
+    assert "Cancelling" in qml
+    assert "Clearing" in qml
     assert "Cancelled" in qml
     assert "Completed" in qml
     assert "Printer error" in qml
@@ -516,13 +529,14 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "Layout.preferredWidth: root.jobButtonWidth" in qml
     assert "Layout.alignment: Qt.AlignVCenter" in qml
     assert "root.primaryActionLabel()" in qml
-    assert 'root.effectivePrintState() === "paused" ? "Resume" : "Pause"' in qml
+    assert 'return state === "paused" || state === "resuming" ? "Resume" : "Pause"' in qml
     assert 'text: "Cancel"' in qml
     assert 'text: "Clear Status"' in qml
     assert 'iconText: ""' in qml
     assert "Layout.preferredWidth: root.clearActionButtonWidth()" in qml
     assert "function terminalJobState()" in qml
     assert "visible: root.terminalJobState()" in qml
+    assert "enabled: !root.isTransitionalState(root.effectivePrintState())" in qml
     assert 'root.stageImmediateJobAction("clear")' in qml
     assert 'text: "Skip Object"' in qml
     assert 'root.detailPage = "exclude"' in qml
@@ -535,6 +549,11 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "property string controlError" in qml
     assert "property string requestedPrintState" in qml
     assert "function effectivePrintState()" in qml
+    assert 'root.requestedPrintState === "printing" && root.printState === "standby"' in qml
+    assert 'root.requestedPrintState === "printing" && root.printState === "paused"' in qml
+    assert 'root.requestedPrintState === "paused" && root.printState === "printing"' in qml
+    assert 'root.requestedPrintState === "cancelled"' in qml
+    assert 'root.requestedPrintState === "standby" && root.isTerminalState(root.printState)' in qml
     assert "function controlFeedbackText()" in qml
     assert "id: jobControlFeedback" in qml
     assert "visible: root.controlFeedbackText().length > 0" in qml
@@ -1322,6 +1341,7 @@ def test_main_keeps_files_and_job_status_as_separate_routes() -> None:
     assert "function syncJobStatusPanel()" in main_qml
     assert "function syncRequestedPrintState()" in main_qml
     assert 'window.requestedPrintState === "standby"' in main_qml
+    assert 'window.printState === "standby"' in main_qml
     assert 'window.currentPanel === "job_status"' in main_qml
     assert 'window.panelStack = ["main", "print"]' in main_qml
     assert 'window.currentPanel = "print"' in main_qml

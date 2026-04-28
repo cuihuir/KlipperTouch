@@ -100,12 +100,19 @@ ApplicationWindow {
                 window.currentPanel = "job_status"
             }
         } else if (!window.shouldKeepJobStatusVisible() && window.currentPanel === "job_status") {
+            if (window.requestedPrintState === "standby" && window.printState === "standby") {
+                window.panelStack = ["main", "print"]
+                window.currentPanel = "print"
+                return
+            }
             window.goHome()
         }
     }
 
     function syncRequestedPrintState() {
-        if (window.requestedPrintState === "standby" && window.currentPanel === "job_status") {
+        if (window.requestedPrintState === "standby"
+                && window.printState === "standby"
+                && window.currentPanel === "job_status") {
             window.panelStack = ["main", "print"]
             window.currentPanel = "print"
         }

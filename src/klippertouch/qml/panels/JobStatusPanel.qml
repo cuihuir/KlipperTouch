@@ -475,8 +475,23 @@ Item {
 
     function stateHeadline() {
         var state = root.effectivePrintState()
+        if (state === "starting") {
+            return "Starting"
+        }
+        if (state === "pausing") {
+            return "Pausing"
+        }
         if (state === "paused") {
             return "Paused"
+        }
+        if (state === "resuming") {
+            return "Resuming"
+        }
+        if (state === "cancelling") {
+            return "Cancelling"
+        }
+        if (state === "clearing") {
+            return "Clearing"
         }
         if (state === "complete") {
             return "Completed"
@@ -495,8 +510,23 @@ Item {
             return root.printMessage
         }
         var state = root.effectivePrintState()
+        if (state === "starting") {
+            return "Starting " + (root.printFilename.length > 0 ? root.printFilename : "selected file")
+        }
+        if (state === "pausing") {
+            return "Pause command sent. Waiting for printer state."
+        }
         if (state === "paused") {
             return "Print paused. Print status remains visible."
+        }
+        if (state === "resuming") {
+            return "Resume command sent. Waiting for printer state."
+        }
+        if (state === "cancelling") {
+            return "Cancel command sent. Waiting for printer state."
+        }
+        if (state === "clearing") {
+            return "Clear command sent. Waiting for standby state."
         }
         if (state === "complete") {
             return "Print completed. Print status remains visible."
@@ -512,6 +542,9 @@ Item {
 
     function stateAccentColor() {
         var state = root.effectivePrintState()
+        if (root.isTransitionalState(state)) {
+            return "#77888b"
+        }
         if (state === "paused") {
             return "#918a7f"
         }
@@ -527,6 +560,31 @@ Item {
         return root.neutralAccent
     }
 
+    function isTerminalState(state) {
+        return state === "complete" || state === "cancelled" || state === "error"
+    }
+
+    function isTransitionalState(state) {
+        return state === "starting"
+            || state === "pausing"
+            || state === "resuming"
+            || state === "cancelling"
+            || state === "clearing"
+    }
+
+    function stateFamily(state) {
+        if (root.isTerminalState(state)) {
+            return "terminal"
+        }
+        if (root.isTransitionalState(state)) {
+            return "transitional"
+        }
+        if (state === "printing" || state === "paused") {
+            return "active"
+        }
+        return "standby"
+    }
+
     function stateProgressValue() {
         if (root.printState === "complete") {
             return 1
@@ -535,19 +593,33 @@ Item {
     }
 
     function primaryActionLabel() {
-        return root.effectivePrintState() === "paused" ? "Resume" : "Pause"
+        var state = root.effectivePrintState()
+        return state === "paused" || state === "resuming" ? "Resume" : "Pause"
     }
 
     function terminalJobState() {
         var state = root.effectivePrintState()
-        return state === "cancelled" || state === "complete"
+        return root.isTerminalState(state) || state === "clearing"
     }
 
     function effectivePrintState() {
-        if (root.printState === "complete"
-                || root.printState === "cancelled"
-                || root.printState === "error"
-                || root.printState === "paused") {
+        if (root.requestedPrintState === "printing" && root.printState === "standby") {
+            return "starting"
+        }
+        if (root.requestedPrintState === "printing" && root.printState === "paused") {
+            return "resuming"
+        }
+        if (root.requestedPrintState === "paused" && root.printState === "printing") {
+            return "pausing"
+        }
+        if (root.requestedPrintState === "cancelled"
+                && (root.printState === "printing" || root.printState === "paused")) {
+            return "cancelling"
+        }
+        if (root.requestedPrintState === "standby" && root.isTerminalState(root.printState)) {
+            return "clearing"
+        }
+        if (root.isTerminalState(root.printState) || root.printState === "paused") {
             return root.printState
         }
         return root.requestedPrintState.length > 0 ? root.requestedPrintState : root.printState
@@ -989,7 +1061,7 @@ Item {
                     text: root.primaryActionLabel()
                     iconText: "||"
                     buttonRole: "primary"
-                    enabled: true
+                    enabled: !root.isTransitionalState(root.effectivePrintState())
                     ToolTip.visible: hovered
                     ToolTip.text: root.readonlyActionHint(text)
                     onClicked: root.stageImmediateJobAction(root.effectivePrintState() === "paused" ? "resume" : "pause")
@@ -1003,7 +1075,7 @@ Item {
                     iconText: "X"
                     buttonRole: "danger"
                     accent: root.mutedDangerAccent
-                    enabled: true
+                    enabled: !root.isTransitionalState(root.effectivePrintState())
                     ToolTip.visible: hovered
                     ToolTip.text: root.readonlyActionHint(text)
                     onClicked: root.requestJobAction("cancel", "")
@@ -1016,7 +1088,7 @@ Item {
                     text: "Clear Status"
                     iconText: ""
                     buttonRole: "primary"
-                    enabled: true
+                    enabled: !root.isTransitionalState(root.effectivePrintState())
                     ToolTip.visible: hovered
                     ToolTip.text: root.readonlyActionHint(text)
                     onClicked: root.stageImmediateJobAction("clear")
@@ -1029,6 +1101,7 @@ Item {
                     text: "Skip Object"
                     iconText: "OBJ"
                     enabled: root.excludeObjectNames.length > 0
+                        && !root.isTransitionalState(root.effectivePrintState())
                     ToolTip.visible: hovered
                     ToolTip.text: enabled ? "Open object exclusion list" : "No object data"
                     onClicked: root.detailPage = "exclude"
@@ -1040,6 +1113,7 @@ Item {
                     Layout.preferredHeight: root.jobButtonHeight
                     text: "Advanced"
                     iconText: "ADV"
+                    enabled: !root.isTransitionalState(root.effectivePrintState())
                     onClicked: root.detailPage = "advanced"
                 }
             }
