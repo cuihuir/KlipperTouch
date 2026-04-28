@@ -789,14 +789,22 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
         "parseFloat(root.selectedSpeed))"
         in qml
     )
-    assert 'signal temperaturePanelRequested()' in qml
-    assert "root.temperaturePanelRequested()" in qml
+    assert 'signal temperatureTargetRequested(string deviceName, real target)' in qml
+    assert "function openTargetEditor()" in qml
+    assert "function confirmTargetEditor()" in qml
+    assert 'root.temperatureTargetRequested("extruder", value)' in qml
+    assert "id: nozzleTemperatureArea" in qml
+    assert "id: targetEditorPopup" in qml
+    assert "id: targetKeypadGrid" in qml
+    assert "Layout.minimumWidth: root.touchTargetSize" in qml
+    assert "Layout.minimumHeight: root.touchTargetSize" in qml
     assert 'signal extrudeActionRequested(string action, real distance, real speed)' in qml
     assert '"action": "extrude"' in qml
     assert '"action": "retract"' in qml
     assert '"label": "Load"' in qml
     assert '"label": "Unload"' in qml
-    assert '"label": "Temperature"' in qml
+    assert '"label": "Temperature"' not in qml
+    assert '"Set Temp"' not in qml
     assert '"label": "Pressure Advance"' in qml
     assert '"label": "Retraction"' in qml
     assert '"label": "Materials"' in qml
@@ -852,7 +860,9 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
         'window.jobControlBridgeModel.lastError : ""'
     ) in main_qml
     assert "onExtrudeActionRequested: function(action, distance, speed)" in main_qml
-    assert "onTemperaturePanelRequested: window.showPanel(\"temperature\")" in main_qml
+    assert "onTemperatureTargetRequested: function(deviceName, target)" in main_qml
+    assert "window.requestTemperatureTarget(deviceName, target)" in main_qml
+    assert "onTemperaturePanelRequested" not in main_qml
     assert "jobControlBridgeModel.requestExtrudeFilament(action, distance, speed)" in main_qml
     assert "jobControlBridgeModel.requestLoadFilament(speed)" in main_qml
     assert "jobControlBridgeModel.requestUnloadFilament(speed)" in main_qml

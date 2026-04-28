@@ -20,7 +20,6 @@ Item {
         {"label": "Unload", "action": "unload", "hint": "macro"}
     ]
     property var settingsButtons: [
-        {"label": "Temperature", "shortLabel": "Temp", "action": "temperature", "hint": "set target"},
         {"label": "Pressure Advance", "shortLabel": "Advance", "action": "pressure_advance", "hint": "placeholder"},
         {"label": "Retraction", "shortLabel": "Retract", "action": "retraction", "hint": "placeholder"},
         {"label": "Materials", "shortLabel": "Materials", "action": "materials", "hint": "AFC / AMS"}
@@ -42,8 +41,10 @@ Item {
     property string controlStatus: ""
     property string controlError: ""
     readonly property color selectedAccent: "#7f9298"
+    readonly property int touchTargetSize: Math.max(44, Math.round(root.metrics.fontSize * 2.8))
+    property string targetEditorValue: ""
     signal extrudeActionRequested(string action, real distance, real speed)
-    signal temperaturePanelRequested()
+    signal temperatureTargetRequested(string deviceName, real target)
 
     component ActionTile: Rectangle {
         id: tileRoot
@@ -227,12 +228,42 @@ Item {
             root.detailPage = "materials"
             return
         }
-        if (action === "temperature") {
-            root.temperaturePanelRequested()
-            return
-        }
         root.controlStatus = action + " settings are reserved"
         root.controlError = ""
+    }
+
+    function openTargetEditor() {
+        root.targetEditorValue = root.extruderTarget > 0 ? String(Math.round(root.extruderTarget)) : ""
+        targetEditorPopup.open()
+    }
+
+    function appendTargetDigit(digit) {
+        if (root.targetEditorValue.length >= 3) {
+            return
+        }
+        if (root.targetEditorValue === "0") {
+            root.targetEditorValue = digit
+            return
+        }
+        root.targetEditorValue += digit
+    }
+
+    function deleteTargetDigit() {
+        root.targetEditorValue = root.targetEditorValue.slice(0, -1)
+    }
+
+    function clearTargetEditor() {
+        root.targetEditorValue = ""
+    }
+
+    function confirmTargetEditor() {
+        if (root.targetEditorValue.length <= 0) {
+            return
+        }
+        var value = Math.max(0, Math.min(350, Number(root.targetEditorValue)))
+        root.targetEditorValue = String(value)
+        root.temperatureTargetRequested("extruder", value)
+        targetEditorPopup.close()
     }
 
     function openFeedSetup() {
@@ -277,12 +308,18 @@ Item {
                 spacing: root.metrics.gap
 
                 Label {
+                    id: nozzleTemperatureArea
                     Layout.fillWidth: true
                     color: Theme.text
                     text: "Nozzle " + root.extruderTemperature.toFixed(1) + "° / " + root.extruderTarget.toFixed(1) + "°"
                     elide: Text.ElideRight
                     font.bold: true
                     font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.05))
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: root.openTargetEditor()
+                    }
                 }
 
                 Label {
@@ -293,18 +330,6 @@ Item {
                     maximumLineCount: 1
                     wrapMode: Text.NoWrap
                     font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.74))
-                }
-
-                ActionTile {
-                    Layout.preferredWidth: Math.max(92, Math.round(root.metrics.fontSize * 6.2))
-                    Layout.fillHeight: true
-                    title: "Set Temp"
-                    hint: ""
-
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: root.temperaturePanelRequested()
-                    }
                 }
             }
         }
@@ -473,18 +498,6 @@ Item {
                             onClicked: root.openSettingsAction("materials")
                         }
                     }
-
-                    ActionTile {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: Math.max(52, Math.round(root.metrics.fontSize * 3.4))
-                        title: "Temperature"
-                        hint: "set target"
-
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: root.openSettingsAction("temperature")
-                        }
-                    }
                 }
             }
         }
@@ -510,22 +523,17 @@ Item {
                 spacing: root.metrics.gap
 
                 Label {
+                    id: nozzleTemperatureAreaPortrait
                     Layout.fillWidth: true
                     color: Theme.text
                     text: "Nozzle " + root.extruderTemperature.toFixed(1) + "° / " + root.extruderTarget.toFixed(1) + "°"
                     elide: Text.ElideRight
                     font.bold: true
                     font.pixelSize: Math.max(15, Math.round(root.metrics.fontSize))
-                }
-
-                ActionTile {
-                    Layout.preferredWidth: Math.max(92, Math.round(root.metrics.fontSize * 6.2))
-                    Layout.fillHeight: true
-                    title: "Set Temp"
 
                     MouseArea {
                         anchors.fill: parent
-                        onClicked: root.temperaturePanelRequested()
+                        onClicked: root.openTargetEditor()
                     }
                 }
             }
@@ -597,17 +605,6 @@ Item {
                 }
             }
 
-            ActionTile {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                title: "Temperature"
-                hint: "set target"
-
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: root.openSettingsAction("temperature")
-                }
-            }
         }
     }
 
@@ -777,6 +774,183 @@ Item {
                         title: root.metrics.ultraWide ? "Unload Selected" : "Unload"
                         hint: "reserved"
                     }
+                }
+            }
+        }
+    }
+
+    Popup {
+        id: targetEditorPopup
+        parent: Overlay.overlay
+        modal: true
+        focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        width: Math.min(parent ? parent.width - root.metrics.margin * 2 : root.width,
+                        Math.max(300, Math.round(root.width * 0.42)))
+        height: Math.min(parent ? parent.height - root.metrics.margin * 2 : root.height,
+                         Math.max(360, Math.round(root.height * 0.82)))
+        x: parent ? Math.round((parent.width - width) / 2) : 0
+        y: parent ? Math.round((parent.height - height) / 2) : 0
+        padding: Math.max(8, Math.round(root.metrics.fontSize * 0.7))
+
+        background: Rectangle {
+            color: "#101617"
+            border.color: Theme.color4
+            border.width: 2
+            radius: Math.round(root.metrics.fontSize * 0.45)
+        }
+
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: Math.max(8, Math.round(root.metrics.fontSize * 0.55))
+
+            Label {
+                Layout.fillWidth: true
+                color: Theme.text
+                text: "Nozzle target"
+                elide: Text.ElideRight
+                font.bold: true
+                font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.2))
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+
+                Label {
+                    Layout.fillWidth: true
+                    color: Theme.mutedText
+                    text: "Actual " + Math.round(root.extruderTemperature) + "°"
+                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
+                }
+
+                Label {
+                    color: Theme.mutedText
+                    text: "Max 350°"
+                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
+                }
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.minimumHeight: root.touchTargetSize
+                Layout.preferredHeight: Math.max(
+                    root.touchTargetSize,
+                    Math.round(root.metrics.fontSize * 3.0)
+                )
+                color: "#050808"
+                border.color: "#465456"
+                border.width: 1
+                radius: Math.round(root.metrics.fontSize * 0.3)
+
+                Label {
+                    anchors.fill: parent
+                    anchors.margins: Math.max(8, Math.round(root.metrics.fontSize * 0.5))
+                    color: Theme.text
+                    text: root.targetEditorValue === "" ? "--" : root.targetEditorValue + "°"
+                    horizontalAlignment: Text.AlignRight
+                    verticalAlignment: Text.AlignVCenter
+                    font.pixelSize: Math.max(26, Math.round(root.metrics.fontSize * 1.8))
+                }
+            }
+
+            GridLayout {
+                id: targetKeypadGrid
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                columns: 3
+                columnSpacing: Math.max(6, Math.round(root.metrics.fontSize * 0.4))
+                rowSpacing: columnSpacing
+
+                Repeater {
+                    model: [
+                        "1", "2", "3",
+                        "4", "5", "6",
+                        "7", "8", "9",
+                        "Clear", "0", "Del"
+                    ]
+
+                    Button {
+                        required property string modelData
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.minimumWidth: root.touchTargetSize
+                        Layout.minimumHeight: root.touchTargetSize
+                        text: modelData
+                        contentItem: Label {
+                            color: Theme.text
+                            text: parent.text
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            font.pixelSize: Math.max(
+                                16,
+                                Math.round(root.metrics.fontSize * 1.1)
+                            )
+                        }
+                        background: Rectangle {
+                            color: "#101819"
+                            border.color: "#536165"
+                            border.width: 1
+                            radius: Math.round(root.metrics.fontSize * 0.28)
+                        }
+                        font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.1))
+                        onClicked: {
+                            if (modelData === "Clear") {
+                                root.clearTargetEditor()
+                            } else if (modelData === "Del") {
+                                root.deleteTargetDigit()
+                            } else {
+                                root.appendTargetDigit(modelData)
+                            }
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Math.max(8, Math.round(root.metrics.fontSize * 0.5))
+
+                Button {
+                    Layout.fillWidth: true
+                    Layout.minimumHeight: root.touchTargetSize
+                    text: "Cancel"
+                    contentItem: Label {
+                        color: Theme.text
+                        text: parent.text
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
+                    }
+                    background: Rectangle {
+                        color: "#101819"
+                        border.color: "#536165"
+                        border.width: 1
+                        radius: Math.round(root.metrics.fontSize * 0.28)
+                    }
+                    font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
+                    onClicked: targetEditorPopup.close()
+                }
+
+                Button {
+                    Layout.fillWidth: true
+                    Layout.minimumHeight: root.touchTargetSize
+                    text: "Set"
+                    enabled: root.targetEditorValue !== ""
+                    contentItem: Label {
+                        color: parent.enabled ? Theme.text : Theme.mutedText
+                        text: parent.text
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
+                    }
+                    background: Rectangle {
+                        color: parent.enabled ? "#1b2b2e" : "#101819"
+                        border.color: parent.enabled ? root.selectedAccent : "#536165"
+                        border.width: 1
+                        radius: Math.round(root.metrics.fontSize * 0.28)
+                    }
+                    font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
+                    onClicked: root.confirmTargetEditor()
                 }
             }
         }
