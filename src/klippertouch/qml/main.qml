@@ -548,6 +548,7 @@ ApplicationWindow {
                 onExtrudeActionRequested: function(action, distance, speed) {
                     window.requestExtrudeControl(action, distance, speed)
                 }
+                onTemperaturePanelRequested: window.showPanel("temperature")
             }
         }
     }

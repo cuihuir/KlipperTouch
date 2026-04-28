@@ -774,6 +774,23 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert 'property string detailPage: "main"' in qml
     assert "property var actionButtons" in qml
     assert "property var settingsButtons" in qml
+    assert "component NozzleStage: Rectangle" in qml
+    assert "id: nozzleStage" in qml
+    assert "id: retractButton" in qml
+    assert "id: nozzleIcon" in qml
+    assert "id: extrudeButton" in qml
+    assert (
+        'root.extrudeActionRequested("retract", parseFloat(root.selectedDistance), '
+        "parseFloat(root.selectedSpeed))"
+        in qml
+    )
+    assert (
+        'root.extrudeActionRequested("extrude", parseFloat(root.selectedDistance), '
+        "parseFloat(root.selectedSpeed))"
+        in qml
+    )
+    assert 'signal temperaturePanelRequested()' in qml
+    assert "root.temperaturePanelRequested()" in qml
     assert 'signal extrudeActionRequested(string action, real distance, real speed)' in qml
     assert '"action": "extrude"' in qml
     assert '"action": "retract"' in qml
@@ -797,6 +814,9 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert 'visible: root.detailPage === "materials"' in qml
     assert "AFC / AMS" in qml
     assert "Material slots" in qml
+    assert "Selected: Slot 1" in qml
+    assert "Load Selected" in qml
+    assert "Unload Selected" in qml
     assert "root.selectedDistance === modelData" in qml
     assert "root.selectedSpeed === modelData" in qml
     assert "root.extruderTemperature.toFixed(1)" in qml
@@ -832,6 +852,7 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
         'window.jobControlBridgeModel.lastError : ""'
     ) in main_qml
     assert "onExtrudeActionRequested: function(action, distance, speed)" in main_qml
+    assert "onTemperaturePanelRequested: window.showPanel(\"temperature\")" in main_qml
     assert "jobControlBridgeModel.requestExtrudeFilament(action, distance, speed)" in main_qml
     assert "jobControlBridgeModel.requestLoadFilament(speed)" in main_qml
     assert "jobControlBridgeModel.requestUnloadFilament(speed)" in main_qml
@@ -1520,6 +1541,7 @@ def test_extrude_panel_is_locked_and_responsive() -> None:
     assert "property real settingsFraction: 0.58" in qml
     assert "component ActionTile: Rectangle" in qml
     assert "component PlaceholderTile: Rectangle" in qml
+    assert "component NozzleStage: Rectangle" in qml
     assert "Layout.preferredWidth: root.metrics.portrait" in qml
     assert "Layout.minimumWidth: 0" in qml
     assert "root.controlFeedbackText()" in qml
