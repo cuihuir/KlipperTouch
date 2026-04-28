@@ -729,6 +729,10 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert "id: motionPad" in qml
     assert "id: motionActions" in qml
     assert "id: positionPanel" in qml
+    assert "id: moveControlFeedbackLabel" in qml
+    assert "Layout.maximumWidth: Math.max(120, Math.round(positionPanel.width * 0.52))" in qml
+    assert "maximumLineCount: 1" in qml
+    assert "wrapMode: Text.NoWrap" in qml
     assert "id: distancePanel" in qml
     assert "root.metrics.ultraWide ? 3 : 1" in qml
     assert "root.metrics.ultraWide ? 1 : 3" in qml

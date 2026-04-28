@@ -462,9 +462,13 @@ Item {
                     }
 
                     Label {
+                        id: moveControlFeedbackLabel
+                        Layout.maximumWidth: Math.max(120, Math.round(positionPanel.width * 0.52))
                         color: Theme.mutedText
                         text: root.controlFeedbackText()
                         elide: Text.ElideRight
+                        maximumLineCount: 1
+                        wrapMode: Text.NoWrap
                         font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.76))
                     }
                 }
