@@ -225,10 +225,14 @@ ApplicationWindow {
         }
         if (action === "disable_motors") {
             jobControlBridgeModel.requestDisableMotors()
+        } else if (action === "home_all") {
+            jobControlBridgeModel.requestHome("all")
         } else if (action === "home_xy") {
             jobControlBridgeModel.requestHome("xy")
         } else if (action === "home_z") {
             jobControlBridgeModel.requestHome("z")
+        } else if (action.indexOf("placeholder_") === 0) {
+            jobControlBridgeModel.requestPlaceholderControl("Move " + action.slice(12))
         } else if (action === "x_minus" || action === "x_plus"
                    || action === "y_minus" || action === "y_plus"
                    || action === "z_minus" || action === "z_plus") {

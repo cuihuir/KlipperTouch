@@ -5,6 +5,7 @@ import "../Theme.js" as Theme
 
 Item {
     id: root
+    objectName: "movePanel"
     required property var metrics
     property var moveButtons: [
         {"label": "Y+", "direction": "up", "action": "y_plus"},
@@ -27,6 +28,12 @@ Item {
     property var actionButtons: [
         {"label": "Disable Motors", "action": "disable_motors", "hint": "M84", "icon": "⏻"},
         {"label": "More", "action": "more", "hint": "settings", "icon": "⋯"}
+    ]
+    property var moreActions: [
+        {"label": "Home All", "action": "home_all", "hint": "XYZ"},
+        {"label": "Disable Motors", "action": "disable_motors", "hint": "M84"},
+        {"label": "XY Speed", "action": "speed_xy", "hint": "50 mm/s"},
+        {"label": "Z Speed", "action": "speed_z", "hint": "10 mm/s"}
     ]
     property var portraitPlaceholders: [
         {"placeholder": true},
@@ -62,6 +69,14 @@ Item {
             return true
         }
         return false
+    }
+
+    function handleMoreAction(action) {
+        if (action === "home_all" || action === "disable_motors") {
+            root.moveActionRequested(action, 0)
+            return
+        }
+        root.moveActionRequested("placeholder_" + action, 0)
     }
 
     function arrowGlyph(direction) {
@@ -461,9 +476,10 @@ Item {
                         rowSpacing: Math.max(5, Math.round(root.metrics.gap * 0.5))
 
                         Repeater {
-                            model: ["Invert X", "Invert Y", "Invert Z", "XY Speed", "Z Speed"]
+                            model: root.moreActions
 
                             Rectangle {
+                                required property var modelData
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
                                 color: "#0b1112"
@@ -475,10 +491,15 @@ Item {
                                     anchors.centerIn: parent
                                     width: parent.width - 4
                                     color: Theme.mutedText
-                                    text: modelData
+                                    text: modelData.label
                                     horizontalAlignment: Text.AlignHCenter
                                     elide: Text.ElideRight
                                     font.pixelSize: Math.max(9, Math.round(root.metrics.fontSize * 0.62))
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: root.handleMoreAction(modelData.action)
                                 }
                             }
                         }
@@ -630,9 +651,10 @@ Item {
                 columnSpacing: root.metrics.gap
 
                 Repeater {
-                    model: ["Invert X", "Invert Y", "Invert Z", "XY Speed", "Z Speed"]
+                    model: root.moreActions
 
                     Rectangle {
+                        required property var modelData
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         Layout.minimumHeight: Math.max(54, Math.round(root.metrics.fontSize * 3.2))
@@ -641,14 +663,33 @@ Item {
                         border.width: 1
                         radius: Math.round(root.metrics.fontSize * 0.28)
 
-                        Label {
+                        ColumnLayout {
                             anchors.centerIn: parent
                             width: parent.width - root.metrics.gap
-                            color: Theme.text
-                            text: modelData
-                            horizontalAlignment: Text.AlignHCenter
-                            elide: Text.ElideRight
-                            font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 0.9))
+                            spacing: 0
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: Theme.text
+                                text: modelData.label
+                                horizontalAlignment: Text.AlignHCenter
+                                elide: Text.ElideRight
+                                font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 0.9))
+                            }
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: Theme.mutedText
+                                text: modelData.hint
+                                horizontalAlignment: Text.AlignHCenter
+                                elide: Text.ElideRight
+                                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.62))
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: root.handleMoreAction(modelData.action)
                         }
                     }
                 }

@@ -660,6 +660,7 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
 def test_move_panel_exposes_read_only_position_without_controls() -> None:
     qml = Path("src/klippertouch/qml/panels/MovePanel.qml").read_text(encoding="utf-8")
 
+    assert 'objectName: "movePanel"' in qml
     assert "property real positionX" in qml
     assert "property real positionY" in qml
     assert "property real positionZ" in qml
@@ -669,6 +670,11 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert 'property var xyButtons' in qml
     assert 'property var zButtons' in qml
     assert 'property var actionButtons' in qml
+    assert 'property var moreActions' in qml
+    assert '"label": "Home All"' in qml
+    assert '"action": "home_all"' in qml
+    assert '"label": "XY Speed"' in qml
+    assert '"action": "speed_xy"' in qml
     assert 'property bool moreVisible' in qml
     assert 'property string detailPage: "main"' in qml
     assert 'signal moveActionRequested(string action, real distance)' in qml
@@ -709,6 +715,8 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert 'title: "Z Home"' in qml
     assert 'root.moveActionRequested("home_xy", 0)' in qml
     assert 'root.moveActionRequested("home_z", 0)' in qml
+    assert "root.handleMoreAction(modelData.action)" in qml
+    assert "function handleMoreAction(action)" in qml
     assert '"label": "Disable Motors"' in qml
     assert '"action": "disable_motors"' in qml
     assert '"hint": "M84"' in qml
@@ -1463,6 +1471,7 @@ def test_main_routes_move_and_extrude_to_locked_panels() -> None:
     assert "jobControlBridgeModel.requestMoveJog(action, distance)" in main_qml
     assert 'jobControlBridgeModel.requestHome("xy")' in main_qml
     assert 'jobControlBridgeModel.requestHome("z")' in main_qml
+    assert 'jobControlBridgeModel.requestHome("all")' in main_qml
     assert "jobControlBridgeModel.requestDisableMotors()" in main_qml
     assert "ExtrudePanel {" in main_qml
 
