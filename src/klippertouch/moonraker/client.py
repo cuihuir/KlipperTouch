@@ -164,13 +164,8 @@ class MoonrakerClient:
         normalized_axis = axis.lower()
         if normalized_axis not in {"x", "y", "z"}:
             raise ValueError("Invalid jog axis")
-        speed = 600 if normalized_axis == "z" else 3000
-        script = (
-            "SAVE_GCODE_STATE NAME=KLIPPERTOUCH_MOVE\n"
-            "G91\n"
-            f"G0 {normalized_axis.upper()}{distance:.3f} F{speed}\n"
-            "RESTORE_GCODE_STATE NAME=KLIPPERTOUCH_MOVE"
-        )
+        speed = 600 if normalized_axis == "z" else 6000
+        script = f"_CLIENT_LINEAR_MOVE {normalized_axis.upper()}={distance:.3f} F={speed}"
         return self.run_gcode_script(script)
 
     def home_axes(self, *axes: str) -> dict[str, Any]:

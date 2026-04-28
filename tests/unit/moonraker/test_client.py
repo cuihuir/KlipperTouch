@@ -328,18 +328,12 @@ def test_client_sends_print_control_when_controls_enabled(
         (
             "jog_toolhead",
             ("x", -10.0),
-            "SAVE_GCODE_STATE NAME=KLIPPERTOUCH_MOVE\n"
-            "G91\n"
-            "G0 X-10.000 F3000\n"
-            "RESTORE_GCODE_STATE NAME=KLIPPERTOUCH_MOVE",
+            "_CLIENT_LINEAR_MOVE X=-10.000 F=6000",
         ),
         (
             "jog_toolhead",
             ("z", 0.5),
-            "SAVE_GCODE_STATE NAME=KLIPPERTOUCH_MOVE\n"
-            "G91\n"
-            "G0 Z0.500 F600\n"
-            "RESTORE_GCODE_STATE NAME=KLIPPERTOUCH_MOVE",
+            "_CLIENT_LINEAR_MOVE Z=0.500 F=600",
         ),
         ("home_axes", ("x", "y"), "G28 X Y"),
         ("home_axes", ("z",), "G28 Z"),
