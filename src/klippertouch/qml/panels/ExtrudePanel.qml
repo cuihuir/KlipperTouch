@@ -5,6 +5,7 @@ import "../Theme.js" as Theme
 
 Item {
     id: root
+    objectName: "extrudePanel"
     required property var metrics
     property var distances: ["5", "10", "15", "25"]
     property var speeds: ["1", "2", "5", "25"]
@@ -15,13 +16,20 @@ Item {
         {"label": "Unload", "action": "unload", "hint": "macro"}
     ]
     property var settingsButtons: [
-        {"label": "Temperature"},
-        {"label": "Pressure Advance"},
-        {"label": "Retraction"},
-        {"label": "Spoolman"}
+        {"label": "Temperature", "shortLabel": "Temp", "action": "temperature", "hint": "set target"},
+        {"label": "Pressure Advance", "shortLabel": "Advance", "action": "pressure_advance", "hint": "placeholder"},
+        {"label": "Retraction", "shortLabel": "Retract", "action": "retraction", "hint": "placeholder"},
+        {"label": "Materials", "shortLabel": "Materials", "action": "materials", "hint": "AFC / AMS"}
+    ]
+    property var materialSlots: [
+        {"label": "Slot 1", "state": "reserved"},
+        {"label": "Slot 2", "state": "reserved"},
+        {"label": "Slot 3", "state": "reserved"},
+        {"label": "Slot 4", "state": "reserved"}
     ]
     property string selectedDistance: "10"
     property string selectedSpeed: "5"
+    property string detailPage: "main"
     property real actionFraction: 0.42
     property real settingsFraction: 0.58
     property real extruderTemperature: 0
@@ -32,25 +40,34 @@ Item {
     readonly property color selectedAccent: "#7f9298"
     signal extrudeActionRequested(string action, real distance, real speed)
 
-    component LockedTile: Rectangle {
+    component ActionTile: Rectangle {
         id: tileRoot
         property string title: ""
-        property string hint: "locked"
+        property string hint: ""
+        property bool selected: false
 
-        color: "#101617"
-        opacity: 0.58
-        border.color: "#263233"
+        color: tileRoot.selected ? "#1b2b2e" : "#101819"
+        border.color: tileRoot.selected ? root.selectedAccent : "#536165"
         border.width: 1
-        radius: Math.round(root.metrics.fontSize * 0.32)
+        radius: Math.round(root.metrics.fontSize * 0.38)
+
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: Math.max(3, Math.round(root.metrics.fontSize * 0.2))
+            color: "transparent"
+            border.color: "#1f2a2c"
+            border.width: 1
+            radius: Math.round(parent.radius * 0.72)
+        }
 
         ColumnLayout {
             anchors.centerIn: parent
             width: parent.width - root.metrics.gap
-            spacing: 0
+            spacing: Math.max(2, Math.round(root.metrics.fontSize * 0.12))
 
             Label {
                 Layout.fillWidth: true
-                color: Theme.mutedText
+                color: Theme.text
                 text: tileRoot.title
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
@@ -62,9 +79,46 @@ Item {
                 Layout.fillWidth: true
                 color: Theme.mutedText
                 text: tileRoot.hint
+                visible: tileRoot.hint.length > 0
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
-                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.7))
+            }
+        }
+    }
+
+    component PlaceholderTile: Rectangle {
+        id: placeholderRoot
+        property string title: ""
+        property string hint: ""
+
+        color: "#0d1415"
+        border.color: "#344346"
+        border.width: 1
+        radius: Math.round(root.metrics.fontSize * 0.34)
+
+        ColumnLayout {
+            anchors.centerIn: parent
+            width: parent.width - root.metrics.gap
+            spacing: 0
+
+            Label {
+                Layout.fillWidth: true
+                color: Theme.text
+                text: placeholderRoot.title
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
+                font.bold: true
+                font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.9))
+            }
+
+            Label {
+                Layout.fillWidth: true
+                color: Theme.mutedText
+                text: placeholderRoot.hint
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
+                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.68))
             }
         }
     }
@@ -75,6 +129,23 @@ Item {
 
     function selectSpeed(speed) {
         root.selectedSpeed = speed
+    }
+
+    function openSettingsAction(action) {
+        if (action === "materials") {
+            root.detailPage = "materials"
+            return
+        }
+        root.controlStatus = action + " settings are reserved"
+        root.controlError = ""
+    }
+
+    function goBack() {
+        if (root.detailPage !== "main") {
+            root.detailPage = "main"
+            return true
+        }
+        return false
     }
 
     function controlFeedbackText() {
@@ -88,20 +159,18 @@ Item {
     }
 
     GridLayout {
+        visible: root.detailPage === "main"
         anchors.fill: parent
         anchors.margins: root.metrics.margin
-        columns: root.metrics.portrait ? 1 : 2
-        rows: root.metrics.portrait ? 2 : 1
+        columns: root.metrics.portrait ? 1 : 3
+        rows: root.metrics.portrait ? 3 : 1
         rowSpacing: root.metrics.gap
         columnSpacing: root.metrics.gap
 
         Rectangle {
             Layout.fillWidth: true
-            Layout.fillHeight: !root.metrics.portrait
-            Layout.preferredWidth: root.metrics.portrait ? parent.width : parent.width * root.actionFraction
-            Layout.preferredHeight: root.metrics.portrait
-                ? Math.max(308, Math.round(root.metrics.fontSize * 19.2))
-                : -1
+            Layout.fillHeight: true
+            Layout.preferredWidth: root.metrics.portrait ? parent.width : -1
             Layout.minimumWidth: 0
             color: Theme.buttonsBg
             border.color: "#465456"
@@ -113,26 +182,29 @@ Item {
                 anchors.margins: root.metrics.gap
                 spacing: root.metrics.gap
 
-                Label {
+                RowLayout {
                     Layout.fillWidth: true
-                    color: Theme.text
-                    text: "Extrude"
-                    font.bold: true
-                    font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.15))
-                }
+                    spacing: root.metrics.gap
 
                     Label {
                         Layout.fillWidth: true
-                        color: Theme.mutedText
-                        text: root.controlFeedbackText()
-                        elide: Text.ElideRight
-                        font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
+                        color: Theme.text
+                        text: "Extrude"
+                        font.bold: true
+                        font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.15))
                     }
+
+                    Label {
+                        color: Theme.mutedText
+                        text: root.extruderTemperature.toFixed(1) + " / " + root.extruderTarget.toFixed(1)
+                        font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.82))
+                    }
+                }
 
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: Math.max(92, Math.round(root.metrics.fontSize * 6.4))
-                    color: "#101617"
+                    Layout.preferredHeight: Math.max(76, Math.round(root.metrics.fontSize * 5.2))
+                    color: "#0d1415"
                     border.color: "#263233"
                     border.width: 1
                     radius: Math.round(root.metrics.fontSize * 0.32)
@@ -140,7 +212,7 @@ Item {
                     ColumnLayout {
                         anchors.fill: parent
                         anchors.margins: root.metrics.gap
-                        spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.32))
+                        spacing: Math.max(2, Math.round(root.metrics.fontSize * 0.15))
 
                         Label {
                             Layout.fillWidth: true
@@ -155,7 +227,7 @@ Item {
                             color: Theme.mutedText
                             text: "E position " + root.positionE.toFixed(2) + " mm"
                             elide: Text.ElideRight
-                            font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.86))
+                            font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.82))
                         }
 
                         Label {
@@ -163,7 +235,7 @@ Item {
                             color: Theme.mutedText
                             text: root.controlFeedbackText()
                             elide: Text.ElideRight
-                            font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                            font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.76))
                         }
                     }
                 }
@@ -178,10 +250,11 @@ Item {
                     Repeater {
                         model: root.actionButtons
 
-                        LockedTile {
+                        ActionTile {
                             required property var modelData
                             Layout.fillWidth: true
                             Layout.fillHeight: true
+                            Layout.minimumHeight: Math.max(56, Math.round(root.metrics.fontSize * 3.8))
                             title: modelData.label
                             hint: modelData.hint
 
@@ -195,47 +268,25 @@ Item {
             }
         }
 
-        GridLayout {
+        Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.preferredWidth: root.metrics.portrait ? parent.width : parent.width * root.settingsFraction
             Layout.minimumWidth: 0
-            columns: 2
-            rowSpacing: root.metrics.gap
-            columnSpacing: root.metrics.gap
+            color: Theme.buttonsBg
+            border.color: "#465456"
+            border.width: 1
+            radius: Math.round(root.metrics.fontSize * 0.45)
 
             GridLayout {
-                Layout.fillWidth: true
-                Layout.fillHeight: false
-                Layout.preferredHeight: Math.max(78, Math.round(root.metrics.fontSize * 5.2))
-                Layout.columnSpan: 2
-                columns: 4
+                anchors.fill: parent
+                anchors.margins: root.metrics.gap
+                columns: 2
                 rowSpacing: root.metrics.gap
                 columnSpacing: root.metrics.gap
 
-                Repeater {
-                    model: root.settingsButtons
-
-                    LockedTile {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: Math.max(64, Math.round(root.metrics.fontSize * 4.2))
-                        title: modelData.label
-                    }
-                }
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.minimumWidth: 0
-                color: Theme.buttonsBg
-                border.color: "#465456"
-                border.width: 1
-                radius: Math.round(root.metrics.fontSize * 0.45)
-
                 ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: root.metrics.gap
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
                     spacing: root.metrics.gap
 
                     Label {
@@ -246,56 +297,28 @@ Item {
                         font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
                     }
 
-                    GridLayout {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        columns: root.metrics.portrait ? 2 : 1
-                        rowSpacing: root.metrics.gap
-                        columnSpacing: root.metrics.gap
+                    Repeater {
+                        model: root.distances
 
-                        Repeater {
-                            model: root.distances
+                        ActionTile {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            Layout.minimumHeight: Math.max(42, Math.round(root.metrics.fontSize * 3.0))
+                            title: modelData + " mm"
+                            selected: root.selectedDistance === modelData
 
-                            Rectangle {
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                Layout.minimumHeight: Math.max(42, Math.round(root.metrics.fontSize * 3.0))
-                                color: root.selectedDistance === modelData ? "#1b2b2e" : "#101617"
-                                border.color: root.selectedDistance === modelData ? root.selectedAccent : "#263233"
-                                border.width: 1
-                                radius: Math.round(root.metrics.fontSize * 0.28)
-
-                                Label {
-                                    anchors.centerIn: parent
-                                    color: root.selectedDistance === modelData ? Theme.text : Theme.mutedText
-                                    text: modelData + " mm"
-                                    horizontalAlignment: Text.AlignHCenter
-                                    font.bold: root.selectedDistance === modelData
-                                    font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.92))
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: root.selectDistance(modelData)
-                                }
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: root.selectDistance(modelData)
                             }
                         }
                     }
                 }
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.minimumWidth: 0
-                color: Theme.buttonsBg
-                border.color: "#465456"
-                border.width: 1
-                radius: Math.round(root.metrics.fontSize * 0.45)
 
                 ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: root.metrics.gap
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
                     spacing: root.metrics.gap
 
                     Label {
@@ -306,40 +329,129 @@ Item {
                         font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
                     }
 
-                    GridLayout {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        columns: root.metrics.portrait ? 2 : 1
-                        rowSpacing: root.metrics.gap
-                        columnSpacing: root.metrics.gap
+                    Repeater {
+                        model: root.speeds
 
-                        Repeater {
-                            model: root.speeds
+                        ActionTile {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            Layout.minimumHeight: Math.max(42, Math.round(root.metrics.fontSize * 3.0))
+                            title: root.metrics.ultraWide ? modelData + " mm/s" : modelData
+                            selected: root.selectedSpeed === modelData
 
-                            Rectangle {
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                Layout.minimumHeight: Math.max(42, Math.round(root.metrics.fontSize * 3.0))
-                                color: root.selectedSpeed === modelData ? "#1b2b2e" : "#101617"
-                                border.color: root.selectedSpeed === modelData ? root.selectedAccent : "#263233"
-                                border.width: 1
-                                radius: Math.round(root.metrics.fontSize * 0.28)
-
-                                Label {
-                                    anchors.centerIn: parent
-                                    color: root.selectedSpeed === modelData ? Theme.text : Theme.mutedText
-                                    text: modelData + " mm/s"
-                                    horizontalAlignment: Text.AlignHCenter
-                                    font.bold: root.selectedSpeed === modelData
-                                    font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.92))
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: root.selectSpeed(modelData)
-                                }
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: root.selectSpeed(modelData)
                             }
                         }
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.columnSpan: 1
+            Layout.preferredWidth: root.metrics.portrait ? parent.width : -1
+            Layout.minimumWidth: 0
+            color: Theme.buttonsBg
+            border.color: "#465456"
+            border.width: 1
+            radius: Math.round(root.metrics.fontSize * 0.45)
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: root.metrics.gap
+                spacing: root.metrics.gap
+
+                Label {
+                    Layout.fillWidth: true
+                    color: Theme.text
+                    text: "Filament"
+                    font.bold: true
+                    font.pixelSize: Math.max(15, Math.round(root.metrics.fontSize))
+                }
+
+                GridLayout {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    columns: root.metrics.ultraWide ? 4 : 2
+                    rowSpacing: root.metrics.gap
+                    columnSpacing: root.metrics.gap
+
+                    Repeater {
+                        model: root.settingsButtons
+
+                        ActionTile {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            Layout.minimumHeight: Math.max(60, Math.round(root.metrics.fontSize * 4.2))
+                            title: root.metrics.portrait || root.metrics.ultraWide
+                                ? modelData.label
+                                : modelData.shortLabel
+                            hint: modelData.hint
+
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: root.openSettingsAction(modelData.action)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        visible: root.detailPage === "materials"
+        anchors.fill: parent
+        anchors.margins: root.metrics.margin
+        color: Theme.buttonsBg
+        border.color: "#465456"
+        border.width: 1
+        radius: Math.round(root.metrics.fontSize * 0.45)
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: root.metrics.gap
+            spacing: root.metrics.gap
+
+            Label {
+                Layout.fillWidth: true
+                color: Theme.text
+                text: "Material slots"
+                font.bold: true
+                font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.25))
+            }
+
+            Label {
+                Layout.fillWidth: true
+                color: Theme.mutedText
+                text: "AFC / AMS entry frame. Hardware protocol adapters will populate these slots."
+                wrapMode: Text.WordWrap
+                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.82))
+            }
+
+            GridLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                columns: root.metrics.portrait ? 2 : 4
+                rowSpacing: root.metrics.gap
+                columnSpacing: root.metrics.gap
+
+                Repeater {
+                    model: root.materialSlots
+
+                    PlaceholderTile {
+                        required property var modelData
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: Math.max(88, Math.round(root.metrics.fontSize * 5.8))
+                        title: modelData.label
+                        hint: modelData.state
                     }
                 }
             }

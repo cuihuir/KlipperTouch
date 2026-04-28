@@ -767,6 +767,7 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert 'readonly property color selectedAccent: "#7f9298"' in qml
     assert "property string selectedDistance" in qml
     assert "property string selectedSpeed" in qml
+    assert 'property string detailPage: "main"' in qml
     assert "property var actionButtons" in qml
     assert "property var settingsButtons" in qml
     assert 'signal extrudeActionRequested(string action, real distance, real speed)' in qml
@@ -777,10 +778,21 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert '"label": "Temperature"' in qml
     assert '"label": "Pressure Advance"' in qml
     assert '"label": "Retraction"' in qml
-    assert '"label": "Spoolman"' in qml
-    assert "component LockedTile: Rectangle" in qml
+    assert '"label": "Materials"' in qml
+    assert '"action": "materials"' in qml
+    assert '"hint": "AFC / AMS"' in qml
+    assert "component ActionTile: Rectangle" in qml
+    assert "component PlaceholderTile: Rectangle" in qml
     assert "function selectDistance(distance)" in qml
     assert "function selectSpeed(speed)" in qml
+    assert "function openSettingsAction(action)" in qml
+    assert "function goBack()" in qml
+    assert 'if (root.detailPage !== "main")' in qml
+    assert 'root.detailPage = "materials"' in qml
+    assert 'visible: root.detailPage === "main"' in qml
+    assert 'visible: root.detailPage === "materials"' in qml
+    assert "AFC / AMS" in qml
+    assert "Material slots" in qml
     assert "root.selectedDistance === modelData" in qml
     assert "root.selectedSpeed === modelData" in qml
     assert "root.extruderTemperature.toFixed(1)" in qml
@@ -1502,6 +1514,8 @@ def test_extrude_panel_is_locked_and_responsive() -> None:
     assert "property var settingsButtons" in qml
     assert "property real actionFraction: 0.42" in qml
     assert "property real settingsFraction: 0.58" in qml
+    assert "component ActionTile: Rectangle" in qml
+    assert "component PlaceholderTile: Rectangle" in qml
     assert "Layout.preferredWidth: root.metrics.portrait" in qml
     assert "Layout.minimumWidth: 0" in qml
     assert "root.controlFeedbackText()" in qml
