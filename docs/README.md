@@ -15,11 +15,11 @@ This documentation is organized for long-term maintenance rather than short-term
 ## Planning
 
 - `docs/roadmap.md` tracks the staged path from research to a production-ready PySide6/QML application.
-- `docs/safety-boundary.md` records the current read-only runtime boundary and verification commands.
+- `docs/safety-boundary.md` records the current runtime safety boundary, read-only allowlist, enabled commands, and verification commands.
 
 ## Documentation Rules
 
 - Keep source-derived observations separate from design decisions.
-- Record real-printer commands before running them, and keep Phase 1 validation read-only.
+- Record real-printer commands before running them, and keep new command groups behind the audited control bridge.
 - Prefer small, stable documents with clear ownership over large catch-all notes.
 - Update the roadmap when a spec changes scope.

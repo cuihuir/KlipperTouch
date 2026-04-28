@@ -4,9 +4,9 @@ KlipperTouch is planned as a production-oriented PySide6 + QML touchscreen UI fo
 
 ## Current Status
 
-This repository now contains the clean PySide6/QML skeleton. It includes Python package scaffolding, application bootstrap, configuration loading, test tooling, and read-only Moonraker probe support. Printer control features remain disabled until separate reviewed implementation plans enable them.
+This repository now contains the clean PySide6/QML application scaffold plus active KlipperScreen-style Files, Job Status, Temperature, Move, Extrude, More, and recovery surfaces. Read-only mode remains the default safety posture, while selected command groups are enabled when `config/KlipperTouch.conf` explicitly sets `read_only = false`.
 
-The skeleton is grounded in the maintained implementation blueprint based on KlipperScreen source analysis, the previous experimental KlipperTouch project at `/home/tope/project_py/KlipperTouch`, and read-only validation against the current real printer at `192.168.123.227`.
+The implementation is grounded in KlipperScreen source analysis, the previous experimental KlipperTouch project at `/home/tope/project_py/KlipperTouch`, and validation against Moonraker development targets including `192.168.123.203`.
 
 ## Documentation
 
@@ -28,11 +28,11 @@ UV_INDEX_URL=https://pypi.org/simple uv run --locked --extra dev mypy src/klippe
 UV_INDEX_URL=https://pypi.org/simple uv run --locked --extra dev python -m klippertouch --probe
 ```
 
-Real-printer probes are read-only. Do not enable command execution without a separate reviewed plan.
+Use read-only probes for unknown printers. Enabled command groups must continue to route through the audited Moonraker client and Qt control model.
 
 ## Safety Boundary
 
-Until an implementation plan explicitly changes this boundary, real-printer validation is read-only only. Do not send movement, homing, heating, extrusion, print-control, restart, firmware-restart, power, or emergency-stop commands from this project.
+Read-only mode is still the default. On the `192.168.123.203` development board, audited print, move, recovery, and extrusion commands are allowed for validation. Heating, host power/service control, and new macro execution paths remain forbidden until reviewed.
 
 ## License
 

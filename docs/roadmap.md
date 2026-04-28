@@ -78,14 +78,14 @@ Exit criteria:
 
 Status: active
 
-Goal: recreate the core KlipperScreen page structure and layout behavior while controls remain disabled or absent.
+Goal: recreate the core KlipperScreen page structure and layout behavior while controls are enabled gradually through audited bridges.
 
 Deliverables:
 
 - Main menu layout matching KlipperScreen top-level concepts.
 - Files/Gcodes page as a file manager only.
 - Job Status page that appears automatically only during active print states.
-- Temperature, Move, Extrude, More/System pages with read-only data.
+- Temperature, Move, Extrude, More/System pages with live data and audited controls where implemented.
 - Screenshot regression set for `800x480`, `1024x600`, `480x800`, and later `1280x800`.
 
 Exit criteria:
@@ -105,8 +105,8 @@ Work packages:
 - Files: directory hierarchy, breadcrumbs, sorting, metadata, search/filter, thumbnails if available, empty/loading/error states.
 - Job Status: progress, filename, thumbnail, elapsed/remaining estimates, layers, filament, speed, flow, Z offset, current temperatures, pause state.
 - Temperature: dynamic heater/sensor grid, historical graph, target display, presets as disabled placeholders.
-- Move: homed axes, position cards, step size UI as disabled placeholders, printer limits.
-- Extrude: extruder temp, target temp, E position, filament sensor states where available, action placeholders.
+- Move: homed axes, position cards, step size UI, jog, home, disable motors, speed settings placeholders.
+- Extrude: extruder temp, target temp, E position, extrude/retract, load/unload macros, filament sensor states where available.
 - More/System: host info, Moonraker/Klipper versions, object list, network/runtime stats, logs entry, settings placeholders.
 
 Exit criteria:
@@ -116,7 +116,7 @@ Exit criteria:
 
 ## Phase 6: Command Safety Framework
 
-Status: planned
+Status: in progress
 
 Goal: create one audited path for all state-changing Moonraker commands.
 
@@ -142,13 +142,12 @@ Goal: enable real printer controls gradually, from lower risk to higher risk.
 
 Recommended order:
 
-- Refresh and local navigation commands that do not affect printer state.
-- File selection and print start with confirmation.
-- Pause, resume, and cancel with confirmation.
-- Fan controls with bounded values.
-- Temperature controls with target limits and confirmation.
-- Movement and homing with axis, distance, speed, and printer-state guards.
-- Extrusion with hotend-temperature guard and bounded distances.
+- Completed: file selection, print start, delete, pause, resume, cancel, clear file, emergency stop, firmware restart, Klipper restart.
+- Completed: movement, homing, disable motors, extrusion/retraction, filament load/unload macros.
+- In progress: user-visible command feedback on Move and Extrude pages.
+- Planned: fan controls with bounded values.
+- Planned: temperature controls with target limits and confirmation.
+- Planned: stronger printer-state guards for movement and extrusion on real motion hardware.
 
 Exit criteria:
 

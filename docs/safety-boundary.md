@@ -1,30 +1,31 @@
 # Runtime Safety Boundary
 
 This document records the current production safety boundary for KlipperTouch.
-It is intentionally conservative while the UI is being recreated.
+Read-only mode remains the default, while selected command groups are now enabled
+when the local config explicitly sets `read_only = false`.
 
 ## Current UI State
 
-Read-only live panels:
+Live panels:
 
 - `Temperature`: displays heater and sensor temperatures from Moonraker startup reads and WebSocket status updates.
 - `Print`: displays the G-code file list from Moonraker file manager reads.
-- `Job Status`: opens automatically while `print_stats.state` is `printing` or `paused` and displays read-only job progress.
-- `Move`: displays read-only toolhead position and homed axes while keeping all movement controls locked.
-- `Extrude`: displays read-only nozzle temperature, target, and E position while keeping extrusion controls locked.
+- `Job Status`: opens automatically while `print_stats.state` is active and exposes audited print-control and tuning actions.
+- `Move`: displays toolhead position and homed axes, with audited jog, homing, and disable-motors actions.
+- `Extrude`: displays nozzle temperature, target, and E position, with audited extrude/retract and load/unload macro actions.
 - `More`: displays printer and Moonraker/Klipper version information.
 
-Locked visual skeleton panels:
+Still-incomplete visual skeleton areas:
 
-- `Move`: shows axis and distance layout, but no controls are clickable and no motion commands are bound.
-- `Extrude`: shows extrusion distance/speed layout, but no controls are clickable and no extrusion commands are bound.
+- `Move`: speed configuration entries are placeholders.
+- `Extrude`: Temperature, Pressure Advance, Retraction, and Spoolman entries are placeholders.
 
 Shell actions:
 
 - `Back`, `Home`, and `Menu` only change local QML navigation state.
-- `Stop` is present in the shell layout but intentionally does not send any printer command.
+- `Stop` sends Moonraker emergency stop through the audited job-control bridge.
 
-## Allowed Moonraker Operations
+## Read-Only Mode Allowlist
 
 HTTP GET endpoints currently allowed by the read-only policy:
 
@@ -52,17 +53,28 @@ devices, read-only print status fields from `print_stats`, `display_status`, and
 `virtual_sdcard`, and read-only position fields from `toolhead` and `gcode_move`.
 Reconnects repeat the same read-only subscription.
 
+## Enabled Commands When `read_only = false`
+
+All state-changing commands must be routed through `JobControlModel` and
+`MoonrakerClient`; QML must not contain direct G-code strings or Moonraker method names.
+
+Currently enabled groups:
+
+- Files and print state: start print, delete G-code file, pause, resume, cancel, clear current SD file.
+- Recovery: emergency stop, firmware restart, Klipper restart.
+- Job tuning: Z offset, speed factor, flow factor, object exclusion.
+- Move: `M84`, `G28`, bounded relative jog using `SAVE_GCODE_STATE`, `G91`, `G0`, and `RESTORE_GCODE_STATE`.
+- Extrude: relative extrusion/retraction using `SAVE_GCODE_STATE`, `M83`, `G1`, and `RESTORE_GCODE_STATE`.
+- Filament macros: `LOAD_FILAMENT SPEED=...` and `UNLOAD_FILAMENT SPEED=...`.
+
 ## Explicitly Forbidden Until Reviewed
 
 Do not add or call any of these without a separate reviewed implementation plan:
 
-- Movement, homing, or toolhead jogging.
 - Heating, cooling, PID tuning, or temperature target changes.
-- Extrusion or retraction.
-- Print start, pause, resume, cancel, upload, delete, or file mutation.
-- Firmware restart, Klipper restart, service restart, host reboot, or power control.
-- Emergency stop wiring from the UI.
-- Any direct `printer.gcode.script` command.
+- Service restart, host reboot, or power control.
+- Direct `printer.gcode.script` calls from QML or UI components.
+- Any new macro execution path that bypasses `JobControlModel`.
 
 ## Verification Commands
 
@@ -84,15 +96,18 @@ rg -n "tuna|tsinghua" uv.lock
 
 ## Real Printer Validation
 
-The current real-printer validation target is `192.168.123.227:7125`.
+The current command-validation development target is `192.168.123.203:7125`.
+It is a development board and may be used for the enabled command groups above.
 
-Allowed validation:
+The previous read-only validation target was `192.168.123.227:7125`.
+
+Allowed read-only validation:
 
 - Read startup server/printer/object information.
 - Read G-code file metadata.
 - Read Unicode temperature objects through read-only JSON-RPC query.
 - Open the WebSocket and subscribe to read-only status updates.
 
-Forbidden validation:
+Forbidden on real motion hardware unless explicitly approved:
 
-- Any command that can move hardware, change heat, alter files, or change print state.
+- Any command that can move hardware unexpectedly, heat hardware, alter files, or change print state.
