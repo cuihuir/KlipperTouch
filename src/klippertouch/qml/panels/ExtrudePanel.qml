@@ -9,10 +9,10 @@ Item {
     property var distances: ["5", "10", "15", "25"]
     property var speeds: ["1", "2", "5", "25"]
     property var actionButtons: [
-        {"label": "Extrude"},
-        {"label": "Retract"},
-        {"label": "Load"},
-        {"label": "Unload"}
+        {"label": "Extrude", "action": "extrude", "hint": "forward"},
+        {"label": "Retract", "action": "retract", "hint": "reverse"},
+        {"label": "Load", "action": "load", "hint": "macro"},
+        {"label": "Unload", "action": "unload", "hint": "macro"}
     ]
     property var settingsButtons: [
         {"label": "Temperature"},
@@ -27,6 +27,8 @@ Item {
     property real extruderTemperature: 0
     property real extruderTarget: 0
     property real positionE: 0
+    readonly property color selectedAccent: "#7f9298"
+    signal extrudeActionRequested(string action, real distance, real speed)
 
     component LockedTile: Rectangle {
         id: tileRoot
@@ -110,7 +112,7 @@ Item {
                 Label {
                     Layout.fillWidth: true
                     color: Theme.mutedText
-                    text: "Extrusion locked"
+                    text: "Extrusion ready"
                     font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
                 }
 
@@ -146,7 +148,7 @@ Item {
                         Label {
                             Layout.fillWidth: true
                             color: Theme.mutedText
-                            text: "Read-only extrusion status"
+                            text: "Commanded extrusion status"
                             elide: Text.ElideRight
                             font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
                         }
@@ -164,9 +166,16 @@ Item {
                         model: root.actionButtons
 
                         LockedTile {
+                            required property var modelData
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             title: modelData.label
+                            hint: modelData.hint
+
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: root.extrudeActionRequested(modelData.action, parseFloat(root.selectedDistance), parseFloat(root.selectedSpeed))
+                            }
                         }
                     }
                 }
@@ -238,8 +247,8 @@ Item {
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
                                 Layout.minimumHeight: Math.max(42, Math.round(root.metrics.fontSize * 3.0))
-                                color: root.selectedDistance === modelData ? "#182b20" : "#101617"
-                                border.color: root.selectedDistance === modelData ? Theme.color3 : "#263233"
+                                color: root.selectedDistance === modelData ? "#1b2b2e" : "#101617"
+                                border.color: root.selectedDistance === modelData ? root.selectedAccent : "#263233"
                                 border.width: 1
                                 radius: Math.round(root.metrics.fontSize * 0.28)
 
@@ -298,8 +307,8 @@ Item {
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
                                 Layout.minimumHeight: Math.max(42, Math.round(root.metrics.fontSize * 3.0))
-                                color: root.selectedSpeed === modelData ? "#182b20" : "#101617"
-                                border.color: root.selectedSpeed === modelData ? Theme.color3 : "#263233"
+                                color: root.selectedSpeed === modelData ? "#1b2b2e" : "#101617"
+                                border.color: root.selectedSpeed === modelData ? root.selectedAccent : "#263233"
                                 border.width: 1
                                 radius: Math.round(root.metrics.fontSize * 0.28)
 

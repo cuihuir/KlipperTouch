@@ -181,6 +181,15 @@ class MoonrakerClient:
         script = f"G28 {suffix}".strip()
         return self.run_gcode_script(script)
 
+    def extrude_filament(self, distance: float, speed: float) -> dict[str, Any]:
+        script = (
+            "SAVE_GCODE_STATE NAME=KLIPPERTOUCH_EXTRUDE\n"
+            "M83\n"
+            f"G1 E{distance:.3f} F{speed * 60:.0f}\n"
+            "RESTORE_GCODE_STATE NAME=KLIPPERTOUCH_EXTRUDE"
+        )
+        return self.run_gcode_script(script)
+
     def delete_gcode_file(self, filename: str) -> dict[str, Any]:
         return self.delete(f"server/files/gcodes/{filename.strip('/')}")
 

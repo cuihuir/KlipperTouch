@@ -240,6 +240,17 @@ ApplicationWindow {
         }
     }
 
+    function requestExtrudeControl(action, distance, speed) {
+        if (!jobControlBridgeModel) {
+            return
+        }
+        if (action === "extrude" || action === "retract") {
+            jobControlBridgeModel.requestExtrudeFilament(action, distance, speed)
+        } else if (action === "load" || action === "unload") {
+            jobControlBridgeModel.requestPlaceholderControl("Extrude " + action)
+        }
+    }
+
     function requestFileControl(action, path) {
         if (!jobControlBridgeModel) {
             return
@@ -506,6 +517,9 @@ ApplicationWindow {
                 extruderTemperature: window.extruderTemperature
                 extruderTarget: window.extruderTarget
                 positionE: window.positionE
+                onExtrudeActionRequested: function(action, distance, speed) {
+                    window.requestExtrudeControl(action, distance, speed)
+                }
             }
         }
     }

@@ -37,6 +37,8 @@ class JobControlClient(Protocol):
 
     def home_axes(self, *axes: str) -> dict[str, object]: ...
 
+    def extrude_filament(self, distance: float, speed: float) -> dict[str, object]: ...
+
 
 class JobControlModel(QObject):
     statusChanged = Signal()
@@ -136,6 +138,28 @@ class JobControlModel(QObject):
             self._set_error("Invalid home target")
             return
         self._run_control("Home", lambda client: client.home_axes(*target_map[clean_target]))
+
+    @Slot(str, float, float)
+    def requestExtrudeFilament(self, action: str, distance: float, speed: float) -> None:  # noqa: N802
+        clean_action = action.strip().lower()
+        if distance <= 0:
+            self._set_error("Extrusion distance must be positive")
+            return
+        if speed <= 0:
+            self._set_error("Extrusion speed must be positive")
+            return
+        action_map = {
+            "extrude": ("Extrude", float(distance)),
+            "retract": ("Retract", -float(distance)),
+        }
+        if clean_action not in action_map:
+            self._set_error("Invalid extrusion action")
+            return
+        label, signed_distance = action_map[clean_action]
+        self._run_control(
+            label,
+            lambda client: client.extrude_filament(signed_distance, float(speed)),
+        )
 
     @Slot(str)
     def requestPlaceholderControl(self, label: str) -> None:  # noqa: N802

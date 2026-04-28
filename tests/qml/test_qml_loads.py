@@ -742,10 +742,14 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "property real extruderTemperature" in qml
     assert "property real extruderTarget" in qml
     assert "property real positionE" in qml
+    assert 'readonly property color selectedAccent: "#7f9298"' in qml
     assert "property string selectedDistance" in qml
     assert "property string selectedSpeed" in qml
     assert "property var actionButtons" in qml
     assert "property var settingsButtons" in qml
+    assert 'signal extrudeActionRequested(string action, real distance, real speed)' in qml
+    assert '"action": "extrude"' in qml
+    assert '"action": "retract"' in qml
     assert '"label": "Load"' in qml
     assert '"label": "Unload"' in qml
     assert '"label": "Temperature"' in qml
@@ -760,6 +764,13 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "root.extruderTemperature.toFixed(1)" in qml
     assert "root.extruderTarget.toFixed(1)" in qml
     assert "root.positionE.toFixed(2)" in qml
+    assert "Commanded extrusion status" in qml
+    assert "Theme.color3" not in qml
+    assert (
+        "root.extrudeActionRequested(modelData.action, parseFloat(root.selectedDistance), "
+        "parseFloat(root.selectedSpeed))"
+        in qml
+    )
     assert "printer.gcode.script" not in qml
 
     main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
@@ -771,6 +782,8 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "property string currentObject:" in main_qml
     assert "extruderTemperature: window.extruderTemperature" in main_qml
     assert "extruderTarget: window.extruderTarget" in main_qml
+    assert "onExtrudeActionRequested: function(action, distance, speed)" in main_qml
+    assert "jobControlBridgeModel.requestExtrudeFilament(action, distance, speed)" in main_qml
 
 
 def test_info_panel_exposes_read_only_versions_and_mcu_lists() -> None:
@@ -1448,7 +1461,7 @@ def test_extrude_panel_is_locked_and_responsive() -> None:
     assert "property real settingsFraction: 0.58" in qml
     assert "Layout.preferredWidth: root.metrics.portrait" in qml
     assert "Layout.minimumWidth: 0" in qml
-    assert "Extrusion locked" in qml
+    assert "Extrusion ready" in qml
     assert "root.metrics.portrait" in qml
     assert "Repeater {" in qml
     assert "root.selectDistance(modelData)" in qml

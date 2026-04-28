@@ -344,6 +344,22 @@ def test_client_sends_print_control_when_controls_enabled(
         ("home_axes", ("x", "y"), "G28 X Y"),
         ("home_axes", ("z",), "G28 Z"),
         ("home_axes", (), "G28"),
+        (
+            "extrude_filament",
+            (10.0, 5.0),
+            "SAVE_GCODE_STATE NAME=KLIPPERTOUCH_EXTRUDE\n"
+            "M83\n"
+            "G1 E10.000 F300\n"
+            "RESTORE_GCODE_STATE NAME=KLIPPERTOUCH_EXTRUDE",
+        ),
+        (
+            "extrude_filament",
+            (-5.0, 2.0),
+            "SAVE_GCODE_STATE NAME=KLIPPERTOUCH_EXTRUDE\n"
+            "M83\n"
+            "G1 E-5.000 F120\n"
+            "RESTORE_GCODE_STATE NAME=KLIPPERTOUCH_EXTRUDE",
+        ),
     ],
 )
 def test_client_sends_gcode_control_scripts_when_controls_enabled(

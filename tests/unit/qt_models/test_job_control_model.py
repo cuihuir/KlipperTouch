@@ -70,6 +70,10 @@ class FakeClient:
         self.calls.append(("home", ",".join(axes)))
         return {"ok": True}
 
+    def extrude_filament(self, distance: float, speed: float) -> dict[str, bool]:
+        self.calls.append(("extrude_filament", f"{distance}:{speed}"))
+        return {"ok": True}
+
 
 class BlockingClient(FakeClient):
     def pause_print(self) -> dict[str, bool]:
@@ -238,6 +242,37 @@ def test_job_control_model_rejects_invalid_home_requests(qtbot) -> None:
 
     assert client.calls == []
     assert model.lastError == "Invalid home target"
+
+
+def test_job_control_model_sends_validated_extrude_requests(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestExtrudeFilament("extrude", 10, 5)
+    model.requestExtrudeFilament("retract", 5, 2)
+
+    assert client.calls == [
+        ("extrude_filament", "10.0:5.0"),
+        ("extrude_filament", "-5.0:2.0"),
+    ]
+    assert model.lastStatus == "Retract sent"
+
+
+def test_job_control_model_rejects_invalid_extrude_requests(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestExtrudeFilament("bad", 10, 5)
+    assert client.calls == []
+    assert model.lastError == "Invalid extrusion action"
+
+    model.requestExtrudeFilament("extrude", 0, 5)
+    assert client.calls == []
+    assert model.lastError == "Extrusion distance must be positive"
+
+    model.requestExtrudeFilament("extrude", 5, 0)
+    assert client.calls == []
+    assert model.lastError == "Extrusion speed must be positive"
 
 
 def test_job_control_model_reports_placeholder_recovery_actions(qtbot) -> None:
