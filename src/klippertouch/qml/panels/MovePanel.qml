@@ -48,6 +48,8 @@ Item {
     property real positionZ: 0
     property real positionE: 0
     property string homedAxes: ""
+    property string controlStatus: ""
+    property string controlError: ""
     readonly property color selectedAccent: "#7f9298"
     signal moveActionRequested(string action, real distance)
 
@@ -77,6 +79,16 @@ Item {
             return
         }
         root.moveActionRequested("placeholder_" + action, 0)
+    }
+
+    function controlFeedbackText() {
+        if (root.controlError.length > 0) {
+            return root.controlError
+        }
+        if (root.controlStatus.length > 0) {
+            return root.controlStatus
+        }
+        return "Controls ready"
     }
 
     function arrowGlyph(direction) {
@@ -451,7 +463,8 @@ Item {
 
                     Label {
                         color: Theme.mutedText
-                        text: "Controls ready"
+                        text: root.controlFeedbackText()
+                        elide: Text.ElideRight
                         font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.76))
                     }
                 }

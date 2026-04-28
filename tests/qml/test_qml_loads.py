@@ -406,6 +406,9 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "property real positionZ" in qml
     assert "property real positionE" in qml
     assert "property string homedAxes" in qml
+    assert "property string controlStatus" in qml
+    assert "property string controlError" in qml
+    assert "function controlFeedbackText()" in qml
     assert "property var temperatureModel: null" in qml
     assert "property var fileModel: null" in qml
     assert "property var excludeObjectNames: []" in qml
@@ -764,7 +767,10 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "root.extruderTemperature.toFixed(1)" in qml
     assert "root.extruderTarget.toFixed(1)" in qml
     assert "root.positionE.toFixed(2)" in qml
-    assert "Commanded extrusion status" in qml
+    assert "property string controlStatus" in qml
+    assert "property string controlError" in qml
+    assert "function controlFeedbackText()" in qml
+    assert "root.controlFeedbackText()" in qml
     assert "Theme.color3" not in qml
     assert (
         "root.extrudeActionRequested(modelData.action, parseFloat(root.selectedDistance), "
@@ -782,6 +788,14 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "property string currentObject:" in main_qml
     assert "extruderTemperature: window.extruderTemperature" in main_qml
     assert "extruderTarget: window.extruderTarget" in main_qml
+    assert (
+        'controlStatus: window.jobControlBridgeModel ? '
+        'window.jobControlBridgeModel.lastStatus : ""'
+    ) in main_qml
+    assert (
+        'controlError: window.jobControlBridgeModel ? '
+        'window.jobControlBridgeModel.lastError : ""'
+    ) in main_qml
     assert "onExtrudeActionRequested: function(action, distance, speed)" in main_qml
     assert "jobControlBridgeModel.requestExtrudeFilament(action, distance, speed)" in main_qml
     assert "jobControlBridgeModel.requestLoadFilament(speed)" in main_qml
@@ -1449,7 +1463,7 @@ def test_move_panel_is_locked_and_responsive() -> None:
     assert "id: zMovePad" in qml
     assert "direction: modelData.direction" in qml
     assert "id: distanceGrid" in qml
-    assert "Controls ready" in qml
+    assert "root.controlFeedbackText()" in qml
     assert "root.metrics.portrait" in qml
     assert "Repeater {" in qml
     assert "root.selectDistance(modelData)" in qml
@@ -1470,7 +1484,7 @@ def test_extrude_panel_is_locked_and_responsive() -> None:
     assert "property real settingsFraction: 0.58" in qml
     assert "Layout.preferredWidth: root.metrics.portrait" in qml
     assert "Layout.minimumWidth: 0" in qml
-    assert "Extrusion ready" in qml
+    assert "root.controlFeedbackText()" in qml
     assert "root.metrics.portrait" in qml
     assert "Repeater {" in qml
     assert "root.selectDistance(modelData)" in qml
@@ -1488,6 +1502,14 @@ def test_main_routes_move_and_extrude_to_locked_panels() -> None:
     assert 'case "extrude":' in main_qml
     assert "return extrudeComponent" in main_qml
     assert "MovePanel {" in main_qml
+    assert (
+        'controlStatus: window.jobControlBridgeModel ? '
+        'window.jobControlBridgeModel.lastStatus : ""'
+    ) in main_qml
+    assert (
+        'controlError: window.jobControlBridgeModel ? '
+        'window.jobControlBridgeModel.lastError : ""'
+    ) in main_qml
     assert "onMoveActionRequested: function(action, distance)" in main_qml
     assert "function requestMoveControl(action, distance)" in main_qml
     assert "jobControlBridgeModel.requestMoveJog(action, distance)" in main_qml

@@ -520,6 +520,8 @@ ApplicationWindow {
                 positionZ: window.positionZ
                 positionE: window.positionE
                 homedAxes: window.homedAxes
+                controlStatus: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastStatus : ""
+                controlError: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastError : ""
                 onMoveActionRequested: function(action, distance) {
                     window.requestMoveControl(action, distance)
                 }
@@ -534,6 +536,8 @@ ApplicationWindow {
                 extruderTemperature: window.extruderTemperature
                 extruderTarget: window.extruderTarget
                 positionE: window.positionE
+                controlStatus: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastStatus : ""
+                controlError: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastError : ""
                 onExtrudeActionRequested: function(action, distance, speed) {
                     window.requestExtrudeControl(action, distance, speed)
                 }

@@ -27,6 +27,8 @@ Item {
     property real extruderTemperature: 0
     property real extruderTarget: 0
     property real positionE: 0
+    property string controlStatus: ""
+    property string controlError: ""
     readonly property color selectedAccent: "#7f9298"
     signal extrudeActionRequested(string action, real distance, real speed)
 
@@ -75,6 +77,16 @@ Item {
         root.selectedSpeed = speed
     }
 
+    function controlFeedbackText() {
+        if (root.controlError.length > 0) {
+            return root.controlError
+        }
+        if (root.controlStatus.length > 0) {
+            return root.controlStatus
+        }
+        return "Extrusion ready"
+    }
+
     GridLayout {
         anchors.fill: parent
         anchors.margins: root.metrics.margin
@@ -109,12 +121,13 @@ Item {
                     font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.15))
                 }
 
-                Label {
-                    Layout.fillWidth: true
-                    color: Theme.mutedText
-                    text: "Extrusion ready"
-                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
-                }
+                    Label {
+                        Layout.fillWidth: true
+                        color: Theme.mutedText
+                        text: root.controlFeedbackText()
+                        elide: Text.ElideRight
+                        font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
+                    }
 
                 Rectangle {
                     Layout.fillWidth: true
@@ -148,7 +161,7 @@ Item {
                         Label {
                             Layout.fillWidth: true
                             color: Theme.mutedText
-                            text: "Commanded extrusion status"
+                            text: root.controlFeedbackText()
                             elide: Text.ElideRight
                             font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
                         }
