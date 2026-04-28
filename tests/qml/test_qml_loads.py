@@ -784,6 +784,8 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "extruderTarget: window.extruderTarget" in main_qml
     assert "onExtrudeActionRequested: function(action, distance, speed)" in main_qml
     assert "jobControlBridgeModel.requestExtrudeFilament(action, distance, speed)" in main_qml
+    assert "jobControlBridgeModel.requestLoadFilament(speed)" in main_qml
+    assert "jobControlBridgeModel.requestUnloadFilament(speed)" in main_qml
 
 
 def test_info_panel_exposes_read_only_versions_and_mcu_lists() -> None:

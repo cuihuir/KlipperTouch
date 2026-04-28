@@ -246,8 +246,10 @@ ApplicationWindow {
         }
         if (action === "extrude" || action === "retract") {
             jobControlBridgeModel.requestExtrudeFilament(action, distance, speed)
-        } else if (action === "load" || action === "unload") {
-            jobControlBridgeModel.requestPlaceholderControl("Extrude " + action)
+        } else if (action === "load") {
+            jobControlBridgeModel.requestLoadFilament(speed)
+        } else if (action === "unload") {
+            jobControlBridgeModel.requestUnloadFilament(speed)
         }
     }
 

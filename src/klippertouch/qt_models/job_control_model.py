@@ -39,6 +39,10 @@ class JobControlClient(Protocol):
 
     def extrude_filament(self, distance: float, speed: float) -> dict[str, object]: ...
 
+    def load_filament(self, speed: float) -> dict[str, object]: ...
+
+    def unload_filament(self, speed: float) -> dict[str, object]: ...
+
 
 class JobControlModel(QObject):
     statusChanged = Signal()
@@ -161,6 +165,14 @@ class JobControlModel(QObject):
             lambda client: client.extrude_filament(signed_distance, float(speed)),
         )
 
+    @Slot(float)
+    def requestLoadFilament(self, speed: float) -> None:  # noqa: N802
+        self._run_filament_macro("Load filament", speed, lambda client: client.load_filament)
+
+    @Slot(float)
+    def requestUnloadFilament(self, speed: float) -> None:  # noqa: N802
+        self._run_filament_macro("Unload filament", speed, lambda client: client.unload_filament)
+
     @Slot(str)
     def requestPlaceholderControl(self, label: str) -> None:  # noqa: N802
         clean_label = label.strip() or "Action"
@@ -195,6 +207,17 @@ class JobControlModel(QObject):
     @Slot(float)
     def requestExtrudeFactor(self, percent: float) -> None:  # noqa: N802
         self._run_control("Flow", lambda client: client.set_extrude_factor(percent))
+
+    def _run_filament_macro(
+        self,
+        label: str,
+        speed: float,
+        command: Callable[[JobControlClient], Callable[[float], dict[str, object]]],
+    ) -> None:
+        if speed <= 0:
+            self._set_error("Filament speed must be positive")
+            return
+        self._run_control(label, lambda client: command(client)(float(speed)))
 
     def _run_control(
         self,

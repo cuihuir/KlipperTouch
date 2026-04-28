@@ -74,6 +74,14 @@ class FakeClient:
         self.calls.append(("extrude_filament", f"{distance}:{speed}"))
         return {"ok": True}
 
+    def load_filament(self, speed: float) -> dict[str, bool]:
+        self.calls.append(("load_filament", speed))
+        return {"ok": True}
+
+    def unload_filament(self, speed: float) -> dict[str, bool]:
+        self.calls.append(("unload_filament", speed))
+        return {"ok": True}
+
 
 class BlockingClient(FakeClient):
     def pause_print(self) -> dict[str, bool]:
@@ -273,6 +281,30 @@ def test_job_control_model_rejects_invalid_extrude_requests(qtbot) -> None:
     model.requestExtrudeFilament("extrude", 5, 0)
     assert client.calls == []
     assert model.lastError == "Extrusion speed must be positive"
+
+
+def test_job_control_model_sends_load_unload_macro_requests(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestLoadFilament(5)
+    model.requestUnloadFilament(2)
+
+    assert client.calls == [("load_filament", 5.0), ("unload_filament", 2.0)]
+    assert model.lastStatus == "Unload filament sent"
+
+
+def test_job_control_model_rejects_invalid_load_unload_speed(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestLoadFilament(0)
+    assert client.calls == []
+    assert model.lastError == "Filament speed must be positive"
+
+    model.requestUnloadFilament(-1)
+    assert client.calls == []
+    assert model.lastError == "Filament speed must be positive"
 
 
 def test_job_control_model_reports_placeholder_recovery_actions(qtbot) -> None:

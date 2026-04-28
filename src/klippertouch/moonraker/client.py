@@ -190,6 +190,12 @@ class MoonrakerClient:
         )
         return self.run_gcode_script(script)
 
+    def load_filament(self, speed: float) -> dict[str, Any]:
+        return self.run_gcode_script(f"LOAD_FILAMENT SPEED={speed * 60:.0f}")
+
+    def unload_filament(self, speed: float) -> dict[str, Any]:
+        return self.run_gcode_script(f"UNLOAD_FILAMENT SPEED={speed * 60:.0f}")
+
     def delete_gcode_file(self, filename: str) -> dict[str, Any]:
         return self.delete(f"server/files/gcodes/{filename.strip('/')}")
 

@@ -360,6 +360,8 @@ def test_client_sends_print_control_when_controls_enabled(
             "G1 E-5.000 F120\n"
             "RESTORE_GCODE_STATE NAME=KLIPPERTOUCH_EXTRUDE",
         ),
+        ("load_filament", 5.0, "LOAD_FILAMENT SPEED=300"),
+        ("unload_filament", 2.0, "UNLOAD_FILAMENT SPEED=120"),
     ],
 )
 def test_client_sends_gcode_control_scripts_when_controls_enabled(
