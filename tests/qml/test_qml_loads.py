@@ -875,6 +875,8 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert 'hint: "Not connected"' in qml
     assert "enabled: false" in qml
     assert "root.selectMaterialSlot(modelData.label)" in qml
+    assert "id: filamentSensorTile" in qml
+    assert "Layout.columnSpan: root.materialEntryVisible() ? 1 : 2" in qml
     assert "root.selectedDistance === modelData" in qml
     assert "root.selectedSpeed === modelData" in qml
     assert "root.extruderTemperature.toFixed(1)" in qml

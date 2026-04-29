@@ -994,8 +994,10 @@ Item {
             }
 
             ActionTile {
+                id: filamentSensorTile
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                Layout.columnSpan: root.materialEntryVisible() ? 1 : 2
                 title: "Sensor"
                 hint: root.filamentSensorSummary()
             }
