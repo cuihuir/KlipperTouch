@@ -119,7 +119,7 @@ def test_client_gets_printer_objects_query(monkeypatch) -> None:
     }
     assert captured["url"] == "http://host:7125/printer/objects/query"
     assert captured["params"] == {
-        "extruder": "temperature,target",
+        "extruder": "temperature,target,pressure_advance,smooth_time",
         "heater_bed": "temperature,target",
     }
 
@@ -364,6 +364,11 @@ def test_client_sends_print_control_when_controls_enabled(
             "set_temperature_target",
             ("temperature_fan SOC散热", 40.0),
             'SET_TEMPERATURE_FAN_TARGET temperature_fan="SOC散热" target=40',
+        ),
+        (
+            "set_pressure_advance",
+            (0.045, 0.04),
+            "SET_PRESSURE_ADVANCE ADVANCE=0.045 SMOOTH_TIME=0.040",
         ),
     ],
 )

@@ -20,7 +20,6 @@ Item {
         {"label": "Unload", "action": "unload", "hint": "macro"}
     ]
     property var settingsButtons: [
-        {"label": "Pressure Advance", "shortLabel": "Advance", "action": "pressure_advance", "hint": "placeholder"},
         {"label": "Retraction", "shortLabel": "Retract", "action": "retraction", "hint": "placeholder"},
         {"label": "Materials", "shortLabel": "Materials", "action": "materials", "hint": "AFC / AMS"}
     ]
@@ -37,14 +36,20 @@ Item {
     property real settingsFraction: 0.58
     property real extruderTemperature: 0
     property real extruderTarget: 0
+    property real extruderPressureAdvance: 0
+    property real extruderSmoothTime: 0
     property real positionE: 0
     property string controlStatus: ""
     property string controlError: ""
     readonly property color selectedAccent: "#7f9298"
     readonly property int touchTargetSize: Math.max(44, Math.round(root.metrics.fontSize * 2.8))
     property string targetEditorValue: ""
+    property string pressureAdvanceEditorField: "advance"
+    property string pressureAdvanceEditorAdvanceValue: ""
+    property string pressureAdvanceEditorSmoothValue: ""
     signal extrudeActionRequested(string action, real distance, real speed)
     signal temperatureTargetRequested(string deviceName, real target)
+    signal pressureAdvanceRequested(real advance, real smoothTime)
 
     component ActionTile: Rectangle {
         id: tileRoot
@@ -323,6 +328,92 @@ Item {
         targetEditorPopup.close()
     }
 
+    function positionPressureAdvanceEditor() {
+        var parentWidth = pressureAdvancePopup.parent ? pressureAdvancePopup.parent.width : root.width
+        var parentHeight = pressureAdvancePopup.parent ? pressureAdvancePopup.parent.height : root.height
+        var margin = root.metrics.margin
+        if (root.metrics.portrait) {
+            pressureAdvancePopup.width = Math.min(parentWidth - margin * 2, Math.max(320, Math.round(parentWidth * 0.78)))
+            pressureAdvancePopup.height = Math.min(parentHeight - margin * 2, Math.max(420, Math.round(parentHeight * 0.86)))
+            pressureAdvancePopup.x = Math.round((parentWidth - pressureAdvancePopup.width) / 2)
+            pressureAdvancePopup.y = Math.round((parentHeight - pressureAdvancePopup.height) / 2)
+            return
+        }
+
+        var safeTop = Math.max(margin, Math.round(parentHeight * 0.18))
+        pressureAdvancePopup.width = Math.min(parentWidth - margin * 2, Math.max(620, Math.round(parentWidth * 0.58)))
+        pressureAdvancePopup.height = Math.min(parentHeight - safeTop - margin, Math.max(420, Math.round(parentHeight * 0.78)))
+        pressureAdvancePopup.x = Math.max(margin, parentWidth - pressureAdvancePopup.width - margin)
+        pressureAdvancePopup.y = Math.max(safeTop, parentHeight - pressureAdvancePopup.height - margin)
+    }
+
+    function openPressureAdvanceEditor() {
+        root.pressureAdvanceEditorField = "advance"
+        root.pressureAdvanceEditorAdvanceValue = root.extruderPressureAdvance.toFixed(3)
+        root.pressureAdvanceEditorSmoothValue = root.extruderSmoothTime.toFixed(3)
+        root.positionPressureAdvanceEditor()
+        pressureAdvancePopup.open()
+    }
+
+    function activePressureAdvanceValue() {
+        return root.pressureAdvanceEditorField === "smooth"
+            ? root.pressureAdvanceEditorSmoothValue
+            : root.pressureAdvanceEditorAdvanceValue
+    }
+
+    function setActivePressureAdvanceValue(value) {
+        if (root.pressureAdvanceEditorField === "smooth") {
+            root.pressureAdvanceEditorSmoothValue = value
+            return
+        }
+        root.pressureAdvanceEditorAdvanceValue = value
+    }
+
+    function appendPressureAdvanceDigit(digit) {
+        var value = root.activePressureAdvanceValue()
+        if (value.length >= 6) {
+            return
+        }
+        if (value === "0") {
+            root.setActivePressureAdvanceValue(digit)
+            return
+        }
+        root.setActivePressureAdvanceValue(value + digit)
+    }
+
+    function appendPressureAdvanceDecimal() {
+        var value = root.activePressureAdvanceValue()
+        if (value.indexOf(".") >= 0 || value.length >= 6) {
+            return
+        }
+        root.setActivePressureAdvanceValue(value.length > 0 ? value + "." : "0.")
+    }
+
+    function deletePressureAdvanceDigit() {
+        var value = root.activePressureAdvanceValue()
+        root.setActivePressureAdvanceValue(value.slice(0, -1))
+    }
+
+    function clearPressureAdvanceEditor() {
+        root.setActivePressureAdvanceValue("")
+    }
+
+    function confirmPressureAdvanceEditor() {
+        if (root.pressureAdvanceEditorAdvanceValue.length <= 0
+                || root.pressureAdvanceEditorSmoothValue.length <= 0) {
+            return
+        }
+        var advance = Math.max(0, Math.min(5, Number(root.pressureAdvanceEditorAdvanceValue)))
+        var smoothTime = Math.max(0, Math.min(1, Number(root.pressureAdvanceEditorSmoothValue)))
+        if (isNaN(advance) || isNaN(smoothTime)) {
+            return
+        }
+        root.pressureAdvanceEditorAdvanceValue = advance.toFixed(3)
+        root.pressureAdvanceEditorSmoothValue = smoothTime.toFixed(3)
+        root.pressureAdvanceRequested(advance, smoothTime)
+        pressureAdvancePopup.close()
+    }
+
     function openFeedSetup() {
         root.detailPage = "feed"
     }
@@ -364,14 +455,37 @@ Item {
                 anchors.margins: root.metrics.gap
                 spacing: root.metrics.gap
 
-                Label {
+                Rectangle {
                     id: nozzleTemperatureArea
                     Layout.fillWidth: true
-                    color: Theme.text
-                    text: "Nozzle " + root.extruderTemperature.toFixed(1) + "° / " + root.extruderTarget.toFixed(1) + "°"
-                    elide: Text.ElideRight
-                    font.bold: true
-                    font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.05))
+                    Layout.fillHeight: true
+                    color: "#101819"
+                    border.color: "#536165"
+                    border.width: 1
+                    radius: Math.round(root.metrics.fontSize * 0.28)
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: Math.max(6, Math.round(root.metrics.fontSize * 0.38))
+                        spacing: 0
+
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.mutedText
+                            text: "Nozzle"
+                            elide: Text.ElideRight
+                            font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.68))
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.text
+                            text: root.extruderTemperature.toFixed(1) + "° / " + root.extruderTarget.toFixed(1) + "°"
+                            elide: Text.ElideRight
+                            font.bold: true
+                            font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.05))
+                        }
+                    }
 
                     MouseArea {
                         anchors.fill: parent
@@ -379,14 +493,57 @@ Item {
                     }
                 }
 
-                Label {
-                    Layout.maximumWidth: Math.max(96, Math.round(parent.width * 0.34))
-                    color: Theme.mutedText
-                    text: root.controlFeedbackText()
-                    elide: Text.ElideRight
-                    maximumLineCount: 1
-                    wrapMode: Text.NoWrap
-                    font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.74))
+                Rectangle {
+                    id: pressureAdvanceArea
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    color: "#101819"
+                    border.color: "#536165"
+                    border.width: 1
+                    radius: Math.round(root.metrics.fontSize * 0.28)
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: Math.max(6, Math.round(root.metrics.fontSize * 0.38))
+                        spacing: 0
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: Math.max(6, Math.round(root.metrics.fontSize * 0.3))
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: Theme.mutedText
+                                text: "Pressure Advance"
+                                elide: Text.ElideRight
+                                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.68))
+                            }
+
+                            Label {
+                                color: Theme.mutedText
+                                text: root.controlFeedbackText()
+                                elide: Text.ElideRight
+                                maximumLineCount: 1
+                                visible: root.metrics.ultraWide
+                                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.68))
+                            }
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.text
+                            text: "ADV " + root.extruderPressureAdvance.toFixed(3)
+                                + " / SMT " + root.extruderSmoothTime.toFixed(3)
+                            elide: Text.ElideRight
+                            font.bold: true
+                            font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.05))
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: root.openPressureAdvanceEditor()
+                    }
                 }
             }
         }
@@ -579,18 +736,80 @@ Item {
                 anchors.margins: root.metrics.gap
                 spacing: root.metrics.gap
 
-                Label {
+                Rectangle {
                     id: nozzleTemperatureAreaPortrait
                     Layout.fillWidth: true
-                    color: Theme.text
-                    text: "Nozzle " + root.extruderTemperature.toFixed(1) + "° / " + root.extruderTarget.toFixed(1) + "°"
-                    elide: Text.ElideRight
-                    font.bold: true
-                    font.pixelSize: Math.max(15, Math.round(root.metrics.fontSize))
+                    Layout.fillHeight: true
+                    color: "#101819"
+                    border.color: "#536165"
+                    border.width: 1
+                    radius: Math.round(root.metrics.fontSize * 0.28)
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: Math.max(6, Math.round(root.metrics.fontSize * 0.38))
+                        spacing: 0
+
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.mutedText
+                            text: "Nozzle"
+                            elide: Text.ElideRight
+                            font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.68))
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.text
+                            text: root.extruderTemperature.toFixed(1) + "° / " + root.extruderTarget.toFixed(1) + "°"
+                            elide: Text.ElideRight
+                            font.bold: true
+                            font.pixelSize: Math.max(15, Math.round(root.metrics.fontSize))
+                        }
+                    }
 
                     MouseArea {
                         anchors.fill: parent
                         onClicked: root.openTargetEditor()
+                    }
+                }
+
+                Rectangle {
+                    id: pressureAdvanceAreaPortrait
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    color: "#101819"
+                    border.color: "#536165"
+                    border.width: 1
+                    radius: Math.round(root.metrics.fontSize * 0.28)
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: Math.max(6, Math.round(root.metrics.fontSize * 0.38))
+                        spacing: 0
+
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.mutedText
+                            text: "Pressure Advance"
+                            elide: Text.ElideRight
+                            font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.68))
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.text
+                            text: "ADV " + root.extruderPressureAdvance.toFixed(3)
+                                + " / SMT " + root.extruderSmoothTime.toFixed(3)
+                            elide: Text.ElideRight
+                            font.bold: true
+                            font.pixelSize: Math.max(15, Math.round(root.metrics.fontSize))
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: root.openPressureAdvanceEditor()
                     }
                 }
             }
@@ -830,6 +1049,191 @@ Item {
                         Layout.fillHeight: true
                         title: root.metrics.ultraWide ? "Unload Selected" : "Unload"
                         hint: "reserved"
+                    }
+                }
+            }
+        }
+    }
+
+    Popup {
+        id: pressureAdvancePopup
+        parent: Overlay.overlay
+        modal: true
+        focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        width: 620
+        height: 440
+        x: 0
+        y: 0
+        padding: Math.max(8, Math.round(root.metrics.fontSize * 0.7))
+
+        background: Rectangle {
+            color: "#101617"
+            border.color: Theme.color4
+            border.width: 2
+            radius: Math.round(root.metrics.fontSize * 0.45)
+        }
+
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: Math.max(6, Math.round(root.metrics.fontSize * 0.4))
+
+            Label {
+                Layout.fillWidth: true
+                color: Theme.text
+                text: "Pressure advance"
+                elide: Text.ElideRight
+                font.bold: true
+                font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.2))
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.preferredHeight: Math.max(root.touchTargetSize, Math.round(root.metrics.fontSize * 3.4))
+                spacing: Math.max(8, Math.round(root.metrics.fontSize * 0.5))
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    color: root.pressureAdvanceEditorField === "advance" ? "#1b2b2e" : "#050808"
+                    border.color: root.pressureAdvanceEditorField === "advance" ? root.selectedAccent : "#465456"
+                    border.width: 1
+                    radius: Math.round(root.metrics.fontSize * 0.3)
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: Math.max(8, Math.round(root.metrics.fontSize * 0.5))
+                        spacing: 0
+
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.mutedText
+                            text: "ADVANCE"
+                            font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.68))
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.text
+                            text: root.pressureAdvanceEditorAdvanceValue === ""
+                                ? "--"
+                                : root.pressureAdvanceEditorAdvanceValue
+                            horizontalAlignment: Text.AlignRight
+                            elide: Text.ElideRight
+                            font.bold: true
+                            font.pixelSize: Math.max(22, Math.round(root.metrics.fontSize * 1.5))
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: root.pressureAdvanceEditorField = "advance"
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    color: root.pressureAdvanceEditorField === "smooth" ? "#1b2b2e" : "#050808"
+                    border.color: root.pressureAdvanceEditorField === "smooth" ? root.selectedAccent : "#465456"
+                    border.width: 1
+                    radius: Math.round(root.metrics.fontSize * 0.3)
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: Math.max(8, Math.round(root.metrics.fontSize * 0.5))
+                        spacing: 0
+
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.mutedText
+                            text: "SMOOTH_TIME"
+                            font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.68))
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.text
+                            text: root.pressureAdvanceEditorSmoothValue === ""
+                                ? "--"
+                                : root.pressureAdvanceEditorSmoothValue
+                            horizontalAlignment: Text.AlignRight
+                            elide: Text.ElideRight
+                            font.bold: true
+                            font.pixelSize: Math.max(22, Math.round(root.metrics.fontSize * 1.5))
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: root.pressureAdvanceEditorField = "smooth"
+                    }
+                }
+
+                KeypadButton {
+                    Layout.preferredWidth: Math.max(root.touchTargetSize, Math.round(root.metrics.fontSize * 4.6))
+                    Layout.fillWidth: false
+                    text: "←"
+                    onClicked: root.deletePressureAdvanceDigit()
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                spacing: Math.max(8, Math.round(root.metrics.fontSize * 0.5))
+
+                GridLayout {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    columns: 3
+                    columnSpacing: Math.max(6, Math.round(root.metrics.fontSize * 0.4))
+                    rowSpacing: columnSpacing
+
+                    Repeater {
+                        model: [
+                            "1", "2", "3",
+                            "4", "5", "6",
+                            "7", "8", "9",
+                            ".", "0", "Clear"
+                        ]
+
+                        KeypadButton {
+                            required property string modelData
+                            text: modelData
+                            onClicked: {
+                                if (modelData === ".") {
+                                    root.appendPressureAdvanceDecimal()
+                                } else if (modelData === "Clear") {
+                                    root.clearPressureAdvanceEditor()
+                                } else {
+                                    root.appendPressureAdvanceDigit(modelData)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.preferredWidth: Math.max(root.touchTargetSize, Math.round(root.metrics.fontSize * 5.4))
+                    Layout.fillHeight: true
+                    spacing: Math.max(8, Math.round(root.metrics.fontSize * 0.5))
+
+                    KeypadButton {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        text: "Cancel"
+                        onClicked: pressureAdvancePopup.close()
+                    }
+
+                    KeypadButton {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        text: "Set"
+                        enabled: root.pressureAdvanceEditorAdvanceValue !== ""
+                            && root.pressureAdvanceEditorSmoothValue !== ""
+                        primary: true
+                        onClicked: root.confirmPressureAdvanceEditor()
                     }
                 }
             }

@@ -45,6 +45,8 @@ class JobControlClient(Protocol):
 
     def set_temperature_target(self, device_name: str, target: float) -> dict[str, object]: ...
 
+    def set_pressure_advance(self, advance: float, smooth_time: float) -> dict[str, object]: ...
+
 
 class JobControlModel(QObject):
     statusChanged = Signal()
@@ -187,6 +189,19 @@ class JobControlModel(QObject):
         self._run_control(
             "Temperature target",
             lambda client: client.set_temperature_target(clean_name, float(target)),
+        )
+
+    @Slot(float, float)
+    def requestPressureAdvance(self, advance: float, smooth_time: float) -> None:  # noqa: N802
+        if advance < 0 or advance > 5:
+            self._set_error("Pressure advance must be between 0 and 5")
+            return
+        if smooth_time < 0 or smooth_time > 1:
+            self._set_error("Smooth time must be between 0 and 1")
+            return
+        self._run_control(
+            "Pressure advance",
+            lambda client: client.set_pressure_advance(float(advance), float(smooth_time)),
         )
 
     @Slot(str)

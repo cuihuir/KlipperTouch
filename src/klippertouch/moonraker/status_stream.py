@@ -12,6 +12,7 @@ from klippertouch.qt_models.status_model import StatusModel
 
 SUBSCRIPTION_ID = 1
 TEMPERATURE_FIELDS = ["temperature", "target"]
+EXTRUDER_FIELDS = ["temperature", "target", "pressure_advance", "smooth_time"]
 PRINT_STATUS_FIELDS = {
     "print_stats": [
         "state",
@@ -218,7 +219,10 @@ class MoonrakerStatusStream(QObject):
 
 
 def _subscription_objects(status: PrinterStatus) -> dict[str, list[str]]:
-    objects = {device.name: TEMPERATURE_FIELDS for device in status.temperature_devices}
+    objects = {
+        device.name: _temperature_subscription_fields(device.name)
+        for device in status.temperature_devices
+    }
     objects.update(
         {
             name: fields
@@ -232,3 +236,9 @@ def _subscription_objects(status: PrinterStatus) -> dict[str, list[str]]:
         }
     )
     return objects
+
+
+def _temperature_subscription_fields(device_name: str) -> list[str]:
+    if device_name == "extruder":
+        return EXTRUDER_FIELDS
+    return TEMPERATURE_FIELDS

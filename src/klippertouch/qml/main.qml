@@ -50,6 +50,8 @@ ApplicationWindow {
     property real maxVelocity: bridgeModel ? bridgeModel.maxVelocity : 0
     property real extruderTemperature: bridgeModel ? bridgeModel.extruderTemperature : 0
     property real extruderTarget: bridgeModel ? bridgeModel.extruderTarget : 0
+    property real extruderPressureAdvance: bridgeModel ? bridgeModel.extruderPressureAdvance : 0
+    property real extruderSmoothTime: bridgeModel ? bridgeModel.extruderSmoothTime : 0
     property var excludeObjectNames: bridgeModel ? bridgeModel.excludeObjectNames : []
     property var excludedObjectNames: bridgeModel ? bridgeModel.excludedObjectNames : []
     property string currentObject: bridgeModel ? bridgeModel.currentObject : ""
@@ -573,6 +575,8 @@ ApplicationWindow {
                 metrics: appMetrics
                 extruderTemperature: window.extruderTemperature
                 extruderTarget: window.extruderTarget
+                extruderPressureAdvance: window.extruderPressureAdvance
+                extruderSmoothTime: window.extruderSmoothTime
                 positionE: window.positionE
                 controlStatus: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastStatus : ""
                 controlError: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastError : ""
@@ -581,6 +585,11 @@ ApplicationWindow {
                 }
                 onTemperatureTargetRequested: function(deviceName, target) {
                     window.requestTemperatureTarget(deviceName, target)
+                }
+                onPressureAdvanceRequested: function(advance, smoothTime) {
+                    if (window.jobControlBridgeModel) {
+                        jobControlBridgeModel.requestPressureAdvance(advance, smoothTime)
+                    }
                 }
             }
         }

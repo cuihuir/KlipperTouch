@@ -767,6 +767,8 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
 
     assert "property real extruderTemperature" in qml
     assert "property real extruderTarget" in qml
+    assert "property real extruderPressureAdvance" in qml
+    assert "property real extruderSmoothTime" in qml
     assert "property real positionE" in qml
     assert 'readonly property color selectedAccent: "#7f9298"' in qml
     assert "property string selectedDistance" in qml
@@ -790,11 +792,18 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
         in qml
     )
     assert 'signal temperatureTargetRequested(string deviceName, real target)' in qml
+    assert "signal pressureAdvanceRequested(real advance, real smoothTime)" in qml
     assert "function openTargetEditor()" in qml
     assert "function confirmTargetEditor()" in qml
+    assert "function openPressureAdvanceEditor()" in qml
+    assert "function confirmPressureAdvanceEditor()" in qml
+    assert "isNaN(advance) || isNaN(smoothTime)" in qml
     assert 'root.temperatureTargetRequested("extruder", value)' in qml
+    assert "root.pressureAdvanceRequested(advance, smoothTime)" in qml
     assert "id: nozzleTemperatureArea" in qml
+    assert "id: pressureAdvanceArea" in qml
     assert "id: targetEditorPopup" in qml
+    assert "id: pressureAdvancePopup" in qml
     assert "id: targetKeypadGrid" in qml
     assert "id: landscapeTargetEditor" in qml
     assert "id: landscapeHeaderRow" in qml
@@ -817,7 +826,7 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert '"label": "Unload"' in qml
     assert '"label": "Temperature"' not in qml
     assert '"Set Temp"' not in qml
-    assert '"label": "Pressure Advance"' in qml
+    assert '"action": "pressure_advance"' not in qml
     assert '"label": "Retraction"' in qml
     assert '"label": "Materials"' in qml
     assert '"action": "materials"' in qml
@@ -841,6 +850,8 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "root.selectedSpeed === modelData" in qml
     assert "root.extruderTemperature.toFixed(1)" in qml
     assert "root.extruderTarget.toFixed(1)" in qml
+    assert "root.extruderPressureAdvance.toFixed(3)" in qml
+    assert "root.extruderSmoothTime.toFixed(3)" in qml
     assert "root.positionE.toFixed(2)" in qml
     assert "property string controlStatus" in qml
     assert "property string controlError" in qml
@@ -858,11 +869,15 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
 
     assert "property real extruderTemperature:" in main_qml
     assert "property real extruderTarget:" in main_qml
+    assert "property real extruderPressureAdvance:" in main_qml
+    assert "property real extruderSmoothTime:" in main_qml
     assert "property var excludeObjectNames:" in main_qml
     assert "property var excludedObjectNames:" in main_qml
     assert "property string currentObject:" in main_qml
     assert "extruderTemperature: window.extruderTemperature" in main_qml
     assert "extruderTarget: window.extruderTarget" in main_qml
+    assert "extruderPressureAdvance: window.extruderPressureAdvance" in main_qml
+    assert "extruderSmoothTime: window.extruderSmoothTime" in main_qml
     assert (
         'controlStatus: window.jobControlBridgeModel ? '
         'window.jobControlBridgeModel.lastStatus : ""'
@@ -873,7 +888,9 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     ) in main_qml
     assert "onExtrudeActionRequested: function(action, distance, speed)" in main_qml
     assert "onTemperatureTargetRequested: function(deviceName, target)" in main_qml
+    assert "onPressureAdvanceRequested: function(advance, smoothTime)" in main_qml
     assert "window.requestTemperatureTarget(deviceName, target)" in main_qml
+    assert "jobControlBridgeModel.requestPressureAdvance(advance, smoothTime)" in main_qml
     assert "onTemperaturePanelRequested" not in main_qml
     assert "jobControlBridgeModel.requestExtrudeFilament(action, distance, speed)" in main_qml
     assert "jobControlBridgeModel.requestLoadFilament(speed)" in main_qml

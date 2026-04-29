@@ -36,7 +36,7 @@ def test_build_temperature_subscription_message_uses_read_only_objects_method() 
         "method": "printer.objects.subscribe",
         "params": {
             "objects": {
-                "extruder": ["temperature", "target"],
+                "extruder": ["temperature", "target", "pressure_advance", "smooth_time"],
                 "heater_bed": ["temperature", "target"],
                 "print_stats": [
                     "state",
@@ -216,7 +216,12 @@ def test_status_from_websocket_message_applies_subscription_snapshot() -> None:
             "jsonrpc": "2.0",
             "result": {
                 "status": {
-                    "extruder": {"temperature": 24.3, "target": 0.0},
+                    "extruder": {
+                        "temperature": 24.3,
+                        "target": 0.0,
+                        "pressure_advance": 0.045,
+                        "smooth_time": 0.04,
+                    },
                     "heater_bed": {"temperature": 26.7, "target": 60.0},
                     "print_stats": {
                         "state": "printing",
@@ -249,6 +254,8 @@ def test_status_from_websocket_message_applies_subscription_snapshot() -> None:
     assert updated is not None
     assert tuple(device.temperature for device in updated.temperature_devices) == (24.3, 26.7)
     assert tuple(device.target for device in updated.temperature_devices) == (0.0, 60.0)
+    assert updated.extruder_pressure_advance == 0.045
+    assert updated.extruder_smooth_time == 0.04
     assert updated.print_state == "printing"
     assert updated.print_filename == "cube.gcode"
     assert updated.print_progress == 25.0

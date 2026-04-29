@@ -111,6 +111,8 @@ class PrinterStatus:
     z_offset: float = 0.0
     max_accel: float = 0.0
     max_velocity: float = 0.0
+    extruder_pressure_advance: float = 0.0
+    extruder_smooth_time: float = 0.0
     webhooks_state: str = ""
     webhooks_message: str = ""
 
@@ -163,6 +165,16 @@ class PrinterStatus:
         object.__setattr__(self, "z_offset", _optional_float(self.z_offset) or 0.0)
         object.__setattr__(self, "max_accel", _optional_float(self.max_accel) or 0.0)
         object.__setattr__(self, "max_velocity", _optional_float(self.max_velocity) or 0.0)
+        object.__setattr__(
+            self,
+            "extruder_pressure_advance",
+            _optional_float(self.extruder_pressure_advance) or 0.0,
+        )
+        object.__setattr__(
+            self,
+            "extruder_smooth_time",
+            _optional_float(self.extruder_smooth_time) or 0.0,
+        )
         object.__setattr__(self, "webhooks_state", str(self.webhooks_state or ""))
         object.__setattr__(self, "webhooks_message", str(self.webhooks_message or ""))
 
@@ -244,6 +256,7 @@ class PrinterStatus:
             **_print_fields_from_status(object_status or {}),
             **_exclude_object_fields_from_status(object_status or {}),
             **_toolhead_fields_from_status(object_status or {}),
+            **_extruder_fields_from_status(object_status or {}),
             **webhooks_fields,
         )
 
@@ -298,6 +311,11 @@ class PrinterStatus:
             "max_velocity": self.max_velocity,
         }
         toolhead_fields.update(_toolhead_fields_from_status({"status": status_update}))
+        extruder_fields = {
+            "extruder_pressure_advance": self.extruder_pressure_advance,
+            "extruder_smooth_time": self.extruder_smooth_time,
+        }
+        extruder_fields.update(_extruder_fields_from_status({"status": status_update}))
         webhooks_fields: WebhooksStatusFields = {
             "webhooks_state": self.webhooks_state,
             "webhooks_message": self.webhooks_message,
@@ -332,6 +350,7 @@ class PrinterStatus:
             **print_fields,
             **exclude_object_fields,
             **toolhead_fields,
+            **extruder_fields,
             **webhooks_fields,
         )
 
@@ -444,6 +463,22 @@ def _temperature_device_from_object(
             target=target,
         )
     return None
+
+
+def _extruder_fields_from_status(object_status: dict[str, Any]) -> dict[str, float]:
+    status = object_status.get("status", {})
+    if not isinstance(status, dict):
+        return {}
+    extruder = status.get("extruder", {})
+    if not isinstance(extruder, dict):
+        return {}
+
+    fields: dict[str, float] = {}
+    if "pressure_advance" in extruder:
+        fields["extruder_pressure_advance"] = _optional_float(extruder["pressure_advance"]) or 0.0
+    if "smooth_time" in extruder:
+        fields["extruder_smooth_time"] = _optional_float(extruder["smooth_time"]) or 0.0
+    return fields
 
 
 def _prettify_name(name: str) -> str:

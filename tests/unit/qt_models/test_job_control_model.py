@@ -86,6 +86,10 @@ class FakeClient:
         self.calls.append(("temperature_target", f"{device_name}:{target}"))
         return {"ok": True}
 
+    def set_pressure_advance(self, advance: float, smooth_time: float) -> dict[str, bool]:
+        self.calls.append(("pressure_advance", f"{advance}:{smooth_time}"))
+        return {"ok": True}
+
 
 class BlockingClient(FakeClient):
     def pause_print(self) -> dict[str, bool]:
@@ -340,6 +344,29 @@ def test_job_control_model_rejects_invalid_temperature_targets(qtbot) -> None:
     model.requestTemperatureTarget("extruder", 351)
     assert client.calls == []
     assert model.lastError == "Temperature target must be between 0 and 350"
+
+
+def test_job_control_model_sends_pressure_advance_request(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestPressureAdvance(0.045, 0.04)
+
+    assert client.calls == [("pressure_advance", "0.045:0.04")]
+    assert model.lastStatus == "Pressure advance sent"
+
+
+def test_job_control_model_rejects_invalid_pressure_advance(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestPressureAdvance(-0.001, 0.04)
+    assert client.calls == []
+    assert model.lastError == "Pressure advance must be between 0 and 5"
+
+    model.requestPressureAdvance(0.045, 1.001)
+    assert client.calls == []
+    assert model.lastError == "Smooth time must be between 0 and 1"
 
 
 def test_job_control_model_reports_placeholder_recovery_actions(qtbot) -> None:

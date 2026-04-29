@@ -196,6 +196,11 @@ class MoonrakerClient:
             f'SET_HEATER_TEMPERATURE heater="{clean_name}" target={target:.0f}'
         )
 
+    def set_pressure_advance(self, advance: float, smooth_time: float) -> dict[str, Any]:
+        return self.run_gcode_script(
+            f"SET_PRESSURE_ADVANCE ADVANCE={advance:.3f} SMOOTH_TIME={smooth_time:.3f}"
+        )
+
     def delete_gcode_file(self, filename: str) -> dict[str, Any]:
         return self.delete(f"server/files/gcodes/{filename.strip('/')}")
 
@@ -247,6 +252,8 @@ class MoonrakerClient:
 
 
 def _query_fields_for_object(name: str) -> str:
+    if name == "extruder":
+        return "temperature,target,pressure_advance,smooth_time"
     if name == "print_stats":
         return "state,filename,print_duration,total_duration,filament_used,info"
     if name == "display_status":

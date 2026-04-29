@@ -130,6 +130,27 @@ def test_printer_status_populates_temperature_values_from_status_query() -> None
     assert tuple(device.target for device in status.temperature_devices) == (0.0, 60.0)
 
 
+def test_printer_status_populates_primary_extruder_pressure_advance() -> None:
+    status = PrinterStatus.from_probe(
+        server_info={"moonraker_version": "v0.10.0", "klippy_state": "ready"},
+        printer_info={"state": "ready", "hostname": "orangepi3b", "software_version": "v0.13.0"},
+        objects={"objects": ["extruder"]},
+        object_status={
+            "status": {
+                "extruder": {
+                    "temperature": 24.3,
+                    "target": 0.0,
+                    "pressure_advance": 0.045,
+                    "smooth_time": 0.04,
+                },
+            }
+        },
+    )
+
+    assert status.extruder_pressure_advance == 0.045
+    assert status.extruder_smooth_time == 0.04
+
+
 def test_printer_status_populates_mcu_and_service_versions() -> None:
     status = PrinterStatus.from_probe(
         server_info={
@@ -211,6 +232,21 @@ def test_printer_status_applies_read_only_temperature_update() -> None:
     assert updated.objects == ("extruder", "heater_bed")
     assert tuple(device.temperature for device in updated.temperature_devices) == (25.1, 26.7)
     assert tuple(device.target for device in updated.temperature_devices) == (0.0, 55.0)
+
+
+def test_printer_status_applies_primary_extruder_pressure_advance_update() -> None:
+    status = PrinterStatus(
+        objects=("extruder",),
+        extruder_pressure_advance=0.02,
+        extruder_smooth_time=0.03,
+    )
+
+    updated = status.with_status_update(
+        {"extruder": {"pressure_advance": 0.055, "smooth_time": 0.04}}
+    )
+
+    assert updated.extruder_pressure_advance == 0.055
+    assert updated.extruder_smooth_time == 0.04
 
 
 def test_printer_status_update_preserves_static_version_metadata() -> None:

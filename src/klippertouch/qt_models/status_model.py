@@ -668,6 +668,14 @@ class StatusModel(QObject):
     def extruderTarget(self) -> float:
         return self._status.primary_extruder_target
 
+    @Property(float, notify=extruderTemperatureChanged)
+    def extruderPressureAdvance(self) -> float:  # noqa: N802
+        return self._status.extruder_pressure_advance
+
+    @Property(float, notify=extruderTemperatureChanged)
+    def extruderSmoothTime(self) -> float:  # noqa: N802
+        return self._status.extruder_smooth_time
+
 
 def _host_fields_changed(previous: PrinterStatus, current: PrinterStatus) -> bool:
     return (
@@ -774,9 +782,13 @@ def _primary_extruder_fields_changed(previous: PrinterStatus, current: PrinterSt
     return (
         previous.primary_extruder_temperature,
         previous.primary_extruder_target,
+        previous.extruder_pressure_advance,
+        previous.extruder_smooth_time,
     ) != (
         current.primary_extruder_temperature,
         current.primary_extruder_target,
+        current.extruder_pressure_advance,
+        current.extruder_smooth_time,
     )
 
 

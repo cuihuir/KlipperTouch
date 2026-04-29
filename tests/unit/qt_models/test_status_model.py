@@ -54,6 +54,8 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
         z_offset=-0.04,
         max_accel=3000.0,
         max_velocity=250.0,
+        extruder_pressure_advance=0.045,
+        extruder_smooth_time=0.04,
     )
 
     with qtbot.waitSignal(model.statusChanged, timeout=1000):
@@ -100,6 +102,8 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
     assert model.maxVelocity == 250.0
     assert model.extruderTemperature == 212.4
     assert model.extruderTarget == 215.0
+    assert model.extruderPressureAdvance == 0.045
+    assert model.extruderSmoothTime == 0.04
 
 
 def test_status_model_exposes_webhooks_shutdown_fields(qtbot) -> None:
@@ -191,6 +195,29 @@ def test_status_model_emits_granular_temperature_signal_without_global_property_
     assert object_changes == []
     assert toolhead_changes == []
     assert model.extruderTemperature == 212.0
+
+
+def test_status_model_emits_extruder_signal_for_pressure_advance(qtbot) -> None:
+    model = StatusModel()
+    model.set_status(
+        PrinterStatus(
+            objects=("extruder",),
+            extruder_pressure_advance=0.02,
+            extruder_smooth_time=0.03,
+        )
+    )
+
+    with qtbot.waitSignal(model.extruderTemperatureChanged, timeout=1000):
+        model.set_status(
+            PrinterStatus(
+                objects=("extruder",),
+                extruder_pressure_advance=0.045,
+                extruder_smooth_time=0.04,
+            )
+        )
+
+    assert model.extruderPressureAdvance == 0.045
+    assert model.extruderSmoothTime == 0.04
 
 
 def test_status_model_emits_granular_print_signal_without_host_or_temperature_churn(
