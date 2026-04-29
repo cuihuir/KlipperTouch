@@ -233,7 +233,7 @@ Item {
                     Label {
                         Layout.fillWidth: true
                         color: Theme.mutedText
-                        text: root.positionE.toFixed(2) + " mm"
+                        text: root.nozzleDetailText()
                         horizontalAlignment: Text.AlignHCenter
                         elide: Text.ElideRight
                         font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.72))
@@ -473,9 +473,48 @@ Item {
         return root.printerReady() && root.extruderCanExtrude
     }
 
+    function nozzleHeating() {
+        return root.printerReady()
+            && !root.extruderCanExtrude
+            && root.extruderTarget > 0
+    }
+
+    function nozzleStateText() {
+        if (!root.printerReady()) {
+            return "Printer not ready"
+        }
+        if (root.extruderCanExtrude) {
+            return "Ready to extrude"
+        }
+        if (root.nozzleHeating()) {
+            return "Heating nozzle"
+        }
+        return "Heat nozzle first"
+    }
+
+    function nozzleDetailStateText() {
+        if (!root.printerReady()) {
+            return "Not ready"
+        }
+        if (root.extruderCanExtrude) {
+            return "Ready"
+        }
+        if (root.nozzleHeating()) {
+            return "Heating"
+        }
+        return "Cold"
+    }
+
+    function nozzleDetailText() {
+        return root.nozzleDetailStateText() + " · E " + root.positionE.toFixed(2) + " mm"
+    }
+
     function extrusionGuardText() {
         if (!root.printerReady()) {
             return "Printer not ready"
+        }
+        if (root.nozzleHeating()) {
+            return "Heating nozzle"
         }
         return "Heat nozzle first"
     }

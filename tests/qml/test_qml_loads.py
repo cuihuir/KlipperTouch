@@ -884,12 +884,22 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "root.extruderPressureAdvance.toFixed(3)" in qml
     assert "root.extruderSmoothTime.toFixed(3)" in qml
     assert "root.positionE.toFixed(2)" in qml
+    assert "function nozzleHeating()" in qml
+    assert "function nozzleStateText()" in qml
+    assert "function nozzleDetailStateText()" in qml
+    assert "function nozzleDetailText()" in qml
     assert "property string controlStatus" in qml
     assert "property string controlError" in qml
     assert "function controlFeedbackText()" in qml
     assert "function printerReady()" in qml
     assert "function extrusionAllowed()" in qml
     assert "function extrusionGuardText()" in qml
+    assert 'return "Heating nozzle"' in qml
+    assert 'return "Ready to extrude"' in qml
+    assert (
+        'return root.nozzleDetailStateText() + " · E " '
+        '+ root.positionE.toFixed(2) + " mm"'
+    ) in qml
     assert "enabled: root.extrusionAllowed()" in qml
     assert "hint: root.extrusionAllowed() ? \"pull back\" : root.extrusionGuardText()" in qml
     assert "hint: root.extrusionAllowed() ? \"push filament\" : root.extrusionGuardText()" in qml
