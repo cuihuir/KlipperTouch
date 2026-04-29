@@ -25,6 +25,7 @@ def test_build_temperature_subscription_message_uses_read_only_objects_method() 
             "gcode_move",
             "exclude_object",
             "webhooks",
+            "filament_switch_sensor runout",
         )
     )
     client = MoonrakerClient(PrinterConfig(name="p", moonraker_host="host"))
@@ -57,6 +58,7 @@ def test_build_temperature_subscription_message_uses_read_only_objects_method() 
                     "speed_factor",
                     "extrude_factor",
                 ],
+                "filament_switch_sensor runout": ["enabled", "filament_detected"],
             }
         },
         "id": 1,
@@ -209,6 +211,7 @@ def test_status_from_websocket_message_applies_subscription_snapshot() -> None:
             "display_status",
             "gcode_move",
             "exclude_object",
+            "filament_switch_sensor runout",
         )
     )
     message = json.dumps(
@@ -243,6 +246,10 @@ def test_status_from_websocket_message_applies_subscription_snapshot() -> None:
                         "excluded_objects": ["part_a"],
                         "current_object": "part_b",
                     },
+                    "filament_switch_sensor runout": {
+                        "enabled": True,
+                        "filament_detected": False,
+                    },
                 }
             },
             "id": 1,
@@ -275,6 +282,8 @@ def test_status_from_websocket_message_applies_subscription_snapshot() -> None:
     assert updated.exclude_object_names == ("part_a", "part_b")
     assert updated.excluded_object_names == ("part_a",)
     assert updated.current_object == "part_b"
+    assert updated.filament_sensors[0].display_name == "Runout"
+    assert updated.filament_sensors[0].filament_detected is False
 
 
 def test_status_from_websocket_message_ignores_unrelated_messages() -> None:

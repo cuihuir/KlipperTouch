@@ -1,6 +1,7 @@
 from PySide6.QtCore import QSettings, Qt
 
 from klippertouch.domain.printer import (
+    FilamentSensorStatus,
     McuStatus,
     PrinterStatus,
     ServiceVersionStatus,
@@ -56,6 +57,15 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
         max_velocity=250.0,
         extruder_pressure_advance=0.045,
         extruder_smooth_time=0.04,
+        filament_sensors=(
+            FilamentSensorStatus(
+                name="filament_switch_sensor runout",
+                display_name="Runout",
+                sensor_type="switch",
+                enabled=True,
+                filament_detected=False,
+            ),
+        ),
     )
 
     with qtbot.waitSignal(model.statusChanged, timeout=1000):
@@ -104,6 +114,16 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
     assert model.extruderTarget == 215.0
     assert model.extruderPressureAdvance == 0.045
     assert model.extruderSmoothTime == 0.04
+    assert model.filamentSensorCount == 1
+    assert model.filamentSensors == [
+        {
+            "name": "filament_switch_sensor runout",
+            "display_name": "Runout",
+            "sensor_type": "switch",
+            "enabled": True,
+            "filament_detected": False,
+        }
+    ]
 
 
 def test_status_model_exposes_webhooks_shutdown_fields(qtbot) -> None:
@@ -218,6 +238,40 @@ def test_status_model_emits_extruder_signal_for_pressure_advance(qtbot) -> None:
 
     assert model.extruderPressureAdvance == 0.045
     assert model.extruderSmoothTime == 0.04
+
+
+def test_status_model_emits_filament_sensor_signal(qtbot) -> None:
+    model = StatusModel()
+    model.set_status(
+        PrinterStatus(
+            filament_sensors=(
+                FilamentSensorStatus(
+                    name="filament_switch_sensor runout",
+                    display_name="Runout",
+                    sensor_type="switch",
+                    enabled=True,
+                    filament_detected=True,
+                ),
+            )
+        )
+    )
+
+    with qtbot.waitSignal(model.filamentSensorChanged, timeout=1000):
+        model.set_status(
+            PrinterStatus(
+                filament_sensors=(
+                    FilamentSensorStatus(
+                        name="filament_switch_sensor runout",
+                        display_name="Runout",
+                        sensor_type="switch",
+                        enabled=True,
+                        filament_detected=False,
+                    ),
+                )
+            )
+        )
+
+    assert model.filamentSensors[0]["filament_detected"] is False
 
 
 def test_status_model_emits_granular_print_signal_without_host_or_temperature_churn(

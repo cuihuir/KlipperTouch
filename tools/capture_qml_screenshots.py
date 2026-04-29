@@ -16,6 +16,7 @@ from PySide6.QtQuick import QQuickWindow  # noqa: F401
 
 from klippertouch.app import create_gcode_file_model, create_status_models
 from klippertouch.domain.printer import (
+    FilamentSensorStatus,
     McuStatus,
     PrinterStatus,
     ServiceVersionStatus,
@@ -93,6 +94,7 @@ SAMPLE_STATUS = {
         "toolhead",
         "gcode_move",
         "exclude_object",
+        "filament_switch_sensor runout",
     ),
     "temperature_devices": (
         TemperatureDeviceStatus(
@@ -133,6 +135,15 @@ SAMPLE_STATUS = {
     "z_offset": -0.02,
     "max_accel": 3000.0,
     "max_velocity": 250.0,
+    "filament_sensors": (
+        FilamentSensorStatus(
+            name="filament_switch_sensor runout",
+            display_name="Runout",
+            sensor_type="switch",
+            enabled=True,
+            filament_detected=True,
+        ),
+    ),
 }
 SAMPLE_HISTORY = ((205.0, 56.0), (208.0, 57.0), (211.8, 58.4))
 SAMPLE_STATES = ("printing", "paused", "complete", "cancelled", "error")

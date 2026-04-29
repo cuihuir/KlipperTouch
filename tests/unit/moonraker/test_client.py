@@ -124,6 +124,42 @@ def test_client_gets_printer_objects_query(monkeypatch) -> None:
     }
 
 
+def test_client_queries_filament_sensor_fields(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            pass
+
+        def json(self) -> dict[str, object]:
+            return {"result": {"status": {}}}
+
+    def fake_get(
+        url: str,
+        *,
+        headers: dict[str, str],
+        params: dict[str, str] | None,
+        timeout: float,
+    ) -> FakeResponse:
+        captured["url"] = url
+        captured["headers"] = headers
+        captured["params"] = params
+        captured["timeout"] = timeout
+        return FakeResponse()
+
+    monkeypatch.setattr("klippertouch.moonraker.client.requests.get", fake_get)
+
+    client = MoonrakerClient(PrinterConfig(name="p", moonraker_host="host"))
+
+    assert client.get_printer_objects_query(
+        ("filament_switch_sensor runout", "filament_motion_sensor encoder")
+    ) == {"status": {}}
+    assert captured["params"] == {
+        "filament_switch_sensor runout": "enabled,filament_detected",
+        "filament_motion_sensor encoder": "enabled,filament_detected",
+    }
+
+
 def test_client_queries_webhooks_state_fields(monkeypatch) -> None:
     captured: dict[str, object] = {}
 

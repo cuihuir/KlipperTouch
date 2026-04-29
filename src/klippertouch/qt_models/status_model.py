@@ -435,6 +435,7 @@ class StatusModel(QObject):
     excludeObjectChanged = Signal()
     toolheadChanged = Signal()
     extruderTemperatureChanged = Signal()
+    filamentSensorChanged = Signal()
 
     def __init__(
         self,
@@ -468,6 +469,8 @@ class StatusModel(QObject):
             self.toolheadChanged.emit()
         if _primary_extruder_fields_changed(previous, status):
             self.extruderTemperatureChanged.emit()
+        if _filament_sensor_fields_changed(previous, status):
+            self.filamentSensorChanged.emit()
         if previous != status:
             self.statusChanged.emit()
 
@@ -559,6 +562,23 @@ class StatusModel(QObject):
     @Property(int, notify=objectsChanged)
     def temperatureDeviceCount(self) -> int:
         return self._status.temperature_device_count
+
+    @Property(int, notify=filamentSensorChanged)
+    def filamentSensorCount(self) -> int:  # noqa: N802
+        return self._status.filament_sensor_count
+
+    @Property(list, notify=filamentSensorChanged)
+    def filamentSensors(self) -> list[dict[str, object]]:  # noqa: N802
+        return [
+            {
+                "name": sensor.name,
+                "display_name": sensor.display_name,
+                "sensor_type": sensor.sensor_type,
+                "enabled": sensor.enabled,
+                "filament_detected": sensor.filament_detected,
+            }
+            for sensor in self._status.filament_sensors
+        ]
 
     @Property(str, notify=printChanged)
     def printState(self) -> str:
@@ -712,6 +732,10 @@ def _object_fields_changed(previous: PrinterStatus, current: PrinterStatus) -> b
         current.objects,
         current_device_names,
     )
+
+
+def _filament_sensor_fields_changed(previous: PrinterStatus, current: PrinterStatus) -> bool:
+    return previous.filament_sensors != current.filament_sensors
 
 
 def _print_fields_changed(previous: PrinterStatus, current: PrinterStatus) -> bool:

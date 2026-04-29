@@ -769,6 +769,7 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "property real extruderTarget" in qml
     assert "property real extruderPressureAdvance" in qml
     assert "property real extruderSmoothTime" in qml
+    assert "property var filamentSensors" in qml
     assert "property real positionE" in qml
     assert 'readonly property color selectedAccent: "#7f9298"' in qml
     assert "property string selectedDistance" in qml
@@ -856,6 +857,10 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "property string controlStatus" in qml
     assert "property string controlError" in qml
     assert "function controlFeedbackText()" in qml
+    assert "function filamentSensorSummary()" in qml
+    assert "root.filamentSensors.length" in qml
+    assert "model: root.filamentSensors" in qml
+    assert "modelData.filament_detected" in qml
     assert "root.controlFeedbackText()" in qml
     assert "Theme.color3" not in qml
     assert (
@@ -871,6 +876,7 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "property real extruderTarget:" in main_qml
     assert "property real extruderPressureAdvance:" in main_qml
     assert "property real extruderSmoothTime:" in main_qml
+    assert "property var filamentSensors:" in main_qml
     assert "property var excludeObjectNames:" in main_qml
     assert "property var excludedObjectNames:" in main_qml
     assert "property string currentObject:" in main_qml
@@ -878,6 +884,7 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "extruderTarget: window.extruderTarget" in main_qml
     assert "extruderPressureAdvance: window.extruderPressureAdvance" in main_qml
     assert "extruderSmoothTime: window.extruderSmoothTime" in main_qml
+    assert "filamentSensors: window.filamentSensors" in main_qml
     assert (
         'controlStatus: window.jobControlBridgeModel ? '
         'window.jobControlBridgeModel.lastStatus : ""'

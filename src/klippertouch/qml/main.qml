@@ -52,6 +52,7 @@ ApplicationWindow {
     property real extruderTarget: bridgeModel ? bridgeModel.extruderTarget : 0
     property real extruderPressureAdvance: bridgeModel ? bridgeModel.extruderPressureAdvance : 0
     property real extruderSmoothTime: bridgeModel ? bridgeModel.extruderSmoothTime : 0
+    property var filamentSensors: bridgeModel ? bridgeModel.filamentSensors : []
     property var excludeObjectNames: bridgeModel ? bridgeModel.excludeObjectNames : []
     property var excludedObjectNames: bridgeModel ? bridgeModel.excludedObjectNames : []
     property string currentObject: bridgeModel ? bridgeModel.currentObject : ""
@@ -577,6 +578,7 @@ ApplicationWindow {
                 extruderTarget: window.extruderTarget
                 extruderPressureAdvance: window.extruderPressureAdvance
                 extruderSmoothTime: window.extruderSmoothTime
+                filamentSensors: window.filamentSensors
                 positionE: window.positionE
                 controlStatus: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastStatus : ""
                 controlError: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastError : ""

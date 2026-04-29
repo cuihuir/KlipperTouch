@@ -41,6 +41,7 @@ EXCLUDE_OBJECT_STATUS_FIELDS = {
 WEBHOOKS_STATUS_FIELDS = {
     "webhooks": ["state", "state_message"],
 }
+FILAMENT_SENSOR_FIELDS = ["enabled", "filament_detected"]
 
 
 def build_websocket_request(client: MoonrakerClient) -> QNetworkRequest:
@@ -233,6 +234,13 @@ def _subscription_objects(status: PrinterStatus) -> dict[str, list[str]]:
                 | WEBHOOKS_STATUS_FIELDS
             ).items()
             if name in status.objects
+        }
+    )
+    objects.update(
+        {
+            name: FILAMENT_SENSOR_FIELDS
+            for name in status.objects
+            if name.startswith(("filament_switch_sensor ", "filament_motion_sensor "))
         }
     )
     return objects

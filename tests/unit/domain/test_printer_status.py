@@ -1,4 +1,5 @@
 from klippertouch.domain.printer import (
+    FilamentSensorStatus,
     McuStatus,
     PrinterStatus,
     ServiceVersionStatus,
@@ -151,6 +152,50 @@ def test_printer_status_populates_primary_extruder_pressure_advance() -> None:
     assert status.extruder_smooth_time == 0.04
 
 
+def test_printer_status_populates_filament_sensor_values_from_status_query() -> None:
+    status = PrinterStatus.from_probe(
+        server_info={"moonraker_version": "v0.10.0", "klippy_state": "ready"},
+        printer_info={"state": "ready", "hostname": "orangepi3b", "software_version": "v0.13.0"},
+        objects={
+            "objects": [
+                "extruder",
+                "filament_switch_sensor runout",
+                "filament_motion_sensor encoder",
+            ]
+        },
+        object_status={
+            "status": {
+                "filament_switch_sensor runout": {
+                    "enabled": True,
+                    "filament_detected": False,
+                },
+                "filament_motion_sensor encoder": {
+                    "enabled": False,
+                    "filament_detected": True,
+                },
+            }
+        },
+    )
+
+    assert status.filament_sensor_count == 2
+    assert status.filament_sensors == (
+        FilamentSensorStatus(
+            name="filament_motion_sensor encoder",
+            display_name="Encoder",
+            sensor_type="motion",
+            enabled=False,
+            filament_detected=True,
+        ),
+        FilamentSensorStatus(
+            name="filament_switch_sensor runout",
+            display_name="Runout",
+            sensor_type="switch",
+            enabled=True,
+            filament_detected=False,
+        ),
+    )
+
+
 def test_printer_status_populates_mcu_and_service_versions() -> None:
     status = PrinterStatus.from_probe(
         server_info={
@@ -247,6 +292,29 @@ def test_printer_status_applies_primary_extruder_pressure_advance_update() -> No
 
     assert updated.extruder_pressure_advance == 0.055
     assert updated.extruder_smooth_time == 0.04
+
+
+def test_printer_status_applies_filament_sensor_update() -> None:
+    status = PrinterStatus.from_probe(
+        server_info={"moonraker_version": "v0.10.0", "klippy_state": "ready"},
+        printer_info={"state": "ready", "hostname": "orangepi3b", "software_version": "v0.13.0"},
+        objects={"objects": ["filament_switch_sensor runout"]},
+        object_status={
+            "status": {
+                "filament_switch_sensor runout": {
+                    "enabled": True,
+                    "filament_detected": True,
+                }
+            }
+        },
+    )
+
+    updated = status.with_status_update(
+        {"filament_switch_sensor runout": {"filament_detected": False}}
+    )
+
+    assert updated.filament_sensors[0].enabled is True
+    assert updated.filament_sensors[0].filament_detected is False
 
 
 def test_printer_status_update_preserves_static_version_metadata() -> None:

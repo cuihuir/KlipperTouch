@@ -38,6 +38,7 @@ Item {
     property real extruderTarget: 0
     property real extruderPressureAdvance: 0
     property real extruderSmoothTime: 0
+    property var filamentSensors: []
     property real positionE: 0
     property string controlStatus: ""
     property string controlError: ""
@@ -436,6 +437,37 @@ Item {
         return "Extrusion ready"
     }
 
+    function filamentSensorStateText(sensor) {
+        if (sensor.enabled === false) {
+            return "Disabled"
+        }
+        if (sensor.filament_detected === true) {
+            return "Detected"
+        }
+        if (sensor.filament_detected === false) {
+            return "Empty"
+        }
+        return "Unknown"
+    }
+
+    function filamentSensorSummary() {
+        if (root.filamentSensors.length <= 0) {
+            return "No filament sensor"
+        }
+        var detected = 0
+        var enabled = 0
+        for (var index = 0; index < root.filamentSensors.length; index += 1) {
+            if (root.filamentSensors[index].enabled !== false) {
+                enabled += 1
+            }
+            if (root.filamentSensors[index].filament_detected === true) {
+                detected += 1
+            }
+        }
+        return detected + "/" + root.filamentSensors.length + " detected"
+            + (enabled < root.filamentSensors.length ? " · " + enabled + " enabled" : "")
+    }
+
     ColumnLayout {
         visible: root.detailPage === "main" && !root.metrics.portrait
         anchors.fill: parent
@@ -675,6 +707,50 @@ Item {
                         font.pixelSize: Math.max(15, Math.round(root.metrics.fontSize))
                     }
 
+                    Label {
+                        Layout.fillWidth: true
+                        color: Theme.mutedText
+                        text: root.filamentSensorSummary()
+                        elide: Text.ElideRight
+                        font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.74))
+                    }
+
+                    Repeater {
+                        model: root.filamentSensors
+
+                        Rectangle {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: Math.max(28, Math.round(root.metrics.fontSize * 1.85))
+                            color: "#0d1415"
+                            border.color: modelData.filament_detected === false ? "#8b5555" : "#465456"
+                            border.width: 1
+                            radius: Math.round(root.metrics.fontSize * 0.24)
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.margins: Math.max(5, Math.round(root.metrics.fontSize * 0.28))
+                                spacing: Math.max(5, Math.round(root.metrics.fontSize * 0.28))
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    color: Theme.text
+                                    text: modelData.display_name
+                                    elide: Text.ElideRight
+                                    font.bold: true
+                                    font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.7))
+                                }
+
+                                Label {
+                                    color: Theme.mutedText
+                                    text: root.filamentSensorStateText(modelData)
+                                    elide: Text.ElideRight
+                                    font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.68))
+                                }
+                            }
+                        }
+                    }
+
                     GridLayout {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
@@ -867,6 +943,13 @@ Item {
                         onClicked: root.extrudeActionRequested(modelData.action, parseFloat(root.selectedDistance), parseFloat(root.selectedSpeed))
                     }
                 }
+            }
+
+            ActionTile {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                title: "Sensor"
+                hint: root.filamentSensorSummary()
             }
 
             ActionTile {

@@ -54,6 +54,20 @@ class TemperatureDeviceStatus:
 
 
 @dataclass(frozen=True)
+class FilamentSensorStatus:
+    name: str
+    display_name: str
+    sensor_type: str
+    enabled: bool | None = None
+    filament_detected: bool | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "name", str(self.name))
+        object.__setattr__(self, "display_name", str(self.display_name))
+        object.__setattr__(self, "sensor_type", str(self.sensor_type))
+
+
+@dataclass(frozen=True)
 class McuStatus:
     name: str
     version: str = "unknown"
@@ -88,6 +102,7 @@ class PrinterStatus:
     service_versions: tuple[ServiceVersionStatus, ...] = ()
     objects: tuple[str, ...] = ()
     temperature_devices: tuple[TemperatureDeviceStatus, ...] = ()
+    filament_sensors: tuple[FilamentSensorStatus, ...] = ()
     print_state: str = "standby"
     print_filename: str = ""
     print_progress: float = 0.0
@@ -134,6 +149,16 @@ class PrinterStatus:
                     derived_devices.append(device)
             temperature_devices = tuple(derived_devices)
         object.__setattr__(self, "temperature_devices", temperature_devices)
+        if self.filament_sensors:
+            filament_sensors = tuple(self.filament_sensors)
+        else:
+            derived_sensors: list[FilamentSensorStatus] = []
+            for item in objects:
+                sensor = _filament_sensor_from_object(item)
+                if sensor is not None:
+                    derived_sensors.append(sensor)
+            filament_sensors = tuple(sorted(derived_sensors, key=_filament_sensor_sort_key))
+        object.__setattr__(self, "filament_sensors", filament_sensors)
         object.__setattr__(self, "print_state", str(self.print_state or "standby"))
         object.__setattr__(self, "print_filename", str(self.print_filename or ""))
         object.__setattr__(self, "print_message", str(self.print_message or ""))
@@ -195,6 +220,10 @@ class PrinterStatus:
         return len(self.temperature_devices)
 
     @property
+    def filament_sensor_count(self) -> int:
+        return len(self.filament_sensors)
+
+    @property
     def exclude_object_count(self) -> int:
         return len(self.exclude_object_names)
 
@@ -253,6 +282,7 @@ class PrinterStatus:
             service_versions=_service_versions_from_update_status(update_status or {}),
             objects=object_names,
             temperature_devices=_temperature_devices_from_status(object_names, object_status or {}),
+            filament_sensors=_filament_sensors_from_status(object_names, object_status or {}),
             **_print_fields_from_status(object_status or {}),
             **_exclude_object_fields_from_status(object_status or {}),
             **_toolhead_fields_from_status(object_status or {}),
@@ -264,7 +294,7 @@ class PrinterStatus:
         return self.with_status_update(status_update)
 
     def with_status_update(self, status_update: dict[str, Any]) -> "PrinterStatus":
-        previous_values = {
+        previous_values: dict[str, dict[str, Any]] = {
             device.name: {"temperature": device.temperature, "target": device.target}
             for device in self.temperature_devices
         }
@@ -276,6 +306,21 @@ class PrinterStatus:
                 previous["temperature"] = values["temperature"]
             if "target" in values:
                 previous["target"] = values["target"]
+        previous_sensor_values: dict[str, dict[str, Any]] = {
+            sensor.name: {
+                "enabled": sensor.enabled,
+                "filament_detected": sensor.filament_detected,
+            }
+            for sensor in self.filament_sensors
+        }
+        for name, values in status_update.items():
+            if not isinstance(values, dict):
+                continue
+            previous = previous_sensor_values.setdefault(str(name), {})
+            if "enabled" in values:
+                previous["enabled"] = values["enabled"]
+            if "filament_detected" in values:
+                previous["filament_detected"] = values["filament_detected"]
 
         print_fields: PrintStatusFields = {
             "print_state": self.print_state,
@@ -347,6 +392,10 @@ class PrinterStatus:
                 self.objects,
                 {"status": previous_values},
             ),
+            filament_sensors=_filament_sensors_from_status(
+                self.objects,
+                {"status": previous_sensor_values},
+            ),
             **print_fields,
             **exclude_object_fields,
             **toolhead_fields,
@@ -372,6 +421,25 @@ def _temperature_devices_from_status(
         if device is not None:
             devices.append(device)
     return tuple(sorted(devices, key=_temperature_device_sort_key))
+
+
+def _filament_sensors_from_status(
+    object_names: tuple[str, ...],
+    object_status: dict[str, Any],
+) -> tuple[FilamentSensorStatus, ...]:
+    status = object_status.get("status", {})
+    if not isinstance(status, dict):
+        status = {}
+
+    sensors: list[FilamentSensorStatus] = []
+    for name in object_names:
+        values = status.get(name, {})
+        if not isinstance(values, dict):
+            values = {}
+        sensor = _filament_sensor_from_object(name, values)
+        if sensor is not None:
+            sensors.append(sensor)
+    return tuple(sorted(sensors, key=_filament_sensor_sort_key))
 
 
 def _mcu_statuses_from_probe(mcu_status: dict[str, Any]) -> tuple[McuStatus, ...]:
@@ -429,6 +497,10 @@ def _temperature_device_sort_key(device: TemperatureDeviceStatus) -> tuple[int, 
     return (3, device.display_name)
 
 
+def _filament_sensor_sort_key(sensor: FilamentSensorStatus) -> tuple[str, str]:
+    return (sensor.display_name, sensor.name)
+
+
 def _temperature_device_from_object(
     name: str,
     values: dict[str, Any] | None = None,
@@ -465,6 +537,30 @@ def _temperature_device_from_object(
     return None
 
 
+def _filament_sensor_from_object(
+    name: str,
+    values: dict[str, Any] | None = None,
+) -> FilamentSensorStatus | None:
+    values = values or {}
+    if name.startswith("filament_switch_sensor "):
+        return FilamentSensorStatus(
+            name=name,
+            display_name=_prettify_name(name),
+            sensor_type="switch",
+            enabled=_optional_bool(values.get("enabled")),
+            filament_detected=_optional_bool(values.get("filament_detected")),
+        )
+    if name.startswith("filament_motion_sensor "):
+        return FilamentSensorStatus(
+            name=name,
+            display_name=_prettify_name(name),
+            sensor_type="motion",
+            enabled=_optional_bool(values.get("enabled")),
+            filament_detected=_optional_bool(values.get("filament_detected")),
+        )
+    return None
+
+
 def _extruder_fields_from_status(object_status: dict[str, Any]) -> dict[str, float]:
     status = object_status.get("status", {})
     if not isinstance(status, dict):
@@ -488,6 +584,8 @@ def _prettify_name(name: str) -> str:
         ("temperature_host ", " Host"),
         ("temperature_sensor ", ""),
         ("temperature_fan ", " Fan"),
+        ("filament_switch_sensor ", ""),
+        ("filament_motion_sensor ", ""),
     ):
         if name.startswith(prefix):
             name = name.removeprefix(prefix)
@@ -716,6 +814,23 @@ def _optional_float(value: Any) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def _optional_bool(value: Any) -> bool | None:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return None
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "1", "yes", "on"}:
+            return True
+        if normalized in {"false", "0", "no", "off"}:
+            return False
+        return None
+    if isinstance(value, int | float):
+        return bool(value)
+    return None
 
 
 def _optional_int(value: Any) -> int:
