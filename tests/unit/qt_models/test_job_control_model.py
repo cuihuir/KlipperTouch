@@ -239,7 +239,17 @@ def test_job_control_model_sends_validated_jog_requests(qtbot) -> None:
         ("jog", "z:0.5:10.0"),
         ("jog", "v:-0.1:2.0"),
     ]
-    assert model.lastStatus == "Move sent"
+    assert model.lastStatus == "Move V- sent"
+
+
+def test_job_control_model_reports_specific_move_status(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestMoveJog("u_minus", 0.1, 2)
+
+    assert client.calls == [("jog", "u:-0.1:2.0")]
+    assert model.lastStatus == "Move U- sent"
 
 
 def test_job_control_model_rejects_invalid_jog_requests(qtbot) -> None:
@@ -269,7 +279,17 @@ def test_job_control_model_sends_home_requests(qtbot) -> None:
     model.requestHome("uvw")
 
     assert client.calls == [("home", "x,y"), ("home", "z"), ("home", ""), ("uvw_home", "")]
-    assert model.lastStatus == "Home sent"
+    assert model.lastStatus == "UVW home sent"
+
+
+def test_job_control_model_reports_specific_uvw_home_status(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestHome("uvw")
+
+    assert client.calls == [("uvw_home", "")]
+    assert model.lastStatus == "UVW home sent"
 
 
 def test_job_control_model_sends_leveling_requests(qtbot) -> None:

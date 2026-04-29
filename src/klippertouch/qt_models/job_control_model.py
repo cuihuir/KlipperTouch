@@ -148,8 +148,9 @@ class JobControlModel(QObject):
             self._set_error("Invalid move direction")
             return
         axis, signed_distance = direction_map[clean_direction]
+        direction_label = f"{axis.upper()}{'+' if signed_distance > 0 else '-'}"
         self._run_control(
-            "Move",
+            f"Move {direction_label}",
             lambda client: client.jog_toolhead(axis, signed_distance, move_speed),
         )
 
@@ -162,7 +163,7 @@ class JobControlModel(QObject):
             "z": ("z",),
         }
         if clean_target == "uvw":
-            self._run_control("Home", lambda client: client.run_uvw_home())
+            self._run_control("UVW home", lambda client: client.run_uvw_home())
             return
         if clean_target not in target_map:
             self._set_error("Invalid home target")

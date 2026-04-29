@@ -351,6 +351,20 @@ Item {
         return axis.length <= 0 || root.homedAxes.indexOf(axis) >= 0
     }
 
+    function unhomedMoveAxesText() {
+        var axes = []
+        if (!root.axisHomed("x")) {
+            axes.push("X")
+        }
+        if (!root.axisHomed("y")) {
+            axes.push("Y")
+        }
+        if (!root.axisHomed("z")) {
+            axes.push("Z")
+        }
+        return axes.join("/")
+    }
+
     function jogAction(action) {
         return root.actionAxis(action).length > 0 && !root.tiltAction(action)
     }
@@ -378,19 +392,30 @@ Item {
     }
 
     function actionAllowed(action) {
+        return root.actionUnavailableReason(action).length <= 0
+    }
+
+    function actionUnavailableReason(action) {
         if (!root.actionRequiresReady(action)) {
-            return true
+            return ""
         }
         if (!root.printerReady()) {
-            return false
+            return "Printer not ready"
         }
-        if (root.tiltAction(action)) {
-            return root.fiveAxisAvailable
+        if ((action === "home_uvw" || root.tiltAction(action)) && !root.fiveAxisAvailable) {
+            return "Five-axis controls unavailable"
         }
-        if (root.jogAction(action)) {
-            return root.axisHomed(root.actionAxis(action))
+        if (action === "accelerator_level" && !root.acceleratorLevelAvailable) {
+            return "Accelerator leveling unavailable"
         }
-        return true
+        if (action === "z_tilt_adjust" && !root.zTiltAvailable) {
+            return "Z tilt unavailable"
+        }
+        if (root.jogAction(action) && !root.axisHomed(root.actionAxis(action))) {
+            var axis = root.actionAxis(action)
+            return "Home " + axis.toUpperCase() + " first"
+        }
+        return ""
     }
 
     function controlFeedbackText() {
@@ -403,10 +428,21 @@ Item {
         if (!root.printerReady()) {
             return root.movementGuardText()
         }
-        if (root.homedAxes.length <= 0) {
-            return root.movementGuardText()
+        var axes = root.unhomedMoveAxesText()
+        if (axes.length > 0) {
+            return "Home " + axes + " first"
         }
         return "Controls ready"
+    }
+
+    function controlFeedbackColor() {
+        if (root.controlError.length > 0) {
+            return "#ff7777"
+        }
+        if (root.controlStatus.length > 0) {
+            return "#d8dee0"
+        }
+        return Theme.mutedText
     }
 
     function arrowGlyph(direction) {
@@ -957,7 +993,7 @@ Item {
                     Label {
                         id: moveControlFeedbackLabel
                         Layout.maximumWidth: Math.max(120, Math.round(positionPanel.width * 0.52))
-                        color: Theme.mutedText
+                        color: root.controlFeedbackColor()
                         text: root.controlFeedbackText()
                         elide: Text.ElideRight
                         maximumLineCount: 1

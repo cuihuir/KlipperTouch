@@ -1825,11 +1825,21 @@ def test_move_panel_is_locked_and_responsive() -> None:
     assert "function actionAxis(action)" in qml
     assert "function tiltAction(action)" in qml
     assert "function axisHomed(axis)" in qml
+    assert "function unhomedMoveAxesText()" in qml
     assert "function jogAction(action)" in qml
     assert "function actionRequiresReady(action)" in qml
     assert "function actionAllowed(action)" in qml
+    assert "function actionUnavailableReason(action)" in qml
+    assert "function controlFeedbackColor()" in qml
     assert 'return "Printer not ready"' in qml
-    assert 'return "Home axis first"' in qml
+    assert 'return "Home " + axes + " first"' in qml
+    assert 'return "Home " + axis.toUpperCase() + " first"' in qml
+    assert 'return "Five-axis controls unavailable"' in qml
+    assert 'return "Accelerator leveling unavailable"' in qml
+    assert 'return "Z tilt unavailable"' in qml
+    assert 'return "#ff7777"' in qml
+    assert 'return "#d8dee0"' in qml
+    assert 'color: root.controlFeedbackColor()' in qml
     assert 'root.axisHomed(root.actionAxis(action))' in qml
     assert "enabled: root.actionAllowed(modelData.action)" in qml
     assert 'enabled: root.actionAllowed("home_xy")' in qml
