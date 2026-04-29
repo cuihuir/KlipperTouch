@@ -68,7 +68,7 @@ ApplicationWindow {
         || window.webhooksFaultActive()
         || window.klippyFaultActive()
     property var panelTitles: ({"main": "Home", "move": "Move", "temperature": "Temperature", "extrude": "Extrude", "more": "More", "system": "System", "network": "Network", "logs": "Logs", "language": "Language", "update": "Update", "print": "Print", "job_status": "Job Status", "notifications": "Notifications", "splash": "Printer Status"})
-    property var panelIcons: ({"main": "main", "move": "move", "temperature": "heat-up", "extrude": "extrude", "more": "settings", "system": "settings", "network": "main", "logs": "printer", "language": "settings", "update": "printer", "print": "printer", "job_status": "printer", "notifications": "printer", "splash": "printer"})
+    property var panelIcons: ({"main": "main", "move": "move", "temperature": "heat-up", "extrude": "extrude", "more": "settings", "system": "settings", "network": "network", "logs": "logs", "language": "language", "update": "update", "print": "printer", "job_status": "printer", "notifications": "notification", "splash": "printer"})
 
     function shouldAutoEnterJobStatus() {
         return window.printState === "printing" || window.printState === "paused"

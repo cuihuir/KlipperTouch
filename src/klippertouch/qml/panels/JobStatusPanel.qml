@@ -124,7 +124,7 @@ Item {
         id: controlRoot
         property color accent: root.neutralAccent
         property string buttonRole: "normal"
-        property string iconText: ""
+        property string iconName: ""
         readonly property color roleAccent: buttonRole === "danger"
             ? root.mutedDangerAccent
             : buttonRole === "primary" ? root.accentColor : accent
@@ -134,16 +134,15 @@ Item {
         contentItem: RowLayout {
             spacing: Math.max(5, Math.round(root.metrics.fontSize * 0.32))
 
-            Label {
-                visible: controlRoot.iconText.length > 0
+            Image {
+                visible: controlRoot.iconName.length > 0
                 Layout.preferredWidth: Math.max(24, Math.round(root.metrics.fontSize * 1.55))
                 Layout.fillHeight: true
-                color: controlRoot.enabled ? controlRoot.roleAccent : Theme.mutedText
-                text: controlRoot.iconText
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                font.bold: true
-                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                source: controlRoot.iconName.length > 0 ? Theme.iconSource(controlRoot.iconName) : ""
+                sourceSize.width: Math.max(24, Math.round(root.metrics.fontSize * 1.55))
+                sourceSize.height: Math.max(24, Math.round(root.metrics.fontSize * 1.55))
+                fillMode: Image.PreserveAspectFit
+                opacity: controlRoot.enabled ? 1.0 : 0.55
             }
 
             Label {
@@ -1059,7 +1058,7 @@ Item {
                     Layout.preferredWidth: root.jobActionButtonWidth()
                     Layout.preferredHeight: root.jobButtonHeight
                     text: root.primaryActionLabel()
-                    iconText: "||"
+                    iconName: root.effectivePrintState() === "paused" ? "resume" : "pause"
                     buttonRole: "primary"
                     enabled: !root.isTransitionalState(root.effectivePrintState())
                     ToolTip.visible: hovered
@@ -1072,7 +1071,7 @@ Item {
                     Layout.preferredWidth: root.jobActionButtonWidth()
                     Layout.preferredHeight: root.jobButtonHeight
                     text: "Cancel"
-                    iconText: "X"
+                    iconName: "cancel"
                     buttonRole: "danger"
                     accent: root.mutedDangerAccent
                     enabled: !root.isTransitionalState(root.effectivePrintState())
@@ -1086,7 +1085,7 @@ Item {
                     Layout.preferredWidth: root.clearActionButtonWidth()
                     Layout.preferredHeight: root.jobButtonHeight
                     text: "Clear Status"
-                    iconText: ""
+                    iconName: "clear"
                     buttonRole: "primary"
                     enabled: !root.isTransitionalState(root.effectivePrintState())
                     ToolTip.visible: hovered
@@ -1099,7 +1098,7 @@ Item {
                     Layout.preferredWidth: root.jobActionButtonWidth()
                     Layout.preferredHeight: root.jobButtonHeight
                     text: "Skip Object"
-                    iconText: "OBJ"
+                    iconName: "object"
                     enabled: root.excludeObjectNames.length > 0
                         && !root.isTransitionalState(root.effectivePrintState())
                     ToolTip.visible: hovered
@@ -1112,7 +1111,7 @@ Item {
                     Layout.preferredWidth: root.jobActionButtonWidth()
                     Layout.preferredHeight: root.jobButtonHeight
                     text: "Advanced"
-                    iconText: "ADV"
+                    iconName: "advanced"
                     enabled: !root.isTransitionalState(root.effectivePrintState())
                     onClicked: root.detailPage = "advanced"
                 }

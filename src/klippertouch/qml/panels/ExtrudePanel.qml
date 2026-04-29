@@ -10,17 +10,17 @@ Item {
     property var distances: ["5", "10", "15", "25"]
     property var speeds: ["1", "2", "5", "25"]
     property var actionButtons: [
-        {"label": "Extrude", "action": "extrude", "hint": "forward"},
-        {"label": "Retract", "action": "retract", "hint": "reverse"},
-        {"label": "Load", "action": "load", "hint": "macro"},
-        {"label": "Unload", "action": "unload", "hint": "macro"}
+        {"label": "Extrude", "action": "extrude", "hint": "forward", "iconName": "extrude"},
+        {"label": "Retract", "action": "retract", "hint": "reverse", "iconName": "unload"},
+        {"label": "Load", "action": "load", "hint": "macro", "iconName": "load"},
+        {"label": "Unload", "action": "unload", "hint": "macro", "iconName": "unload"}
     ]
     property var filamentActionButtons: [
-        {"label": "Load", "action": "load", "hint": "macro"},
-        {"label": "Unload", "action": "unload", "hint": "macro"}
+        {"label": "Load", "action": "load", "hint": "macro", "iconName": "load"},
+        {"label": "Unload", "action": "unload", "hint": "macro", "iconName": "unload"}
     ]
     property var settingsButtons: [
-        {"label": "Materials", "shortLabel": "Materials", "action": "materials", "hint": "AFC / AMS"}
+        {"label": "Materials", "shortLabel": "Materials", "action": "materials", "hint": "AFC / AMS", "iconName": "material"}
     ]
     property var materialSlots: [
         {"label": "Slot 1", "state": "reserved"},
@@ -29,8 +29,8 @@ Item {
         {"label": "Slot 4", "state": "reserved"}
     ]
     property var materialActionButtons: [
-        {"label": "Load Selected", "shortLabel": "Load"},
-        {"label": "Unload Selected", "shortLabel": "Unload"}
+        {"label": "Load Selected", "shortLabel": "Load", "iconName": "load"},
+        {"label": "Unload Selected", "shortLabel": "Unload", "iconName": "unload"}
     ]
     property string selectedDistance: "10"
     property string selectedSpeed: "5"
@@ -65,6 +65,7 @@ Item {
         id: tileRoot
         property string title: ""
         property string hint: ""
+        property string iconName: ""
         property bool selected: false
         property bool primary: false
 
@@ -95,6 +96,20 @@ Item {
             anchors.centerIn: parent
             width: parent.width - root.metrics.gap
             spacing: Math.max(2, Math.round(root.metrics.fontSize * 0.12))
+
+            Image {
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: Math.max(20, Math.round(root.metrics.fontSize * 1.45))
+                Layout.preferredHeight: tileRoot.iconName.length > 0
+                    ? Math.max(20, Math.round(root.metrics.fontSize * 1.45))
+                    : 0
+                visible: tileRoot.iconName.length > 0
+                source: tileRoot.iconName.length > 0 ? Theme.iconSource(tileRoot.iconName) : ""
+                sourceSize.width: Layout.preferredWidth
+                sourceSize.height: Layout.preferredHeight
+                fillMode: Image.PreserveAspectFit
+                opacity: tileRoot.enabled ? 1.0 : 0.55
+            }
 
             Label {
                 Layout.fillWidth: true
@@ -202,6 +217,7 @@ Item {
                 Layout.minimumHeight: Math.max(root.metrics.portrait ? 44 : 58, Math.round(root.metrics.fontSize * (root.metrics.portrait ? 3.0 : 4.2)))
                 title: "Retract"
                 hint: root.extrusionAllowed() ? "pull back" : root.extrusionGuardText()
+                iconName: "unload"
                 enabled: root.extrusionAllowed()
 
                 MouseArea {
@@ -261,6 +277,7 @@ Item {
                 Layout.minimumHeight: Math.max(root.metrics.portrait ? 44 : 58, Math.round(root.metrics.fontSize * (root.metrics.portrait ? 3.0 : 4.2)))
                 title: "Extrude"
                 hint: root.extrusionAllowed() ? "push filament" : root.extrusionGuardText()
+                iconName: "extrude"
                 enabled: root.extrusionAllowed()
                 primary: true
 
@@ -902,6 +919,7 @@ Item {
                                 Layout.minimumHeight: Math.max(64, Math.round(root.metrics.fontSize * 4.4))
                                 title: modelData.label
                                 hint: root.extrusionAllowed() ? modelData.hint : root.extrusionGuardText()
+                                iconName: modelData.iconName
                                 enabled: root.extrusionAllowed()
 
                                 MouseArea {
@@ -919,6 +937,7 @@ Item {
                         Layout.preferredHeight: Math.max(64, Math.round(root.metrics.fontSize * 4.4))
                         title: "Materials"
                         hint: "AFC / AMS"
+                        iconName: "material"
 
                         MouseArea {
                             anchors.fill: parent
@@ -1074,6 +1093,7 @@ Item {
                     Layout.fillHeight: true
                     title: modelData.label
                     hint: root.extrusionAllowed() ? modelData.hint : root.extrusionGuardText()
+                    iconName: modelData.iconName
                     enabled: root.extrusionAllowed()
 
                     MouseArea {
@@ -1099,6 +1119,7 @@ Item {
                 Layout.fillHeight: true
                 title: "Materials"
                 hint: "AFC / AMS"
+                iconName: "material"
 
                 MouseArea {
                     anchors.fill: parent
@@ -1293,6 +1314,7 @@ Item {
                             Layout.fillHeight: true
                             title: root.metrics.ultraWide ? modelData.label : modelData.shortLabel
                             hint: "Not connected"
+                            iconName: modelData.iconName
                             enabled: false
                         }
                     }

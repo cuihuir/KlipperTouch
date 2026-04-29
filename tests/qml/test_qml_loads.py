@@ -60,18 +60,32 @@ def test_material_dark_svg_assets_are_vendored() -> None:
     images = Path("src/klippertouch/qml/assets/material-dark/images")
     expected = {
         "back.svg",
+        "advanced.svg",
         "bed.svg",
+        "cancel.svg",
+        "clear.svg",
         "emergency.svg",
         "extruder.svg",
         "extrude.svg",
         "heat-up.svg",
         "home.svg",
+        "load.svg",
+        "logs.svg",
+        "language.svg",
         "main.svg",
+        "material.svg",
         "motor-off.svg",
         "move.svg",
+        "network.svg",
+        "notification.svg",
+        "object.svg",
+        "pause.svg",
         "printer.svg",
+        "resume.svg",
         "settings.svg",
         "speed.svg",
+        "update.svg",
+        "unload.svg",
     }
 
     assert {path.name for path in images.glob("*.svg")} == expected
@@ -483,7 +497,10 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert 'readonly property color neutralAccent: "#8b9496"' in qml
     assert 'readonly property color mutedDangerAccent: "#9a8582"' in qml
     assert "property string buttonRole" in qml
-    assert "property string iconText" in qml
+    assert "property string iconName" in qml
+    assert (
+        'source: controlRoot.iconName.length > 0 ? Theme.iconSource(controlRoot.iconName) : ""'
+    ) in qml
     assert "function jobActionGridHeight()" in qml
     assert "function jobActionGridWidth()" in qml
     assert "function jobActionButtonWidth()" in qml
@@ -515,10 +532,11 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "Layout.maximumWidth: Math.max(160" in qml
     assert "id: progressRail" in qml
     assert "id: progressFill" in qml
-    assert 'iconText: "||"' in qml
-    assert 'iconText: "X"' in qml
-    assert 'iconText: "OBJ"' in qml
-    assert 'iconText: "ADV"' in qml
+    assert 'iconName: root.effectivePrintState() === "paused" ? "resume" : "pause"' in qml
+    assert 'iconName: "cancel"' in qml
+    assert 'iconName: "clear"' in qml
+    assert 'iconName: "object"' in qml
+    assert 'iconName: "advanced"' in qml
     assert 'buttonRole: "danger"' in qml
     assert "background: Rectangle" in qml
     assert 'color: controlRoot.enabled ? "#263033" : "#151a1b"' in qml
@@ -535,7 +553,6 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert 'return state === "paused" || state === "resuming" ? "Resume" : "Pause"' in qml
     assert 'text: "Cancel"' in qml
     assert 'text: "Clear Status"' in qml
-    assert 'iconText: ""' in qml
     assert "Layout.preferredWidth: root.clearActionButtonWidth()" in qml
     assert "function terminalJobState()" in qml
     assert "visible: root.terminalJobState()" in qml
@@ -849,9 +866,13 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "Layout.minimumHeight: root.touchTargetSize" in qml
     assert 'signal extrudeActionRequested(string action, real distance, real speed)' in qml
     assert '"action": "extrude"' in qml
+    assert '"iconName": "extrude"' in qml
     assert '"action": "retract"' in qml
+    assert '"iconName": "unload"' in qml
     assert '"label": "Load"' in qml
+    assert '"iconName": "load"' in qml
     assert '"label": "Unload"' in qml
+    assert '"iconName": "unload"' in qml
     assert '"label": "Temperature"' not in qml
     assert '"Set Temp"' not in qml
     assert '"action": "pressure_advance"' not in qml
@@ -859,8 +880,12 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert '"action": "retraction"' not in qml
     assert '"label": "Materials"' in qml
     assert '"action": "materials"' in qml
+    assert '"iconName": "material"' in qml
     assert '"hint": "AFC / AMS"' in qml
     assert "component ActionTile: Rectangle" in qml
+    assert (
+        'source: tileRoot.iconName.length > 0 ? Theme.iconSource(tileRoot.iconName) : ""'
+    ) in qml
     assert "component PlaceholderTile: Rectangle" in qml
     assert "function selectDistance(distance)" in qml
     assert "function selectSpeed(speed)" in qml
@@ -1017,10 +1042,10 @@ def test_more_menu_panel_uses_icon_list_entry_model() -> None:
     assert 'panelName: "network"' not in main_model_qml
     assert 'panelName: "logs"' not in main_model_qml
     assert 'ListElement { tileLabel: "System"; tileIcon: "settings"' in model_qml
-    assert 'ListElement { tileLabel: "Network"; tileIcon: "main"' in model_qml
-    assert 'ListElement { tileLabel: "Logs"; tileIcon: "printer"' in model_qml
-    assert 'ListElement { tileLabel: "Language"; tileIcon: "settings"' in model_qml
-    assert 'ListElement { tileLabel: "Update"; tileIcon: "printer"' in model_qml
+    assert 'ListElement { tileLabel: "Network"; tileIcon: "network"' in model_qml
+    assert 'ListElement { tileLabel: "Logs"; tileIcon: "logs"' in model_qml
+    assert 'ListElement { tileLabel: "Language"; tileIcon: "language"' in model_qml
+    assert 'ListElement { tileLabel: "Update"; tileIcon: "update"' in model_qml
     assert 'panelName: "system"' in model_qml
     assert 'panelName: "network"' in model_qml
     assert 'panelName: "logs"' in model_qml
@@ -1057,7 +1082,7 @@ def test_notification_center_is_globally_routed() -> None:
     assert "property int notificationUnreadCount" in status_qml
     assert "signal notificationRequested()" in status_qml
     assert "notificationBadge" in status_qml
-    assert 'ListElement { tileLabel: "Notifications"; tileIcon: "printer"' in more_model_qml
+    assert 'ListElement { tileLabel: "Notifications"; tileIcon: "notification"' in more_model_qml
     assert "required property var metrics" in panel_qml
     assert "property var notificationModel: null" in panel_qml
     assert "notificationModel.markAllRead()" in panel_qml
@@ -1658,10 +1683,10 @@ def test_main_routes_network_and_logs_to_safe_placeholder_panels() -> None:
     assert 'case "language":' in main_qml
     assert 'case "update":' in main_qml
     assert "return placeholderComponent" in main_qml
-    assert '"network": "main"' in main_qml
-    assert '"logs": "printer"' in main_qml
-    assert '"language": "settings"' in main_qml
-    assert '"update": "printer"' in main_qml
+    assert '"network": "network"' in main_qml
+    assert '"logs": "logs"' in main_qml
+    assert '"language": "language"' in main_qml
+    assert '"update": "update"' in main_qml
 
 
 def test_move_panel_is_locked_and_responsive() -> None:
