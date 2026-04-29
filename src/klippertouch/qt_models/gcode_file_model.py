@@ -29,6 +29,7 @@ class GCodeFileListModel(QAbstractListModel):
     selectedPathChanged = Signal()
     thumbnailChanged = Signal()
     metadataChanged = Signal()
+    metadataRequested = Signal(str)
 
     PATH_ROLE = int(Qt.ItemDataRole.UserRole) + 1
     DISPLAY_NAME_ROLE = int(Qt.ItemDataRole.UserRole) + 2
@@ -199,6 +200,13 @@ class GCodeFileListModel(QAbstractListModel):
             return
         self._selected_path = ""
         self.selectedPathChanged.emit()
+
+    @Slot(str)
+    def requestMetadata(self, path: str) -> None:  # noqa: N802
+        clean = _normalize_gcode_request_path(path)
+        if self._file_for_name(clean) is None:
+            return
+        self.metadataRequested.emit(clean)
 
     @Slot(str)
     def removeFile(self, path: str) -> None:  # noqa: N802
@@ -446,6 +454,16 @@ class GCodeFileListModel(QAbstractListModel):
 
 def _normalized_file_snapshot(files: tuple[GCodeFile, ...]) -> tuple[GCodeFile, ...]:
     return tuple(sorted(tuple(files), key=lambda file: file.path))
+
+
+def _normalize_gcode_request_path(path: str) -> str:
+    clean = path.strip().replace("\\", "/").strip("/")
+    marker = "gcodes/"
+    if clean.startswith(marker):
+        clean = clean[len(marker) :]
+    if f"/{marker}" in clean:
+        clean = clean.rsplit(f"/{marker}", 1)[1]
+    return clean.strip("/")
 
 
 def _preserve_loaded_thumbnails(

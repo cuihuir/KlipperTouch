@@ -110,7 +110,7 @@ def test_file_refresh_only_runs_while_files_panel_is_active(qtbot) -> None:
     assert model.rowCount() == 1
 
 
-def test_file_refresh_lazily_loads_one_metadata_entry_per_tick(qtbot) -> None:
+def test_file_refresh_lazily_loads_requested_metadata_off_gui_thread(qtbot) -> None:
     class FakeClient(MoonrakerClient):
         def __init__(self) -> None:
             super().__init__(PrinterConfig(name="p", moonraker_host="host"))
@@ -123,6 +123,7 @@ def test_file_refresh_lazily_loads_one_metadata_entry_per_tick(qtbot) -> None:
             ]
 
         def get_gcode_file_metadata(self, filename: str) -> dict[str, object]:
+            time.sleep(0.05)
             self.metadata_calls.append(filename)
             return {
                 "thumbnails": [
@@ -144,13 +145,21 @@ def test_file_refresh_lazily_loads_one_metadata_entry_per_tick(qtbot) -> None:
 
     assert client.metadata_calls == []
 
+    started = time.monotonic()
+    model.requestMetadata("a.gcode")
+    assert time.monotonic() - started < 0.04
     with qtbot.waitSignal(model.dataChanged, timeout=1000):
-        refresh.refresh_metadata_once()
+        pass
+    with qtbot.waitSignal(refresh.metadataRefreshFinished, timeout=1000):
+        pass
 
     assert client.metadata_calls == ["a.gcode"]
 
+    model.requestMetadata("b.gcode")
     with qtbot.waitSignal(model.dataChanged, timeout=1000):
-        refresh.refresh_metadata_once()
+        pass
+    with qtbot.waitSignal(refresh.metadataRefreshFinished, timeout=1000):
+        pass
 
     assert client.metadata_calls == ["a.gcode", "b.gcode"]
 
@@ -180,7 +189,8 @@ def test_file_refresh_loads_metadata_while_print_or_job_status_is_active(qtbot) 
     assert client.metadata_calls == 0
 
     status_model.setActivePanel("job_status")
-    refresh.refresh_metadata_once()
+    with qtbot.waitSignal(refresh.metadataRefreshFinished, timeout=1000):
+        refresh.refresh_metadata_once()
 
     assert client.metadata_calls == 1
 

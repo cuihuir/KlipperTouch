@@ -61,6 +61,7 @@ Item {
             root.pendingFileAction = ""
         } else if (root.activeFileModel) {
             root.activeFileModel.selectPath(path, isDirectory)
+            root.activeFileModel.requestMetadata(path)
             root.detailPage = true
             root.pendingFileAction = ""
         }
@@ -482,18 +483,27 @@ Item {
                             radius: Math.round(root.metrics.fontSize * 0.22)
 
                             Image {
+                                id: thumbnailImage
                                 anchors.fill: parent
                                 anchors.margins: 2
                                 source: thumbnailUrl
                                 fillMode: Image.PreserveAspectFit
-                                visible: !isDirectory && thumbnailUrl.length > 0
+                                asynchronous: true
+                                cache: true
+                                sourceSize.width: width
+                                sourceSize.height: height
+                                visible: !isDirectory
+                                    && thumbnailUrl.length > 0
+                                    && status !== Image.Error
                             }
 
                             Label {
                                 anchors.centerIn: parent
                                 color: Theme.mutedText
                                 text: isDirectory ? "DIR" : "G"
-                                visible: isDirectory || thumbnailUrl.length <= 0
+                                visible: isDirectory
+                                    || thumbnailUrl.length <= 0
+                                    || thumbnailImage.status === Image.Error
                                 font.bold: true
                                 font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
                             }
@@ -542,6 +552,12 @@ Item {
                     MouseArea {
                         anchors.fill: parent
                         onClicked: root.enterPath(path, isDirectory)
+                    }
+
+                    Component.onCompleted: {
+                        if (!isDirectory && thumbnailUrl.length <= 0 && root.activeFileModel) {
+                            activeFileModel.requestMetadata(path)
+                        }
                     }
                 }
             }
@@ -614,6 +630,10 @@ Item {
                                         ? root.activeFileModel.selectedPreviewThumbnailUrl
                                         : ""
                                     fillMode: Image.PreserveAspectFit
+                                    asynchronous: true
+                                    cache: true
+                                    sourceSize.width: width
+                                    sourceSize.height: height
                                 }
                             }
 

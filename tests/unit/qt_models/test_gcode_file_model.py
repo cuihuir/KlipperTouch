@@ -511,3 +511,15 @@ def test_gcode_file_list_model_exposes_selected_thumbnail_url(qtbot) -> None:
         "http://host:7125/server/files/gcodes/.thumbs/cube-300x300.png"
     )
     assert model.thumbnailRevision == 1
+
+
+def test_gcode_file_list_model_emits_metadata_request_for_existing_files(qtbot) -> None:
+    model = GCodeFileListModel()
+    model.set_files((GCodeFile(path="cube.gcode", display_name="cube.gcode", size=2048),))
+    requested: list[str] = []
+    model.metadataRequested.connect(lambda path: requested.append(path))
+
+    model.requestMetadata(" /gcodes/cube.gcode ")
+    model.requestMetadata("missing.gcode")
+
+    assert requested == ["cube.gcode"]
