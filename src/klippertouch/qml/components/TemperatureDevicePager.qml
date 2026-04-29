@@ -210,8 +210,8 @@ Item {
         var region = root.bestExternalEditorRegion(minWidth, minHeight)
         if (region !== null) {
             root.targetEditorFullscreen = false
-            targetEditorPopup.width = Math.min(region.width, Math.max(minWidth, Math.round(parentWidth * 0.36)))
-            targetEditorPopup.height = Math.min(region.height, Math.max(minHeight, Math.round(parentHeight * 0.72)))
+            targetEditorPopup.width = Math.min(region.width, Math.max(minWidth, Math.round(parentWidth * 0.5)))
+            targetEditorPopup.height = Math.min(region.height, Math.max(minHeight, Math.round(parentHeight * 0.82)))
             targetEditorPopup.x = Math.round(region.x + (region.width - targetEditorPopup.width) / 2)
             targetEditorPopup.y = Math.round(region.y + (region.height - targetEditorPopup.height) / 2)
             return

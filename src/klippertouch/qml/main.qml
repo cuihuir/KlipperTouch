@@ -374,6 +374,9 @@ ApplicationWindow {
                 metrics: appMetrics
                 temperatureModel: window.temperatureBridgeModel
                 onPanelRequested: function(panelName) { window.showPanel(panelName) }
+                onTargetTemperatureRequested: function(deviceName, target) {
+                    window.requestTemperatureTarget(deviceName, target)
+                }
             }
         }
 

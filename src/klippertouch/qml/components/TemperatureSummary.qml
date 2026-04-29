@@ -12,6 +12,7 @@ Item {
     property var activeTemperatureModel: root.hasExternalTemperatureModel
         ? temperatureModel
         : fallbackTemperatureModel
+    signal targetTemperatureRequested(string deviceName, real target)
 
     TemperatureDeviceModel {
         id: fallbackTemperatureModel
@@ -61,6 +62,9 @@ Item {
             compact: true
             showTargets: true
             fontSize: root.metrics.fontSize
+            onTargetTemperatureRequested: function(deviceName, target) {
+                root.targetTemperatureRequested(deviceName, target)
+            }
         }
     }
 

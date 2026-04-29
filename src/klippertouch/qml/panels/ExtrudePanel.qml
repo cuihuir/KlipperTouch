@@ -257,8 +257,28 @@ Item {
         root.controlError = ""
     }
 
+    function positionTargetEditor() {
+        var parentWidth = targetEditorPopup.parent ? targetEditorPopup.parent.width : root.width
+        var parentHeight = targetEditorPopup.parent ? targetEditorPopup.parent.height : root.height
+        var margin = root.metrics.margin
+        if (root.metrics.portrait) {
+            targetEditorPopup.width = Math.min(parentWidth - margin * 2, Math.max(300, Math.round(parentWidth * 0.72)))
+            targetEditorPopup.height = Math.min(parentHeight - margin * 2, Math.max(360, Math.round(parentHeight * 0.82)))
+            targetEditorPopup.x = Math.round((parentWidth - targetEditorPopup.width) / 2)
+            targetEditorPopup.y = Math.round((parentHeight - targetEditorPopup.height) / 2)
+            return
+        }
+
+        var safeTop = Math.max(margin, Math.round(parentHeight * 0.22))
+        targetEditorPopup.width = Math.min(parentWidth - margin * 2, Math.max(560, Math.round(parentWidth * 0.54)))
+        targetEditorPopup.height = Math.min(parentHeight - safeTop - margin, Math.max(360, Math.round(parentHeight * 0.72)))
+        targetEditorPopup.x = Math.max(margin, parentWidth - targetEditorPopup.width - margin)
+        targetEditorPopup.y = Math.max(safeTop, parentHeight - targetEditorPopup.height - margin)
+    }
+
     function openTargetEditor() {
         root.targetEditorValue = root.extruderTarget > 0 ? String(Math.round(root.extruderTarget)) : ""
+        root.positionTargetEditor()
         targetEditorPopup.open()
     }
 
@@ -822,20 +842,10 @@ Item {
         modal: true
         focus: true
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-        width: Math.min(
-            parent ? parent.width - root.metrics.margin * 2 : root.width,
-            root.metrics.portrait
-                ? Math.max(300, Math.round(root.width * 0.62))
-                : Math.max(500, Math.round(root.width * 0.42))
-        )
-        height: Math.min(
-            parent ? parent.height - root.metrics.margin * 2 : root.height,
-            root.metrics.portrait
-                ? Math.max(360, Math.round(root.height * 0.82))
-                : Math.max(360, Math.round(root.height * 0.78))
-        )
-        x: parent ? Math.round((parent.width - width) / 2) : 0
-        y: parent ? Math.round((parent.height - height) / 2) : 0
+        width: 560
+        height: 432
+        x: 0
+        y: 0
         padding: Math.max(8, Math.round(root.metrics.fontSize * 0.7))
 
         background: Rectangle {

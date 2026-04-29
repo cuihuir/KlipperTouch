@@ -800,6 +800,9 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "id: landscapeHeaderRow" in qml
     assert "id: landscapeInputRow" in qml
     assert "id: landscapeBottomRow" in qml
+    assert "function positionTargetEditor()" in qml
+    assert "targetEditorPopup.x = Math.max(" in qml
+    assert "targetEditorPopup.y = Math.max(" in qml
     assert "id: landscapeBackspaceButton" in qml
     assert "id: landscapeCancelButton" in qml
     assert "id: landscapeSetButton" in qml
@@ -1104,11 +1107,19 @@ def test_main_menu_requests_safe_local_panels() -> None:
     main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
 
     assert "signal panelRequested(string panelName)" in qml
+    assert "signal targetTemperatureRequested(string deviceName, real target)" in qml
     assert "required property string panelName" in qml
     assert "onActivated: root.panelRequested(panelName)" in qml
+    assert "onTargetTemperatureRequested: function(deviceName, target)" in qml
+    assert "root.targetTemperatureRequested(deviceName, target)" in qml
     assert "function showPanel(panelName)" in main_qml
     assert "currentPanel = panelName" in main_qml
     assert "onPanelRequested: function(panelName) { window.showPanel(panelName) }" in main_qml
+    assert (
+        "onTargetTemperatureRequested: function(deviceName, target) {\n"
+        "                    window.requestTemperatureTarget(deviceName, target)\n"
+        "                }"
+    ) in main_qml
     assert "printer.gcode.script" not in qml
     assert "printer.gcode.script" not in main_qml
 
@@ -1175,6 +1186,9 @@ def test_temperature_summary_uses_klipperscreen_device_icons_and_theme() -> None
     assert "id: fallbackTemperatureModel" in component_qml
     assert "TemperatureDevicePager {" in component_qml
     assert "temperatureModel: root.activeTemperatureModel" in component_qml
+    assert "signal targetTemperatureRequested(string deviceName, real target)" in component_qml
+    assert "onTargetTemperatureRequested: function(deviceName, target)" in component_qml
+    assert "root.targetTemperatureRequested(deviceName, target)" in component_qml
     assert 'text: "Target (°C)"' in component_qml
     assert "showTargets: true" in component_qml
     assert "color: Theme.mutedText" in component_qml
@@ -1210,6 +1224,8 @@ def test_temperature_device_pager_uses_page_based_navigation() -> None:
     assert "function positionTargetEditor()" in qml
     assert "function bestExternalEditorRegion(minWidth, minHeight)" in qml
     assert "targetEditorPopup.parent" in qml
+    assert "Math.round(parentWidth * 0.5)" in qml
+    assert "Math.round(parentHeight * 0.82)" in qml
     assert "function appendTargetDigit(digit)" in qml
     assert "function confirmTargetEditor()" in qml
     assert 'typeof root.activeTemperatureModel.setPendingTarget === "function"' in qml

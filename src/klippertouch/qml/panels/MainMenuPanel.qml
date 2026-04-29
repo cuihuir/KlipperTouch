@@ -8,6 +8,7 @@ Item {
     required property var metrics
     property var temperatureModel: null
     signal panelRequested(string panelName)
+    signal targetTemperatureRequested(string deviceName, real target)
     property int virtualRows: 5
     property int temperatureRows: 3
     property int menuRows: 2
@@ -35,6 +36,9 @@ Item {
             ? parent.width - root.metrics.margin * 2
             : Math.round((parent.width - root.metrics.margin * 2) * root.landscapeTemperatureFraction)
         height: root.metrics.portrait ? root.temperaturePanelHeight - root.metrics.margin * 2 : parent.height - root.metrics.margin * 2
+        onTargetTemperatureRequested: function(deviceName, target) {
+            root.targetTemperatureRequested(deviceName, target)
+        }
     }
 
     GridLayout {
