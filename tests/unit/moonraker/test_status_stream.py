@@ -110,7 +110,7 @@ def test_status_stream_schedules_read_only_reconnects() -> None:
     assert "printer.objects.subscribe" in source
     assert "printer.gcode.script" not in source
     assert '_set_webhooks_state("disconnected", "Moonraker disconnected")' in source
-    assert '_set_webhooks_state("startup", "Klipper is attempting to start")' in source
+    assert '_set_webhooks_state("startup", "Klipper is attempting to start")' not in source
 
 
 def test_status_needs_recovery_polling_for_klippy_faults() -> None:

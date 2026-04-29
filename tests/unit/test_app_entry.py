@@ -98,6 +98,10 @@ def test_run_app_bootstraps_initial_moonraker_data_after_qml_load() -> None:
     assert "startup_loader.start()" in source
     assert source.index("engine.load(") < source.index("startup_loader.start()")
     assert "engine.startup_loader = startup_loader" in source
+    assert "build_basic_status_from_client(self._client)" in app.Path(
+        app.__file__
+    ).with_name("moonraker").joinpath("startup_loader.py").read_text(encoding="utf-8")
+    assert "startup_loader.finished.connect(status_model.markBootstrapComplete)" in source
 
 
 def test_run_app_stops_background_loaders_when_app_exits() -> None:

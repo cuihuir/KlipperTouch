@@ -172,7 +172,6 @@ class MoonrakerStatusStream(QObject):
 
     @Slot()
     def _send_subscription(self) -> None:
-        self._set_webhooks_state("startup", "Klipper is attempting to start")
         self._socket.sendTextMessage(
             build_temperature_subscription_message(self._client, self._status)
         )

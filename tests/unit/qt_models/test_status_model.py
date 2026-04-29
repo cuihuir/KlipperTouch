@@ -126,6 +126,20 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
             "filament_detected": False,
         }
     ]
+    assert model.bootstrapComplete is True
+
+
+def test_status_model_does_not_report_bootstrap_complete_before_first_status(qtbot) -> None:
+    model = StatusModel()
+    changes: list[bool] = []
+    model.bootstrapChanged.connect(lambda: changes.append(model.bootstrapComplete))
+
+    assert model.bootstrapComplete is False
+
+    model.markBootstrapComplete()
+
+    assert model.bootstrapComplete is True
+    assert changes == [True]
 
 
 def test_status_model_exposes_webhooks_shutdown_fields(qtbot) -> None:

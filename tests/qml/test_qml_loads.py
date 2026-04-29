@@ -1263,7 +1263,9 @@ def test_splash_panel_handles_system_fault_states() -> None:
 
     assert "property string webhooksState" in main_qml
     assert "property string webhooksMessage" in main_qml
+    assert "property bool bootstrapComplete" in main_qml
     assert "property bool systemFaultVisible:" in main_qml
+    assert "window.bootstrapComplete && (" in main_qml
     assert "function systemFaultActive()" in main_qml
     assert "function moonrakerFaultActive()" in main_qml
     assert "function klippyFaultActive()" in main_qml

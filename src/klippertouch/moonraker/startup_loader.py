@@ -2,7 +2,7 @@ from PySide6.QtCore import QObject, QThread, Signal, Slot
 
 from klippertouch.domain.printer import PrinterStatus
 from klippertouch.moonraker.client import MoonrakerClient
-from klippertouch.probe import build_status_from_client
+from klippertouch.probe import build_basic_status_from_client, build_status_from_client
 
 
 class _StartupDataWorker(QObject):
@@ -18,6 +18,11 @@ class _StartupDataWorker(QObject):
 
     @Slot()
     def run(self) -> None:
+        try:
+            self.statusLoaded.emit(build_basic_status_from_client(self._client))
+        except Exception as exc:
+            self.failed.emit(str(exc))
+
         try:
             self.statusLoaded.emit(build_status_from_client(self._client))
         except Exception as exc:
@@ -41,6 +46,7 @@ class StartupDataLoader(QObject):
     temperatureStoreLoaded = Signal(object)
     filesLoaded = Signal(object)
     failed = Signal(str)
+    finished = Signal()
 
     def __init__(self, client: MoonrakerClient) -> None:
         super().__init__()
@@ -59,6 +65,7 @@ class StartupDataLoader(QObject):
         worker.temperatureStoreLoaded.connect(self.temperatureStoreLoaded.emit)
         worker.filesLoaded.connect(self.filesLoaded.emit)
         worker.failed.connect(self.failed.emit)
+        worker.finished.connect(self.finished.emit)
         worker.finished.connect(thread.quit)
         worker.finished.connect(worker.deleteLater)
         thread.finished.connect(thread.deleteLater)

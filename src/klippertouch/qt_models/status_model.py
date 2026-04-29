@@ -478,6 +478,7 @@ class StatusModel(QObject):
     toolheadChanged = Signal()
     extruderTemperatureChanged = Signal()
     filamentSensorChanged = Signal()
+    bootstrapChanged = Signal()
 
     def __init__(
         self,
@@ -485,6 +486,7 @@ class StatusModel(QObject):
     ) -> None:
         super().__init__()
         self._status = PrinterStatus()
+        self._bootstrap_complete = False
         self._temperature_device_model = temperature_device_model
         self._active_panel = "main"
         if self._temperature_device_model is not None:
@@ -494,7 +496,9 @@ class StatusModel(QObject):
 
     def set_status(self, status: PrinterStatus) -> None:
         previous = self._status
+        was_bootstrap_complete = self._bootstrap_complete
         self._status = status
+        self._bootstrap_complete = True
         if self._temperature_device_model is not None:
             self._temperature_device_model.set_status(status)
         if _host_fields_changed(previous, status):
@@ -515,6 +519,19 @@ class StatusModel(QObject):
             self.filamentSensorChanged.emit()
         if previous != status:
             self.statusChanged.emit()
+        if not was_bootstrap_complete:
+            self.bootstrapChanged.emit()
+
+    @Property(bool, notify=bootstrapChanged)
+    def bootstrapComplete(self) -> bool:  # noqa: N802
+        return self._bootstrap_complete
+
+    @Slot()
+    def markBootstrapComplete(self) -> None:  # noqa: N802
+        if self._bootstrap_complete:
+            return
+        self._bootstrap_complete = True
+        self.bootstrapChanged.emit()
 
     @Property(str, notify=activePanelChanged)
     def activePanel(self) -> str:

@@ -119,6 +119,7 @@ def run_app(
         startup_loader.statusLoaded.connect(apply_startup_status)
         startup_loader.temperatureStoreLoaded.connect(apply_startup_temperature_store)
         startup_loader.filesLoaded.connect(apply_startup_files)
+        startup_loader.finished.connect(status_model.markBootstrapComplete)
         startup_loader.start()
         engine.startup_loader = startup_loader  # type: ignore[attr-defined]
     if file_refresh_client is not None:

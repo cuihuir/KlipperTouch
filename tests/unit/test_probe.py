@@ -1,5 +1,11 @@
+import time
+
 from klippertouch.domain.printer import PrinterStatus
-from klippertouch.probe import build_status_from_client, status_to_dict
+from klippertouch.probe import (
+    build_basic_status_from_client,
+    build_status_from_client,
+    status_to_dict,
+)
 
 
 class FakeClient:
@@ -148,6 +154,57 @@ def test_build_status_from_client_returns_partial_status_when_optional_probe_fai
     assert status.temperature_devices == ()
     assert status.mcu_statuses == ()
     assert status.service_versions == ()
+
+
+def test_build_basic_status_from_client_uses_only_server_and_printer_info() -> None:
+    class BasicClient(FakeClient):
+        def __init__(self) -> None:
+            self.calls: list[str] = []
+
+        def get_server_info(self):
+            self.calls.append("server")
+            return super().get_server_info()
+
+        def get_printer_info(self):
+            self.calls.append("printer")
+            return super().get_printer_info()
+
+        def get_objects_list(self):
+            raise AssertionError("basic status should not query objects")
+
+    client = BasicClient()
+    status = build_basic_status_from_client(client)
+
+    assert client.calls == ["server", "printer"]
+    assert status.hostname == "orangepi3b"
+    assert status.klippy_state == "ready"
+    assert status.moonraker_version == "v0.10.0"
+    assert status.objects == ()
+
+
+def test_build_status_from_client_runs_independent_startup_probes_concurrently() -> None:
+    class SlowStartupClient(FakeClient):
+        def get_server_info(self):
+            time.sleep(0.05)
+            return super().get_server_info()
+
+        def get_printer_info(self):
+            time.sleep(0.05)
+            return super().get_printer_info()
+
+        def get_objects_list(self):
+            time.sleep(0.05)
+            return super().get_objects_list()
+
+        def get_machine_update_status(self):
+            time.sleep(0.05)
+            return super().get_machine_update_status()
+
+    start = time.monotonic()
+    status = build_status_from_client(SlowStartupClient())
+
+    assert time.monotonic() - start < 0.18
+    assert status.hostname == "orangepi3b"
 
 
 def test_build_status_from_client_uses_unfiltered_query_for_non_ascii_temperature_objects() -> None:

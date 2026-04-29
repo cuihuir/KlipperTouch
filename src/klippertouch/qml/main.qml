@@ -23,6 +23,7 @@ ApplicationWindow {
     property string klippyState: bridgeModel ? bridgeModel.klippyState : "disconnected"
     property string webhooksState: bridgeModel ? bridgeModel.webhooksState : ""
     property string webhooksMessage: bridgeModel ? bridgeModel.webhooksMessage : ""
+    property bool bootstrapComplete: bridgeModel ? bridgeModel.bootstrapComplete : false
     property string klipperVersion: bridgeModel ? bridgeModel.klipperVersion : "unknown"
     property string moonrakerVersion: bridgeModel ? bridgeModel.moonrakerVersion : "unknown"
     property var mcuInfos: bridgeModel ? bridgeModel.mcuInfos : []
@@ -70,9 +71,11 @@ ApplicationWindow {
     property string toastMessage: ""
     property string currentPanel: "main"
     property var panelStack: ["main"]
-    property bool systemFaultVisible: window.moonrakerFaultActive()
+    property bool systemFaultVisible: window.bootstrapComplete && (
+        window.moonrakerFaultActive()
         || window.webhooksFaultActive()
         || window.klippyFaultActive()
+    )
     property var panelTitles: ({"main": "Home", "move": "Move", "temperature": "Temperature", "extrude": "Extrude", "more": "More", "system": "System", "network": "Network", "logs": "Logs", "language": "Language", "update": "Update", "print": "Print", "job_status": "Job Status", "notifications": "Notifications", "splash": "Printer Status"})
     property var panelIcons: ({"main": "main", "move": "move", "temperature": "heat-up", "extrude": "extrude", "more": "settings", "system": "settings", "network": "network", "logs": "logs", "language": "language", "update": "update", "print": "printer", "job_status": "printer", "notifications": "notification", "splash": "printer"})
 

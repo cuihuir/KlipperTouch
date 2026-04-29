@@ -1,3 +1,4 @@
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import asdict
 from typing import Any, Protocol
 
@@ -34,28 +35,58 @@ class ReadOnlyProbeClient(Protocol):
     def get_machine_update_status(self) -> dict[str, Any]: ...
 
 
+def build_basic_status_from_client(client: ReadOnlyProbeClient) -> PrinterStatus:
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        server_info_future = executor.submit(client.get_server_info)
+        printer_info_future = executor.submit(client.get_printer_info)
+        server_info = server_info_future.result()
+        printer_info = _safe_future(printer_info_future)
+    return PrinterStatus.from_probe(
+        server_info=server_info,
+        printer_info=printer_info,
+        objects={},
+        object_status={},
+        mcu_status={},
+        update_status={},
+    )
+
+
 def build_status_from_client(client: ReadOnlyProbeClient) -> PrinterStatus:
-    server_info = client.get_server_info()
-    objects = _safe_probe(client.get_objects_list)
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        server_info_future = executor.submit(client.get_server_info)
+        objects_future = executor.submit(client.get_objects_list)
+        printer_info_future = executor.submit(client.get_printer_info)
+        update_status_future = executor.submit(client.get_machine_update_status)
+
+        server_info = server_info_future.result()
+        objects = _safe_future(objects_future)
+        printer_info = _safe_future(printer_info_future)
+        update_status = _safe_future(update_status_future)
+
     object_names = tuple(str(item) for item in objects.get("objects", ()))
     mcu_object_names = tuple(
         name for name in object_names if name == "mcu" or name.startswith("mcu ")
     )
-    object_status = _safe_probe(
-        lambda: client.get_printer_objects_query(_read_only_status_object_names(object_names))
-    )
-    object_status = _with_non_ascii_temperature_status(client, object_names, object_status)
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        object_status_future = executor.submit(
+            client.get_printer_objects_query,
+            _read_only_status_object_names(object_names),
+        )
+        mcu_status_future = executor.submit(
+            client.get_printer_objects_query_fields,
+            {name: "mcu_version,mcu_build_versions" for name in mcu_object_names},
+        )
+        object_status = _safe_future(object_status_future)
+        mcu_status = _safe_future(mcu_status_future)
+        object_status = _with_non_ascii_temperature_status(client, object_names, object_status)
+
     return PrinterStatus.from_probe(
         server_info=server_info,
-        printer_info=_safe_probe(client.get_printer_info),
+        printer_info=printer_info,
         objects=objects,
         object_status=object_status,
-        mcu_status=_safe_probe(
-            lambda: client.get_printer_objects_query_fields(
-                {name: "mcu_version,mcu_build_versions" for name in mcu_object_names}
-            )
-        ),
-        update_status=_safe_probe(client.get_machine_update_status),
+        mcu_status=mcu_status,
+        update_status=update_status,
     )
 
 
@@ -66,6 +97,14 @@ def status_to_dict(status: PrinterStatus) -> dict[str, Any]:
 def _safe_probe(probe: Any) -> dict[str, Any]:
     try:
         result = probe()
+    except Exception:
+        return {}
+    return result if isinstance(result, dict) else {}
+
+
+def _safe_future(future: Future[dict[str, Any]]) -> dict[str, Any]:
+    try:
+        result = future.result()
     except Exception:
         return {}
     return result if isinstance(result, dict) else {}
