@@ -214,6 +214,32 @@ def test_shell_has_responsive_orientation_hooks() -> None:
     assert "property bool vertical" in action_bar_qml
 
 
+def test_move_bed_tilt_preview_uses_rectangular_bed_geometry() -> None:
+    qml = Path("src/klippertouch/qml/panels/MovePanel.qml").read_text(encoding="utf-8")
+
+    assert "id: bedRectCanvas" in qml
+    assert "function bedCornerPoints(" in qml
+    assert "function bedHeightOffset(value)" in qml
+    assert "nearLeft: root.positionU" in qml
+    assert "nearRight: root.positionW" in qml
+    assert "farMid: root.positionV" in qml
+    assert "farLeft" in qml
+    assert "farRight" in qml
+    assert "drawBaselineBed(ctx, points)" in qml
+    assert "drawCurrentBed(ctx, points)" in qml
+    assert "drawBedPoint(ctx, points.nearLeft, \"U\", root.positionU)" in qml
+    assert "drawBedPoint(ctx, points.nearRight, \"W\", root.positionW)" in qml
+    assert "drawBedPoint(ctx, points.farMid, \"V\", root.positionV)" in qml
+    assert '"Bed plane"' not in qml
+
+
+def test_move_bed_tilt_preview_maps_negative_uvw_toward_screen_top() -> None:
+    qml = Path("src/klippertouch/qml/panels/MovePanel.qml").read_text(encoding="utf-8")
+
+    assert "return Math.max(-18, Math.min(18, (value - average) * 2.4))" in qml
+    assert "return Math.max(-18, Math.min(18, (value - average) * -2.4))" not in qml
+
+
 def test_responsive_layout_components_exist() -> None:
     qml_dir = Path("src/klippertouch/qml")
     expected = [
@@ -714,6 +740,14 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert 'property var zButtons' in qml
     assert 'property var actionButtons' in qml
     assert 'property var moreActions' in qml
+    action_buttons = qml.split("property var actionButtons: [", 1)[1].split(
+        "property var moreActions: [", 1
+    )[0]
+    assert '"action": "bed_tilt"' in action_buttons
+    assert '"action": "disable_motors"' in action_buttons
+    assert '"action": "more"' in action_buttons
+    assert '"action": "home_uvw"' not in action_buttons
+    assert '"action": "accelerator_level"' not in action_buttons
     assert '"label": "Home All"' in qml
     assert '"action": "home_all"' in qml
     assert '"hint": "XYZ"' in qml
@@ -742,6 +776,45 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert 'property bool moreVisible' in qml
     assert 'property string detailPage: "main"' in qml
     assert 'signal moveActionRequested(string action, real distance, real speed)' in qml
+    assert 'property var bedTiltButtons' in qml
+    assert 'property var tiltDistances: [".01", ".05", ".1", ".5", "1"]' in qml
+    assert 'property string selectedTiltDistance: ".1"' in qml
+    assert 'property string selectedTiltSpeed: "2"' in qml
+    assert 'function selectTiltDistance(distance)' in qml
+    assert 'function showBedTilt()' in qml
+    assert 'function bedHeightOffset(value)' in qml
+    assert 'function bedCornerPoints(' in qml
+    assert 'root.detailPage = "bed_tilt"' in qml
+    assert '"label": "Bed Tilt"' in qml
+    assert '"action": "bed_tilt"' in qml
+    assert '"requires": "five_axis"' in qml
+    assert 'id: bedTiltPage' in qml
+    assert 'id: bedTiltPreviewPanel' in qml
+    assert 'id: bedRectCanvas' in qml
+    assert 'id: bedPositionStrip' in qml
+    assert qml.index('id: bedTiltPreviewPanel') < qml.index('id: bedPositionStrip')
+    position_strip_block = qml.split('id: bedPositionStrip', 1)[1].split('id: uvwTiltPad', 1)[0]
+    assert 'id: bedTiltPreview' not in position_strip_block
+    assert 'text: "Z " + root.positionZ.toFixed(3)' in qml
+    assert 'text: "U " + root.positionU.toFixed(3)' in qml
+    assert 'text: "V " + root.positionV.toFixed(3)' in qml
+    assert 'text: "W " + root.positionW.toFixed(3)' in qml
+    assert 'id: uvwTiltPad' in qml
+    assert 'id: bedRectCanvas' in qml
+    assert 'drawBaselineBed(ctx, points)' in qml
+    assert 'drawCurrentBed(ctx, points)' in qml
+    assert 'drawBedPoint(ctx, points.nearLeft, "U", root.positionU)' in qml
+    assert 'drawBedPoint(ctx, points.nearRight, "W", root.positionW)' in qml
+    assert 'drawBedPoint(ctx, points.farMid, "V", root.positionV)' in qml
+    assert 'title: "V"' in qml
+    assert 'title: "U"' in qml
+    assert 'title: "W"' in qml
+    assert '"actionPlus": "v_plus"' in qml
+    assert '"actionMinus": "v_minus"' in qml
+    assert '"actionPlus": "u_plus"' in qml
+    assert '"actionMinus": "u_minus"' in qml
+    assert '"actionPlus": "w_plus"' in qml
+    assert '"actionMinus": "w_minus"' in qml
     assert 'property var xySpeeds: ["25", "50", "100", "150"]' in qml
     assert 'property var zSpeeds: ["2", "5", "10", "15"]' in qml
     assert 'property string selectedXYSpeed: "100"' in qml
@@ -764,7 +837,7 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert "component LockedTile: Rectangle" in qml
     assert "component DirectionButton: Rectangle" in qml
     assert "function arrowGlyph(direction)" in qml
-    assert "Canvas {" not in qml
+    assert "id: bedRectCanvas" in qml
     assert '"#eef3fb"' not in qml
     assert "root.positionX.toFixed(2)" in qml
     assert "root.positionU.toFixed(2)" in qml
@@ -1735,7 +1808,7 @@ def test_move_panel_is_locked_and_responsive() -> None:
     assert "component LockedTile: Rectangle" in qml
     assert "component DirectionButton: Rectangle" in qml
     assert "function arrowGlyph(direction)" in qml
-    assert "Canvas {" not in qml
+    assert "id: bedRectCanvas" in qml
     assert "id: moveMorePanel" in qml
     assert "id: controlGroupGrid" in qml
     assert "id: motionPad" in qml
@@ -1750,6 +1823,7 @@ def test_move_panel_is_locked_and_responsive() -> None:
     assert "function printerReady()" in qml
     assert "function movementGuardText()" in qml
     assert "function actionAxis(action)" in qml
+    assert "function tiltAction(action)" in qml
     assert "function axisHomed(axis)" in qml
     assert "function jogAction(action)" in qml
     assert "function actionRequiresReady(action)" in qml
@@ -1814,6 +1888,9 @@ def test_main_routes_move_and_extrude_to_locked_panels() -> None:
     assert "onMoveActionRequested: function(action, distance, speed)" in main_qml
     assert "function requestMoveControl(action, distance, speed)" in main_qml
     assert "jobControlBridgeModel.requestMoveJog(action, distance, speed)" in main_qml
+    assert 'action === "u_minus" || action === "u_plus"' in main_qml
+    assert 'action === "v_minus" || action === "v_plus"' in main_qml
+    assert 'action === "w_minus" || action === "w_plus"' in main_qml
     assert 'jobControlBridgeModel.requestHome("xy")' in main_qml
     assert 'jobControlBridgeModel.requestHome("z")' in main_qml
     assert 'jobControlBridgeModel.requestHome("all")' in main_qml

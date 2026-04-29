@@ -295,6 +295,36 @@ def test_status_from_websocket_message_applies_subscription_snapshot() -> None:
     assert updated.filament_sensors[0].filament_detected is False
 
 
+def test_status_from_websocket_message_preserves_uvw_on_partial_motion_update() -> None:
+    status = PrinterStatus(
+        objects=("toolhead", "gcode_move"),
+        position_u=4.0,
+        position_v=-4.0,
+        position_w=4.0,
+    )
+    message = json.dumps(
+        {
+            "jsonrpc": "2.0",
+            "method": "notify_status_update",
+            "params": [
+                {
+                    "toolhead": {"max_accel": 2400.0},
+                    "gcode_move": {"speed": 3000.0},
+                }
+            ],
+        }
+    )
+
+    updated = status_from_websocket_message(status, message)
+
+    assert updated is not None
+    assert updated.position_u == 4.0
+    assert updated.position_v == -4.0
+    assert updated.position_w == 4.0
+    assert updated.requested_speed == 50.0
+    assert updated.max_accel == 2400.0
+
+
 def test_status_from_websocket_message_ignores_unrelated_messages() -> None:
     status = PrinterStatus(objects=("extruder",))
 

@@ -39,6 +39,66 @@ def test_printer_status_from_probe_payloads() -> None:
     )
 
 
+def test_printer_status_detects_five_axis_capabilities_from_configfile() -> None:
+    status = PrinterStatus.from_probe(
+        server_info={"klippy_state": "ready"},
+        printer_info={"state": "ready"},
+        objects={"objects": ["independent_3z", "z_tilt", "configfile"]},
+        object_status={
+            "status": {
+                "configfile": {
+                    "config": {
+                        "pre_level": {"accelerator_level": "true"},
+                        "accelerator_level": {},
+                    },
+                    "settings": {
+                        "independent_3z": {},
+                        "z_tilt": {},
+                    },
+                }
+            }
+        },
+    )
+
+    assert status.objects == ("independent_3z", "z_tilt", "configfile")
+    assert status.five_axis_available is True
+    assert status.accelerator_level_available is True
+    assert status.z_tilt_available is True
+
+
+def test_printer_status_extracts_klipper_warnings_from_configfile() -> None:
+    status = PrinterStatus.from_probe(
+        server_info={"klippy_state": "ready"},
+        printer_info={"state": "ready"},
+        objects={"objects": ["configfile"]},
+        object_status={
+            "status": {
+                "configfile": {
+                    "warnings": [
+                        {
+                            "type": "deprecated_mcu_code",
+                            "message": (
+                                "MCU 'cartographer' has deprecated code "
+                                "(it is missing feature 'get_canbus_status')."
+                            ),
+                        },
+                        "Legacy config option is deprecated",
+                        {"warning": "Config fallback warning"},
+                        {"message": ""},
+                    ]
+                }
+            }
+        },
+    )
+
+    assert status.klipper_warnings == (
+        "MCU 'cartographer' has deprecated code "
+        "(it is missing feature 'get_canbus_status').",
+        "Legacy config option is deprecated",
+        "Config fallback warning",
+    )
+
+
 def test_printer_status_copies_mutable_objects() -> None:
     object_names = ["extruder"]
     status = PrinterStatus(objects=object_names)  # type: ignore[arg-type]
@@ -682,6 +742,48 @@ def test_printer_status_applies_read_only_toolhead_update() -> None:
     assert updated.z_offset == 0.12
     assert updated.max_accel == 2400.0
     assert updated.max_velocity == 180.0
+
+
+def test_printer_status_normalizes_uvw_positions() -> None:
+    status = PrinterStatus(
+        position_u="4.5",  # type: ignore[arg-type]
+        position_v="-4.25",  # type: ignore[arg-type]
+        position_w=None,  # type: ignore[arg-type]
+    )
+
+    assert status.position_u == 4.5
+    assert status.position_v == -4.25
+    assert status.position_w == 0.0
+
+
+def test_printer_status_preserves_uvw_when_partial_toolhead_update_lacks_position() -> None:
+    status = PrinterStatus(
+        objects=("toolhead", "gcode_move"),
+        position_x=128.0,
+        position_y=128.0,
+        position_z=10.0,
+        position_e=0.0,
+        position_u=4.0,
+        position_v=-4.0,
+        position_w=4.0,
+    )
+
+    updated = status.with_status_update(
+        {
+            "toolhead": {"max_accel": 2400.0},
+            "gcode_move": {"speed": 3000.0},
+        }
+    )
+
+    assert updated.position_x == 128.0
+    assert updated.position_y == 128.0
+    assert updated.position_z == 10.0
+    assert updated.position_e == 0.0
+    assert updated.position_u == 4.0
+    assert updated.position_v == -4.0
+    assert updated.position_w == 4.0
+    assert updated.requested_speed == 50.0
+    assert updated.max_accel == 2400.0
 
 
 def test_printer_status_exposes_primary_extruder_temperatures() -> None:

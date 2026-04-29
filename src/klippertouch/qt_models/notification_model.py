@@ -132,16 +132,28 @@ class NotificationModel(QAbstractListModel):
 
     @Slot(list)
     def addMoonrakerWarnings(self, warnings: list[str] | tuple[str, ...]) -> None:  # noqa: N802
+        self._add_warning_notifications(warnings, "Moonraker warning", "moonraker")
+
+    @Slot(list)
+    def addKlipperWarnings(self, warnings: list[str] | tuple[str, ...]) -> None:  # noqa: N802
+        self._add_warning_notifications(warnings, "Klipper warning", "klipper")
+
+    def _add_warning_notifications(
+        self,
+        warnings: list[str] | tuple[str, ...],
+        title: str,
+        source: str,
+    ) -> None:
         seen = {
             (item.level, item.title, item.message, item.source)
             for item in self._items
         }
         for warning in warnings:
             message = str(warning).strip()
-            key = ("warning", "Moonraker warning", message, "moonraker")
+            key = ("warning", title, message, source)
             if not message or key in seen:
                 continue
-            self.addNotification("warning", "Moonraker warning", message, "moonraker", True, "")
+            self.addNotification("warning", title, message, source, True, "")
             seen.add(key)
 
     @Slot(str, str, str)

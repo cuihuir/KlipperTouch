@@ -87,6 +87,26 @@ def test_notification_model_adds_moonraker_warnings_as_sticky_items(qtbot) -> No
     )
 
 
+def test_notification_model_adds_klipper_warnings_as_sticky_items(qtbot) -> None:
+    model = NotificationModel()
+
+    model.addKlipperWarnings(
+        [
+            "MCU 'cartographer' has deprecated code",
+            "MCU 'cartographer' has deprecated code",
+            "",
+        ]
+    )
+
+    assert model.rowCount() == 1
+    newest = model.index(0, 0)
+    assert model.data(newest, model.LevelRole) == "warning"
+    assert model.data(newest, model.TitleRole) == "Klipper warning"
+    assert model.data(newest, model.MessageRole) == "MCU 'cartographer' has deprecated code"
+    assert model.data(newest, model.SourceRole) == "klipper"
+    assert model.data(newest, model.StickyRole) is True
+
+
 def test_notification_model_requests_transient_toast_without_history(qtbot) -> None:
     model = NotificationModel()
     toasts: list[tuple[str, str, str]] = []

@@ -162,7 +162,7 @@ class MoonrakerClient:
 
     def jog_toolhead(self, axis: str, distance: float, speed: float) -> dict[str, Any]:
         normalized_axis = axis.lower()
-        if normalized_axis not in {"x", "y", "z"}:
+        if normalized_axis not in {"x", "y", "z", "u", "v", "w"}:
             raise ValueError("Invalid jog axis")
         if speed <= 0:
             raise ValueError("Invalid jog speed")
@@ -183,6 +183,9 @@ class MoonrakerClient:
 
     def run_accelerator_level(self) -> dict[str, Any]:
         return self.run_gcode_script("ACCELERATOR_LEVEL MOVE=1")
+
+    def run_uvw_home(self) -> dict[str, Any]:
+        return self.run_gcode_script("UVW_HOME")
 
     def extrude_filament(self, distance: float, speed: float) -> dict[str, Any]:
         return self.run_gcode_script(f"_CLIENT_LINEAR_MOVE E={distance:.3f} F={speed * 60:.0f}")
@@ -276,6 +279,8 @@ def _query_fields_for_object(name: str) -> str:
         return "gcode_position,homing_origin,speed,speed_factor,extrude_factor"
     if name == "webhooks":
         return "state,state_message"
+    if name == "configfile":
+        return "config,settings,warnings"
     return "temperature,target"
 
 

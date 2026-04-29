@@ -265,7 +265,10 @@ ApplicationWindow {
             jobControlBridgeModel.requestPlaceholderControl("Move " + action.slice(12))
         } else if (action === "x_minus" || action === "x_plus"
                    || action === "y_minus" || action === "y_plus"
-                   || action === "z_minus" || action === "z_plus") {
+                   || action === "z_minus" || action === "z_plus"
+                   || action === "u_minus" || action === "u_plus"
+                   || action === "v_minus" || action === "v_plus"
+                   || action === "w_minus" || action === "w_plus") {
             jobControlBridgeModel.requestMoveJog(action, distance, speed)
         }
     }

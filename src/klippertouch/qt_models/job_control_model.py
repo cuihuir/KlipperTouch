@@ -41,6 +41,8 @@ class JobControlClient(Protocol):
 
     def run_accelerator_level(self) -> dict[str, object]: ...
 
+    def run_uvw_home(self) -> dict[str, object]: ...
+
     def extrude_filament(self, distance: float, speed: float) -> dict[str, object]: ...
 
     def load_filament(self, speed: float) -> dict[str, object]: ...
@@ -135,6 +137,12 @@ class JobControlModel(QObject):
             "y_plus": ("y", move_distance),
             "z_minus": ("z", -move_distance),
             "z_plus": ("z", move_distance),
+            "u_minus": ("u", -move_distance),
+            "u_plus": ("u", move_distance),
+            "v_minus": ("v", -move_distance),
+            "v_plus": ("v", move_distance),
+            "w_minus": ("w", -move_distance),
+            "w_plus": ("w", move_distance),
         }
         if clean_direction not in direction_map:
             self._set_error("Invalid move direction")
@@ -152,8 +160,10 @@ class JobControlModel(QObject):
             "all": (),
             "xy": ("x", "y"),
             "z": ("z",),
-            "uvw": ("u", "v", "w"),
         }
+        if clean_target == "uvw":
+            self._run_control("Home", lambda client: client.run_uvw_home())
+            return
         if clean_target not in target_map:
             self._set_error("Invalid home target")
             return

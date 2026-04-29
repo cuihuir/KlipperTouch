@@ -108,6 +108,7 @@ class PrinterStatus:
     klipper_version: str = "unknown"
     moonraker_version: str = "unknown"
     moonraker_warnings: tuple[str, ...] = ()
+    klipper_warnings: tuple[str, ...] = ()
     mcu_statuses: tuple[McuStatus, ...] = ()
     service_versions: tuple[ServiceVersionStatus, ...] = ()
     objects: tuple[str, ...] = ()
@@ -144,14 +145,38 @@ class PrinterStatus:
     extruder_smooth_time: float = 0.0
     webhooks_state: str = ""
     webhooks_message: str = ""
+    five_axis_available: bool = False
+    accelerator_level_available: bool = False
+    z_tilt_available: bool = False
 
     def __post_init__(self) -> None:
         objects = tuple(str(item) for item in self.objects)
         object.__setattr__(self, "objects", objects)
+        object_set = set(objects)
+        object.__setattr__(
+            self,
+            "five_axis_available",
+            bool(self.five_axis_available or "independent_3z" in object_set),
+        )
+        object.__setattr__(
+            self,
+            "accelerator_level_available",
+            bool(self.accelerator_level_available or "accelerator_level" in object_set),
+        )
+        object.__setattr__(
+            self,
+            "z_tilt_available",
+            bool(self.z_tilt_available or "z_tilt" in object_set),
+        )
         object.__setattr__(
             self,
             "moonraker_warnings",
             tuple(str(item).strip() for item in self.moonraker_warnings if str(item).strip()),
+        )
+        object.__setattr__(
+            self,
+            "klipper_warnings",
+            tuple(str(item).strip() for item in self.klipper_warnings if str(item).strip()),
         )
         if self.temperature_devices:
             temperature_devices = tuple(self.temperature_devices)
@@ -197,6 +222,9 @@ class PrinterStatus:
         object.__setattr__(self, "position_y", _optional_float(self.position_y) or 0.0)
         object.__setattr__(self, "position_z", _optional_float(self.position_z) or 0.0)
         object.__setattr__(self, "position_e", _optional_float(self.position_e) or 0.0)
+        object.__setattr__(self, "position_u", _optional_float(self.position_u) or 0.0)
+        object.__setattr__(self, "position_v", _optional_float(self.position_v) or 0.0)
+        object.__setattr__(self, "position_w", _optional_float(self.position_w) or 0.0)
         object.__setattr__(self, "homed_axes", str(self.homed_axes or ""))
         object.__setattr__(self, "requested_speed", _optional_float(self.requested_speed) or 0.0)
         object.__setattr__(self, "speed_factor", _clamped_factor_percent(self.speed_factor))
@@ -287,12 +315,14 @@ class PrinterStatus:
             "disconnected",
         }:
             klippy_state = str(webhooks_fields["webhooks_state"])
+        capabilities = _capabilities_from_probe(object_names, object_status or {})
         return cls(
             hostname=str(printer_info.get("hostname", "unknown")),
             klippy_state=klippy_state,
             klipper_version=str(printer_info.get("software_version", "unknown")),
             moonraker_version=str(server_info.get("moonraker_version", "unknown")),
             moonraker_warnings=_moonraker_warnings_from_server_info(server_info),
+            klipper_warnings=_klipper_warnings_from_status(object_status or {}),
             mcu_statuses=_mcu_statuses_from_probe(mcu_status or {}),
             service_versions=_service_versions_from_update_status(update_status or {}),
             objects=object_names,
@@ -303,6 +333,7 @@ class PrinterStatus:
             **_toolhead_fields_from_status(object_status or {}),
             **_extruder_fields_from_status(object_status or {}),
             **webhooks_fields,
+            **capabilities,
         )
 
     def with_temperature_status_update(self, status_update: dict[str, Any]) -> "PrinterStatus":
@@ -362,6 +393,9 @@ class PrinterStatus:
             "position_y": self.position_y,
             "position_z": self.position_z,
             "position_e": self.position_e,
+            "position_u": self.position_u,
+            "position_v": self.position_v,
+            "position_w": self.position_w,
             "homed_axes": self.homed_axes,
             "requested_speed": self.requested_speed,
             "speed_factor": self.speed_factor,
@@ -401,6 +435,7 @@ class PrinterStatus:
             klipper_version=self.klipper_version,
             moonraker_version=self.moonraker_version,
             moonraker_warnings=self.moonraker_warnings,
+            klipper_warnings=self.klipper_warnings,
             mcu_statuses=self.mcu_statuses,
             service_versions=self.service_versions,
             objects=self.objects,
@@ -417,6 +452,9 @@ class PrinterStatus:
             **toolhead_fields,
             **extruder_fields,
             **webhooks_fields,
+            five_axis_available=self.five_axis_available,
+            accelerator_level_available=self.accelerator_level_available,
+            z_tilt_available=self.z_tilt_available,
         )
 
 
@@ -437,6 +475,48 @@ def _temperature_devices_from_status(
         if device is not None:
             devices.append(device)
     return tuple(sorted(devices, key=_temperature_device_sort_key))
+
+
+def _capabilities_from_probe(
+    object_names: tuple[str, ...],
+    object_status: dict[str, Any],
+) -> dict[str, bool]:
+    object_set = set(object_names)
+    config_sections = _configfile_sections_from_status(object_status)
+    pre_level = config_sections.get("pre_level", {})
+    if not isinstance(pre_level, dict):
+        pre_level = {}
+    return {
+        "five_axis_available": "independent_3z" in object_set
+        or "independent_3z" in config_sections,
+        "accelerator_level_available": "accelerator_level" in object_set
+        or "accelerator_level" in config_sections
+        or _truthy_config_value(pre_level.get("accelerator_level")),
+        "z_tilt_available": "z_tilt" in object_set or "z_tilt" in config_sections,
+    }
+
+
+def _configfile_sections_from_status(object_status: dict[str, Any]) -> dict[str, Any]:
+    status = object_status.get("status", {})
+    if not isinstance(status, dict):
+        return {}
+    configfile = status.get("configfile", {})
+    if not isinstance(configfile, dict):
+        return {}
+    sections: dict[str, Any] = {}
+    for key in ("config", "settings"):
+        values = configfile.get(key, {})
+        if isinstance(values, dict):
+            sections.update({str(name): value for name, value in values.items()})
+    return sections
+
+
+def _truthy_config_value(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "on"}
+    return bool(value)
 
 
 def _filament_sensors_from_status(
@@ -731,7 +811,20 @@ def _string_tuple(values: Any) -> tuple[str, ...]:
 
 
 def _moonraker_warnings_from_server_info(server_info: dict[str, Any]) -> tuple[str, ...]:
-    warnings = server_info.get("warnings", ())
+    return _warning_messages(server_info.get("warnings", ()))
+
+
+def _klipper_warnings_from_status(object_status: dict[str, Any]) -> tuple[str, ...]:
+    status = object_status.get("status", {})
+    if not isinstance(status, dict):
+        return ()
+    configfile = status.get("configfile", {})
+    if not isinstance(configfile, dict):
+        return ()
+    return _warning_messages(configfile.get("warnings", ()))
+
+
+def _warning_messages(warnings: Any) -> tuple[str, ...]:
     if not isinstance(warnings, list | tuple):
         return ()
     parsed: list[str] = []

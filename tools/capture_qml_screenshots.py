@@ -42,7 +42,7 @@ DEFAULT_PANELS = (
 )
 JOB_DETAIL_PAGES = ("summary", "advanced", "exclude", "time", "motion", "extrusion")
 EXTRUDE_DETAIL_PAGES = ("feed", "materials")
-MOVE_DETAIL_PAGES = ("more",)
+MOVE_DETAIL_PAGES = ("more", "bed_tilt")
 SAMPLE_FILES = (
     {
         "path": "OrcaCube_PLA_27m41s.gcode",
@@ -97,6 +97,9 @@ SAMPLE_STATUS = {
         "gcode_move",
         "exclude_object",
         "filament_switch_sensor runout",
+        "independent_3z",
+        "z_tilt",
+        "configfile",
     ),
     "temperature_devices": (
         TemperatureDeviceStatus(
@@ -127,6 +130,10 @@ SAMPLE_STATUS = {
     "position_y": 20.2,
     "position_z": 3.3,
     "position_e": 40.4,
+    "position_u": 0.02,
+    "position_v": -0.04,
+    "position_w": 0.01,
+    "accelerator_level_available": True,
     "homed_axes": "xyz",
     "exclude_object_names": ("part_a", "part_b", "part_c"),
     "excluded_object_names": ("part_a",),

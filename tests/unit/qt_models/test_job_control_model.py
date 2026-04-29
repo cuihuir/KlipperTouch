@@ -78,6 +78,10 @@ class FakeClient:
         self.calls.append(("accelerator_level", ""))
         return {"ok": True}
 
+    def run_uvw_home(self) -> dict[str, bool]:
+        self.calls.append(("uvw_home", ""))
+        return {"ok": True}
+
     def extrude_filament(self, distance: float, speed: float) -> dict[str, bool]:
         self.calls.append(("extrude_filament", f"{distance}:{speed}"))
         return {"ok": True}
@@ -228,8 +232,13 @@ def test_job_control_model_sends_validated_jog_requests(qtbot) -> None:
 
     model.requestMoveJog("x_minus", 10, 100)
     model.requestMoveJog("z_plus", 0.5, 10)
+    model.requestMoveJog("v_minus", 0.1, 2)
 
-    assert client.calls == [("jog", "x:-10.0:100.0"), ("jog", "z:0.5:10.0")]
+    assert client.calls == [
+        ("jog", "x:-10.0:100.0"),
+        ("jog", "z:0.5:10.0"),
+        ("jog", "v:-0.1:2.0"),
+    ]
     assert model.lastStatus == "Move sent"
 
 
@@ -259,7 +268,7 @@ def test_job_control_model_sends_home_requests(qtbot) -> None:
     model.requestHome("all")
     model.requestHome("uvw")
 
-    assert client.calls == [("home", "x,y"), ("home", "z"), ("home", ""), ("home", "u,v,w")]
+    assert client.calls == [("home", "x,y"), ("home", "z"), ("home", ""), ("uvw_home", "")]
     assert model.lastStatus == "Home sent"
 
 

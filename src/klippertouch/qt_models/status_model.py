@@ -708,15 +708,15 @@ class StatusModel(QObject):
 
     @Property(bool, notify=objectsChanged)
     def fiveAxisAvailable(self) -> bool:
-        return "independent_3z" in self._status.objects
+        return self._status.five_axis_available
 
     @Property(bool, notify=objectsChanged)
     def acceleratorLevelAvailable(self) -> bool:
-        return "accelerator_level" in self._status.objects
+        return self._status.accelerator_level_available
 
     @Property(bool, notify=objectsChanged)
     def zTiltAvailable(self) -> bool:
-        return "z_tilt" in self._status.objects
+        return self._status.z_tilt_available
 
     @Property(str, notify=toolheadChanged)
     def homedAxes(self) -> str:
@@ -798,9 +798,18 @@ def _info_fields_changed(previous: PrinterStatus, current: PrinterStatus) -> boo
 def _object_fields_changed(previous: PrinterStatus, current: PrinterStatus) -> bool:
     previous_device_names = tuple(device.name for device in previous.temperature_devices)
     current_device_names = tuple(device.name for device in current.temperature_devices)
-    return (previous.objects, previous_device_names) != (
+    return (
+        previous.objects,
+        previous_device_names,
+        previous.five_axis_available,
+        previous.accelerator_level_available,
+        previous.z_tilt_available,
+    ) != (
         current.objects,
         current_device_names,
+        current.five_axis_available,
+        current.accelerator_level_available,
+        current.z_tilt_available,
     )
 
 

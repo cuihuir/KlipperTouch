@@ -404,6 +404,21 @@ def test_status_model_exposes_five_axis_positions_and_capabilities(qtbot) -> Non
     assert model.zTiltAvailable is True
 
 
+def test_status_model_uses_capability_flags_without_runtime_accelerator_object(qtbot) -> None:
+    model = StatusModel()
+
+    model.set_status(
+        PrinterStatus(
+            objects=("independent_3z", "z_tilt", "configfile"),
+            accelerator_level_available=True,
+        )
+    )
+
+    assert model.fiveAxisAvailable is True
+    assert model.acceleratorLevelAvailable is True
+    assert model.zTiltAvailable is True
+
+
 def test_temperature_device_list_model_exposes_qml_roles(qtbot) -> None:
     model = TemperatureDeviceListModel()
     status = PrinterStatus(objects=("extruder", "heater_bed"))

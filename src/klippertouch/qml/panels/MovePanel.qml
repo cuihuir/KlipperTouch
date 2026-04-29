@@ -25,15 +25,19 @@ Item {
         {"label": "Z+", "direction": "up", "action": "z_plus"},
         {"label": "Z-", "direction": "down", "action": "z_minus"}
     ]
+    property var bedTiltButtons: [
+        {"label": "V", "actionPlus": "v_plus", "actionMinus": "v_minus", "position": "top"},
+        {"label": "U", "actionPlus": "u_plus", "actionMinus": "u_minus", "position": "left"},
+        {"label": "W", "actionPlus": "w_plus", "actionMinus": "w_minus", "position": "right"}
+    ]
     property var actionButtons: [
         {"label": "Disable Motors", "action": "disable_motors", "hint": "M84", "iconName": "motor-off"},
-        {"label": "UVW Home", "action": "home_uvw", "hint": "UVW", "iconName": "tilt", "requires": "five_axis"},
-        {"label": "Acc Level", "action": "accelerator_level", "hint": "MOVE=1", "iconName": "tilt", "requires": "accelerator_level"},
+        {"label": "Bed Tilt", "action": "bed_tilt", "hint": "UVW", "iconName": "tilt", "requires": "five_axis"},
         {"label": "More", "action": "more", "hint": "settings", "iconName": "settings"}
     ]
     property var moreActions: [
         {"label": "Home All", "action": "home_all", "hint": "XYZ", "iconName": "home"},
-        {"label": "UVW Home", "action": "home_uvw", "hint": "UVW", "iconName": "tilt", "requires": "five_axis"},
+        {"label": "UVW Home", "action": "home_uvw", "hint": "UVW_HOME", "iconName": "tilt", "requires": "five_axis"},
         {"label": "Acc Level", "action": "accelerator_level", "hint": "MOVE=1", "iconName": "tilt", "requires": "accelerator_level"},
         {"label": "Z Tilt Adjust", "action": "z_tilt_adjust", "hint": "Z_TILT_ADJUST", "iconName": "tilt", "requires": "z_tilt"},
         {"label": "Disable Motors", "action": "disable_motors", "hint": "M84", "iconName": "motor-off"},
@@ -45,11 +49,14 @@ Item {
         {"placeholder": true}
     ]
     property var distances: [".1", ".5", "1", "5", "10", "25", "50"]
+    property var tiltDistances: [".01", ".05", ".1", ".5", "1"]
     property var xySpeeds: ["25", "50", "100", "150"]
     property var zSpeeds: ["2", "5", "10", "15"]
     property string selectedDistance: "10"
+    property string selectedTiltDistance: ".1"
     property string selectedXYSpeed: "100"
     property string selectedZSpeed: "10"
+    property string selectedTiltSpeed: "2"
     property bool moreVisible: false
     property string detailPage: "main"
     property bool confirmVisible: false
@@ -86,6 +93,10 @@ Item {
 
     function selectDistance(distance) {
         root.selectedDistance = distance
+    }
+
+    function selectTiltDistance(distance) {
+        root.selectedTiltDistance = distance
     }
 
     function fittedMoveButtonSize(padWidth, padHeight) {
@@ -193,6 +204,44 @@ Item {
         root.detailPage = "more"
     }
 
+    function showBedTilt() {
+        root.moreVisible = false
+        root.detailPage = "bed_tilt"
+    }
+
+    function bedHeightOffset(value) {
+        var average = (root.positionU + root.positionV + root.positionW) / 3
+        return Math.max(-18, Math.min(18, (value - average) * 2.4))
+    }
+
+    function bedCornerPoints(previewWidth, previewHeight) {
+        var marginX = Math.max(16, Math.round(previewWidth * 0.13))
+        var nearY = Math.round(previewHeight * 0.76)
+        var farY = Math.round(previewHeight * 0.25)
+        var nearLeftX = marginX
+        var nearRightX = previewWidth - marginX
+        var farLeftX = Math.round(previewWidth * 0.29)
+        var farRightX = Math.round(previewWidth * 0.71)
+        var farMidX = Math.round((farLeftX + farRightX) / 2)
+        var heights = {
+            nearLeft: root.positionU,
+            nearRight: root.positionW,
+            farMid: root.positionV
+        }
+        return {
+            nearLeft: {"x": nearLeftX, "y": nearY + root.bedHeightOffset(heights.nearLeft)},
+            nearRight: {"x": nearRightX, "y": nearY + root.bedHeightOffset(heights.nearRight)},
+            farMid: {"x": farMidX, "y": farY + root.bedHeightOffset(heights.farMid)},
+            farLeft: {"x": farLeftX, "y": farY + root.bedHeightOffset(heights.farMid)},
+            farRight: {"x": farRightX, "y": farY + root.bedHeightOffset(heights.farMid)},
+            baselineNearLeft: {"x": nearLeftX, "y": nearY},
+            baselineNearRight: {"x": nearRightX, "y": nearY},
+            baselineFarLeft: {"x": farLeftX, "y": farY},
+            baselineFarRight: {"x": farRightX, "y": farY},
+            baselineFarMid: {"x": farMidX, "y": farY}
+        }
+    }
+
     function goBack() {
         if (root.detailPage !== "main") {
             root.detailPage = "main"
@@ -213,6 +262,10 @@ Item {
             root.cycleSpeed("z")
             return
         }
+        if (action === "bed_tilt") {
+            root.showBedTilt()
+            return
+        }
         if (action === "home_all" || action === "home_uvw"
                 || action === "z_tilt_adjust" || action === "accelerator_level"
                 || action === "disable_motors") {
@@ -223,6 +276,9 @@ Item {
     }
 
     function speedForAction(action) {
+        if (root.tiltAction(action)) {
+            return parseFloat(root.selectedTiltSpeed)
+        }
         if (root.actionAxis(action) === "z") {
             return parseFloat(root.selectedZSpeed)
         }
@@ -273,7 +329,22 @@ Item {
         if (action === "z_minus" || action === "z_plus") {
             return "z"
         }
+        if (action === "u_minus" || action === "u_plus") {
+            return "u"
+        }
+        if (action === "v_minus" || action === "v_plus") {
+            return "v"
+        }
+        if (action === "w_minus" || action === "w_plus") {
+            return "w"
+        }
         return ""
+    }
+
+    function tiltAction(action) {
+        return action === "u_minus" || action === "u_plus"
+            || action === "v_minus" || action === "v_plus"
+            || action === "w_minus" || action === "w_plus"
     }
 
     function axisHomed(axis) {
@@ -281,7 +352,7 @@ Item {
     }
 
     function jogAction(action) {
-        return root.actionAxis(action).length > 0
+        return root.actionAxis(action).length > 0 && !root.tiltAction(action)
     }
 
     function actionRequiresReady(action) {
@@ -298,6 +369,12 @@ Item {
             || action === "y_plus"
             || action === "z_minus"
             || action === "z_plus"
+            || action === "u_minus"
+            || action === "u_plus"
+            || action === "v_minus"
+            || action === "v_plus"
+            || action === "w_minus"
+            || action === "w_plus"
     }
 
     function actionAllowed(action) {
@@ -306,6 +383,9 @@ Item {
         }
         if (!root.printerReady()) {
             return false
+        }
+        if (root.tiltAction(action)) {
+            return root.fiveAxisAvailable
         }
         if (root.jogAction(action)) {
             return root.axisHomed(root.actionAxis(action))
@@ -511,6 +591,132 @@ Item {
         }
     }
 
+    component TiltPointControl: Rectangle {
+        id: tiltRoot
+        property string title: ""
+        property string value: "0.00"
+        property string plusAction: ""
+        property string minusAction: ""
+
+        color: "#101718"
+        opacity: tiltRoot.enabled ? 1.0 : 0.46
+        border.color: "#536165"
+        border.width: 1
+        radius: Math.round(Math.min(width, height) * 0.14)
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: root.metrics.portrait
+                ? Math.max(6, Math.round(root.metrics.gap * 0.7))
+                : Math.max(3, Math.round(root.metrics.gap * 0.32))
+            spacing: root.metrics.portrait
+                ? Math.max(5, Math.round(root.metrics.gap * 0.55))
+                : Math.max(2, Math.round(root.metrics.gap * 0.22))
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.minimumHeight: root.metrics.portrait
+                    ? Math.max(42, Math.round(root.metrics.fontSize * 2.4))
+                    : Math.max(25, Math.round(root.metrics.fontSize * 1.42))
+                color: "#172224"
+                border.color: "#344044"
+                border.width: 1
+                radius: Math.round(root.metrics.fontSize * 0.22)
+
+                Label {
+                    anchors.centerIn: parent
+                    text: tiltRoot.title + "+"
+                    color: Theme.text
+                    font.bold: true
+                    font.pixelSize: root.metrics.portrait
+                        ? Math.max(18, Math.round(root.metrics.fontSize * 1.25))
+                        : Math.max(15, Math.round(root.metrics.fontSize * 0.9))
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    enabled: root.actionAllowed(tiltRoot.plusAction)
+                    onClicked: root.moveActionRequested(
+                        tiltRoot.plusAction,
+                        parseFloat(root.selectedTiltDistance),
+                        root.speedForAction(tiltRoot.plusAction)
+                    )
+                }
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: root.metrics.portrait
+                    ? Math.max(34, Math.round(root.metrics.fontSize * 2.1))
+                    : Math.max(24, Math.round(root.metrics.fontSize * 1.42))
+                color: "#0b1112"
+                border.color: "#263233"
+                border.width: 1
+                radius: Math.round(root.metrics.fontSize * 0.18)
+
+                ColumnLayout {
+                    anchors.centerIn: parent
+                    width: parent.width - root.metrics.gap
+                    spacing: 0
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: tiltRoot.title
+                        color: Theme.text
+                        horizontalAlignment: Text.AlignHCenter
+                        font.bold: true
+                        font.pixelSize: root.metrics.portrait
+                            ? Math.max(15, Math.round(root.metrics.fontSize * 1.0))
+                            : Math.max(13, Math.round(root.metrics.fontSize * 0.78))
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: tiltRoot.value
+                        color: Theme.mutedText
+                        horizontalAlignment: Text.AlignHCenter
+                        font.pixelSize: root.metrics.portrait
+                            ? Math.max(11, Math.round(root.metrics.fontSize * 0.72))
+                            : Math.max(8, Math.round(root.metrics.fontSize * 0.52))
+                    }
+                }
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.minimumHeight: root.metrics.portrait
+                    ? Math.max(42, Math.round(root.metrics.fontSize * 2.4))
+                    : Math.max(25, Math.round(root.metrics.fontSize * 1.42))
+                color: "#172224"
+                border.color: "#344044"
+                border.width: 1
+                radius: Math.round(root.metrics.fontSize * 0.22)
+
+                Label {
+                    anchors.centerIn: parent
+                    text: tiltRoot.title + "-"
+                    color: Theme.text
+                    font.bold: true
+                    font.pixelSize: root.metrics.portrait
+                        ? Math.max(18, Math.round(root.metrics.fontSize * 1.25))
+                        : Math.max(15, Math.round(root.metrics.fontSize * 0.9))
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    enabled: root.actionAllowed(tiltRoot.minusAction)
+                    onClicked: root.moveActionRequested(
+                        tiltRoot.minusAction,
+                        parseFloat(root.selectedTiltDistance),
+                        root.speedForAction(tiltRoot.minusAction)
+                    )
+                }
+            }
+        }
+    }
+
     GridLayout {
         visible: root.detailPage === "main" || root.metrics.ultraWide
         anchors.fill: parent
@@ -699,7 +905,9 @@ Item {
                                 anchors.fill: parent
                                 enabled: root.actionAllowed(modelData.action)
                                 onClicked: {
-                                    if (modelData.action === "more") {
+                                    if (modelData.action === "bed_tilt") {
+                                        root.showBedTilt()
+                                    } else if (modelData.action === "more") {
                                         root.showMore()
                                     } else {
                                         root.requestConfirmedAction(modelData.action)
@@ -1019,6 +1227,404 @@ Item {
                             enabled: root.actionAllowed(modelData.action)
                             onClicked: root.handleMoreAction(modelData.action)
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        id: bedTiltPage
+        z: 20
+        anchors.fill: parent
+        anchors.margins: root.metrics.margin
+        visible: root.detailPage === "bed_tilt"
+        color: "#0d1415"
+        border.color: "#344044"
+        border.width: 1
+        radius: Math.round(root.metrics.fontSize * 0.36)
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: root.metrics.gap
+            spacing: root.metrics.portrait
+                ? root.metrics.gap
+                : Math.max(4, Math.round(root.metrics.gap * 0.42))
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.preferredHeight: root.metrics.portrait
+                    ? Math.max(24, Math.round(root.metrics.fontSize * 1.45))
+                    : Math.max(22, Math.round(root.metrics.fontSize * 1.24))
+                spacing: root.metrics.gap
+
+                Label {
+                    Layout.fillWidth: true
+                    color: Theme.text
+                    text: "Bed Tilt"
+                    font.bold: true
+                    font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.18))
+                }
+
+                Label {
+                    color: Theme.mutedText
+                    text: "UVW maps Z/Z1/Z2"
+                    elide: Text.ElideRight
+                    maximumLineCount: 1
+                    font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.72))
+                }
+            }
+
+            Rectangle {
+                id: bedTiltPreviewPanel
+                Layout.fillWidth: true
+                Layout.preferredHeight: root.metrics.portrait
+                    ? Math.max(122, Math.round(root.metrics.fontSize * 7.2))
+                    : Math.max(86, Math.round(root.metrics.fontSize * 5.1))
+                color: "#101617"
+                border.color: "#263233"
+                border.width: 1
+                radius: Math.round(root.metrics.fontSize * 0.2)
+
+                Item {
+                    anchors.fill: parent
+                    anchors.margins: Math.max(5, Math.round(root.metrics.gap * 0.55))
+
+                    Canvas {
+                        id: bedRectCanvas
+                        anchors.fill: parent
+                        antialiasing: true
+
+                        onWidthChanged: requestPaint()
+                        onHeightChanged: requestPaint()
+                        Component.onCompleted: requestPaint()
+
+                        Connections {
+                            target: root
+                            function onPositionUChanged() { bedRectCanvas.requestPaint() }
+                            function onPositionVChanged() { bedRectCanvas.requestPaint() }
+                            function onPositionWChanged() { bedRectCanvas.requestPaint() }
+                        }
+
+                        function drawBaselineBed(ctx, points) {
+                            ctx.save()
+                            ctx.strokeStyle = "#324042"
+                            ctx.lineWidth = 1
+                            ctx.setLineDash([5, 5])
+                            ctx.beginPath()
+                            ctx.moveTo(points.baselineFarLeft.x, points.baselineFarLeft.y)
+                            ctx.lineTo(points.baselineFarRight.x, points.baselineFarRight.y)
+                            ctx.lineTo(points.baselineNearRight.x, points.baselineNearRight.y)
+                            ctx.lineTo(points.baselineNearLeft.x, points.baselineNearLeft.y)
+                            ctx.closePath()
+                            ctx.stroke()
+                            ctx.restore()
+                        }
+
+                        function drawCurrentBed(ctx, points) {
+                            var gradient = ctx.createLinearGradient(0, points.farMid.y, 0, points.nearLeft.y)
+                            gradient.addColorStop(0, "#263739")
+                            gradient.addColorStop(1, "#172325")
+                            ctx.save()
+                            ctx.fillStyle = gradient
+                            ctx.strokeStyle = "#8da0a4"
+                            ctx.lineWidth = 2
+                            ctx.setLineDash([])
+                            ctx.beginPath()
+                            ctx.moveTo(points.farLeft.x, points.farLeft.y)
+                            ctx.lineTo(points.farRight.x, points.farRight.y)
+                            ctx.lineTo(points.nearRight.x, points.nearRight.y)
+                            ctx.lineTo(points.nearLeft.x, points.nearLeft.y)
+                            ctx.closePath()
+                            ctx.fill()
+                            ctx.stroke()
+
+                            ctx.strokeStyle = "#536568"
+                            ctx.lineWidth = 1
+                            ctx.beginPath()
+                            ctx.moveTo(points.farMid.x, points.farMid.y)
+                            ctx.lineTo(points.nearLeft.x, points.nearLeft.y)
+                            ctx.moveTo(points.farMid.x, points.farMid.y)
+                            ctx.lineTo(points.nearRight.x, points.nearRight.y)
+                            ctx.stroke()
+                            ctx.restore()
+                        }
+
+                        function drawBedPoint(ctx, point, label, value) {
+                            var radius = Math.max(4, Math.round(root.metrics.fontSize * 0.34))
+                            ctx.save()
+                            ctx.fillStyle = "#d7dedf"
+                            ctx.strokeStyle = "#111819"
+                            ctx.lineWidth = 2
+                            ctx.beginPath()
+                            ctx.arc(point.x, point.y, radius, 0, Math.PI * 2)
+                            ctx.fill()
+                            ctx.stroke()
+
+                            ctx.fillStyle = Theme.text
+                            ctx.font = "700 " + Math.max(10, Math.round(root.metrics.fontSize * 0.72)) + "px sans-serif"
+                            ctx.textAlign = "center"
+                            ctx.textBaseline = "bottom"
+                            ctx.fillText(label, point.x, point.y - radius - 2)
+
+                            ctx.fillStyle = Theme.mutedText
+                            ctx.font = Math.max(9, Math.round(root.metrics.fontSize * 0.58)) + "px sans-serif"
+                            ctx.textBaseline = "top"
+                            ctx.fillText(value.toFixed(2), point.x, point.y + radius + 2)
+                            ctx.restore()
+                        }
+
+                        onPaint: {
+                            var ctx = getContext("2d")
+                            ctx.reset()
+                            var points = root.bedCornerPoints(width, height)
+                            drawBaselineBed(ctx, points)
+                            drawCurrentBed(ctx, points)
+                            drawBedPoint(ctx, points.nearLeft, "U", root.positionU)
+                            drawBedPoint(ctx, points.nearRight, "W", root.positionW)
+                            drawBedPoint(ctx, points.farMid, "V", root.positionV)
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                id: bedPositionStrip
+                Layout.fillWidth: true
+                Layout.preferredHeight: root.metrics.portrait
+                    ? Math.max(30, Math.round(root.metrics.fontSize * 1.9))
+                    : Math.max(24, Math.round(root.metrics.fontSize * 1.45))
+                color: "#101617"
+                border.color: "#263233"
+                border.width: 1
+                radius: Math.round(root.metrics.fontSize * 0.18)
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.margins: Math.max(4, Math.round(root.metrics.gap * 0.4))
+                    spacing: Math.max(4, Math.round(root.metrics.gap * 0.45))
+
+                    GridLayout {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        columns: 4
+                        columnSpacing: Math.max(4, Math.round(root.metrics.gap * 0.4))
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: "Z " + root.positionZ.toFixed(3)
+                            color: Theme.text
+                            horizontalAlignment: Text.AlignHCenter
+                            elide: Text.ElideRight
+                            font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: "U " + root.positionU.toFixed(3)
+                            color: Theme.text
+                            horizontalAlignment: Text.AlignHCenter
+                            elide: Text.ElideRight
+                            font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: "V " + root.positionV.toFixed(3)
+                            color: Theme.text
+                            horizontalAlignment: Text.AlignHCenter
+                            elide: Text.ElideRight
+                            font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: "W " + root.positionW.toFixed(3)
+                            color: Theme.text
+                            horizontalAlignment: Text.AlignHCenter
+                            elide: Text.ElideRight
+                            font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                        }
+                    }
+                }
+            }
+
+            Item {
+                id: uvwTiltPad
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.minimumHeight: root.metrics.portrait
+                    ? Math.max(190, Math.round(root.metrics.fontSize * 11.2))
+                    : Math.max(124, Math.round(root.metrics.fontSize * 7.0))
+
+                readonly property int cardWidth: Math.max(
+                    root.metrics.portrait ? 112 : 100,
+                    Math.min(
+                        Math.round(width * (root.metrics.portrait ? 0.44 : 0.28)),
+                        Math.round(root.metrics.fontSize * 8.5)
+                    )
+                )
+                readonly property int cardHeight: Math.max(
+                    root.metrics.portrait ? 142 : 96,
+                    Math.min(
+                        Math.round(height * (root.metrics.portrait ? 0.46 : 0.62)),
+                        Math.round(root.metrics.fontSize * (root.metrics.portrait ? 9.4 : 5.85))
+                    )
+                )
+
+                TiltPointControl {
+                    width: uvwTiltPad.cardWidth
+                    height: uvwTiltPad.cardHeight
+                    title: "V"
+                    value: root.positionV.toFixed(3)
+                    plusAction: "v_plus"
+                    minusAction: "v_minus"
+                    enabled: root.fiveAxisAvailable
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: parent.top
+                }
+
+                TiltPointControl {
+                    width: uvwTiltPad.cardWidth
+                    height: uvwTiltPad.cardHeight
+                    title: "U"
+                    value: root.positionU.toFixed(3)
+                    plusAction: "u_plus"
+                    minusAction: "u_minus"
+                    enabled: root.fiveAxisAvailable
+                    anchors.left: parent.left
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: root.metrics.portrait
+                        ? root.metrics.gap
+                        : root.metrics.gap
+                }
+
+                TiltPointControl {
+                    width: uvwTiltPad.cardWidth
+                    height: uvwTiltPad.cardHeight
+                    title: "W"
+                    value: root.positionW.toFixed(3)
+                    plusAction: "w_plus"
+                    minusAction: "w_minus"
+                    enabled: root.fiveAxisAvailable
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: root.metrics.portrait
+                        ? root.metrics.gap
+                        : root.metrics.gap
+                }
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: root.metrics.portrait
+                    ? Math.max(72, Math.round(root.metrics.fontSize * 4.6))
+                    : Math.max(58, Math.round(root.metrics.fontSize * 3.55))
+                color: "#101617"
+                border.color: "#263233"
+                border.width: 1
+                radius: Math.round(root.metrics.fontSize * 0.26)
+
+                GridLayout {
+                    anchors.fill: parent
+                    anchors.margins: Math.max(5, Math.round(root.metrics.gap * 0.55))
+                    columns: root.metrics.portrait ? 3 : 6
+                    rowSpacing: Math.max(5, Math.round(root.metrics.gap * 0.5))
+                    columnSpacing: Math.max(5, Math.round(root.metrics.gap * 0.5))
+
+                    Repeater {
+                        model: root.tiltDistances
+
+                        LockedTile {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            Layout.minimumHeight: root.metrics.portrait
+                                ? Math.max(34, Math.round(root.metrics.fontSize * 2.05))
+                                : Math.max(28, Math.round(root.metrics.fontSize * 1.65))
+                            title: modelData
+                            hint: "mm"
+                            selected: root.selectedTiltDistance === modelData
+
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: root.selectTiltDistance(modelData)
+                            }
+                        }
+                    }
+
+                    LockedTile {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: root.metrics.portrait
+                            ? Math.max(34, Math.round(root.metrics.fontSize * 2.05))
+                            : Math.max(28, Math.round(root.metrics.fontSize * 1.65))
+                        title: root.selectedTiltSpeed
+                        hint: "mm/s"
+                        selected: false
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: root.selectedTiltSpeed = root.selectedTiltSpeed === "2" ? "5" : "2"
+                        }
+                    }
+                }
+            }
+
+            GridLayout {
+                Layout.fillWidth: true
+                Layout.preferredHeight: root.metrics.portrait
+                    ? Math.max(112, Math.round(root.metrics.fontSize * 6.9))
+                    : Math.max(58, Math.round(root.metrics.fontSize * 3.55))
+                Layout.minimumHeight: Layout.preferredHeight
+                columns: 3
+                columnSpacing: root.metrics.portrait
+                    ? root.metrics.gap
+                    : Math.max(5, Math.round(root.metrics.gap * 0.55))
+
+                ActionIconButton {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    title: "UVW Home"
+                    hint: "UVW_HOME"
+                    iconName: "tilt"
+                    enabled: root.actionAllowed("home_uvw")
+
+                    MouseArea {
+                        anchors.fill: parent
+                        enabled: root.actionAllowed("home_uvw")
+                        onClicked: root.requestConfirmedAction("home_uvw")
+                    }
+                }
+
+                ActionIconButton {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    title: "Acc Level"
+                    hint: "MOVE=1"
+                    iconName: "tilt"
+                    visible: root.acceleratorLevelAvailable
+                    enabled: root.acceleratorLevelAvailable && root.actionAllowed("accelerator_level")
+
+                    MouseArea {
+                        anchors.fill: parent
+                        enabled: root.actionAllowed("accelerator_level")
+                        onClicked: root.requestConfirmedAction("accelerator_level")
+                    }
+                }
+
+                ActionIconButton {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    title: "Z Tilt"
+                    hint: "adjust"
+                    iconName: "tilt"
+                    visible: root.zTiltAvailable
+                    enabled: root.zTiltAvailable && root.actionAllowed("z_tilt_adjust")
+
+                    MouseArea {
+                        anchors.fill: parent
+                        enabled: root.actionAllowed("z_tilt_adjust")
+                        onClicked: root.requestConfirmedAction("z_tilt_adjust")
                     }
                 }
             }

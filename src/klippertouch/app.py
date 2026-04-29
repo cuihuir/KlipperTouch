@@ -62,6 +62,7 @@ def run_app(
     notification_model = NotificationModel()
     if initial_status is not None:
         notification_model.addMoonrakerWarnings(initial_status.moonraker_warnings)
+        notification_model.addKlipperWarnings(initial_status.klipper_warnings)
     engine.rootContext().setContextProperty("statusModel", status_model)
     engine.rootContext().setContextProperty("temperatureDeviceModel", temperature_device_model)
     engine.rootContext().setContextProperty("gcodeFileModel", gcode_file_model)

@@ -190,6 +190,36 @@ def test_client_queries_webhooks_state_fields(monkeypatch) -> None:
     assert captured["params"] == {"webhooks": "state,state_message"}
 
 
+def test_client_queries_configfile_capability_and_warning_fields(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            pass
+
+        def json(self) -> dict[str, object]:
+            return {"result": {"status": {"configfile": {"config": {}}}}}
+
+    def fake_get(
+        _url: str,
+        *,
+        headers: dict[str, str],
+        params: dict[str, str] | None,
+        timeout: float,
+    ) -> FakeResponse:
+        captured["params"] = params
+        return FakeResponse()
+
+    monkeypatch.setattr("klippertouch.moonraker.client.requests.get", fake_get)
+
+    client = MoonrakerClient(PrinterConfig(name="p", moonraker_host="host"))
+
+    assert client.get_printer_objects_query(("configfile",)) == {
+        "status": {"configfile": {"config": {}}}
+    }
+    assert captured["params"] == {"configfile": "config,settings,warnings"}
+
+
 def test_client_gets_printer_objects_query_with_jsonrpc(monkeypatch) -> None:
     captured: dict[str, object] = {}
 
@@ -371,10 +401,20 @@ def test_client_sends_print_control_when_controls_enabled(
             ("z", 0.5, 5.0),
             "_CLIENT_LINEAR_MOVE Z=0.500 F=300",
         ),
+        (
+            "jog_toolhead",
+            ("u", -0.1, 2.0),
+            "_CLIENT_LINEAR_MOVE U=-0.100 F=120",
+        ),
+        (
+            "jog_toolhead",
+            ("w", 0.05, 1.5),
+            "_CLIENT_LINEAR_MOVE W=0.050 F=90",
+        ),
         ("home_axes", ("x", "y"), "G28 X Y"),
         ("home_axes", ("z",), "G28 Z"),
-        ("home_axes", ("u", "v", "w"), "G28 U V W"),
         ("home_axes", (), "G28"),
+        ("run_uvw_home", None, "UVW_HOME"),
         ("run_z_tilt_adjust", None, "Z_TILT_ADJUST"),
         ("run_accelerator_level", None, "ACCELERATOR_LEVEL MOVE=1"),
         (
