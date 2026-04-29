@@ -784,6 +784,8 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert "readonly property int moveHomeSize" in qml
     assert "readonly property int moveActionIconSize" in qml
     assert "readonly property real motionSectionGap" in qml
+    assert "function fittedMoveButtonSize(padWidth, padHeight)" in qml
+    assert "Math.floor(padHeight / 3.08)" in qml
     assert 'source: tileRoot.iconName.length > 0 ? Theme.iconSource(tileRoot.iconName) : ""' in qml
     assert "source: Theme.iconSource(actionRoot.iconName)" in qml
     assert "id: moveMorePanel" in qml

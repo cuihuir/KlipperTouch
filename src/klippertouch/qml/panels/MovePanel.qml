@@ -73,6 +73,12 @@ Item {
         root.selectedDistance = distance
     }
 
+    function fittedMoveButtonSize(padWidth, padHeight) {
+        var sizeCap = Math.floor(padHeight / 3.08)
+        var widthCap = Math.floor(padWidth * 0.46)
+        return Math.max(44, Math.min(root.moveButtonSize, sizeCap, widthCap))
+    }
+
     function showMore() {
         if (root.metrics.ultraWide) {
             root.moreVisible = !root.moreVisible
@@ -425,8 +431,8 @@ Item {
                     anchors.left: parent.left
                     anchors.top: parent.top
                     property int padSize: Math.max(58, Math.min(width, height))
-                    property int arrowSize: root.moveButtonSize
-                    property int homeSize: root.moveHomeSize
+                    property int arrowSize: root.fittedMoveButtonSize(width, height)
+                    property int homeSize: Math.min(root.moveHomeSize, arrowSize)
 
                     Repeater {
                         model: root.xyButtons
@@ -481,8 +487,8 @@ Item {
                     anchors.topMargin: root.metrics.portrait ? root.metrics.gap : 0
                     anchors.left: root.metrics.portrait ? parent.left : xyMovePad.right
                     property int padSize: Math.max(58, Math.min(width, height))
-                    property int arrowSize: root.moveButtonSize
-                    property int homeSize: root.moveHomeSize
+                    property int arrowSize: root.fittedMoveButtonSize(width, height)
+                    property int homeSize: Math.min(root.moveHomeSize, arrowSize)
 
                     DirectionButton {
                         width: zMovePad.arrowSize
