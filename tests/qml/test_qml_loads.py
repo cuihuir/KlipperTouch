@@ -1830,6 +1830,7 @@ def test_move_panel_is_locked_and_responsive() -> None:
     assert "function actionRequiresReady(action)" in qml
     assert "function actionAllowed(action)" in qml
     assert "function actionUnavailableReason(action)" in qml
+    assert "function actionHint(action, fallback)" in qml
     assert "function controlFeedbackColor()" in qml
     assert 'return "Printer not ready"' in qml
     assert 'return "Home " + axes + " first"' in qml
@@ -1837,6 +1838,12 @@ def test_move_panel_is_locked_and_responsive() -> None:
     assert 'return "Five-axis controls unavailable"' in qml
     assert 'return "Accelerator leveling unavailable"' in qml
     assert 'return "Z tilt unavailable"' in qml
+    assert "var reason = root.actionUnavailableReason(action)" in qml
+    assert "return reason.length > 0 ? reason : fallback" in qml
+    assert "hint: root.actionHint(modelData.action, modelData.hint)" in qml
+    assert 'hint: root.actionHint("home_uvw", "UVW_HOME")' in qml
+    assert 'hint: root.actionHint("accelerator_level", "MOVE=1")' in qml
+    assert 'hint: root.actionHint("z_tilt_adjust", "adjust")' in qml
     assert 'return "#ff7777"' in qml
     assert 'return "#d8dee0"' in qml
     assert 'color: root.controlFeedbackColor()' in qml

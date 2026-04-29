@@ -307,6 +307,11 @@ Item {
         return fallback
     }
 
+    function actionHint(action, fallback) {
+        var reason = root.actionUnavailableReason(action)
+        return reason.length > 0 ? reason : fallback
+    }
+
     function printerReady() {
         return root.klippyState === "ready"
             && (root.webhooksState.length <= 0 || root.webhooksState === "ready")
@@ -931,7 +936,7 @@ Item {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             title: modelData.label
-                            hint: modelData.hint
+                            hint: root.actionHint(modelData.action, modelData.hint)
                             iconName: modelData.iconName
                             enabled: root.actionAllowed(modelData.action)
                             selected: modelData.action === "more"
@@ -1251,7 +1256,10 @@ Item {
                             Label {
                                 Layout.fillWidth: true
                                 color: Theme.mutedText
-                                text: root.moreActionHint(modelData.action, modelData.hint)
+                                text: root.actionHint(
+                                    modelData.action,
+                                    root.moreActionHint(modelData.action, modelData.hint)
+                                )
                                 horizontalAlignment: Text.AlignHCenter
                                 elide: Text.ElideRight
                                 font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.62))
@@ -1621,7 +1629,7 @@ Item {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     title: "UVW Home"
-                    hint: "UVW_HOME"
+                    hint: root.actionHint("home_uvw", "UVW_HOME")
                     iconName: "tilt"
                     enabled: root.actionAllowed("home_uvw")
 
@@ -1636,7 +1644,7 @@ Item {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     title: "Acc Level"
-                    hint: "MOVE=1"
+                    hint: root.actionHint("accelerator_level", "MOVE=1")
                     iconName: "tilt"
                     visible: root.acceleratorLevelAvailable
                     enabled: root.acceleratorLevelAvailable && root.actionAllowed("accelerator_level")
@@ -1652,7 +1660,7 @@ Item {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     title: "Z Tilt"
-                    hint: "adjust"
+                    hint: root.actionHint("z_tilt_adjust", "adjust")
                     iconName: "tilt"
                     visible: root.zTiltAvailable
                     enabled: root.zTiltAvailable && root.actionAllowed("z_tilt_adjust")
