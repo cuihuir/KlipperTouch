@@ -841,7 +841,8 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert '"label": "Temperature"' not in qml
     assert '"Set Temp"' not in qml
     assert '"action": "pressure_advance"' not in qml
-    assert '"label": "Retraction"' in qml
+    assert '"label": "Retraction"' not in qml
+    assert '"action": "retraction"' not in qml
     assert '"label": "Materials"' in qml
     assert '"action": "materials"' in qml
     assert '"hint": "AFC / AMS"' in qml

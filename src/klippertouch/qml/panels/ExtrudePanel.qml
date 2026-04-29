@@ -20,7 +20,6 @@ Item {
         {"label": "Unload", "action": "unload", "hint": "macro"}
     ]
     property var settingsButtons: [
-        {"label": "Retraction", "shortLabel": "Retract", "action": "retraction", "hint": "placeholder"},
         {"label": "Materials", "shortLabel": "Materials", "action": "materials", "hint": "AFC / AMS"}
     ]
     property var materialSlots: [
