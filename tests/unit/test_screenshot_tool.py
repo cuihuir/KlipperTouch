@@ -52,6 +52,10 @@ def test_screenshot_tool_captures_common_panels_and_sizes() -> None:
     assert "--job-action-previews" in source
     assert "--file-detail-pages" in source
     assert "--file-action-previews" in source
+    assert "--material-system" in source
+    assert "--extrude-detail-pages" in source
+    assert '"configuredMaterialSystemEnabled"' in source
+    assert "_set_extrude_detail_page" in source
     assert "JOB_DETAIL_PAGES" in source
     assert '"time"' in source
     assert '"motion"' in source
@@ -59,6 +63,7 @@ def test_screenshot_tool_captures_common_panels_and_sizes() -> None:
     assert "_set_job_status_detail_page" in source
     assert "_set_job_status_action_preview" in source
     assert "_set_files_detail_page" in source
+    assert 'panel.setProperty("detailPage", page)' in source
     assert "_set_files_action_preview" in source
     assert 'panel.setProperty("detailPage", page)' in source
     assert 'panel.setProperty("pendingJobAction", action)' in source

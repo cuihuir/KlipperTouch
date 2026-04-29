@@ -8,6 +8,7 @@ def load_config(path: Path) -> AppSettings:
     parser = ConfigParser(interpolation=None)
     if path.exists():
         parser.read(path, encoding="utf-8")
+    material_system_enabled = _has_material_system_section(parser)
 
     printer_sections = [
         section for section in parser.sections() if section.startswith("printer ")
@@ -18,6 +19,7 @@ def load_config(path: Path) -> AppSettings:
             default_printer="Printer",
             printers={"Printer": default},
             read_only=parser.getboolean("main", "read_only", fallback=True),
+            material_system_enabled=material_system_enabled,
         )
 
     printers: dict[str, PrinterConfig] = {}
@@ -44,4 +46,15 @@ def load_config(path: Path) -> AppSettings:
         default_printer=default_printer,
         printers=printers,
         read_only=parser.getboolean("main", "read_only", fallback=True),
+        material_system_enabled=material_system_enabled,
+    )
+
+
+def _has_material_system_section(parser: ConfigParser) -> bool:
+    return any(
+        section.lower() == "afc"
+        or section.lower() == "ams"
+        or section.lower().startswith("afc ")
+        or section.lower().startswith("ams ")
+        for section in parser.sections()
     )

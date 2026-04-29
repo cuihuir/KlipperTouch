@@ -41,6 +41,7 @@ DEFAULT_PANELS = (
     "update",
 )
 JOB_DETAIL_PAGES = ("summary", "advanced", "exclude", "time", "motion", "extrusion")
+EXTRUDE_DETAIL_PAGES = ("feed", "materials")
 SAMPLE_FILES = (
     {
         "path": "OrcaCube_PLA_27m41s.gcode",
@@ -227,9 +228,11 @@ def capture(
     sample_status: bool = False,
     sample_state: str = "printing",
     job_detail_pages: tuple[str, ...] = (),
+    extrude_detail_pages: tuple[str, ...] = (),
     job_action_previews: tuple[str, ...] = (),
     file_detail_pages: tuple[str, ...] = (),
     file_action_previews: tuple[str, ...] = (),
+    material_system: bool = False,
 ) -> list[Path]:
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     app = QGuiApplication.instance() or QGuiApplication([])
@@ -239,6 +242,10 @@ def capture(
     for width, height in sizes:
         for panel in panels:
             engine = QQmlApplicationEngine()
+            engine.rootContext().setContextProperty(
+                "configuredMaterialSystemEnabled",
+                material_system,
+            )
             if sample_files:
                 file_model = create_gcode_file_model(list(SAMPLE_FILES))
                 file_model.setFileMetadata(
@@ -278,10 +285,17 @@ def capture(
             root.setProperty("panelStack", [panel])
             root.setProperty("currentPanel", panel)
             app.processEvents()
-            for detail_page in _detail_pages_for_panel(panel, job_detail_pages, file_detail_pages):
+            for detail_page in _detail_pages_for_panel(
+                panel,
+                job_detail_pages,
+                extrude_detail_pages,
+                file_detail_pages,
+            ):
                 if detail_page:
                     if panel == "job_status":
                         _set_job_status_detail_page(root, detail_page)
+                    elif panel == "extrude":
+                        _set_extrude_detail_page(root, detail_page)
                     elif panel == "print":
                         _set_files_detail_page(root, detail_page)
                     app.processEvents()
@@ -311,10 +325,13 @@ def capture(
 def _detail_pages_for_panel(
     panel: str,
     job_detail_pages: tuple[str, ...],
+    extrude_detail_pages: tuple[str, ...],
     file_detail_pages: tuple[str, ...],
 ) -> tuple[str, ...]:
     if panel == "job_status" and job_detail_pages:
         return job_detail_pages
+    if panel == "extrude" and extrude_detail_pages:
+        return extrude_detail_pages
     if panel == "print" and file_detail_pages:
         return file_detail_pages
     return ("",)
@@ -363,6 +380,16 @@ def _set_files_detail_page(root: QObject, page: str) -> None:
     if panel is None:
         raise RuntimeError("Failed to find filesPanel for detail screenshot")
     panel.setProperty("detailPage", page == "detail")
+
+
+def _set_extrude_detail_page(root: QObject, page: str) -> None:
+    panel = root.findChild(QObject, "extrudePanel")
+    if panel is None:
+        loader = root.findChild(QObject, "panelLoader")
+        panel = loader.property("item") if loader is not None else None
+    if panel is None:
+        raise RuntimeError("Failed to find extrudePanel for detail screenshot")
+    panel.setProperty("detailPage", page)
 
 
 def _set_files_action_preview(root: QObject, action: str) -> None:
@@ -473,6 +500,13 @@ def main(argv: list[str] | None = None) -> int:
         help="Capture specific read-only Job Status action preview states.",
     )
     parser.add_argument(
+        "--extrude-detail-pages",
+        nargs="+",
+        choices=EXTRUDE_DETAIL_PAGES,
+        default=(),
+        help="Capture specific Extrude subpages, for example materials.",
+    )
+    parser.add_argument(
         "--file-detail-pages",
         nargs="+",
         choices=("detail",),
@@ -491,6 +525,11 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Do not write index.html next to the captured screenshots.",
     )
+    parser.add_argument(
+        "--material-system",
+        action="store_true",
+        help="Inject a configured AFC/AMS material-system flag for Extrude screenshots.",
+    )
     args = parser.parse_args(argv)
 
     captured = capture(
@@ -502,9 +541,11 @@ def main(argv: list[str] | None = None) -> int:
         sample_status=args.sample_status,
         sample_state=args.sample_state,
         job_detail_pages=tuple(args.job_detail_pages),
+        extrude_detail_pages=tuple(args.extrude_detail_pages),
         job_action_previews=tuple(args.job_action_previews),
         file_detail_pages=tuple(args.file_detail_pages),
         file_action_previews=tuple(args.file_action_previews),
+        material_system=args.material_system,
     )
     if not args.no_index:
         print(write_index(args.output, captured))

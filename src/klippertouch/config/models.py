@@ -16,3 +16,4 @@ class AppSettings:
     default_printer: str
     printers: dict[str, PrinterConfig]
     read_only: bool = True
+    material_system_enabled: bool = False

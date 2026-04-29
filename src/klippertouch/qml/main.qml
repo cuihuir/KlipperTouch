@@ -17,6 +17,7 @@ ApplicationWindow {
     property var gcodeFileBridgeModel: typeof gcodeFileModel === "undefined" ? null : gcodeFileModel
     property var jobControlBridgeModel: typeof jobControlModel === "undefined" ? null : jobControlModel
     property var notificationBridgeModel: typeof notificationModel === "undefined" ? null : notificationModel
+    property bool materialSystemEnabled: typeof configuredMaterialSystemEnabled === "undefined" ? false : configuredMaterialSystemEnabled
     property string requestedPrintState: jobControlBridgeModel ? jobControlBridgeModel.requestedPrintState : ""
     property string hostname: bridgeModel ? bridgeModel.hostname : "offline"
     property string klippyState: bridgeModel ? bridgeModel.klippyState : "disconnected"
@@ -583,6 +584,7 @@ ApplicationWindow {
                 extruderPressureAdvance: window.extruderPressureAdvance
                 extruderSmoothTime: window.extruderSmoothTime
                 filamentSensors: window.filamentSensors
+                materialSystemEnabled: window.materialSystemEnabled
                 positionE: window.positionE
                 klippyState: window.klippyState
                 webhooksState: window.webhooksState

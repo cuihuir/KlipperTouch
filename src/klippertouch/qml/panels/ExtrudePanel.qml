@@ -28,8 +28,13 @@ Item {
         {"label": "Slot 3", "state": "reserved"},
         {"label": "Slot 4", "state": "reserved"}
     ]
+    property var materialActionButtons: [
+        {"label": "Load Selected", "shortLabel": "Load"},
+        {"label": "Unload Selected", "shortLabel": "Unload"}
+    ]
     property string selectedDistance: "10"
     property string selectedSpeed: "5"
+    property string selectedMaterialSlot: "Slot 1"
     property string detailPage: "main"
     property real actionFraction: 0.42
     property real settingsFraction: 0.58
@@ -39,6 +44,7 @@ Item {
     property real extruderPressureAdvance: 0
     property real extruderSmoothTime: 0
     property var filamentSensors: []
+    property bool materialSystemEnabled: false
     property real positionE: 0
     property string klippyState: "disconnected"
     property string webhooksState: ""
@@ -262,12 +268,23 @@ Item {
     }
 
     function openSettingsAction(action) {
+        if (!root.materialSystemEnabled) {
+            return
+        }
         if (action === "materials") {
             root.detailPage = "materials"
             return
         }
         root.controlStatus = action + " settings are reserved"
         root.controlError = ""
+    }
+
+    function materialEntryVisible() {
+        return root.materialSystemEnabled
+    }
+
+    function selectMaterialSlot(slotLabel) {
+        root.selectedMaterialSlot = slotLabel
     }
 
     function positionTargetEditor() {
@@ -806,6 +823,7 @@ Item {
                     }
 
                     ActionTile {
+                        visible: root.materialEntryVisible()
                         Layout.fillWidth: true
                         Layout.preferredHeight: Math.max(64, Math.round(root.metrics.fontSize * 4.4))
                         title: "Materials"
@@ -983,6 +1001,7 @@ Item {
             }
 
             ActionTile {
+                visible: root.materialEntryVisible()
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 title: "Materials"
@@ -1102,7 +1121,7 @@ Item {
             Label {
                 Layout.fillWidth: true
                 color: Theme.mutedText
-                text: "AFC / AMS entry frame. Hardware protocol adapters will populate these slots."
+                text: "Adapter pending"
                 wrapMode: Text.WordWrap
                 font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.82))
             }
@@ -1124,6 +1143,11 @@ Item {
                         Layout.minimumHeight: Math.max(88, Math.round(root.metrics.fontSize * 5.8))
                         title: modelData.label
                         hint: modelData.state
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: root.selectMaterialSlot(modelData.label)
+                        }
                     }
                 }
             }
@@ -1144,24 +1168,23 @@ Item {
                     Label {
                         Layout.fillWidth: true
                         color: Theme.text
-                        text: root.metrics.ultraWide ? "Selected: Slot 1" : "Slot 1"
+                        text: root.metrics.portrait ? root.selectedMaterialSlot : "Selected: " + root.selectedMaterialSlot
                         elide: Text.ElideRight
                         font.bold: true
                         font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
                     }
 
-                    ActionTile {
-                        Layout.preferredWidth: Math.max(128, Math.round(root.metrics.fontSize * 8.4))
-                        Layout.fillHeight: true
-                        title: root.metrics.ultraWide ? "Load Selected" : "Load"
-                        hint: "reserved"
-                    }
+                    Repeater {
+                        model: root.materialActionButtons
 
-                    ActionTile {
-                        Layout.preferredWidth: Math.max(136, Math.round(root.metrics.fontSize * 8.8))
-                        Layout.fillHeight: true
-                        title: root.metrics.ultraWide ? "Unload Selected" : "Unload"
-                        hint: "reserved"
+                        ActionTile {
+                            required property var modelData
+                            Layout.preferredWidth: Math.max(136, Math.round(root.metrics.fontSize * 8.8))
+                            Layout.fillHeight: true
+                            title: root.metrics.ultraWide ? modelData.label : modelData.shortLabel
+                            hint: "Not connected"
+                            enabled: false
+                        }
                     }
                 }
             }

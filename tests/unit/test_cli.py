@@ -42,6 +42,7 @@ def test_main_attempts_read_only_status_before_gui() -> None:
     assert "file_refresh_client=client" in source
     assert "job_control_client=client" in source
     assert "initial_files=initial_files" in source
+    assert "material_system_enabled=settings.material_system_enabled" in source
 
 
 def test_resolve_config_path_prefers_explicit_path(tmp_path: Path) -> None:

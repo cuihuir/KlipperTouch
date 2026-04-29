@@ -76,6 +76,7 @@ def main() -> int:
         status_stream_client=client,
         file_refresh_client=client,
         job_control_client=client,
+        material_system_enabled=settings.material_system_enabled,
     )
 
 

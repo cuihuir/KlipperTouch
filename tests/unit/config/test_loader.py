@@ -40,6 +40,45 @@ def test_load_config_parses_read_only_control_switch(tmp_path: Path) -> None:
     assert settings.read_only is False
 
 
+def test_load_config_enables_material_system_when_afc_or_ams_section_exists(
+    tmp_path: Path,
+) -> None:
+    config = tmp_path / "KlipperTouch.conf"
+    config.write_text(
+        "[main]\n"
+        "default_printer = TestPrinter\n"
+        "\n"
+        "[printer TestPrinter]\n"
+        "moonraker_host = printer.local\n"
+        "\n"
+        "[afc]\n"
+        "enabled = true\n",
+        encoding="utf-8",
+    )
+
+    settings = load_config(config)
+
+    assert settings.material_system_enabled is True
+
+
+def test_load_config_disables_material_system_without_afc_or_ams_section(
+    tmp_path: Path,
+) -> None:
+    config = tmp_path / "KlipperTouch.conf"
+    config.write_text(
+        "[main]\n"
+        "default_printer = TestPrinter\n"
+        "\n"
+        "[printer TestPrinter]\n"
+        "moonraker_host = printer.local\n",
+        encoding="utf-8",
+    )
+
+    settings = load_config(config)
+
+    assert settings.material_system_enabled is False
+
+
 def test_load_config_provides_local_default_when_missing(tmp_path: Path) -> None:
     missing = tmp_path / "missing.conf"
 
@@ -48,6 +87,7 @@ def test_load_config_provides_local_default_when_missing(tmp_path: Path) -> None
     assert settings.default_printer == "Printer"
     assert settings.printers["Printer"].moonraker_host == "127.0.0.1"
     assert settings.printers["Printer"].moonraker_port == 7125
+    assert settings.material_system_enabled is False
 
 
 def test_load_config_parses_optional_printer_fields(tmp_path: Path) -> None:

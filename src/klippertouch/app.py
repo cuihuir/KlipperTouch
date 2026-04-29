@@ -46,6 +46,7 @@ def run_app(
     status_stream_client: MoonrakerClient | None = None,
     file_refresh_client: MoonrakerClient | None = None,
     job_control_client: MoonrakerClient | None = None,
+    material_system_enabled: bool = False,
 ) -> int:
     app = QApplication(argv or [])
     app.setOrganizationName("KlipperTouch")
@@ -66,6 +67,10 @@ def run_app(
     engine.rootContext().setContextProperty("gcodeFileModel", gcode_file_model)
     engine.rootContext().setContextProperty("jobControlModel", job_control_model)
     engine.rootContext().setContextProperty("notificationModel", notification_model)
+    engine.rootContext().setContextProperty(
+        "configuredMaterialSystemEnabled",
+        material_system_enabled,
+    )
     engine.job_control_model = job_control_model  # type: ignore[attr-defined]
     engine.notification_model = notification_model  # type: ignore[attr-defined]
     qml_path = Path(__file__).parent / "qml" / "main.qml"

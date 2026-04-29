@@ -48,6 +48,13 @@ def test_app_registers_notification_context() -> None:
     assert "engine.notification_model = notification_model" in source
 
 
+def test_app_registers_material_system_context() -> None:
+    source = app.Path(app.__file__).read_text(encoding="utf-8")
+
+    assert "material_system_enabled: bool = False" in source
+    assert 'setContextProperty(\n        "configuredMaterialSystemEnabled"' in source
+
+
 def test_create_status_models_applies_initial_status(qtbot) -> None:
     status = PrinterStatus(objects=("extruder", "heater_bed"))
 

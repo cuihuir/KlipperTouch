@@ -783,6 +783,9 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "property real extruderPressureAdvance" in qml
     assert "property real extruderSmoothTime" in qml
     assert "property var filamentSensors" in qml
+    assert "property bool materialSystemEnabled" in qml
+    assert 'property string selectedMaterialSlot: "Slot 1"' in qml
+    assert "property var materialActionButtons" in qml
     assert "property real positionE" in qml
     assert 'readonly property color selectedAccent: "#7f9298"' in qml
     assert "property string selectedDistance" in qml
@@ -851,16 +854,27 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "function selectDistance(distance)" in qml
     assert "function selectSpeed(speed)" in qml
     assert "function openSettingsAction(action)" in qml
+    assert "function materialEntryVisible()" in qml
+    assert "function selectMaterialSlot(slotLabel)" in qml
     assert "function goBack()" in qml
     assert 'if (root.detailPage !== "main")' in qml
     assert 'root.detailPage = "materials"' in qml
+    assert 'if (!root.materialSystemEnabled)' in qml
+    assert "visible: root.materialEntryVisible()" in qml
     assert 'visible: root.detailPage === "main"' in qml
     assert 'visible: root.detailPage === "materials"' in qml
     assert "AFC / AMS" in qml
     assert "Material slots" in qml
-    assert "Selected: Slot 1" in qml
+    assert (
+        'text: root.metrics.portrait ? root.selectedMaterialSlot '
+        ': "Selected: " + root.selectedMaterialSlot'
+    ) in qml
+    assert "Adapter pending" in qml
     assert "Load Selected" in qml
     assert "Unload Selected" in qml
+    assert 'hint: "Not connected"' in qml
+    assert "enabled: false" in qml
+    assert "root.selectMaterialSlot(modelData.label)" in qml
     assert "root.selectedDistance === modelData" in qml
     assert "root.selectedSpeed === modelData" in qml
     assert "root.extruderTemperature.toFixed(1)" in qml
@@ -898,6 +912,8 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "property real extruderPressureAdvance:" in main_qml
     assert "property real extruderSmoothTime:" in main_qml
     assert "property var filamentSensors:" in main_qml
+    assert "property bool materialSystemEnabled:" in main_qml
+    assert "materialSystemEnabled: window.materialSystemEnabled" in main_qml
     assert "property var excludeObjectNames:" in main_qml
     assert "property var excludedObjectNames:" in main_qml
     assert "property string currentObject:" in main_qml
