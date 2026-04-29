@@ -562,6 +562,8 @@ ApplicationWindow {
                 positionZ: window.positionZ
                 positionE: window.positionE
                 homedAxes: window.homedAxes
+                klippyState: window.klippyState
+                webhooksState: window.webhooksState
                 controlStatus: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastStatus : ""
                 controlError: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastError : ""
                 onMoveActionRequested: function(action, distance) {

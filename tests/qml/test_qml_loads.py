@@ -1594,6 +1594,8 @@ def test_move_panel_is_locked_and_responsive() -> None:
     qml = Path("src/klippertouch/qml/panels/MovePanel.qml").read_text(encoding="utf-8")
 
     assert "required property var metrics" in qml
+    assert "property string klippyState" in qml
+    assert "property string webhooksState" in qml
     assert "property var moveButtons" in qml
     assert "property var distances" in qml
     assert "component LockedTile: Rectangle" in qml
@@ -1611,6 +1613,14 @@ def test_move_panel_is_locked_and_responsive() -> None:
     assert "direction: modelData.direction" in qml
     assert "id: distanceGrid" in qml
     assert "root.controlFeedbackText()" in qml
+    assert "function printerReady()" in qml
+    assert "function movementGuardText()" in qml
+    assert "function actionRequiresReady(action)" in qml
+    assert "function actionAllowed(action)" in qml
+    assert 'return "Printer not ready"' in qml
+    assert "enabled: root.actionAllowed(modelData.action)" in qml
+    assert 'enabled: root.actionAllowed("home_xy")' in qml
+    assert 'enabled: root.actionAllowed("home_z")' in qml
     assert "root.metrics.portrait" in qml
     assert "Repeater {" in qml
     assert "root.selectDistance(modelData)" in qml
@@ -1652,6 +1662,8 @@ def test_main_routes_move_and_extrude_to_locked_panels() -> None:
     assert 'case "extrude":' in main_qml
     assert "return extrudeComponent" in main_qml
     assert "MovePanel {" in main_qml
+    assert "klippyState: window.klippyState" in main_qml
+    assert "webhooksState: window.webhooksState" in main_qml
     assert (
         'controlStatus: window.jobControlBridgeModel ? '
         'window.jobControlBridgeModel.lastStatus : ""'

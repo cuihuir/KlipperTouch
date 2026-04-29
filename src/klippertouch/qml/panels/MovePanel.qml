@@ -48,6 +48,8 @@ Item {
     property real positionZ: 0
     property real positionE: 0
     property string homedAxes: ""
+    property string klippyState: "disconnected"
+    property string webhooksState: ""
     property string controlStatus: ""
     property string controlError: ""
     readonly property color selectedAccent: "#7f9298"
@@ -74,11 +76,40 @@ Item {
     }
 
     function handleMoreAction(action) {
+        if (!root.actionAllowed(action)) {
+            return
+        }
         if (action === "home_all" || action === "disable_motors") {
             root.moveActionRequested(action, 0)
             return
         }
         root.moveActionRequested("placeholder_" + action, 0)
+    }
+
+    function printerReady() {
+        return root.klippyState === "ready"
+            && (root.webhooksState.length <= 0 || root.webhooksState === "ready")
+    }
+
+    function movementGuardText() {
+        return "Printer not ready"
+    }
+
+    function actionRequiresReady(action) {
+        return action === "disable_motors"
+            || action === "home_all"
+            || action === "home_xy"
+            || action === "home_z"
+            || action === "x_minus"
+            || action === "x_plus"
+            || action === "y_minus"
+            || action === "y_plus"
+            || action === "z_minus"
+            || action === "z_plus"
+    }
+
+    function actionAllowed(action) {
+        return !root.actionRequiresReady(action) || root.printerReady()
     }
 
     function controlFeedbackText() {
@@ -87,6 +118,9 @@ Item {
         }
         if (root.controlStatus.length > 0) {
             return root.controlStatus
+        }
+        if (!root.printerReady()) {
+            return root.movementGuardText()
         }
         return "Controls ready"
     }
@@ -111,7 +145,7 @@ Item {
         property bool selected: false
 
         color: selected ? "#1b2b2e" : "#101617"
-        opacity: selected ? 1.0 : 0.9
+        opacity: tileRoot.enabled ? selected ? 1.0 : 0.9 : 0.46
         border.color: selected ? root.selectedAccent : "#48565a"
         border.width: 1
         radius: Math.round(Math.min(width, height) * 0.2)
@@ -158,6 +192,7 @@ Item {
         property string direction: "up"
 
         color: "#101819"
+        opacity: directionRoot.enabled ? 1.0 : 0.46
         border.color: "#536165"
         border.width: 1
         radius: Math.round(Math.min(width, height) * 0.22)
@@ -205,6 +240,7 @@ Item {
         property bool selected: false
 
         color: selected ? "#1b2b2e" : "#101819"
+        opacity: actionRoot.enabled ? 1.0 : 0.46
         border.color: selected ? root.selectedAccent : "#536165"
         border.width: 1
         radius: Math.round(Math.min(width, height) * 0.22)
@@ -297,6 +333,7 @@ Item {
                             height: xyMovePad.arrowSize
                             title: modelData.label
                             direction: modelData.direction
+                            enabled: root.actionAllowed(modelData.action)
                             anchors.horizontalCenter: modelData.direction === "up" || modelData.direction === "down" ? parent.horizontalCenter : undefined
                             anchors.verticalCenter: modelData.direction === "left" || modelData.direction === "right" ? parent.verticalCenter : undefined
                             anchors.top: modelData.direction === "up" ? parent.top : undefined
@@ -306,6 +343,7 @@ Item {
 
                             MouseArea {
                                 anchors.fill: parent
+                                enabled: root.actionAllowed(modelData.action)
                                 onClicked: root.moveActionRequested(modelData.action, parseFloat(root.selectedDistance))
                             }
                         }
@@ -317,9 +355,11 @@ Item {
                         anchors.centerIn: parent
                         title: "Home"
                         hint: "XY"
+                        enabled: root.actionAllowed("home_xy")
 
                         MouseArea {
                             anchors.fill: parent
+                            enabled: root.actionAllowed("home_xy")
                             onClicked: root.moveActionRequested("home_xy", 0)
                         }
                     }
@@ -344,11 +384,13 @@ Item {
                         height: zMovePad.arrowSize
                         title: "Z+"
                         direction: "up"
+                        enabled: root.actionAllowed("z_plus")
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.top: parent.top
 
                         MouseArea {
                             anchors.fill: parent
+                            enabled: root.actionAllowed("z_plus")
                             onClicked: root.moveActionRequested(
                                 "z_plus",
                                 parseFloat(root.selectedDistance)
@@ -362,9 +404,11 @@ Item {
                         anchors.centerIn: parent
                         title: "Z Home"
                         hint: "Z"
+                        enabled: root.actionAllowed("home_z")
 
                         MouseArea {
                             anchors.fill: parent
+                            enabled: root.actionAllowed("home_z")
                             onClicked: root.moveActionRequested("home_z", 0)
                         }
                     }
@@ -374,11 +418,13 @@ Item {
                         height: zMovePad.arrowSize
                         title: "Z-"
                         direction: "down"
+                        enabled: root.actionAllowed("z_minus")
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.bottom: parent.bottom
 
                         MouseArea {
                             anchors.fill: parent
+                            enabled: root.actionAllowed("z_minus")
                             onClicked: root.moveActionRequested(
                                 "z_minus",
                                 parseFloat(root.selectedDistance)
@@ -410,11 +456,13 @@ Item {
                             title: modelData.label
                             hint: modelData.hint
                             icon: modelData.icon
+                            enabled: root.actionAllowed(modelData.action)
                             selected: modelData.action === "more"
                                 && (root.moreVisible || root.detailPage === "more")
 
                             MouseArea {
                                 anchors.fill: parent
+                                enabled: root.actionAllowed(modelData.action)
                                 onClicked: {
                                     if (modelData.action === "more") {
                                         root.showMore()
@@ -500,6 +548,7 @@ Item {
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
                                 color: "#0b1112"
+                                opacity: root.actionAllowed(modelData.action) ? 1.0 : 0.46
                                 border.color: "#263233"
                                 border.width: 1
                                 radius: Math.round(root.metrics.fontSize * 0.18)
@@ -516,6 +565,7 @@ Item {
 
                                 MouseArea {
                                     anchors.fill: parent
+                                    enabled: root.actionAllowed(modelData.action)
                                     onClicked: root.handleMoreAction(modelData.action)
                                 }
                             }
@@ -676,6 +726,7 @@ Item {
                         Layout.fillHeight: true
                         Layout.minimumHeight: Math.max(54, Math.round(root.metrics.fontSize * 3.2))
                         color: "#101617"
+                        opacity: root.actionAllowed(modelData.action) ? 1.0 : 0.46
                         border.color: "#263233"
                         border.width: 1
                         radius: Math.round(root.metrics.fontSize * 0.28)
@@ -706,6 +757,7 @@ Item {
 
                         MouseArea {
                             anchors.fill: parent
+                            enabled: root.actionAllowed(modelData.action)
                             onClicked: root.handleMoreAction(modelData.action)
                         }
                     }
