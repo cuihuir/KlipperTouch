@@ -376,7 +376,7 @@ def test_client_sends_print_control_when_controls_enabled(
         ("home_axes", ("u", "v", "w"), "G28 U V W"),
         ("home_axes", (), "G28"),
         ("run_z_tilt_adjust", None, "Z_TILT_ADJUST"),
-        ("run_accelerator_level", None, "ACCELERATOR_LEVEL"),
+        ("run_accelerator_level", None, "ACCELERATOR_LEVEL MOVE=1"),
         (
             "extrude_filament",
             (10.0, 5.0),

@@ -28,13 +28,13 @@ Item {
     property var actionButtons: [
         {"label": "Disable Motors", "action": "disable_motors", "hint": "M84", "iconName": "motor-off"},
         {"label": "UVW Home", "action": "home_uvw", "hint": "UVW", "iconName": "tilt", "requires": "five_axis"},
-        {"label": "Accelerometer Level", "action": "accelerator_level", "hint": "tilt", "iconName": "tilt", "requires": "accelerator_level"},
+        {"label": "Acc Level", "action": "accelerator_level", "hint": "MOVE=1", "iconName": "tilt", "requires": "accelerator_level"},
         {"label": "More", "action": "more", "hint": "settings", "iconName": "settings"}
     ]
     property var moreActions: [
         {"label": "Home All", "action": "home_all", "hint": "XYZ", "iconName": "home"},
         {"label": "UVW Home", "action": "home_uvw", "hint": "UVW", "iconName": "tilt", "requires": "five_axis"},
-        {"label": "Accelerometer Level", "action": "accelerator_level", "hint": "ACCELERATOR_LEVEL", "iconName": "tilt", "requires": "accelerator_level"},
+        {"label": "Acc Level", "action": "accelerator_level", "hint": "MOVE=1", "iconName": "tilt", "requires": "accelerator_level"},
         {"label": "Z Tilt Adjust", "action": "z_tilt_adjust", "hint": "Z_TILT_ADJUST", "iconName": "tilt", "requires": "z_tilt"},
         {"label": "Disable Motors", "action": "disable_motors", "hint": "M84", "iconName": "motor-off"},
         {"label": "XY Speed", "action": "speed_xy", "hint": "50 mm/s", "iconName": "speed"},
@@ -52,6 +52,10 @@ Item {
     property string selectedZSpeed: "10"
     property bool moreVisible: false
     property string detailPage: "main"
+    property bool confirmVisible: false
+    property string pendingConfirmAction: ""
+    property string pendingConfirmTitle: ""
+    property string pendingConfirmHint: ""
     property real positionX: 0
     property real positionY: 0
     property real positionZ: 0
@@ -123,6 +127,49 @@ Item {
         return actions
     }
 
+    function actionNeedsConfirmation(action) {
+        return action === "accelerator_level" || action === "z_tilt_adjust"
+    }
+
+    function actionLabel(action) {
+        var actions = root.moreActions.concat(root.actionButtons)
+        for (var index = 0; index < actions.length; index += 1) {
+            if (actions[index].action === action) {
+                return actions[index].label
+            }
+        }
+        return "Action"
+    }
+
+    function requestConfirmedAction(action) {
+        if (root.actionNeedsConfirmation(action)) {
+            root.pendingConfirmAction = action
+            root.pendingConfirmTitle = root.actionLabel(action)
+            root.pendingConfirmHint = action === "accelerator_level"
+                ? "This will run accelerometer leveling with movement enabled."
+                : "This will run Z tilt adjustment."
+            root.confirmVisible = true
+            return
+        }
+        root.moveActionRequested(action, 0, 0)
+    }
+
+    function confirmPendingAction() {
+        if (root.pendingConfirmAction.length <= 0) {
+            root.confirmVisible = false
+            return
+        }
+        var action = root.pendingConfirmAction
+        root.pendingConfirmAction = ""
+        root.confirmVisible = false
+        root.moveActionRequested(action, 0, 0)
+    }
+
+    function dismissConfirmAction() {
+        root.pendingConfirmAction = ""
+        root.confirmVisible = false
+    }
+
     function positionItems() {
         var items = [
             {"label": "X", "value": root.positionX.toFixed(2)},
@@ -169,7 +216,7 @@ Item {
         if (action === "home_all" || action === "home_uvw"
                 || action === "z_tilt_adjust" || action === "accelerator_level"
                 || action === "disable_motors") {
-            root.moveActionRequested(action, 0, 0)
+            root.requestConfirmedAction(action)
             return
         }
         root.moveActionRequested("placeholder_" + action, 0, 0)
@@ -655,7 +702,7 @@ Item {
                                     if (modelData.action === "more") {
                                         root.showMore()
                                     } else {
-                                        root.moveActionRequested(modelData.action, 0, 0)
+                                        root.requestConfirmedAction(modelData.action)
                                     }
                                 }
                             }
@@ -971,6 +1018,100 @@ Item {
                             anchors.fill: parent
                             enabled: root.actionAllowed(modelData.action)
                             onClicked: root.handleMoreAction(modelData.action)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        id: moveConfirmOverlay
+        visible: root.confirmVisible
+        z: 50
+        anchors.fill: parent
+        color: "#99000000"
+
+        Rectangle {
+            anchors.centerIn: parent
+            width: Math.min(parent.width - root.metrics.margin * 2, Math.max(320, Math.round(parent.width * 0.48)))
+            height: Math.min(parent.height - root.metrics.margin * 2, Math.max(190, Math.round(root.metrics.fontSize * 12.0)))
+            color: "#101718"
+            border.color: "#536165"
+            border.width: 1
+            radius: Math.round(root.metrics.fontSize * 0.45)
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: root.metrics.gap
+                spacing: root.metrics.gap
+
+                Label {
+                    Layout.fillWidth: true
+                    color: Theme.text
+                    text: root.pendingConfirmTitle
+                    horizontalAlignment: Text.AlignHCenter
+                    font.bold: true
+                    font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.18))
+                    elide: Text.ElideRight
+                }
+
+                Label {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    color: Theme.mutedText
+                    text: root.pendingConfirmHint
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    wrapMode: Text.WordWrap
+                    font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.88))
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Math.max(46, Math.round(root.metrics.fontSize * 3.0))
+                    spacing: root.metrics.gap
+
+                    Button {
+                        id: cancelConfirmButton
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        text: "Cancel"
+                        onClicked: root.dismissConfirmAction()
+                        contentItem: Label {
+                            color: Theme.text
+                            text: cancelConfirmButton.text
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.9))
+                        }
+                        background: Rectangle {
+                            color: "#0b1112"
+                            border.color: "#536165"
+                            border.width: 1
+                            radius: Math.round(root.metrics.fontSize * 0.28)
+                        }
+                    }
+
+                    Button {
+                        id: confirmActionButton
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        text: "Confirm"
+                        onClicked: root.confirmPendingAction()
+                        contentItem: Label {
+                            color: Theme.text
+                            text: confirmActionButton.text
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            font.bold: true
+                            font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.9))
+                        }
+                        background: Rectangle {
+                            color: "#1b2b2e"
+                            border.color: root.selectedAccent
+                            border.width: 1
+                            radius: Math.round(root.metrics.fontSize * 0.28)
                         }
                     }
                 }

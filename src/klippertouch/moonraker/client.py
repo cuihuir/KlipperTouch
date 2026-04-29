@@ -182,7 +182,7 @@ class MoonrakerClient:
         return self.run_gcode_script("Z_TILT_ADJUST")
 
     def run_accelerator_level(self) -> dict[str, Any]:
-        return self.run_gcode_script("ACCELERATOR_LEVEL")
+        return self.run_gcode_script("ACCELERATOR_LEVEL MOVE=1")
 
     def extrude_filament(self, distance: float, speed: float) -> dict[str, Any]:
         return self.run_gcode_script(f"_CLIENT_LINEAR_MOVE E={distance:.3f} F={speed * 60:.0f}")

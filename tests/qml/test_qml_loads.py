@@ -721,13 +721,21 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert '"action": "speed_xy"' in qml
     assert '"label": "UVW Home"' in qml
     assert '"action": "home_uvw"' in qml
-    assert '"label": "Accelerometer Level"' in qml
+    assert '"label": "Acc Level"' in qml
     assert '"action": "accelerator_level"' in qml
     assert '"label": "Z Tilt Adjust"' in qml
     assert '"action": "z_tilt_adjust"' in qml
     assert '"iconName": "tilt"' in qml
     assert "function visibleMoreActions()" in qml
     assert "function positionItems()" in qml
+    assert "property bool confirmVisible" in qml
+    assert "property string pendingConfirmAction" in qml
+    assert "function actionNeedsConfirmation(action)" in qml
+    assert "function requestConfirmedAction(action)" in qml
+    assert "function confirmPendingAction()" in qml
+    assert "id: moveConfirmOverlay" in qml
+    assert 'action === "accelerator_level"' in qml
+    assert 'action === "z_tilt_adjust"' in qml
     assert "root.fiveAxisAvailable" in qml
     assert "root.acceleratorLevelAvailable" in qml
     assert "root.zTiltAvailable" in qml
@@ -1121,6 +1129,10 @@ def test_job_control_events_are_forwarded_to_notifications() -> None:
     assert "function shouldStoreNotification(level, sticky)" in main_qml
     assert "id: toastCard" in main_qml
     assert "id: toastTimer" in main_qml
+    assert "anchors.left: parent.left" in main_qml
+    assert "anchors.right: parent.right" in main_qml
+    assert "appMetrics.actionBarWidth + appMetrics.margin" in main_qml
+    assert "width: undefined" not in main_qml
     assert "toastTimer.restart()" in main_qml
     assert "function onToastRequested(level, title, message)" in main_qml
     assert "window.showToast(level, title, message)" in main_qml

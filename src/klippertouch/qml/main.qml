@@ -634,11 +634,12 @@ ApplicationWindow {
         id: toastCard
         visible: window.toastVisible
         z: 100
-        width: Math.min(Math.max(280, Math.round(window.width * 0.42)), window.width - appMetrics.margin * 2)
         height: Math.max(Math.round(appMetrics.fontSize * 4.8), toastContent.implicitHeight + appMetrics.gap * 2)
         anchors.top: parent.top
+        anchors.left: parent.left
         anchors.right: parent.right
         anchors.topMargin: appMetrics.titlebarHeight + appMetrics.margin
+        anchors.leftMargin: appMetrics.portrait ? appMetrics.margin : appMetrics.actionBarWidth + appMetrics.margin
         anchors.rightMargin: appMetrics.margin
         radius: Math.round(appMetrics.fontSize * 0.55)
         color: window.toastLevel === "error" ? "#182023" : "#101819"
