@@ -42,6 +42,7 @@ DEFAULT_PANELS = (
 )
 JOB_DETAIL_PAGES = ("summary", "advanced", "exclude", "time", "motion", "extrusion")
 EXTRUDE_DETAIL_PAGES = ("feed", "materials")
+MOVE_DETAIL_PAGES = ("more",)
 SAMPLE_FILES = (
     {
         "path": "OrcaCube_PLA_27m41s.gcode",
@@ -273,6 +274,7 @@ def capture(
     sample_many_sensors: bool = False,
     job_detail_pages: tuple[str, ...] = (),
     extrude_detail_pages: tuple[str, ...] = (),
+    move_detail_pages: tuple[str, ...] = (),
     job_action_previews: tuple[str, ...] = (),
     file_detail_pages: tuple[str, ...] = (),
     file_action_previews: tuple[str, ...] = (),
@@ -339,6 +341,7 @@ def capture(
                 panel,
                 job_detail_pages,
                 extrude_detail_pages,
+                move_detail_pages,
                 file_detail_pages,
             ):
                 if detail_page:
@@ -346,6 +349,8 @@ def capture(
                         _set_job_status_detail_page(root, detail_page)
                     elif panel == "extrude":
                         _set_extrude_detail_page(root, detail_page)
+                    elif panel == "move":
+                        _set_move_detail_page(root, detail_page)
                     elif panel == "print":
                         _set_files_detail_page(root, detail_page)
                     app.processEvents()
@@ -376,12 +381,15 @@ def _detail_pages_for_panel(
     panel: str,
     job_detail_pages: tuple[str, ...],
     extrude_detail_pages: tuple[str, ...],
+    move_detail_pages: tuple[str, ...],
     file_detail_pages: tuple[str, ...],
 ) -> tuple[str, ...]:
     if panel == "job_status" and job_detail_pages:
         return job_detail_pages
     if panel == "extrude" and extrude_detail_pages:
         return extrude_detail_pages
+    if panel == "move" and move_detail_pages:
+        return move_detail_pages
     if panel == "print" and file_detail_pages:
         return file_detail_pages
     return ("",)
@@ -439,6 +447,16 @@ def _set_extrude_detail_page(root: QObject, page: str) -> None:
         panel = loader.property("item") if loader is not None else None
     if panel is None:
         raise RuntimeError("Failed to find extrudePanel for detail screenshot")
+    panel.setProperty("detailPage", page)
+
+
+def _set_move_detail_page(root: QObject, page: str) -> None:
+    panel = root.findChild(QObject, "movePanel")
+    if panel is None:
+        loader = root.findChild(QObject, "panelLoader")
+        panel = loader.property("item") if loader is not None else None
+    if panel is None:
+        raise RuntimeError("Failed to find movePanel for detail screenshot")
     panel.setProperty("detailPage", page)
 
 
@@ -562,6 +580,13 @@ def main(argv: list[str] | None = None) -> int:
         help="Capture specific Extrude subpages, for example materials.",
     )
     parser.add_argument(
+        "--move-detail-pages",
+        nargs="+",
+        choices=MOVE_DETAIL_PAGES,
+        default=(),
+        help="Capture specific Move subpages, for example more.",
+    )
+    parser.add_argument(
         "--file-detail-pages",
         nargs="+",
         choices=("detail",),
@@ -598,6 +623,7 @@ def main(argv: list[str] | None = None) -> int:
         sample_many_sensors=args.sample_many_sensors,
         job_detail_pages=tuple(args.job_detail_pages),
         extrude_detail_pages=tuple(args.extrude_detail_pages),
+        move_detail_pages=tuple(args.move_detail_pages),
         job_action_previews=tuple(args.job_action_previews),
         file_detail_pages=tuple(args.file_detail_pages),
         file_action_previews=tuple(args.file_action_previews),

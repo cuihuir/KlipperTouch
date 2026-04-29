@@ -26,14 +26,14 @@ Item {
         {"label": "Z-", "direction": "down", "action": "z_minus"}
     ]
     property var actionButtons: [
-        {"label": "Disable Motors", "action": "disable_motors", "hint": "M84", "icon": "⏻"},
-        {"label": "More", "action": "more", "hint": "settings", "icon": "⋯"}
+        {"label": "Disable Motors", "action": "disable_motors", "hint": "M84", "iconName": "motor-off"},
+        {"label": "More", "action": "more", "hint": "settings", "iconName": "settings"}
     ]
     property var moreActions: [
-        {"label": "Home All", "action": "home_all", "hint": "XYZ"},
-        {"label": "Disable Motors", "action": "disable_motors", "hint": "M84"},
-        {"label": "XY Speed", "action": "speed_xy", "hint": "50 mm/s"},
-        {"label": "Z Speed", "action": "speed_z", "hint": "10 mm/s"}
+        {"label": "Home All", "action": "home_all", "hint": "XYZ", "iconName": "home"},
+        {"label": "Disable Motors", "action": "disable_motors", "hint": "M84", "iconName": "motor-off"},
+        {"label": "XY Speed", "action": "speed_xy", "hint": "50 mm/s", "iconName": "speed"},
+        {"label": "Z Speed", "action": "speed_z", "hint": "10 mm/s", "iconName": "speed"}
     ]
     property var portraitPlaceholders: [
         {"placeholder": true},
@@ -219,6 +219,7 @@ Item {
         id: tileRoot
         property string title: ""
         property string hint: "locked"
+        property string iconName: ""
         property bool selected: false
 
         color: selected ? "#1b2b2e" : "#101617"
@@ -240,6 +241,20 @@ Item {
             anchors.centerIn: parent
             width: parent.width - root.metrics.gap
             spacing: 0
+
+            Image {
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: Math.max(18, Math.round(root.metrics.fontSize * 1.3))
+                Layout.preferredHeight: tileRoot.iconName.length > 0
+                    ? Math.max(18, Math.round(root.metrics.fontSize * 1.3))
+                    : 0
+                visible: tileRoot.iconName.length > 0
+                source: tileRoot.iconName.length > 0 ? Theme.iconSource(tileRoot.iconName) : ""
+                sourceSize.width: Layout.preferredWidth
+                sourceSize.height: Layout.preferredHeight
+                fillMode: Image.PreserveAspectFit
+                opacity: tileRoot.enabled ? 1.0 : 0.55
+            }
 
             Label {
                 Layout.fillWidth: true
@@ -313,7 +328,7 @@ Item {
         id: actionRoot
         property string title: ""
         property string hint: ""
-        property string icon: ""
+        property string iconName: ""
         property bool selected: false
 
         color: selected ? "#1b2b2e" : "#101819"
@@ -336,12 +351,14 @@ Item {
             width: parent.width - root.metrics.gap
             spacing: 0
 
-            Label {
+            Image {
                 Layout.fillWidth: true
-                text: actionRoot.icon
-                color: Theme.text
-                font.pixelSize: Math.max(22, Math.round(root.metrics.fontSize * 1.6))
-                horizontalAlignment: Text.AlignHCenter
+                Layout.preferredHeight: Math.max(24, Math.round(root.metrics.fontSize * 1.9))
+                source: Theme.iconSource(actionRoot.iconName)
+                sourceSize.width: Math.max(24, Math.round(root.metrics.fontSize * 1.9))
+                sourceSize.height: Math.max(24, Math.round(root.metrics.fontSize * 1.9))
+                fillMode: Image.PreserveAspectFit
+                opacity: actionRoot.enabled ? 1.0 : 0.6
             }
 
             Label {
@@ -430,8 +447,9 @@ Item {
                         width: xyMovePad.homeSize
                         height: xyMovePad.homeSize
                         anchors.centerIn: parent
-                        title: "Home"
-                        hint: "XY"
+                        title: "XY"
+                        hint: "home"
+                        iconName: "home"
                         enabled: root.actionAllowed("home_xy")
 
                         MouseArea {
@@ -480,8 +498,9 @@ Item {
                         width: zMovePad.homeSize
                         height: zMovePad.homeSize
                         anchors.centerIn: parent
-                        title: "Z Home"
-                        hint: "Z"
+                        title: "Z"
+                        hint: "home"
+                        iconName: "home"
                         enabled: root.actionAllowed("home_z")
 
                         MouseArea {
@@ -534,7 +553,7 @@ Item {
                             Layout.fillHeight: true
                             title: modelData.label
                             hint: modelData.hint
-                            icon: modelData.icon
+                            iconName: modelData.iconName
                             enabled: root.actionAllowed(modelData.action)
                             selected: modelData.action === "more"
                                 && (root.moreVisible || root.detailPage === "more")
@@ -632,14 +651,30 @@ Item {
                                 border.width: 1
                                 radius: Math.round(root.metrics.fontSize * 0.18)
 
-                                Label {
-                                    anchors.centerIn: parent
-                                    width: parent.width - 4
-                                    color: Theme.mutedText
-                                    text: modelData.label
-                                    horizontalAlignment: Text.AlignHCenter
-                                    elide: Text.ElideRight
-                                    font.pixelSize: Math.max(9, Math.round(root.metrics.fontSize * 0.62))
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: 4
+                                    spacing: 4
+
+                                    Image {
+                                        Layout.preferredWidth: Math.max(14, Math.round(root.metrics.fontSize * 0.9))
+                                        Layout.preferredHeight: Math.max(14, Math.round(root.metrics.fontSize * 0.9))
+                                        source: Theme.iconSource(modelData.iconName)
+                                        sourceSize.width: Layout.preferredWidth
+                                        sourceSize.height: Layout.preferredHeight
+                                        fillMode: Image.PreserveAspectFit
+                                        opacity: root.actionAllowed(modelData.action) ? 0.9 : 0.5
+                                    }
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        color: Theme.mutedText
+                                        text: modelData.label
+                                        horizontalAlignment: Text.AlignLeft
+                                        verticalAlignment: Text.AlignVCenter
+                                        elide: Text.ElideRight
+                                        font.pixelSize: Math.max(9, Math.round(root.metrics.fontSize * 0.62))
+                                    }
                                 }
 
                                 MouseArea {
@@ -814,6 +849,17 @@ Item {
                             anchors.centerIn: parent
                             width: parent.width - root.metrics.gap
                             spacing: 0
+
+                            Image {
+                                Layout.alignment: Qt.AlignHCenter
+                                Layout.preferredWidth: Math.max(28, Math.round(root.metrics.fontSize * 1.8))
+                                Layout.preferredHeight: Math.max(28, Math.round(root.metrics.fontSize * 1.8))
+                                source: Theme.iconSource(modelData.iconName)
+                                sourceSize.width: Layout.preferredWidth
+                                sourceSize.height: Layout.preferredHeight
+                                fillMode: Image.PreserveAspectFit
+                                opacity: root.actionAllowed(modelData.action) ? 1.0 : 0.55
+                            }
 
                             Label {
                                 Layout.fillWidth: true

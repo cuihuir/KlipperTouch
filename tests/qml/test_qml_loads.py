@@ -65,10 +65,13 @@ def test_material_dark_svg_assets_are_vendored() -> None:
         "extruder.svg",
         "extrude.svg",
         "heat-up.svg",
+        "home.svg",
         "main.svg",
+        "motor-off.svg",
         "move.svg",
         "printer.svg",
         "settings.svg",
+        "speed.svg",
     }
 
     assert {path.name for path in images.glob("*.svg")} == expected
@@ -695,6 +698,7 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert 'property var moreActions' in qml
     assert '"label": "Home All"' in qml
     assert '"action": "home_all"' in qml
+    assert '"hint": "XYZ"' in qml
     assert '"label": "XY Speed"' in qml
     assert '"action": "speed_xy"' in qml
     assert 'property bool moreVisible' in qml
@@ -744,8 +748,9 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert "root.metrics.ultraWide ? 3 : 1" in qml
     assert "root.metrics.ultraWide ? 1 : 3" in qml
     assert "placeholder" in qml
-    assert 'title: "Home"' in qml
-    assert 'title: "Z Home"' in qml
+    assert 'iconName: "home"' in qml
+    assert 'title: "XY"' in qml
+    assert 'title: "Z"' in qml
     assert 'root.moveActionRequested("home_xy", 0, 0)' in qml
     assert 'root.moveActionRequested("home_z", 0, 0)' in qml
     assert "root.handleMoreAction(modelData.action)" in qml
@@ -753,11 +758,16 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert '"label": "Disable Motors"' in qml
     assert '"action": "disable_motors"' in qml
     assert '"hint": "M84"' in qml
+    assert '"iconName": "motor-off"' in qml
     assert '"label": "More"' in qml
     assert '"action": "more"' in qml
-    assert "property string icon" in qml
+    assert '"iconName": "settings"' in qml
+    assert "property string iconName" in qml
+    assert 'source: tileRoot.iconName.length > 0 ? Theme.iconSource(tileRoot.iconName) : ""' in qml
+    assert "source: Theme.iconSource(actionRoot.iconName)" in qml
     assert "id: moveMorePanel" in qml
     assert "id: moveMorePage" in qml
+    assert "source: Theme.iconSource(modelData.iconName)" in qml
     assert "function showMore()" in qml
     assert 'root.detailPage = "more"' in qml
     assert "function goBack()" in qml
