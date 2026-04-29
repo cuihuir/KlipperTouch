@@ -1,7 +1,7 @@
 import json
 from typing import Any
 
-from PySide6.QtCore import QObject, QTimer, QUrl, Slot
+from PySide6.QtCore import QObject, QTimer, QUrl, Signal, Slot
 from PySide6.QtNetwork import QNetworkRequest
 from PySide6.QtWebSockets import QWebSocket
 
@@ -82,6 +82,22 @@ def status_from_websocket_message(
     return current_status.with_status_update(update)
 
 
+def gcode_response_from_websocket_message(message: str) -> str:
+    try:
+        payload = json.loads(message)
+    except json.JSONDecodeError:
+        return ""
+
+    if not isinstance(payload, dict) or payload.get("method") != "notify_gcode_response":
+        return ""
+    params = payload.get("params")
+    if isinstance(params, list) and params:
+        return str(params[0]).strip()
+    if isinstance(params, str):
+        return params.strip()
+    return ""
+
+
 def status_needs_recovery_polling(status: PrinterStatus) -> bool:
     if status.moonraker_version in {"", "unknown"}:
         return True
@@ -107,6 +123,8 @@ def _status_update_from_payload(payload: dict[str, Any]) -> dict[str, Any] | Non
 
 
 class MoonrakerStatusStream(QObject):
+    gcodeResponseReceived = Signal(str)
+
     def __init__(
         self,
         client: MoonrakerClient,
@@ -159,6 +177,9 @@ class MoonrakerStatusStream(QObject):
 
     @Slot(str)
     def _handle_text_message(self, message: str) -> None:
+        gcode_response = gcode_response_from_websocket_message(message)
+        if gcode_response:
+            self.gcodeResponseReceived.emit(gcode_response)
         status = status_from_websocket_message(self._status, message)
         if status is None:
             return

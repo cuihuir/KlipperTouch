@@ -77,5 +77,7 @@ def test_run_app_wires_optional_read_only_status_stream() -> None:
 
     assert "MoonrakerStatusStream" in source
     assert "status_stream_client" in source
+    assert "status_stream.gcodeResponseReceived.connect" in source
+    assert 'notification_model.showToast("info", "Printer message", message)' in source
     assert "status_stream.start()" in source
     assert "engine.status_stream = status_stream" in source

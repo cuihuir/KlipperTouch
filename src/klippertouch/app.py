@@ -74,6 +74,9 @@ def run_app(
         return 1
     if initial_status is not None and status_stream_client is not None:
         status_stream = MoonrakerStatusStream(status_stream_client, status_model, initial_status)
+        status_stream.gcodeResponseReceived.connect(
+            lambda message: notification_model.showToast("info", "Printer message", message)
+        )
         status_stream.start()
         engine.status_stream = status_stream  # type: ignore[attr-defined]
     if file_refresh_client is not None:

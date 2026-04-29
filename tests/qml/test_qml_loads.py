@@ -976,6 +976,7 @@ def test_job_control_events_are_forwarded_to_notifications() -> None:
     assert "id: toastCard" in main_qml
     assert "id: toastTimer" in main_qml
     assert "toastTimer.restart()" in main_qml
+    assert "function onToastRequested(level, title, message)" in main_qml
     assert "window.showToast(level, title, message)" in main_qml
     assert "window.shouldStoreNotification(level, sticky)" in main_qml
     assert "notificationBridgeModel.addNotification" in main_qml

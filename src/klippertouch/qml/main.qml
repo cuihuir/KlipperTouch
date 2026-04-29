@@ -361,6 +361,14 @@ ApplicationWindow {
         }
     }
 
+    Connections {
+        target: window.notificationBridgeModel
+
+        function onToastRequested(level, title, message) {
+            window.showToast(level, title, message)
+        }
+    }
+
     BaseShell {
         anchors.fill: parent
         metrics: appMetrics

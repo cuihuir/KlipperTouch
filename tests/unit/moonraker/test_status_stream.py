@@ -7,6 +7,7 @@ from klippertouch.moonraker.client import MoonrakerClient
 from klippertouch.moonraker.status_stream import (
     build_temperature_subscription_message,
     build_websocket_request,
+    gcode_response_from_websocket_message,
     status_from_websocket_message,
     status_needs_recovery_polling,
 )
@@ -153,6 +154,26 @@ def test_status_from_websocket_message_applies_notification_temperature_delta() 
     assert updated is not None
     assert tuple(device.temperature for device in updated.temperature_devices) == (25.1, 26.7)
     assert tuple(device.target for device in updated.temperature_devices) == (0.0, 60.0)
+
+
+def test_gcode_response_from_websocket_message_extracts_m118_message() -> None:
+    message = json.dumps(
+        {
+            "jsonrpc": "2.0",
+            "method": "notify_gcode_response",
+            "params": ["M118 filament runout soon"],
+        }
+    )
+
+    assert gcode_response_from_websocket_message(message) == "M118 filament runout soon"
+
+
+def test_status_stream_emits_gcode_responses_for_toast_notifications() -> None:
+    source = Path("src/klippertouch/moonraker/status_stream.py").read_text(encoding="utf-8")
+
+    assert "gcodeResponseReceived = Signal(str)" in source
+    assert "gcode_response = gcode_response_from_websocket_message(message)" in source
+    assert "self.gcodeResponseReceived.emit(gcode_response)" in source
 
 
 def test_status_from_websocket_message_recovers_from_webhooks_shutdown() -> None:

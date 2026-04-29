@@ -41,6 +41,7 @@ class NotificationModel(QAbstractListModel):
 
     unreadCountChanged = Signal()
     countChanged = Signal()
+    toastRequested = Signal(str, str, str)
 
     def __init__(self, max_items: int = 100) -> None:
         super().__init__()
@@ -142,6 +143,10 @@ class NotificationModel(QAbstractListModel):
                 continue
             self.addNotification("warning", "Moonraker warning", message, "moonraker", True, "")
             seen.add(key)
+
+    @Slot(str, str, str)
+    def showToast(self, level: str, title: str, message: str = "") -> None:  # noqa: N802
+        self.toastRequested.emit(level.strip() or "info", title.strip(), message.strip())
 
     @Slot()
     def markAllRead(self) -> None:  # noqa: N802

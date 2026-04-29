@@ -85,3 +85,17 @@ def test_notification_model_adds_moonraker_warnings_as_sticky_items(qtbot) -> No
         model.data(older, model.MessageRole)
         == "[update_manager]: Failed to load extension fluidd"
     )
+
+
+def test_notification_model_requests_transient_toast_without_history(qtbot) -> None:
+    model = NotificationModel()
+    toasts: list[tuple[str, str, str]] = []
+    model.toastRequested.connect(
+        lambda level, title, message: toasts.append((level, title, message))
+    )
+
+    model.showToast("info", "Printer message", "M118 filament runout soon")
+
+    assert toasts == [("info", "Printer message", "M118 filament runout soon")]
+    assert model.rowCount() == 0
+    assert model.unreadCount == 0
