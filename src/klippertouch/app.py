@@ -132,6 +132,7 @@ def run_app(
     try:
         return app.exec()
     finally:
+        job_control_model.stop()
         if startup_loader is not None:
             startup_loader.stop()
         if file_refresh is not None:

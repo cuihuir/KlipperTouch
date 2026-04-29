@@ -108,6 +108,32 @@ class BlockingClient(FakeClient):
         raise UnsafeCommandError("blocked")
 
 
+class SlowClient(FakeClient):
+    def start_print(self, filename: str) -> dict[str, bool]:
+        import time
+
+        time.sleep(0.05)
+        return super().start_print(filename)
+
+
+def wait_for_calls(qtbot, model: JobControlModel, client: FakeClient, count: int) -> None:
+    qtbot.waitUntil(
+        lambda: len(client.calls) >= count
+        and not model._command_queue  # noqa: SLF001
+        and model._command_thread is None,  # noqa: SLF001
+        timeout=1000,
+    )
+
+
+def wait_for_error(qtbot, model: JobControlModel, error: str) -> None:
+    qtbot.waitUntil(
+        lambda: model.lastError == error
+        and not model._command_queue  # noqa: SLF001
+        and model._command_thread is None,  # noqa: SLF001
+        timeout=1000,
+    )
+
+
 def test_job_control_model_sends_pause_resume_cancel_requests(qtbot) -> None:
     client = FakeClient()
     model = JobControlModel(client)
@@ -117,6 +143,7 @@ def test_job_control_model_sends_pause_resume_cancel_requests(qtbot) -> None:
     model.requestPause()
     model.requestResume()
     model.requestCancel()
+    wait_for_calls(qtbot, model, client, 3)
 
     assert client.calls == [("pause", ""), ("resume", ""), ("cancel", "")]
     assert statuses == ["Pause sent", "Resume sent", "Cancel sent"]
@@ -129,10 +156,25 @@ def test_job_control_model_starts_selected_file(qtbot) -> None:
     model = JobControlModel(client)
 
     model.requestStartPrint("cube.gcode")
+    wait_for_calls(qtbot, model, client, 1)
 
     assert client.calls == [("start", "cube.gcode")]
     assert model.lastStatus == "Print sent"
     assert model.requestedPrintState == "printing"
+
+
+def test_job_control_model_start_print_does_not_block_gui_thread(qtbot) -> None:
+    import time
+
+    client = SlowClient()
+    model = JobControlModel(client)
+    started = time.monotonic()
+
+    model.requestStartPrint("cube.gcode")
+
+    assert time.monotonic() - started < 0.04
+    wait_for_calls(qtbot, model, client, 1)
+    assert client.calls == [("start", "cube.gcode")]
 
 
 def test_job_control_model_normalizes_absolute_gcodes_path_before_start(qtbot) -> None:
@@ -140,6 +182,7 @@ def test_job_control_model_normalizes_absolute_gcodes_path_before_start(qtbot) -
     model = JobControlModel(client)
 
     model.requestStartPrint("/home/tope/printer_data/gcodes/folder/cube.gcode")
+    wait_for_calls(qtbot, model, client, 1)
 
     assert client.calls == [("start", "folder/cube.gcode")]
 
@@ -160,6 +203,7 @@ def test_job_control_model_reports_read_only_blocks(qtbot) -> None:
     model.errorChanged.connect(lambda: errors.append(model.lastError))
 
     model.requestPause()
+    wait_for_error(qtbot, model, "blocked")
 
     assert errors == ["blocked"]
     assert model.lastStatus == ""
@@ -175,6 +219,7 @@ def test_job_control_model_exposes_successful_requested_print_states(qtbot) -> N
     model.requestPause()
     model.requestResume()
     model.requestCancel()
+    wait_for_calls(qtbot, model, client, 3)
 
     assert states == ["paused", "printing", "cancelled"]
 
@@ -186,6 +231,7 @@ def test_job_control_model_sends_advanced_adjustments(qtbot) -> None:
     model.requestZOffsetAdjust(0.05)
     model.requestSpeedFactor(95)
     model.requestExtrudeFactor(105)
+    wait_for_calls(qtbot, model, client, 3)
 
     assert client.calls == [
         ("z_offset", 0.05),
@@ -201,6 +247,7 @@ def test_job_control_model_sends_recovery_restart_commands(qtbot) -> None:
 
     model.requestFirmwareRestart()
     model.requestKlipperRestart()
+    wait_for_calls(qtbot, model, client, 2)
 
     assert client.calls == [("firmware_restart", ""), ("restart_klipper", "")]
     assert model.lastStatus == "Restart Klipper sent"
@@ -211,6 +258,7 @@ def test_job_control_model_sends_emergency_stop(qtbot) -> None:
     model = JobControlModel(client)
 
     model.requestEmergencyStop()
+    wait_for_calls(qtbot, model, client, 1)
 
     assert client.calls == [("emergency_stop", "")]
     assert model.lastStatus == "Emergency Stop sent"
@@ -221,6 +269,7 @@ def test_job_control_model_sends_disable_motors(qtbot) -> None:
     model = JobControlModel(client)
 
     model.requestDisableMotors()
+    wait_for_calls(qtbot, model, client, 1)
 
     assert client.calls == [("disable_motors", "")]
     assert model.lastStatus == "Disable motors sent"
@@ -233,6 +282,7 @@ def test_job_control_model_sends_validated_jog_requests(qtbot) -> None:
     model.requestMoveJog("x_minus", 10, 100)
     model.requestMoveJog("z_plus", 0.5, 10)
     model.requestMoveJog("v_minus", 0.1, 2)
+    wait_for_calls(qtbot, model, client, 3)
 
     assert client.calls == [
         ("jog", "x:-10.0:100.0"),
@@ -247,6 +297,7 @@ def test_job_control_model_reports_specific_move_status(qtbot) -> None:
     model = JobControlModel(client)
 
     model.requestMoveJog("u_minus", 0.1, 2)
+    wait_for_calls(qtbot, model, client, 1)
 
     assert client.calls == [("jog", "u:-0.1:2.0")]
     assert model.lastStatus == "Move U- sent"
@@ -277,6 +328,7 @@ def test_job_control_model_sends_home_requests(qtbot) -> None:
     model.requestHome("z")
     model.requestHome("all")
     model.requestHome("uvw")
+    wait_for_calls(qtbot, model, client, 4)
 
     assert client.calls == [("home", "x,y"), ("home", "z"), ("home", ""), ("uvw_home", "")]
     assert model.lastStatus == "UVW home sent"
@@ -287,6 +339,7 @@ def test_job_control_model_reports_specific_uvw_home_status(qtbot) -> None:
     model = JobControlModel(client)
 
     model.requestHome("uvw")
+    wait_for_calls(qtbot, model, client, 1)
 
     assert client.calls == [("uvw_home", "")]
     assert model.lastStatus == "UVW home sent"
@@ -298,6 +351,7 @@ def test_job_control_model_sends_leveling_requests(qtbot) -> None:
 
     model.requestZTiltAdjust()
     model.requestAcceleratorLevel()
+    wait_for_calls(qtbot, model, client, 2)
 
     assert client.calls == [("z_tilt_adjust", ""), ("accelerator_level", "")]
     assert model.lastStatus == "Accelerator level sent"
@@ -319,6 +373,7 @@ def test_job_control_model_sends_validated_extrude_requests(qtbot) -> None:
 
     model.requestExtrudeFilament("extrude", 10, 5)
     model.requestExtrudeFilament("retract", 5, 2)
+    wait_for_calls(qtbot, model, client, 2)
 
     assert client.calls == [
         ("extrude_filament", "10.0:5.0"),
@@ -350,6 +405,7 @@ def test_job_control_model_sends_load_unload_macro_requests(qtbot) -> None:
 
     model.requestLoadFilament(5)
     model.requestUnloadFilament(2)
+    wait_for_calls(qtbot, model, client, 2)
 
     assert client.calls == [("load_filament", 5.0), ("unload_filament", 2.0)]
     assert model.lastStatus == "Unload filament sent"
@@ -374,6 +430,7 @@ def test_job_control_model_sends_temperature_target_requests(qtbot) -> None:
 
     model.requestTemperatureTarget("extruder", 0)
     model.requestTemperatureTarget("heater_bed", 60)
+    wait_for_calls(qtbot, model, client, 2)
 
     assert client.calls == [
         ("temperature_target", "extruder:0.0"),
@@ -404,6 +461,7 @@ def test_job_control_model_sends_pressure_advance_request(qtbot) -> None:
     model = JobControlModel(client)
 
     model.requestPressureAdvance(0.045, 0.04)
+    wait_for_calls(qtbot, model, client, 1)
 
     assert client.calls == [("pressure_advance", "0.045:0.04")]
     assert model.lastStatus == "Pressure advance sent"
@@ -437,6 +495,7 @@ def test_job_control_model_sends_object_skip(qtbot) -> None:
     model = JobControlModel(client)
 
     model.requestSkipObject("part_b")
+    wait_for_calls(qtbot, model, client, 1)
 
     assert client.calls == [("exclude", "part_b")]
     assert model.lastStatus == "Object skip sent"
@@ -459,6 +518,7 @@ def test_job_control_model_deletes_selected_file(qtbot) -> None:
     model.fileDeleted.connect(lambda path: deleted.append(path))
 
     model.requestDeleteFile("cube.gcode")
+    wait_for_calls(qtbot, model, client, 1)
 
     assert client.calls == [("delete", "cube.gcode")]
     assert deleted == ["cube.gcode"]
@@ -472,6 +532,7 @@ def test_job_control_model_normalizes_absolute_gcodes_path_before_delete(qtbot) 
     model.fileDeleted.connect(lambda path: deleted.append(path))
 
     model.requestDeleteFile("/home/tope/printer_data/gcodes/folder/cube.gcode")
+    wait_for_calls(qtbot, model, client, 1)
 
     assert client.calls == [("delete", "folder/cube.gcode")]
     assert deleted == ["folder/cube.gcode"]
@@ -492,6 +553,7 @@ def test_job_control_model_clears_terminal_job_file(qtbot) -> None:
     model = JobControlModel(client)
 
     model.requestClearJob()
+    wait_for_calls(qtbot, model, client, 1)
 
     assert client.calls == [("clear", "")]
     assert model.lastStatus == "Clear sent"
@@ -506,5 +568,6 @@ def test_job_control_model_emits_duplicate_requested_state_for_repeated_controls
 
     model.requestClearJob()
     model.requestClearJob()
+    wait_for_calls(qtbot, model, client, 2)
 
     assert states == ["standby", "standby"]

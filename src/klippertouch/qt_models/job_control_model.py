@@ -1,7 +1,8 @@
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Protocol
 
-from PySide6.QtCore import Property, QObject, Signal, Slot
+from PySide6.QtCore import Property, QObject, QThread, Signal, Slot
 
 
 class JobControlClient(Protocol):
@@ -54,6 +55,34 @@ class JobControlClient(Protocol):
     def set_pressure_advance(self, advance: float, smooth_time: float) -> dict[str, object]: ...
 
 
+class _JobCommandWorker(QObject):
+    succeeded = Signal()
+    failed = Signal(str)
+    finished = Signal()
+
+    def __init__(self, command: Callable[[], dict[str, object]]) -> None:
+        super().__init__()
+        self._command = command
+
+    @Slot()
+    def run(self) -> None:
+        try:
+            self._command()
+        except Exception as exc:
+            self.failed.emit(str(exc))
+        else:
+            self.succeeded.emit()
+        self.finished.emit()
+
+
+@dataclass
+class _PendingJobCommand:
+    label: str
+    command: Callable[[], dict[str, object]]
+    requested_print_state: str
+    on_success: Callable[[], None] | None
+
+
 class JobControlModel(QObject):
     statusChanged = Signal()
     errorChanged = Signal()
@@ -66,6 +95,9 @@ class JobControlModel(QObject):
         self._last_status = ""
         self._last_error = ""
         self._requested_print_state = ""
+        self._command_thread: QThread | None = None
+        self._command_worker: _JobCommandWorker | None = None
+        self._command_queue: list[_PendingJobCommand] = []
 
     @Property(str, notify=statusChanged)
     def lastStatus(self) -> str:  # noqa: N802
@@ -246,9 +278,11 @@ class JobControlModel(QObject):
         if not clean_filename:
             self._set_error("Filename is required")
             return
-        self._run_control("Delete", lambda client: client.delete_gcode_file(clean_filename))
-        if not self._last_error:
-            self.fileDeleted.emit(clean_filename)
+        self._run_control(
+            "Delete",
+            lambda client: client.delete_gcode_file(clean_filename),
+            on_success=lambda: self.fileDeleted.emit(clean_filename),
+        )
 
     @Slot(str)
     def requestSkipObject(self, object_name: str) -> None:  # noqa: N802
@@ -286,17 +320,65 @@ class JobControlModel(QObject):
         label: str,
         command: Callable[[JobControlClient], dict[str, object]],
         requested_print_state: str = "",
+        on_success: Callable[[], None] | None = None,
     ) -> None:
         if self._client is None:
             self._set_error("Job control client is unavailable")
             return
-        try:
-            command(self._client)
-        except Exception as exc:
-            self._set_error(str(exc))
+        client = self._client
+        self._command_queue.append(
+            _PendingJobCommand(
+                label=label,
+                command=lambda: command(client),
+                requested_print_state=requested_print_state,
+                on_success=on_success,
+            )
+        )
+        self._start_next_control()
+
+    def _start_next_control(self) -> None:
+        if self._command_thread is not None or not self._command_queue:
             return
+        pending = self._command_queue.pop(0)
+        thread = QThread(self)
+        worker = _JobCommandWorker(pending.command)
+        worker.moveToThread(thread)
+        thread.started.connect(worker.run)
+        worker.succeeded.connect(
+            lambda: self._handle_control_success(
+                pending.label,
+                pending.requested_print_state,
+                pending.on_success,
+            )
+        )
+        worker.failed.connect(self._set_error)
+        worker.finished.connect(thread.quit)
+        worker.finished.connect(worker.deleteLater)
+        thread.finished.connect(thread.deleteLater)
+        thread.finished.connect(self._clear_command_worker)
+        self._command_thread = thread
+        self._command_worker = worker
+        thread.start()
+
+    def stop(self, timeout_ms: int = 5000) -> None:
+        self._command_queue.clear()
+        thread = self._command_thread
+        if thread is not None and thread.isRunning():
+            thread.quit()
+            thread.wait(timeout_ms)
+        self._command_thread = None
+        self._command_worker = None
+
+    def _handle_control_success(
+        self,
+        label: str,
+        requested_print_state: str,
+        on_success: Callable[[], None] | None,
+    ) -> None:
         if requested_print_state:
             self._set_requested_print_state(requested_print_state)
+        if on_success is not None:
+            on_success()
         self._set_status(f"{label} sent")
 
     def _set_status(self, value: str) -> None:
@@ -314,6 +396,12 @@ class JobControlModel(QObject):
     def _set_requested_print_state(self, value: str) -> None:
         self._requested_print_state = value
         self.requestedPrintStateChanged.emit()
+
+    @Slot()
+    def _clear_command_worker(self) -> None:
+        self._command_thread = None
+        self._command_worker = None
+        self._start_next_control()
 
 
 def _normalize_gcode_filename(filename: str) -> str:
