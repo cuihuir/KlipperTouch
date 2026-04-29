@@ -57,6 +57,16 @@ Item {
     property string controlStatus: ""
     property string controlError: ""
     readonly property color selectedAccent: "#7f9298"
+    readonly property int moveButtonSize: Math.max(
+        72,
+        Math.min(
+            root.metrics.ultraWide ? 104 : 96,
+            Math.round(Math.min(root.width, root.height) * (root.metrics.ultraWide ? 0.2 : 0.17))
+        )
+    )
+    readonly property int moveHomeSize: Math.max(72, Math.round(root.moveButtonSize * 0.98))
+    readonly property int moveActionIconSize: Math.max(30, Math.round(root.moveButtonSize * 0.42))
+    readonly property real motionSectionGap: Math.max(root.metrics.gap, Math.round(root.metrics.fontSize * 0.85))
     signal moveActionRequested(string action, real distance, real speed)
 
     function selectDistance(distance) {
@@ -222,17 +232,17 @@ Item {
         property string iconName: ""
         property bool selected: false
 
-        color: selected ? "#1b2b2e" : "#101617"
+        color: selected ? "#1b2b2e" : "#101718"
         opacity: tileRoot.enabled ? selected ? 1.0 : 0.9 : 0.46
         border.color: selected ? root.selectedAccent : "#48565a"
         border.width: 1
-        radius: Math.round(Math.min(width, height) * 0.2)
+        radius: Math.round(Math.min(width, height) * 0.18)
 
         Rectangle {
             anchors.fill: parent
-            anchors.margins: Math.max(3, Math.round(root.metrics.fontSize * 0.2))
+            anchors.margins: Math.max(4, Math.round(root.metrics.fontSize * 0.22))
             color: "transparent"
-            border.color: "#1f2a2c"
+            border.color: "#263235"
             border.width: 1
             radius: Math.round(parent.radius * 0.72)
         }
@@ -244,9 +254,9 @@ Item {
 
             Image {
                 Layout.alignment: Qt.AlignHCenter
-                Layout.preferredWidth: Math.max(18, Math.round(root.metrics.fontSize * 1.3))
+                Layout.preferredWidth: Math.max(19, Math.round(root.metrics.fontSize * 1.42))
                 Layout.preferredHeight: tileRoot.iconName.length > 0
-                    ? Math.max(18, Math.round(root.metrics.fontSize * 1.3))
+                    ? Math.max(19, Math.round(root.metrics.fontSize * 1.42))
                     : 0
                 visible: tileRoot.iconName.length > 0
                 source: tileRoot.iconName.length > 0 ? Theme.iconSource(tileRoot.iconName) : ""
@@ -263,7 +273,7 @@ Item {
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
                 font.bold: tileRoot.selected
-                font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 1.02))
+                font.pixelSize: Math.max(15, Math.round(root.metrics.fontSize * 1.05))
             }
 
             Label {
@@ -273,7 +283,7 @@ Item {
                 visible: tileRoot.hint.length > 0
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
-                font.pixelSize: Math.max(9, Math.round(root.metrics.fontSize * 0.62))
+                font.pixelSize: Math.max(9, Math.round(root.metrics.fontSize * 0.58))
             }
         }
     }
@@ -283,17 +293,17 @@ Item {
         property string title: ""
         property string direction: "up"
 
-        color: "#101819"
+        color: "#101718"
         opacity: directionRoot.enabled ? 1.0 : 0.46
         border.color: "#536165"
         border.width: 1
-        radius: Math.round(Math.min(width, height) * 0.22)
+        radius: Math.round(Math.min(width, height) * 0.18)
 
         Rectangle {
             anchors.fill: parent
-            anchors.margins: Math.max(3, Math.round(root.metrics.fontSize * 0.2))
+            anchors.margins: Math.max(4, Math.round(root.metrics.fontSize * 0.22))
             color: "transparent"
-            border.color: "#1f2a2c"
+            border.color: "#263235"
             border.width: 1
             radius: Math.round(directionRoot.radius * 0.72)
         }
@@ -307,7 +317,7 @@ Item {
                 Layout.fillWidth: true
                 text: root.arrowGlyph(directionRoot.direction)
                 color: "#d9e0e2"
-                font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.35))
+                font.pixelSize: Math.max(22, Math.round(root.metrics.fontSize * 1.56))
                 horizontalAlignment: Text.AlignHCenter
             }
 
@@ -315,7 +325,7 @@ Item {
                 Layout.fillWidth: true
                 text: directionRoot.title
                 color: Theme.text
-                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.78))
+                font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.7))
                 font.bold: true
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
@@ -331,17 +341,17 @@ Item {
         property string iconName: ""
         property bool selected: false
 
-        color: selected ? "#1b2b2e" : "#101819"
+        color: selected ? "#1b2b2e" : "#101718"
         opacity: actionRoot.enabled ? 1.0 : 0.46
         border.color: selected ? root.selectedAccent : "#536165"
         border.width: 1
-        radius: Math.round(Math.min(width, height) * 0.22)
+        radius: Math.round(Math.min(width, height) * 0.18)
 
         Rectangle {
             anchors.fill: parent
-            anchors.margins: Math.max(3, Math.round(root.metrics.fontSize * 0.2))
+            anchors.margins: Math.max(4, Math.round(root.metrics.fontSize * 0.22))
             color: "transparent"
-            border.color: "#1f2a2c"
+            border.color: "#263235"
             border.width: 1
             radius: Math.round(parent.radius * 0.72)
         }
@@ -353,10 +363,10 @@ Item {
 
             Image {
                 Layout.fillWidth: true
-                Layout.preferredHeight: Math.max(24, Math.round(root.metrics.fontSize * 1.9))
+                Layout.preferredHeight: root.moveActionIconSize
                 source: Theme.iconSource(actionRoot.iconName)
-                sourceSize.width: Math.max(24, Math.round(root.metrics.fontSize * 1.9))
-                sourceSize.height: Math.max(24, Math.round(root.metrics.fontSize * 1.9))
+                sourceSize.width: root.moveActionIconSize
+                sourceSize.height: root.moveActionIconSize
                 fillMode: Image.PreserveAspectFit
                 opacity: actionRoot.enabled ? 1.0 : 0.6
             }
@@ -366,7 +376,7 @@ Item {
                 text: actionRoot.title
                 color: Theme.text
                 font.bold: true
-                font.pixelSize: Math.max(9, Math.round(root.metrics.fontSize * 0.6))
+                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.68))
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.WordWrap
                 maximumLineCount: 2
@@ -377,7 +387,7 @@ Item {
                 Layout.fillWidth: true
                 text: actionRoot.hint
                 color: Theme.mutedText
-                font.pixelSize: Math.max(8, Math.round(root.metrics.fontSize * 0.52))
+                font.pixelSize: Math.max(8, Math.round(root.metrics.fontSize * 0.5))
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
             }
@@ -415,8 +425,8 @@ Item {
                     anchors.left: parent.left
                     anchors.top: parent.top
                     property int padSize: Math.max(58, Math.min(width, height))
-                    property int arrowSize: Math.max(64, Math.round(padSize * 0.32))
-                    property int homeSize: Math.max(76, Math.round(padSize * 0.29))
+                    property int arrowSize: root.moveButtonSize
+                    property int homeSize: root.moveHomeSize
 
                     Repeater {
                         model: root.xyButtons
@@ -462,7 +472,7 @@ Item {
 
                 Item {
                     id: zMovePad
-                    width: root.metrics.portrait ? Math.round(parent.width * 0.48) : Math.round(parent.width * 0.22)
+                    width: root.metrics.portrait ? Math.round(parent.width * 0.46) : Math.round(parent.width * 0.22)
                     height: root.metrics.portrait ? Math.round(parent.height * 0.46) : parent.height
                     anchors.right: undefined
                     anchors.horizontalCenter: undefined
@@ -471,8 +481,8 @@ Item {
                     anchors.topMargin: root.metrics.portrait ? root.metrics.gap : 0
                     anchors.left: root.metrics.portrait ? parent.left : xyMovePad.right
                     property int padSize: Math.max(58, Math.min(width, height))
-                    property int arrowSize: Math.max(70, Math.round(padSize * 0.32))
-                    property int homeSize: Math.max(88, Math.round(padSize * 0.31))
+                    property int arrowSize: root.moveButtonSize
+                    property int homeSize: root.moveHomeSize
 
                     DirectionButton {
                         width: zMovePad.arrowSize
@@ -533,15 +543,19 @@ Item {
 
                 GridLayout {
                     id: motionActions
-                    width: root.metrics.portrait ? Math.round(parent.width * 0.52) : Math.round(parent.width * 0.24)
-                    height: root.metrics.portrait ? zMovePad.height : Math.round(parent.height * 0.72)
+                    width: root.metrics.portrait
+                        ? Math.round(parent.width * 0.50)
+                        : Math.max(Math.round(parent.width * 0.24), Math.round(root.moveButtonSize * 2.2))
+                    height: root.metrics.portrait
+                        ? Math.max(root.moveButtonSize, Math.round(root.moveButtonSize * 1.62))
+                        : Math.max(Math.round(root.moveButtonSize * 2.15), Math.round(parent.height * 0.58))
                     y: root.metrics.portrait ? zMovePad.y : Math.round((parent.height - height) / 2)
                     anchors.right: parent.right
                     anchors.rightMargin: 0
                     columns: root.metrics.portrait ? 2 : 1
                     rows: root.metrics.portrait ? 1 : 2
-                    rowSpacing: root.metrics.gap
-                    columnSpacing: root.metrics.gap
+                    rowSpacing: root.motionSectionGap
+                    columnSpacing: root.motionSectionGap
 
                     Repeater {
                         model: root.actionButtons
