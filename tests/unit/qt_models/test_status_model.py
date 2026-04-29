@@ -384,6 +384,26 @@ def test_status_model_suppresses_hidden_toolhead_updates_until_panel_needs_them(
     assert model.positionX == 9.0
 
 
+def test_status_model_exposes_five_axis_positions_and_capabilities(qtbot) -> None:
+    model = StatusModel()
+
+    model.set_status(
+        PrinterStatus(
+            objects=("toolhead", "gcode_move", "independent_3z", "accelerator_level", "z_tilt"),
+            position_u=1.1,
+            position_v=2.2,
+            position_w=3.3,
+        )
+    )
+
+    assert model.positionU == 1.1
+    assert model.positionV == 2.2
+    assert model.positionW == 3.3
+    assert model.fiveAxisAvailable is True
+    assert model.acceleratorLevelAvailable is True
+    assert model.zTiltAvailable is True
+
+
 def test_temperature_device_list_model_exposes_qml_roles(qtbot) -> None:
     model = TemperatureDeviceListModel()
     status = PrinterStatus(objects=("extruder", "heater_bed"))

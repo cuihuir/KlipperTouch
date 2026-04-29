@@ -37,6 +37,10 @@ class JobControlClient(Protocol):
 
     def home_axes(self, *axes: str) -> dict[str, object]: ...
 
+    def run_z_tilt_adjust(self) -> dict[str, object]: ...
+
+    def run_accelerator_level(self) -> dict[str, object]: ...
+
     def extrude_filament(self, distance: float, speed: float) -> dict[str, object]: ...
 
     def load_filament(self, speed: float) -> dict[str, object]: ...
@@ -148,11 +152,20 @@ class JobControlModel(QObject):
             "all": (),
             "xy": ("x", "y"),
             "z": ("z",),
+            "uvw": ("u", "v", "w"),
         }
         if clean_target not in target_map:
             self._set_error("Invalid home target")
             return
         self._run_control("Home", lambda client: client.home_axes(*target_map[clean_target]))
+
+    @Slot()
+    def requestZTiltAdjust(self) -> None:  # noqa: N802
+        self._run_control("Z tilt adjust", lambda client: client.run_z_tilt_adjust())
+
+    @Slot()
+    def requestAcceleratorLevel(self) -> None:  # noqa: N802
+        self._run_control("Accelerator level", lambda client: client.run_accelerator_level())
 
     @Slot(str, float, float)
     def requestExtrudeFilament(self, action: str, distance: float, speed: float) -> None:  # noqa: N802

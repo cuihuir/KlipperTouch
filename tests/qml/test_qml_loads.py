@@ -84,6 +84,7 @@ def test_material_dark_svg_assets_are_vendored() -> None:
         "resume.svg",
         "settings.svg",
         "speed.svg",
+        "tilt.svg",
         "update.svg",
         "unload.svg",
     }
@@ -718,6 +719,18 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert '"hint": "XYZ"' in qml
     assert '"label": "XY Speed"' in qml
     assert '"action": "speed_xy"' in qml
+    assert '"label": "UVW Home"' in qml
+    assert '"action": "home_uvw"' in qml
+    assert '"label": "Accelerometer Level"' in qml
+    assert '"action": "accelerator_level"' in qml
+    assert '"label": "Z Tilt Adjust"' in qml
+    assert '"action": "z_tilt_adjust"' in qml
+    assert '"iconName": "tilt"' in qml
+    assert "function visibleMoreActions()" in qml
+    assert "function positionItems()" in qml
+    assert "root.fiveAxisAvailable" in qml
+    assert "root.acceleratorLevelAvailable" in qml
+    assert "root.zTiltAvailable" in qml
     assert 'property bool moreVisible' in qml
     assert 'property string detailPage: "main"' in qml
     assert 'signal moveActionRequested(string action, real distance, real speed)' in qml
@@ -746,6 +759,7 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert "Canvas {" not in qml
     assert '"#eef3fb"' not in qml
     assert "root.positionX.toFixed(2)" in qml
+    assert "root.positionU.toFixed(2)" in qml
     assert "root.homedAxes.length > 0" in qml
     assert "property string selectedDistance" in qml
     assert "function selectDistance(distance)" in qml
@@ -770,6 +784,7 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert 'title: "Z"' in qml
     assert 'root.moveActionRequested("home_xy", 0, 0)' in qml
     assert 'root.moveActionRequested("home_z", 0, 0)' in qml
+    assert "root.moveActionRequested(action, 0, 0)" in qml
     assert "root.handleMoreAction(modelData.action)" in qml
     assert "function handleMoreAction(action)" in qml
     assert '"label": "Disable Motors"' in qml
@@ -1790,6 +1805,15 @@ def test_main_routes_move_and_extrude_to_locked_panels() -> None:
     assert 'jobControlBridgeModel.requestHome("xy")' in main_qml
     assert 'jobControlBridgeModel.requestHome("z")' in main_qml
     assert 'jobControlBridgeModel.requestHome("all")' in main_qml
+    assert 'jobControlBridgeModel.requestHome("uvw")' in main_qml
+    assert "jobControlBridgeModel.requestZTiltAdjust()" in main_qml
+    assert "jobControlBridgeModel.requestAcceleratorLevel()" in main_qml
+    assert "positionU: window.positionU" in main_qml
+    assert "positionV: window.positionV" in main_qml
+    assert "positionW: window.positionW" in main_qml
+    assert "fiveAxisAvailable: window.fiveAxisAvailable" in main_qml
+    assert "acceleratorLevelAvailable: window.acceleratorLevelAvailable" in main_qml
+    assert "zTiltAvailable: window.zTiltAvailable" in main_qml
     assert "jobControlBridgeModel.requestDisableMotors()" in main_qml
     assert "ExtrudePanel {" in main_qml
 

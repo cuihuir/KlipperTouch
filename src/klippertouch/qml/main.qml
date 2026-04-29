@@ -42,6 +42,12 @@ ApplicationWindow {
     property real positionY: bridgeModel ? bridgeModel.positionY : 0
     property real positionZ: bridgeModel ? bridgeModel.positionZ : 0
     property real positionE: bridgeModel ? bridgeModel.positionE : 0
+    property real positionU: bridgeModel ? bridgeModel.positionU : 0
+    property real positionV: bridgeModel ? bridgeModel.positionV : 0
+    property real positionW: bridgeModel ? bridgeModel.positionW : 0
+    property bool fiveAxisAvailable: bridgeModel ? bridgeModel.fiveAxisAvailable : false
+    property bool acceleratorLevelAvailable: bridgeModel ? bridgeModel.acceleratorLevelAvailable : false
+    property bool zTiltAvailable: bridgeModel ? bridgeModel.zTiltAvailable : false
     property string homedAxes: bridgeModel ? bridgeModel.homedAxes : ""
     property real requestedSpeed: bridgeModel ? bridgeModel.requestedSpeed : 0
     property real speedFactor: bridgeModel ? bridgeModel.speedFactor : 100
@@ -249,6 +255,12 @@ ApplicationWindow {
             jobControlBridgeModel.requestHome("xy")
         } else if (action === "home_z") {
             jobControlBridgeModel.requestHome("z")
+        } else if (action === "home_uvw") {
+            jobControlBridgeModel.requestHome("uvw")
+        } else if (action === "z_tilt_adjust") {
+            jobControlBridgeModel.requestZTiltAdjust()
+        } else if (action === "accelerator_level") {
+            jobControlBridgeModel.requestAcceleratorLevel()
         } else if (action.indexOf("placeholder_") === 0) {
             jobControlBridgeModel.requestPlaceholderControl("Move " + action.slice(12))
         } else if (action === "x_minus" || action === "x_plus"
@@ -562,6 +574,12 @@ ApplicationWindow {
                 positionY: window.positionY
                 positionZ: window.positionZ
                 positionE: window.positionE
+                positionU: window.positionU
+                positionV: window.positionV
+                positionW: window.positionW
+                fiveAxisAvailable: window.fiveAxisAvailable
+                acceleratorLevelAvailable: window.acceleratorLevelAvailable
+                zTiltAvailable: window.zTiltAvailable
                 homedAxes: window.homedAxes
                 klippyState: window.klippyState
                 webhooksState: window.webhooksState

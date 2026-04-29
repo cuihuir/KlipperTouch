@@ -27,10 +27,15 @@ Item {
     ]
     property var actionButtons: [
         {"label": "Disable Motors", "action": "disable_motors", "hint": "M84", "iconName": "motor-off"},
+        {"label": "UVW Home", "action": "home_uvw", "hint": "UVW", "iconName": "tilt", "requires": "five_axis"},
+        {"label": "Accelerometer Level", "action": "accelerator_level", "hint": "tilt", "iconName": "tilt", "requires": "accelerator_level"},
         {"label": "More", "action": "more", "hint": "settings", "iconName": "settings"}
     ]
     property var moreActions: [
         {"label": "Home All", "action": "home_all", "hint": "XYZ", "iconName": "home"},
+        {"label": "UVW Home", "action": "home_uvw", "hint": "UVW", "iconName": "tilt", "requires": "five_axis"},
+        {"label": "Accelerometer Level", "action": "accelerator_level", "hint": "ACCELERATOR_LEVEL", "iconName": "tilt", "requires": "accelerator_level"},
+        {"label": "Z Tilt Adjust", "action": "z_tilt_adjust", "hint": "Z_TILT_ADJUST", "iconName": "tilt", "requires": "z_tilt"},
         {"label": "Disable Motors", "action": "disable_motors", "hint": "M84", "iconName": "motor-off"},
         {"label": "XY Speed", "action": "speed_xy", "hint": "50 mm/s", "iconName": "speed"},
         {"label": "Z Speed", "action": "speed_z", "hint": "10 mm/s", "iconName": "speed"}
@@ -51,6 +56,12 @@ Item {
     property real positionY: 0
     property real positionZ: 0
     property real positionE: 0
+    property real positionU: 0
+    property real positionV: 0
+    property real positionW: 0
+    property bool fiveAxisAvailable: false
+    property bool acceleratorLevelAvailable: false
+    property bool zTiltAvailable: false
     property string homedAxes: ""
     property string klippyState: "disconnected"
     property string webhooksState: ""
@@ -77,6 +88,54 @@ Item {
         var sizeCap = Math.floor(padHeight / 3.08)
         var widthCap = Math.floor(padWidth * 0.46)
         return Math.max(44, Math.min(root.moveButtonSize, sizeCap, widthCap))
+    }
+
+    function fiveAxisActionVisible(action) {
+        if (action.requires === "five_axis") {
+            return root.fiveAxisAvailable
+        }
+        if (action.requires === "accelerator_level") {
+            return root.acceleratorLevelAvailable
+        }
+        if (action.requires === "z_tilt") {
+            return root.zTiltAvailable
+        }
+        return true
+    }
+
+    function visibleActionButtons() {
+        var actions = []
+        for (var index = 0; index < root.actionButtons.length; index += 1) {
+            if (root.fiveAxisActionVisible(root.actionButtons[index])) {
+                actions.push(root.actionButtons[index])
+            }
+        }
+        return actions
+    }
+
+    function visibleMoreActions() {
+        var actions = []
+        for (var index = 0; index < root.moreActions.length; index += 1) {
+            if (root.fiveAxisActionVisible(root.moreActions[index])) {
+                actions.push(root.moreActions[index])
+            }
+        }
+        return actions
+    }
+
+    function positionItems() {
+        var items = [
+            {"label": "X", "value": root.positionX.toFixed(2)},
+            {"label": "Y", "value": root.positionY.toFixed(2)},
+            {"label": "Z", "value": root.positionZ.toFixed(2)},
+            {"label": "E", "value": root.positionE.toFixed(2)}
+        ]
+        if (root.fiveAxisAvailable) {
+            items.push({"label": "U", "value": root.positionU.toFixed(2)})
+            items.push({"label": "V", "value": root.positionV.toFixed(2)})
+            items.push({"label": "W", "value": root.positionW.toFixed(2)})
+        }
+        return items
     }
 
     function showMore() {
@@ -107,7 +166,9 @@ Item {
             root.cycleSpeed("z")
             return
         }
-        if (action === "home_all" || action === "disable_motors") {
+        if (action === "home_all" || action === "home_uvw"
+                || action === "z_tilt_adjust" || action === "accelerator_level"
+                || action === "disable_motors") {
             root.moveActionRequested(action, 0, 0)
             return
         }
@@ -181,6 +242,9 @@ Item {
             || action === "home_all"
             || action === "home_xy"
             || action === "home_z"
+            || action === "home_uvw"
+            || action === "z_tilt_adjust"
+            || action === "accelerator_level"
             || action === "x_minus"
             || action === "x_plus"
             || action === "y_minus"
@@ -551,20 +615,26 @@ Item {
                     id: motionActions
                     width: root.metrics.portrait
                         ? Math.round(parent.width * 0.50)
-                        : Math.max(Math.round(parent.width * 0.24), Math.round(root.moveButtonSize * 2.2))
+                        : Math.max(
+                            Math.round(parent.width * (root.fiveAxisAvailable ? 0.32 : 0.24)),
+                            Math.round(root.moveButtonSize * (root.fiveAxisAvailable ? 3.2 : 2.2))
+                        )
                     height: root.metrics.portrait
-                        ? Math.max(root.moveButtonSize, Math.round(root.moveButtonSize * 1.62))
-                        : Math.max(Math.round(root.moveButtonSize * 2.15), Math.round(parent.height * 0.58))
+                        ? Math.max(root.moveButtonSize, Math.round(root.moveButtonSize * (root.fiveAxisAvailable ? 2.05 : 1.62)))
+                        : Math.max(
+                            Math.round(root.moveButtonSize * (root.fiveAxisAvailable ? 2.05 : 2.15)),
+                            Math.round(parent.height * 0.58)
+                        )
                     y: root.metrics.portrait ? zMovePad.y : Math.round((parent.height - height) / 2)
                     anchors.right: parent.right
                     anchors.rightMargin: 0
-                    columns: root.metrics.portrait ? 2 : 1
-                    rows: root.metrics.portrait ? 1 : 2
+                    columns: root.metrics.portrait || root.fiveAxisAvailable ? 2 : 1
+                    rows: Math.ceil(root.visibleActionButtons().length / columns)
                     rowSpacing: root.motionSectionGap
                     columnSpacing: root.motionSectionGap
 
                     Repeater {
-                        model: root.actionButtons
+                        model: root.visibleActionButtons()
 
                         ActionIconButton {
                             required property var modelData
@@ -604,7 +674,9 @@ Item {
                 ? -1
                 : root.moreVisible
                     ? Math.max(118, Math.round(root.metrics.fontSize * 7.2))
-                    : Math.max(82, Math.round(root.metrics.fontSize * 5.1))
+                    : root.fiveAxisAvailable
+                        ? Math.max(122, Math.round(root.metrics.fontSize * 7.4))
+                        : Math.max(82, Math.round(root.metrics.fontSize * 5.1))
             color: "#0d1415"
             border.color: "#344044"
             border.width: 1
@@ -659,7 +731,7 @@ Item {
                         rowSpacing: Math.max(5, Math.round(root.metrics.gap * 0.5))
 
                         Repeater {
-                            model: root.moreActions
+                            model: root.visibleMoreActions()
 
                             Rectangle {
                                 required property var modelData
@@ -711,17 +783,12 @@ Item {
                     id: positionGrid
                     Layout.fillWidth: true
                     Layout.fillHeight: root.metrics.ultraWide
-                    columns: root.metrics.ultraWide ? 1 : 4
+                    columns: root.metrics.ultraWide ? 1 : root.fiveAxisAvailable ? 4 : 4
                     rowSpacing: Math.max(5, Math.round(root.metrics.gap * 0.5))
                     columnSpacing: Math.max(5, Math.round(root.metrics.fontSize * 0.35))
 
                     Repeater {
-                        model: [
-                            {"label": "X", "value": root.positionX.toFixed(2)},
-                            {"label": "Y", "value": root.positionY.toFixed(2)},
-                            {"label": "Z", "value": root.positionZ.toFixed(2)},
-                            {"label": "E", "value": root.positionE.toFixed(2)}
-                        ]
+                        model: root.positionItems()
 
                         Rectangle {
                             Layout.fillWidth: true
@@ -852,7 +919,7 @@ Item {
                 columnSpacing: root.metrics.gap
 
                 Repeater {
-                    model: root.moreActions
+                    model: root.visibleMoreActions()
 
                     Rectangle {
                         required property var modelData

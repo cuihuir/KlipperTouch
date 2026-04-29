@@ -626,7 +626,7 @@ def test_printer_status_populates_read_only_toolhead_position() -> None:
                     "max_velocity": 250.0,
                 },
                 "gcode_move": {
-                    "gcode_position": [10.1, 20.2, 30.3, 40.4],
+                    "gcode_position": [10.1, 20.2, 30.3, 40.4, 50.5, 60.6, 70.7],
                     "speed": 7500.0,
                     "speed_factor": 1.5,
                     "extrude_factor": 0.95,
@@ -640,6 +640,9 @@ def test_printer_status_populates_read_only_toolhead_position() -> None:
     assert status.position_y == 20.2
     assert status.position_z == 30.3
     assert status.position_e == 40.4
+    assert status.position_u == 50.5
+    assert status.position_v == 60.6
+    assert status.position_w == 70.7
     assert status.homed_axes == "xyz"
     assert status.requested_speed == 125.0
     assert status.speed_factor == 150.0
@@ -656,7 +659,7 @@ def test_printer_status_applies_read_only_toolhead_update() -> None:
         {
             "toolhead": {"homed_axes": "xy", "max_accel": 2400.0, "max_velocity": 180.0},
             "gcode_move": {
-                "gcode_position": [11.0, 22.0, 33.0, 44.0],
+                "gcode_position": [11.0, 22.0, 33.0, 44.0, 55.0, 66.0, 77.0],
                 "speed": 5400.0,
                 "speed_factor": 0.8,
                 "extrude_factor": 1.1,
@@ -669,6 +672,9 @@ def test_printer_status_applies_read_only_toolhead_update() -> None:
     assert updated.position_y == 22.0
     assert updated.position_z == 33.0
     assert updated.position_e == 44.0
+    assert updated.position_u == 55.0
+    assert updated.position_v == 66.0
+    assert updated.position_w == 77.0
     assert updated.homed_axes == "xy"
     assert updated.requested_speed == 90.0
     assert updated.speed_factor == 80.0

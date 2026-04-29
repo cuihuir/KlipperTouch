@@ -19,6 +19,9 @@ class ToolheadStatusFields(TypedDict, total=False):
     position_y: float
     position_z: float
     position_e: float
+    position_u: float
+    position_v: float
+    position_w: float
     homed_axes: str
     requested_speed: float
     speed_factor: float
@@ -126,6 +129,9 @@ class PrinterStatus:
     position_y: float = 0.0
     position_z: float = 0.0
     position_e: float = 0.0
+    position_u: float = 0.0
+    position_v: float = 0.0
+    position_w: float = 0.0
     homed_axes: str = ""
     requested_speed: float = 0.0
     speed_factor: float = 100.0
@@ -783,6 +789,10 @@ def _toolhead_fields_from_status(object_status: dict[str, Any]) -> ToolheadStatu
         fields["position_y"] = _optional_float(position[1]) or 0.0
         fields["position_z"] = _optional_float(position[2]) or 0.0
         fields["position_e"] = _optional_float(position[3]) or 0.0
+        if len(position) >= 7:
+            fields["position_u"] = _optional_float(position[4]) or 0.0
+            fields["position_v"] = _optional_float(position[5]) or 0.0
+            fields["position_w"] = _optional_float(position[6]) or 0.0
     if "homed_axes" in toolhead:
         fields["homed_axes"] = str(toolhead["homed_axes"])
     if "speed" in gcode_move:

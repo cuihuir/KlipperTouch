@@ -70,6 +70,14 @@ class FakeClient:
         self.calls.append(("home", ",".join(axes)))
         return {"ok": True}
 
+    def run_z_tilt_adjust(self) -> dict[str, bool]:
+        self.calls.append(("z_tilt_adjust", ""))
+        return {"ok": True}
+
+    def run_accelerator_level(self) -> dict[str, bool]:
+        self.calls.append(("accelerator_level", ""))
+        return {"ok": True}
+
     def extrude_filament(self, distance: float, speed: float) -> dict[str, bool]:
         self.calls.append(("extrude_filament", f"{distance}:{speed}"))
         return {"ok": True}
@@ -249,9 +257,21 @@ def test_job_control_model_sends_home_requests(qtbot) -> None:
     model.requestHome("xy")
     model.requestHome("z")
     model.requestHome("all")
+    model.requestHome("uvw")
 
-    assert client.calls == [("home", "x,y"), ("home", "z"), ("home", "")]
+    assert client.calls == [("home", "x,y"), ("home", "z"), ("home", ""), ("home", "u,v,w")]
     assert model.lastStatus == "Home sent"
+
+
+def test_job_control_model_sends_leveling_requests(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestZTiltAdjust()
+    model.requestAcceleratorLevel()
+
+    assert client.calls == [("z_tilt_adjust", ""), ("accelerator_level", "")]
+    assert model.lastStatus == "Accelerator level sent"
 
 
 def test_job_control_model_rejects_invalid_home_requests(qtbot) -> None:

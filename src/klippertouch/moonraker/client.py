@@ -172,11 +172,17 @@ class MoonrakerClient:
 
     def home_axes(self, *axes: str) -> dict[str, Any]:
         normalized_axes = tuple(axis.lower() for axis in axes)
-        if any(axis not in {"x", "y", "z"} for axis in normalized_axes):
+        if any(axis not in {"x", "y", "z", "u", "v", "w"} for axis in normalized_axes):
             raise ValueError("Invalid home axis")
         suffix = " ".join(axis.upper() for axis in normalized_axes)
         script = f"G28 {suffix}".strip()
         return self.run_gcode_script(script)
+
+    def run_z_tilt_adjust(self) -> dict[str, Any]:
+        return self.run_gcode_script("Z_TILT_ADJUST")
+
+    def run_accelerator_level(self) -> dict[str, Any]:
+        return self.run_gcode_script("ACCELERATOR_LEVEL")
 
     def extrude_filament(self, distance: float, speed: float) -> dict[str, Any]:
         return self.run_gcode_script(f"_CLIENT_LINEAR_MOVE E={distance:.3f} F={speed * 60:.0f}")

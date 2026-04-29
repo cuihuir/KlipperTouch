@@ -694,6 +694,30 @@ class StatusModel(QObject):
     def positionE(self) -> float:
         return self._status.position_e
 
+    @Property(float, notify=toolheadChanged)
+    def positionU(self) -> float:
+        return self._status.position_u
+
+    @Property(float, notify=toolheadChanged)
+    def positionV(self) -> float:
+        return self._status.position_v
+
+    @Property(float, notify=toolheadChanged)
+    def positionW(self) -> float:
+        return self._status.position_w
+
+    @Property(bool, notify=objectsChanged)
+    def fiveAxisAvailable(self) -> bool:
+        return "independent_3z" in self._status.objects
+
+    @Property(bool, notify=objectsChanged)
+    def acceleratorLevelAvailable(self) -> bool:
+        return "accelerator_level" in self._status.objects
+
+    @Property(bool, notify=objectsChanged)
+    def zTiltAvailable(self) -> bool:
+        return "z_tilt" in self._status.objects
+
     @Property(str, notify=toolheadChanged)
     def homedAxes(self) -> str:
         return self._status.homed_axes
@@ -826,6 +850,9 @@ def _toolhead_fields_changed(previous: PrinterStatus, current: PrinterStatus) ->
         previous.position_y,
         previous.position_z,
         previous.position_e,
+        previous.position_u,
+        previous.position_v,
+        previous.position_w,
         previous.homed_axes,
         previous.requested_speed,
         previous.speed_factor,
@@ -838,6 +865,9 @@ def _toolhead_fields_changed(previous: PrinterStatus, current: PrinterStatus) ->
         current.position_y,
         current.position_z,
         current.position_e,
+        current.position_u,
+        current.position_v,
+        current.position_w,
         current.homed_axes,
         current.requested_speed,
         current.speed_factor,
