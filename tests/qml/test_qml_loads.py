@@ -767,6 +767,9 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
 
     assert "property real extruderTemperature" in qml
     assert "property real extruderTarget" in qml
+    assert "property bool extruderCanExtrude" in qml
+    assert "property string klippyState" in qml
+    assert "property string webhooksState" in qml
     assert "property real extruderPressureAdvance" in qml
     assert "property real extruderSmoothTime" in qml
     assert "property var filamentSensors" in qml
@@ -857,6 +860,12 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "property string controlStatus" in qml
     assert "property string controlError" in qml
     assert "function controlFeedbackText()" in qml
+    assert "function printerReady()" in qml
+    assert "function extrusionAllowed()" in qml
+    assert "function extrusionGuardText()" in qml
+    assert "enabled: root.extrusionAllowed()" in qml
+    assert "hint: root.extrusionAllowed() ? \"pull back\" : root.extrusionGuardText()" in qml
+    assert "hint: root.extrusionAllowed() ? \"push filament\" : root.extrusionGuardText()" in qml
     assert "function filamentSensorSummary()" in qml
     assert "root.filamentSensors.length" in qml
     assert "model: root.filamentSensors" in qml
@@ -874,6 +883,7 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
 
     assert "property real extruderTemperature:" in main_qml
     assert "property real extruderTarget:" in main_qml
+    assert "property bool extruderCanExtrude:" in main_qml
     assert "property real extruderPressureAdvance:" in main_qml
     assert "property real extruderSmoothTime:" in main_qml
     assert "property var filamentSensors:" in main_qml
@@ -882,6 +892,9 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "property string currentObject:" in main_qml
     assert "extruderTemperature: window.extruderTemperature" in main_qml
     assert "extruderTarget: window.extruderTarget" in main_qml
+    assert "extruderCanExtrude: window.extruderCanExtrude" in main_qml
+    assert "klippyState: window.klippyState" in main_qml
+    assert "webhooksState: window.webhooksState" in main_qml
     assert "extruderPressureAdvance: window.extruderPressureAdvance" in main_qml
     assert "extruderSmoothTime: window.extruderSmoothTime" in main_qml
     assert "filamentSensors: window.filamentSensors" in main_qml

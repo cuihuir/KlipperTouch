@@ -55,6 +55,7 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
         z_offset=-0.04,
         max_accel=3000.0,
         max_velocity=250.0,
+        extruder_can_extrude=True,
         extruder_pressure_advance=0.045,
         extruder_smooth_time=0.04,
         filament_sensors=(
@@ -112,6 +113,7 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
     assert model.maxVelocity == 250.0
     assert model.extruderTemperature == 212.4
     assert model.extruderTarget == 215.0
+    assert model.extruderCanExtrude is True
     assert model.extruderPressureAdvance == 0.045
     assert model.extruderSmoothTime == 0.04
     assert model.filamentSensorCount == 1
@@ -222,6 +224,7 @@ def test_status_model_emits_extruder_signal_for_pressure_advance(qtbot) -> None:
     model.set_status(
         PrinterStatus(
             objects=("extruder",),
+            extruder_can_extrude=False,
             extruder_pressure_advance=0.02,
             extruder_smooth_time=0.03,
         )
@@ -231,11 +234,13 @@ def test_status_model_emits_extruder_signal_for_pressure_advance(qtbot) -> None:
         model.set_status(
             PrinterStatus(
                 objects=("extruder",),
+                extruder_can_extrude=True,
                 extruder_pressure_advance=0.045,
                 extruder_smooth_time=0.04,
             )
         )
 
+    assert model.extruderCanExtrude is True
     assert model.extruderPressureAdvance == 0.045
     assert model.extruderSmoothTime == 0.04
 

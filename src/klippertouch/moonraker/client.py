@@ -253,7 +253,7 @@ class MoonrakerClient:
 
 def _query_fields_for_object(name: str) -> str:
     if name == "extruder":
-        return "temperature,target,pressure_advance,smooth_time"
+        return "temperature,target,can_extrude,pressure_advance,smooth_time"
     if name.startswith(("filament_switch_sensor ", "filament_motion_sensor ")):
         return "enabled,filament_detected"
     if name == "print_stats":

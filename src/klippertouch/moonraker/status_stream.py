@@ -12,7 +12,7 @@ from klippertouch.qt_models.status_model import StatusModel
 
 SUBSCRIPTION_ID = 1
 TEMPERATURE_FIELDS = ["temperature", "target"]
-EXTRUDER_FIELDS = ["temperature", "target", "pressure_advance", "smooth_time"]
+EXTRUDER_FIELDS = ["temperature", "target", "can_extrude", "pressure_advance", "smooth_time"]
 PRINT_STATUS_FIELDS = {
     "print_stats": [
         "state",

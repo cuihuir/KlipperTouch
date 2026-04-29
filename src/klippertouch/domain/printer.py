@@ -126,6 +126,7 @@ class PrinterStatus:
     z_offset: float = 0.0
     max_accel: float = 0.0
     max_velocity: float = 0.0
+    extruder_can_extrude: bool = False
     extruder_pressure_advance: float = 0.0
     extruder_smooth_time: float = 0.0
     webhooks_state: str = ""
@@ -190,6 +191,7 @@ class PrinterStatus:
         object.__setattr__(self, "z_offset", _optional_float(self.z_offset) or 0.0)
         object.__setattr__(self, "max_accel", _optional_float(self.max_accel) or 0.0)
         object.__setattr__(self, "max_velocity", _optional_float(self.max_velocity) or 0.0)
+        object.__setattr__(self, "extruder_can_extrude", bool(self.extruder_can_extrude))
         object.__setattr__(
             self,
             "extruder_pressure_advance",
@@ -356,7 +358,8 @@ class PrinterStatus:
             "max_velocity": self.max_velocity,
         }
         toolhead_fields.update(_toolhead_fields_from_status({"status": status_update}))
-        extruder_fields = {
+        extruder_fields: dict[str, Any] = {
+            "extruder_can_extrude": self.extruder_can_extrude,
             "extruder_pressure_advance": self.extruder_pressure_advance,
             "extruder_smooth_time": self.extruder_smooth_time,
         }
@@ -561,7 +564,7 @@ def _filament_sensor_from_object(
     return None
 
 
-def _extruder_fields_from_status(object_status: dict[str, Any]) -> dict[str, float]:
+def _extruder_fields_from_status(object_status: dict[str, Any]) -> dict[str, Any]:
     status = object_status.get("status", {})
     if not isinstance(status, dict):
         return {}
@@ -569,7 +572,9 @@ def _extruder_fields_from_status(object_status: dict[str, Any]) -> dict[str, flo
     if not isinstance(extruder, dict):
         return {}
 
-    fields: dict[str, float] = {}
+    fields: dict[str, Any] = {}
+    if "can_extrude" in extruder:
+        fields["extruder_can_extrude"] = _optional_bool(extruder["can_extrude"]) is True
     if "pressure_advance" in extruder:
         fields["extruder_pressure_advance"] = _optional_float(extruder["pressure_advance"]) or 0.0
     if "smooth_time" in extruder:

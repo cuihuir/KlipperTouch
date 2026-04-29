@@ -141,6 +141,7 @@ def test_printer_status_populates_primary_extruder_pressure_advance() -> None:
                 "extruder": {
                     "temperature": 24.3,
                     "target": 0.0,
+                    "can_extrude": True,
                     "pressure_advance": 0.045,
                     "smooth_time": 0.04,
                 },
@@ -148,6 +149,7 @@ def test_printer_status_populates_primary_extruder_pressure_advance() -> None:
         },
     )
 
+    assert status.extruder_can_extrude is True
     assert status.extruder_pressure_advance == 0.045
     assert status.extruder_smooth_time == 0.04
 
@@ -282,14 +284,16 @@ def test_printer_status_applies_read_only_temperature_update() -> None:
 def test_printer_status_applies_primary_extruder_pressure_advance_update() -> None:
     status = PrinterStatus(
         objects=("extruder",),
+        extruder_can_extrude=False,
         extruder_pressure_advance=0.02,
         extruder_smooth_time=0.03,
     )
 
     updated = status.with_status_update(
-        {"extruder": {"pressure_advance": 0.055, "smooth_time": 0.04}}
+        {"extruder": {"can_extrude": True, "pressure_advance": 0.055, "smooth_time": 0.04}}
     )
 
+    assert updated.extruder_can_extrude is True
     assert updated.extruder_pressure_advance == 0.055
     assert updated.extruder_smooth_time == 0.04
 

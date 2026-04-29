@@ -36,10 +36,13 @@ Item {
     property real settingsFraction: 0.58
     property real extruderTemperature: 0
     property real extruderTarget: 0
+    property bool extruderCanExtrude: false
     property real extruderPressureAdvance: 0
     property real extruderSmoothTime: 0
     property var filamentSensors: []
     property real positionE: 0
+    property string klippyState: "disconnected"
+    property string webhooksState: ""
     property string controlStatus: ""
     property string controlError: ""
     readonly property color selectedAccent: "#7f9298"
@@ -61,6 +64,7 @@ Item {
         color: tileRoot.selected ? "#1b2b2e" : "#101819"
         border.color: tileRoot.selected ? root.selectedAccent : "#536165"
         border.width: 1
+        opacity: tileRoot.enabled ? 1.0 : 0.46
         radius: Math.round(root.metrics.fontSize * 0.38)
 
         Rectangle {
@@ -179,10 +183,12 @@ Item {
                 Layout.fillHeight: true
                 Layout.minimumHeight: Math.max(root.metrics.portrait ? 44 : 58, Math.round(root.metrics.fontSize * (root.metrics.portrait ? 3.0 : 4.2)))
                 title: "Retract"
-                hint: "pull back"
+                hint: root.extrusionAllowed() ? "pull back" : root.extrusionGuardText()
+                enabled: root.extrusionAllowed()
 
                 MouseArea {
                     anchors.fill: parent
+                    enabled: root.extrusionAllowed()
                     onClicked: root.extrudeActionRequested("retract", parseFloat(root.selectedDistance), parseFloat(root.selectedSpeed))
                 }
             }
@@ -236,10 +242,12 @@ Item {
                 Layout.fillHeight: true
                 Layout.minimumHeight: Math.max(root.metrics.portrait ? 44 : 58, Math.round(root.metrics.fontSize * (root.metrics.portrait ? 3.0 : 4.2)))
                 title: "Extrude"
-                hint: "push filament"
+                hint: root.extrusionAllowed() ? "push filament" : root.extrusionGuardText()
+                enabled: root.extrusionAllowed()
 
                 MouseArea {
                     anchors.fill: parent
+                    enabled: root.extrusionAllowed()
                     onClicked: root.extrudeActionRequested("extrude", parseFloat(root.selectedDistance), parseFloat(root.selectedSpeed))
                 }
             }
@@ -434,7 +442,26 @@ Item {
         if (root.controlStatus.length > 0) {
             return root.controlStatus
         }
+        if (!root.extrusionAllowed()) {
+            return root.extrusionGuardText()
+        }
         return "Extrusion ready"
+    }
+
+    function printerReady() {
+        return root.klippyState === "ready"
+            && (root.webhooksState.length <= 0 || root.webhooksState === "ready")
+    }
+
+    function extrusionAllowed() {
+        return root.printerReady() && root.extruderCanExtrude
+    }
+
+    function extrusionGuardText() {
+        if (!root.printerReady()) {
+            return "Printer not ready"
+        }
+        return "Heat nozzle first"
     }
 
     function filamentSensorStateText(sensor) {
@@ -767,10 +794,12 @@ Item {
                                 Layout.fillHeight: true
                                 Layout.minimumHeight: Math.max(64, Math.round(root.metrics.fontSize * 4.4))
                                 title: modelData.label
-                                hint: modelData.hint
+                                hint: root.extrusionAllowed() ? modelData.hint : root.extrusionGuardText()
+                                enabled: root.extrusionAllowed()
 
                                 MouseArea {
                                     anchors.fill: parent
+                                    enabled: root.extrusionAllowed()
                                     onClicked: root.extrudeActionRequested(modelData.action, parseFloat(root.selectedDistance), parseFloat(root.selectedSpeed))
                                 }
                             }
@@ -936,10 +965,12 @@ Item {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     title: modelData.label
-                    hint: modelData.hint
+                    hint: root.extrusionAllowed() ? modelData.hint : root.extrusionGuardText()
+                    enabled: root.extrusionAllowed()
 
                     MouseArea {
                         anchors.fill: parent
+                        enabled: root.extrusionAllowed()
                         onClicked: root.extrudeActionRequested(modelData.action, parseFloat(root.selectedDistance), parseFloat(root.selectedSpeed))
                     }
                 }

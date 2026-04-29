@@ -50,6 +50,7 @@ ApplicationWindow {
     property real maxVelocity: bridgeModel ? bridgeModel.maxVelocity : 0
     property real extruderTemperature: bridgeModel ? bridgeModel.extruderTemperature : 0
     property real extruderTarget: bridgeModel ? bridgeModel.extruderTarget : 0
+    property bool extruderCanExtrude: bridgeModel ? bridgeModel.extruderCanExtrude : false
     property real extruderPressureAdvance: bridgeModel ? bridgeModel.extruderPressureAdvance : 0
     property real extruderSmoothTime: bridgeModel ? bridgeModel.extruderSmoothTime : 0
     property var filamentSensors: bridgeModel ? bridgeModel.filamentSensors : []
@@ -576,10 +577,13 @@ ApplicationWindow {
                 metrics: appMetrics
                 extruderTemperature: window.extruderTemperature
                 extruderTarget: window.extruderTarget
+                extruderCanExtrude: window.extruderCanExtrude
                 extruderPressureAdvance: window.extruderPressureAdvance
                 extruderSmoothTime: window.extruderSmoothTime
                 filamentSensors: window.filamentSensors
                 positionE: window.positionE
+                klippyState: window.klippyState
+                webhooksState: window.webhooksState
                 controlStatus: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastStatus : ""
                 controlError: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastError : ""
                 onExtrudeActionRequested: function(action, distance, speed) {

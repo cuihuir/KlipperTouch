@@ -119,7 +119,7 @@ def test_client_gets_printer_objects_query(monkeypatch) -> None:
     }
     assert captured["url"] == "http://host:7125/printer/objects/query"
     assert captured["params"] == {
-        "extruder": "temperature,target,pressure_advance,smooth_time",
+        "extruder": "temperature,target,can_extrude,pressure_advance,smooth_time",
         "heater_bed": "temperature,target",
     }
 

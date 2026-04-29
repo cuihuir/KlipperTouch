@@ -37,7 +37,13 @@ def test_build_temperature_subscription_message_uses_read_only_objects_method() 
         "method": "printer.objects.subscribe",
         "params": {
             "objects": {
-                "extruder": ["temperature", "target", "pressure_advance", "smooth_time"],
+                "extruder": [
+                    "temperature",
+                    "target",
+                    "can_extrude",
+                    "pressure_advance",
+                    "smooth_time",
+                ],
                 "heater_bed": ["temperature", "target"],
                 "print_stats": [
                     "state",
@@ -138,7 +144,7 @@ def test_status_from_websocket_message_applies_notification_temperature_delta() 
         objects={"objects": ["extruder", "heater_bed"]},
         object_status={
             "status": {
-                "extruder": {"temperature": 24.3, "target": 0.0},
+                "extruder": {"temperature": 24.3, "target": 0.0, "can_extrude": False},
                 "heater_bed": {"temperature": 26.7, "target": 60.0},
             }
         },
@@ -156,6 +162,7 @@ def test_status_from_websocket_message_applies_notification_temperature_delta() 
     assert updated is not None
     assert tuple(device.temperature for device in updated.temperature_devices) == (25.1, 26.7)
     assert tuple(device.target for device in updated.temperature_devices) == (0.0, 60.0)
+    assert updated.extruder_can_extrude is False
 
 
 def test_gcode_response_from_websocket_message_extracts_m118_message() -> None:
@@ -222,6 +229,7 @@ def test_status_from_websocket_message_applies_subscription_snapshot() -> None:
                     "extruder": {
                         "temperature": 24.3,
                         "target": 0.0,
+                        "can_extrude": True,
                         "pressure_advance": 0.045,
                         "smooth_time": 0.04,
                     },
@@ -261,6 +269,7 @@ def test_status_from_websocket_message_applies_subscription_snapshot() -> None:
     assert updated is not None
     assert tuple(device.temperature for device in updated.temperature_devices) == (24.3, 26.7)
     assert tuple(device.target for device in updated.temperature_devices) == (0.0, 60.0)
+    assert updated.extruder_can_extrude is True
     assert updated.extruder_pressure_advance == 0.045
     assert updated.extruder_smooth_time == 0.04
     assert updated.print_state == "printing"
