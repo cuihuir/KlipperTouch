@@ -38,6 +38,7 @@ Item {
     property string detailPage: "main"
     property real actionFraction: 0.42
     property real settingsFraction: 0.58
+    property real actionEmphasis: 1.08
     property real extruderTemperature: 0
     property real extruderTarget: 0
     property bool extruderCanExtrude: false
@@ -65,10 +66,19 @@ Item {
         property string title: ""
         property string hint: ""
         property bool selected: false
+        property bool primary: false
 
-        color: tileRoot.selected ? "#1b2b2e" : "#101819"
-        border.color: tileRoot.selected ? root.selectedAccent : "#536165"
-        border.width: 1
+        color: tileRoot.primary && tileRoot.enabled
+            ? "#162426"
+            : tileRoot.selected
+                ? "#1b2b2e"
+                : "#101819"
+        border.color: tileRoot.primary && tileRoot.enabled
+            ? root.selectedAccent
+            : tileRoot.selected
+                ? root.selectedAccent
+                : "#536165"
+        border.width: tileRoot.primary && tileRoot.enabled ? 2 : 1
         opacity: tileRoot.enabled ? 1.0 : 0.46
         radius: Math.round(root.metrics.fontSize * 0.38)
 
@@ -93,7 +103,10 @@ Item {
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
                 font.bold: true
-                font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
+                font.pixelSize: Math.max(
+                    14,
+                    Math.round(root.metrics.fontSize * (tileRoot.primary ? root.actionEmphasis : 1.0))
+                )
             }
 
             Label {
@@ -249,6 +262,7 @@ Item {
                 title: "Extrude"
                 hint: root.extrusionAllowed() ? "push filament" : root.extrusionGuardText()
                 enabled: root.extrusionAllowed()
+                primary: true
 
                 MouseArea {
                     anchors.fill: parent
@@ -265,6 +279,18 @@ Item {
 
     function selectSpeed(speed) {
         root.selectedSpeed = speed
+    }
+
+    function feedSummaryText() {
+        return root.selectedDistance + " mm @ " + root.selectedSpeed + " mm/s"
+    }
+
+    function closeFeedSetupAfterSelection() {
+        root.detailPage = "main"
+    }
+
+    function maxVisibleFilamentSensors() {
+        return root.metrics.ultraWide ? 4 : 2
     }
 
     function openSettingsAction(action) {
@@ -797,40 +823,66 @@ Item {
                         font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.74))
                     }
 
-                    Repeater {
-                        model: root.filamentSensors
+                    ColumnLayout {
+                        id: filamentSensorList
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: Math.max(
+                            28,
+                            Math.round(root.metrics.fontSize * 1.85)
+                                * Math.max(1, Math.min(root.filamentSensors.length, root.maxVisibleFilamentSensors()))
+                                + root.metrics.gap
+                        )
+                        spacing: Math.max(4, Math.round(root.metrics.gap * 0.45))
+                        clip: true
 
-                        Rectangle {
-                            required property var modelData
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: Math.max(28, Math.round(root.metrics.fontSize * 1.85))
-                            color: "#0d1415"
-                            border.color: modelData.filament_detected === false ? "#8b5555" : "#465456"
-                            border.width: 1
-                            radius: Math.round(root.metrics.fontSize * 0.24)
+                        Repeater {
+                            model: Math.min(root.filamentSensors.length, root.maxVisibleFilamentSensors())
 
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.margins: Math.max(5, Math.round(root.metrics.fontSize * 0.28))
-                                spacing: Math.max(5, Math.round(root.metrics.fontSize * 0.28))
+                            Rectangle {
+                                required property int index
+                                property var sensor: root.filamentSensors[index]
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: Math.max(28, Math.round(root.metrics.fontSize * 1.85))
+                                color: "#0d1415"
+                                border.color: sensor.filament_detected === false ? "#8b5555" : "#465456"
+                                border.width: 1
+                                radius: Math.round(root.metrics.fontSize * 0.24)
 
-                                Label {
-                                    Layout.fillWidth: true
-                                    color: Theme.text
-                                    text: modelData.display_name
-                                    elide: Text.ElideRight
-                                    font.bold: true
-                                    font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.7))
-                                }
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: Math.max(5, Math.round(root.metrics.fontSize * 0.28))
+                                    spacing: Math.max(5, Math.round(root.metrics.fontSize * 0.28))
 
-                                Label {
-                                    color: Theme.mutedText
-                                    text: root.filamentSensorStateText(modelData)
-                                    elide: Text.ElideRight
-                                    font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.68))
+                                    Label {
+                                        Layout.fillWidth: true
+                                        color: Theme.text
+                                        text: sensor.display_name
+                                        elide: Text.ElideRight
+                                        font.bold: true
+                                        font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.7))
+                                    }
+
+                                    Label {
+                                        color: Theme.mutedText
+                                        text: root.filamentSensorStateText(sensor)
+                                        elide: Text.ElideRight
+                                        font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.68))
+                                    }
                                 }
                             }
                         }
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        color: Theme.mutedText
+                        visible: root.filamentSensors.length > root.maxVisibleFilamentSensors()
+                        text: {
+                            var hidden = root.filamentSensors.length - root.maxVisibleFilamentSensors()
+                            return "+" + hidden + " more sensors"
+                        }
+                        elide: Text.ElideRight
+                        font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.68))
                     }
 
                     GridLayout {
@@ -1073,6 +1125,17 @@ Item {
             rowSpacing: root.metrics.gap
             columnSpacing: root.metrics.gap
 
+            Label {
+                Layout.columnSpan: 2
+                Layout.fillWidth: true
+                color: Theme.text
+                text: root.feedSummaryText()
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
+                font.bold: true
+                font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.05))
+            }
+
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -1098,7 +1161,10 @@ Item {
 
                         MouseArea {
                             anchors.fill: parent
-                            onClicked: root.selectDistance(modelData)
+                            onClicked: {
+                                root.selectDistance(modelData)
+                                root.closeFeedSetupAfterSelection()
+                            }
                         }
                     }
                 }
@@ -1129,7 +1195,10 @@ Item {
 
                         MouseArea {
                             anchors.fill: parent
-                            onClicked: root.selectSpeed(modelData)
+                            onClicked: {
+                                root.selectSpeed(modelData)
+                                root.closeFeedSetupAfterSelection()
+                            }
                         }
                     }
                 }

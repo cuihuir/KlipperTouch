@@ -786,6 +786,7 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "property bool materialSystemEnabled" in qml
     assert 'property string selectedMaterialSlot: "Slot 1"' in qml
     assert "property var materialActionButtons" in qml
+    assert "property real actionEmphasis" in qml
     assert "property real positionE" in qml
     assert 'readonly property color selectedAccent: "#7f9298"' in qml
     assert "property string selectedDistance" in qml
@@ -853,6 +854,9 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "component PlaceholderTile: Rectangle" in qml
     assert "function selectDistance(distance)" in qml
     assert "function selectSpeed(speed)" in qml
+    assert "function feedSummaryText()" in qml
+    assert "function closeFeedSetupAfterSelection()" in qml
+    assert "function maxVisibleFilamentSensors()" in qml
     assert "function openSettingsAction(action)" in qml
     assert "function materialEntryVisible()" in qml
     assert "function selectMaterialSlot(slotLabel)" in qml
@@ -879,6 +883,14 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "Layout.columnSpan: root.materialEntryVisible() ? 1 : 2" in qml
     assert "root.selectedDistance === modelData" in qml
     assert "root.selectedSpeed === modelData" in qml
+    assert "root.closeFeedSetupAfterSelection()" in qml
+    assert 'text: root.feedSummaryText()' in qml
+    assert "id: filamentSensorList" in qml
+    assert "clip: true" in qml
+    assert "model: Math.min(root.filamentSensors.length, root.maxVisibleFilamentSensors())" in qml
+    assert "var hidden = root.filamentSensors.length - root.maxVisibleFilamentSensors()" in qml
+    assert "primary: true" in qml
+    assert "property bool primary" in qml
     assert "root.extruderTemperature.toFixed(1)" in qml
     assert "root.extruderTarget.toFixed(1)" in qml
     assert "root.extruderPressureAdvance.toFixed(3)" in qml
@@ -905,8 +917,8 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "hint: root.extrusionAllowed() ? \"push filament\" : root.extrusionGuardText()" in qml
     assert "function filamentSensorSummary()" in qml
     assert "root.filamentSensors.length" in qml
-    assert "model: root.filamentSensors" in qml
-    assert "modelData.filament_detected" in qml
+    assert "property var sensor: root.filamentSensors[index]" in qml
+    assert "sensor.filament_detected" in qml
     assert "root.controlFeedbackText()" in qml
     assert "Theme.color3" not in qml
     assert (
