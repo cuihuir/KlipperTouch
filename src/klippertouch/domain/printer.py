@@ -83,6 +83,7 @@ class PrinterStatus:
     klippy_state: str = "disconnected"
     klipper_version: str = "unknown"
     moonraker_version: str = "unknown"
+    moonraker_warnings: tuple[str, ...] = ()
     mcu_statuses: tuple[McuStatus, ...] = ()
     service_versions: tuple[ServiceVersionStatus, ...] = ()
     objects: tuple[str, ...] = ()
@@ -116,6 +117,11 @@ class PrinterStatus:
     def __post_init__(self) -> None:
         objects = tuple(str(item) for item in self.objects)
         object.__setattr__(self, "objects", objects)
+        object.__setattr__(
+            self,
+            "moonraker_warnings",
+            tuple(str(item).strip() for item in self.moonraker_warnings if str(item).strip()),
+        )
         if self.temperature_devices:
             temperature_devices = tuple(self.temperature_devices)
         else:
@@ -230,6 +236,7 @@ class PrinterStatus:
             klippy_state=klippy_state,
             klipper_version=str(printer_info.get("software_version", "unknown")),
             moonraker_version=str(server_info.get("moonraker_version", "unknown")),
+            moonraker_warnings=_moonraker_warnings_from_server_info(server_info),
             mcu_statuses=_mcu_statuses_from_probe(mcu_status or {}),
             service_versions=_service_versions_from_update_status(update_status or {}),
             objects=object_names,
@@ -314,6 +321,7 @@ class PrinterStatus:
             klippy_state=klippy_state,
             klipper_version=self.klipper_version,
             moonraker_version=self.moonraker_version,
+            moonraker_warnings=self.moonraker_warnings,
             mcu_statuses=self.mcu_statuses,
             service_versions=self.service_versions,
             objects=self.objects,
@@ -559,6 +567,21 @@ def _string_tuple(values: Any) -> tuple[str, ...]:
     if not isinstance(values, list | tuple):
         return ()
     return tuple(str(item) for item in values if str(item))
+
+
+def _moonraker_warnings_from_server_info(server_info: dict[str, Any]) -> tuple[str, ...]:
+    warnings = server_info.get("warnings", ())
+    if not isinstance(warnings, list | tuple):
+        return ()
+    parsed: list[str] = []
+    for warning in warnings:
+        if isinstance(warning, dict):
+            message = str(warning.get("message") or warning.get("warning") or "").strip()
+        else:
+            message = str(warning).strip()
+        if message:
+            parsed.append(message)
+    return tuple(parsed)
 
 
 def _progress_to_percent(value: Any) -> float:

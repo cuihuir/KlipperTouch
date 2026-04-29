@@ -32,7 +32,7 @@ Use read-only probes for unknown printers. Enabled command groups must continue 
 
 ## Safety Boundary
 
-Read-only mode is still the default. On the `192.168.123.203` development board, audited print, move, recovery, and extrusion commands are allowed for validation. Heating, host power/service control, and new macro execution paths remain forbidden until reviewed.
+Read-only mode is still the default. On the `192.168.123.203` development board, audited print, move, recovery, extrusion, and temperature-target commands are allowed for validation. New heating paths outside the audited target setter, host power/service control, and new macro execution paths remain forbidden until reviewed.
 
 ## License
 

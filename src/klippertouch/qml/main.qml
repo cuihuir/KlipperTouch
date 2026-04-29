@@ -1,5 +1,7 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
+import "Theme.js" as Theme
 import "components"
 import "panels"
 
@@ -51,6 +53,10 @@ ApplicationWindow {
     property var excludeObjectNames: bridgeModel ? bridgeModel.excludeObjectNames : []
     property var excludedObjectNames: bridgeModel ? bridgeModel.excludedObjectNames : []
     property string currentObject: bridgeModel ? bridgeModel.currentObject : ""
+    property bool toastVisible: false
+    property string toastLevel: "info"
+    property string toastTitle: ""
+    property string toastMessage: ""
     property string currentPanel: "main"
     property var panelStack: ["main"]
     property bool systemFaultVisible: window.moonrakerFaultActive()
@@ -294,8 +300,22 @@ ApplicationWindow {
         return Math.max(1, Math.min(999, value))
     }
 
+    function showToast(level, title, message) {
+        window.toastLevel = level || "info"
+        window.toastTitle = title || ""
+        window.toastMessage = message || ""
+        window.toastVisible = true
+        toastTimer.restart()
+    }
+
+    function shouldStoreNotification(level, sticky) {
+        var normalizedLevel = (level || "info").toLowerCase()
+        return sticky || normalizedLevel === "warning" || normalizedLevel === "error"
+    }
+
     function notify(level, title, message, source, sticky, actionPanel) {
-        if (!notificationBridgeModel) {
+        window.showToast(level, title, message)
+        if (!notificationBridgeModel || !window.shouldStoreNotification(level, sticky)) {
             return
         }
         notificationBridgeModel.addNotification(level, title, message, source, sticky, actionPanel)
@@ -554,6 +574,63 @@ ApplicationWindow {
                 onTemperatureTargetRequested: function(deviceName, target) {
                     window.requestTemperatureTarget(deviceName, target)
                 }
+            }
+        }
+    }
+
+    Timer {
+        id: toastTimer
+        interval: 3200
+        repeat: false
+        onTriggered: window.toastVisible = false
+    }
+
+    Rectangle {
+        id: toastCard
+        visible: window.toastVisible
+        z: 100
+        width: Math.min(Math.max(280, Math.round(window.width * 0.42)), window.width - appMetrics.margin * 2)
+        height: Math.max(Math.round(appMetrics.fontSize * 4.8), toastContent.implicitHeight + appMetrics.gap * 2)
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.topMargin: appMetrics.titlebarHeight + appMetrics.margin
+        anchors.rightMargin: appMetrics.margin
+        radius: Math.round(appMetrics.fontSize * 0.55)
+        color: window.toastLevel === "error" ? "#182023" : "#101819"
+        border.color: window.toastLevel === "info" ? "#536165" : "#8b9496"
+        border.width: 2
+        opacity: 0.97
+
+        ColumnLayout {
+            id: toastContent
+            anchors.fill: parent
+            anchors.margins: appMetrics.gap
+            spacing: Math.max(3, Math.round(appMetrics.gap * 0.45))
+
+            Label {
+                Layout.fillWidth: true
+                text: window.toastTitle
+                color: Theme.text
+                font.bold: true
+                font.pixelSize: Math.max(13, Math.round(appMetrics.fontSize * 0.9))
+                elide: Text.ElideRight
+            }
+
+            Label {
+                Layout.fillWidth: true
+                text: window.toastMessage
+                color: Theme.mutedText
+                font.pixelSize: Math.max(11, Math.round(appMetrics.fontSize * 0.75))
+                elide: Text.ElideRight
+                visible: window.toastMessage.length > 0
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                window.toastVisible = false
+                toastTimer.stop()
             }
         }
     }

@@ -63,8 +63,8 @@ Currently enabled groups:
 - Files and print state: start print, delete G-code file, pause, resume, cancel, clear current SD file.
 - Recovery: emergency stop, firmware restart, Klipper restart.
 - Job tuning: Z offset, speed factor, flow factor, object exclusion.
-- Move: `M84`, `G28`, bounded relative jog using `SAVE_GCODE_STATE`, `G91`, `G0`, and `RESTORE_GCODE_STATE`.
-- Extrude: relative extrusion/retraction using `SAVE_GCODE_STATE`, `M83`, `G1`, and `RESTORE_GCODE_STATE`.
+- Move: `M84`, `G28`, and bounded jogs through `_CLIENT_LINEAR_MOVE X/Y/Z=... F=...`.
+- Extrude: relative extrusion/retraction through `_CLIENT_LINEAR_MOVE E=... F=...`.
 - Filament macros: `LOAD_FILAMENT SPEED=...` and `UNLOAD_FILAMENT SPEED=...`.
 - Temperature targets: `SET_HEATER_TEMPERATURE` and `SET_TEMPERATURE_FAN_TARGET` with UI-clamped `0..350` values.
 

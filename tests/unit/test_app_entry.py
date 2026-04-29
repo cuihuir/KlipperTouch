@@ -43,6 +43,7 @@ def test_app_registers_notification_context() -> None:
 
     assert "NotificationModel" in source
     assert "notification_model = NotificationModel()" in source
+    assert "notification_model.addMoonrakerWarnings(initial_status.moonraker_warnings)" in source
     assert 'setContextProperty("notificationModel", notification_model)' in source
     assert "engine.notification_model = notification_model" in source
 

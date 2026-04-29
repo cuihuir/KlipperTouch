@@ -971,6 +971,13 @@ def test_job_control_events_are_forwarded_to_notifications() -> None:
     main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
 
     assert "function notify(level, title, message, source, sticky, actionPanel)" in main_qml
+    assert "function showToast(level, title, message)" in main_qml
+    assert "function shouldStoreNotification(level, sticky)" in main_qml
+    assert "id: toastCard" in main_qml
+    assert "id: toastTimer" in main_qml
+    assert "toastTimer.restart()" in main_qml
+    assert "window.showToast(level, title, message)" in main_qml
+    assert "window.shouldStoreNotification(level, sticky)" in main_qml
     assert "notificationBridgeModel.addNotification" in main_qml
     assert "function onStatusChanged()" in main_qml
     assert "function onErrorChanged()" in main_qml

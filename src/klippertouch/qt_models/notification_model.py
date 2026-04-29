@@ -129,6 +129,20 @@ class NotificationModel(QAbstractListModel):
         self.countChanged.emit()
         self._refresh_unread_count()
 
+    @Slot(list)
+    def addMoonrakerWarnings(self, warnings: list[str] | tuple[str, ...]) -> None:  # noqa: N802
+        seen = {
+            (item.level, item.title, item.message, item.source)
+            for item in self._items
+        }
+        for warning in warnings:
+            message = str(warning).strip()
+            key = ("warning", "Moonraker warning", message, "moonraker")
+            if not message or key in seen:
+                continue
+            self.addNotification("warning", "Moonraker warning", message, "moonraker", True, "")
+            seen.add(key)
+
     @Slot()
     def markAllRead(self) -> None:  # noqa: N802
         if not self._items:

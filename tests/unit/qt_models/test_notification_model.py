@@ -58,3 +58,30 @@ def test_notification_model_trims_old_history(qtbot) -> None:
     assert model.data(model.index(0, 0), model.TitleRole) == "three"
     assert model.data(model.index(1, 0), model.TitleRole) == "two"
     assert model.unreadCount == 2
+
+
+def test_notification_model_adds_moonraker_warnings_as_sticky_items(qtbot) -> None:
+    model = NotificationModel()
+
+    model.addMoonrakerWarnings(
+        [
+            "[update_manager]: Failed to load extension fluidd",
+            "[update_manager]: Failed to load extension fluidd",
+            "MCU 'cartographer' has deprecated code",
+            "",
+        ]
+    )
+
+    assert model.rowCount() == 2
+    assert model.unreadCount == 2
+    newest = model.index(0, 0)
+    older = model.index(1, 0)
+    assert model.data(newest, model.LevelRole) == "warning"
+    assert model.data(newest, model.TitleRole) == "Moonraker warning"
+    assert model.data(newest, model.MessageRole) == "MCU 'cartographer' has deprecated code"
+    assert model.data(newest, model.SourceRole) == "moonraker"
+    assert model.data(newest, model.StickyRole) is True
+    assert (
+        model.data(older, model.MessageRole)
+        == "[update_manager]: Failed to load extension fluidd"
+    )

@@ -12,6 +12,10 @@ def test_printer_status_from_probe_payloads() -> None:
             "moonraker_version": "v0.10.0",
             "klippy_state": "ready",
             "components": ["update_manager", "history"],
+            "warnings": [
+                "[update_manager]: Failed to load extension fluidd",
+                {"message": "MCU 'cartographer' has deprecated code"},
+            ],
         },
         printer_info={"state": "ready", "hostname": "orangepi3b", "software_version": "v0.13.0"},
         objects={"objects": ["extruder", "heater_bed", "controller_fan 驱动"]},
@@ -28,6 +32,10 @@ def test_printer_status_from_probe_payloads() -> None:
     assert status.object_count == 3
     assert "controller_fan 驱动" in status.objects
     assert tuple(item.name for item in status.service_versions) == ("klipper", "moonraker")
+    assert status.moonraker_warnings == (
+        "[update_manager]: Failed to load extension fluidd",
+        "MCU 'cartographer' has deprecated code",
+    )
 
 
 def test_printer_status_copies_mutable_objects() -> None:

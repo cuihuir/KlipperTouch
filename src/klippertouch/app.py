@@ -59,6 +59,8 @@ def run_app(
     gcode_file_model = create_gcode_file_model(initial_files)
     job_control_model = JobControlModel(job_control_client)
     notification_model = NotificationModel()
+    if initial_status is not None:
+        notification_model.addMoonrakerWarnings(initial_status.moonraker_warnings)
     engine.rootContext().setContextProperty("statusModel", status_model)
     engine.rootContext().setContextProperty("temperatureDeviceModel", temperature_device_model)
     engine.rootContext().setContextProperty("gcodeFileModel", gcode_file_model)
