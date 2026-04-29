@@ -797,6 +797,9 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "id: targetEditorPopup" in qml
     assert "id: targetKeypadGrid" in qml
     assert "id: landscapeTargetEditor" in qml
+    assert "id: landscapeHeaderRow" in qml
+    assert "id: landscapeInputRow" in qml
+    assert "id: landscapeBottomRow" in qml
     assert "id: landscapeBackspaceButton" in qml
     assert "id: landscapeCancelButton" in qml
     assert "id: landscapeSetButton" in qml
@@ -1214,6 +1217,12 @@ def test_temperature_device_pager_uses_page_based_navigation() -> None:
     assert "id: targetEditorPopup" in qml
     assert "parent: Overlay.overlay" in qml
     assert "id: targetKeypadGrid" in qml
+    assert "id: landscapeTargetEditor" in qml
+    assert "id: landscapeTargetKeypadGrid" in qml
+    assert "id: landscapeBackspaceButton" in qml
+    assert "id: landscapeCancelButton" in qml
+    assert "id: landscapeSetButton" in qml
+    assert 'model: ["1", "2", "3", "4", "5", "6", "7", "8", "9"]' in qml
     assert "Layout.minimumWidth: root.touchTargetSize" in qml
     assert "Layout.minimumHeight: root.touchTargetSize" in qml
     assert "Layout.minimumHeight: root.touchTargetSize" in qml

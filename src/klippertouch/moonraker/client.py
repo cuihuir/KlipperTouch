@@ -177,13 +177,7 @@ class MoonrakerClient:
         return self.run_gcode_script(script)
 
     def extrude_filament(self, distance: float, speed: float) -> dict[str, Any]:
-        script = (
-            "SAVE_GCODE_STATE NAME=KLIPPERTOUCH_EXTRUDE\n"
-            "M83\n"
-            f"G1 E{distance:.3f} F{speed * 60:.0f}\n"
-            "RESTORE_GCODE_STATE NAME=KLIPPERTOUCH_EXTRUDE"
-        )
-        return self.run_gcode_script(script)
+        return self.run_gcode_script(f"_CLIENT_LINEAR_MOVE E={distance:.3f} F={speed * 60:.0f}")
 
     def load_filament(self, speed: float) -> dict[str, Any]:
         return self.run_gcode_script(f"LOAD_FILAMENT SPEED={speed * 60:.0f}")

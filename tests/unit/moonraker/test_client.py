@@ -341,18 +341,12 @@ def test_client_sends_print_control_when_controls_enabled(
         (
             "extrude_filament",
             (10.0, 5.0),
-            "SAVE_GCODE_STATE NAME=KLIPPERTOUCH_EXTRUDE\n"
-            "M83\n"
-            "G1 E10.000 F300\n"
-            "RESTORE_GCODE_STATE NAME=KLIPPERTOUCH_EXTRUDE",
+            "_CLIENT_LINEAR_MOVE E=10.000 F=300",
         ),
         (
             "extrude_filament",
             (-5.0, 2.0),
-            "SAVE_GCODE_STATE NAME=KLIPPERTOUCH_EXTRUDE\n"
-            "M83\n"
-            "G1 E-5.000 F120\n"
-            "RESTORE_GCODE_STATE NAME=KLIPPERTOUCH_EXTRUDE",
+            "_CLIENT_LINEAR_MOVE E=-5.000 F=120",
         ),
         ("load_filament", 5.0, "LOAD_FILAMENT SPEED=300"),
         ("unload_filament", 2.0, "UNLOAD_FILAMENT SPEED=120"),

@@ -849,37 +849,35 @@ Item {
             id: landscapeTargetEditor
             visible: !root.metrics.portrait
             anchors.fill: parent
-            spacing: Math.max(8, Math.round(root.metrics.fontSize * 0.55))
-
-            Label {
-                Layout.fillWidth: true
-                color: Theme.text
-                text: "Nozzle target"
-                elide: Text.ElideRight
-                font.bold: true
-                font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.2))
-            }
+            spacing: Math.max(6, Math.round(root.metrics.fontSize * 0.4))
 
             RowLayout {
+                id: landscapeHeaderRow
                 Layout.fillWidth: true
+                Layout.fillHeight: false
                 spacing: Math.max(8, Math.round(root.metrics.fontSize * 0.5))
+
                 Label {
                     Layout.fillWidth: true
-                    color: Theme.mutedText
-                    text: "Actual " + Math.round(root.extruderTemperature) + "°"
-                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
+                    color: Theme.text
+                    text: "Nozzle target"
+                    elide: Text.ElideRight
+                    font.bold: true
+                    font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.2))
                 }
 
                 Label {
                     color: Theme.mutedText
-                    text: "Max 350°"
-                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
+                    text: Math.round(root.extruderTemperature) + "° / 350°"
+                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.82))
                 }
             }
 
             RowLayout {
+                id: landscapeInputRow
                 Layout.fillWidth: true
-                Layout.preferredHeight: Math.max(root.touchTargetSize, Math.round(root.metrics.fontSize * 3.0))
+                Layout.fillHeight: false
+                Layout.preferredHeight: root.touchTargetSize
                 spacing: Math.max(8, Math.round(root.metrics.fontSize * 0.5))
 
                 Rectangle {
@@ -949,7 +947,10 @@ Item {
             }
 
             RowLayout {
+                id: landscapeBottomRow
                 Layout.fillWidth: true
+                Layout.fillHeight: false
+                Layout.preferredHeight: root.touchTargetSize
                 spacing: Math.max(8, Math.round(root.metrics.fontSize * 0.5))
 
                 KeypadButton {

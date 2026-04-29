@@ -11,6 +11,7 @@ Item {
     property int pageIndex: 0
     property bool showTargets: true
     property bool compact: false
+    property bool portrait: root.height > root.width
     property bool hasExternalTemperatureModel: typeof temperatureModel !== "undefined"
         && temperatureModel !== null
     property var activeTemperatureModel: root.hasExternalTemperatureModel
@@ -40,6 +41,33 @@ Item {
     property string targetEditorValue: ""
     property var targetEditorActual: null
     signal targetTemperatureRequested(string deviceName, real target)
+
+    component KeypadButton: Button {
+        id: keyRoot
+        property bool primary: false
+
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.minimumWidth: root.touchTargetSize
+        Layout.minimumHeight: root.touchTargetSize
+        font.pixelSize: Math.max(16, Math.round(root.fontSize * 1.1))
+
+        contentItem: Label {
+            text: keyRoot.text
+            color: keyRoot.enabled ? Theme.text : Theme.mutedText
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            font: keyRoot.font
+        }
+
+        background: Rectangle {
+            color: keyRoot.primary ? "#1b2b2e" : "#101819"
+            border.color: keyRoot.primary ? Theme.color4 : "#536165"
+            border.width: 1
+            radius: Math.round(root.fontSize * 0.32)
+            opacity: keyRoot.enabled ? 1 : 0.45
+        }
+    }
 
     function modelCount() {
         if (!root.activeTemperatureModel) {
@@ -122,6 +150,11 @@ Item {
     }
 
     function editorMinimumHeight() {
+        if (!root.portrait) {
+            return root.touchTargetSize * 5
+                + Math.max(6, Math.round(root.fontSize * 0.4)) * 3
+                + root.targetEditorMargin * 2
+        }
         return root.touchTargetSize * 6
             + Math.max(8, Math.round(root.fontSize * 0.55)) * 5
             + root.targetEditorMargin * 2
@@ -616,6 +649,135 @@ Item {
         }
 
         ColumnLayout {
+            id: landscapeTargetEditor
+            visible: !root.portrait
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            height: implicitHeight
+            spacing: Math.max(6, Math.round(root.fontSize * 0.4))
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: false
+                spacing: Math.max(8, Math.round(root.fontSize * 0.5))
+
+                Label {
+                    Layout.fillWidth: true
+                    color: Theme.text
+                    text: root.targetEditorDisplayName
+                    elide: Text.ElideRight
+                    font.bold: true
+                    font.pixelSize: Math.max(18, Math.round(root.fontSize * 1.2))
+                }
+
+                Label {
+                    color: Theme.mutedText
+                    text: (root.targetEditorActual === null
+                        ? "--"
+                        : Math.round(root.targetEditorActual) + "°") + " / 350°"
+                    font.pixelSize: Math.max(12, Math.round(root.fontSize * 0.82))
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: false
+                Layout.preferredHeight: root.touchTargetSize
+                spacing: Math.max(8, Math.round(root.fontSize * 0.5))
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Layout.minimumHeight: root.touchTargetSize
+                    color: "#050808"
+                    border.color: "#465456"
+                    border.width: 1
+                    radius: Math.round(root.fontSize * 0.3)
+
+                    Label {
+                        anchors.fill: parent
+                        anchors.margins: Math.max(8, Math.round(root.fontSize * 0.5))
+                        color: Theme.text
+                        text: root.targetEditorValue === "" ? "--" : root.targetEditorValue + "°"
+                        horizontalAlignment: Text.AlignRight
+                        verticalAlignment: Text.AlignVCenter
+                        font.pixelSize: Math.max(26, Math.round(root.fontSize * 1.8))
+                    }
+                }
+
+                KeypadButton {
+                    id: landscapeBackspaceButton
+                    Layout.preferredWidth: Math.max(root.touchTargetSize, Math.round(root.fontSize * 4.6))
+                    Layout.fillWidth: false
+                    text: "←"
+                    onClicked: root.deleteTargetDigit()
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: false
+                Layout.preferredHeight: root.touchTargetSize * 3
+                    + Math.max(6, Math.round(root.fontSize * 0.4)) * 2
+                spacing: Math.max(8, Math.round(root.fontSize * 0.5))
+
+                GridLayout {
+                    id: landscapeTargetKeypadGrid
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    columns: 3
+                    columnSpacing: Math.max(6, Math.round(root.fontSize * 0.4))
+                    rowSpacing: columnSpacing
+
+                    Repeater {
+                        model: ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
+
+                        KeypadButton {
+                            required property string modelData
+                            text: modelData
+                            onClicked: root.appendTargetDigit(modelData)
+                        }
+                    }
+                }
+
+                KeypadButton {
+                    id: landscapeCancelButton
+                    Layout.preferredWidth: Math.max(root.touchTargetSize, Math.round(root.fontSize * 5.0))
+                    Layout.fillWidth: false
+                    text: "Cancel"
+                    onClicked: targetEditorPopup.close()
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: false
+                Layout.preferredHeight: root.touchTargetSize
+                spacing: Math.max(8, Math.round(root.fontSize * 0.5))
+
+                KeypadButton {
+                    text: "."
+                    onClicked: root.appendTargetDecimal()
+                }
+
+                KeypadButton {
+                    text: "0"
+                    onClicked: root.appendTargetDigit("0")
+                }
+
+                KeypadButton {
+                    id: landscapeSetButton
+                    text: "Set"
+                    enabled: root.targetEditorValue !== ""
+                    primary: true
+                    onClicked: root.confirmTargetEditor()
+                }
+            }
+        }
+
+        ColumnLayout {
+            visible: root.portrait
             anchors.fill: parent
             spacing: Math.max(8, Math.round(root.fontSize * 0.55))
 
@@ -678,14 +840,9 @@ Item {
                 Repeater {
                     model: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "Clear", "0", "Del"]
 
-                    Button {
+                    KeypadButton {
                         required property string modelData
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        Layout.minimumWidth: root.touchTargetSize
-                        Layout.minimumHeight: root.touchTargetSize
                         text: modelData
-                        font.pixelSize: Math.max(16, Math.round(root.fontSize * 1.1))
                         onClicked: {
                             if (modelData === "Clear") {
                                 root.clearTargetEditor()
@@ -703,20 +860,15 @@ Item {
                 Layout.fillWidth: true
                 spacing: Math.max(8, Math.round(root.fontSize * 0.5))
 
-                Button {
-                    Layout.fillWidth: true
-                    Layout.minimumHeight: root.touchTargetSize
+                KeypadButton {
                     text: "Cancel"
-                    font.pixelSize: Math.max(14, Math.round(root.fontSize))
                     onClicked: targetEditorPopup.close()
                 }
 
-                Button {
-                    Layout.fillWidth: true
-                    Layout.minimumHeight: root.touchTargetSize
+                KeypadButton {
                     text: "Set"
                     enabled: root.targetEditorValue !== ""
-                    font.pixelSize: Math.max(14, Math.round(root.fontSize))
+                    primary: true
                     onClicked: root.confirmTargetEditor()
                 }
             }
