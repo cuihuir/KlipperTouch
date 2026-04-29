@@ -36,10 +36,14 @@ Rectangle {
                 y: root.vertical ? index * (buttonGrid.cellHeight + buttonGrid.spacing) : 0
                 height: buttonGrid.cellHeight
                 width: buttonGrid.cellWidth
-                color: Theme.buttonsBg
+                color: actionPressArea.pressed ? "#182124" : Theme.buttonsBg
+                scale: actionPressArea.pressed ? 0.96 : 1.0
                 radius: Math.round(Math.min(width, height) * 0.18)
-                border.color: Theme.actionBarBg
+                border.color: actionPressArea.pressed ? Theme.text : Theme.actionBarBg
                 border.width: Math.max(1, Math.round(Math.min(width, height) * 0.035))
+                Behavior on scale { NumberAnimation { duration: 80; easing.type: Easing.OutQuad } }
+                Behavior on color { ColorAnimation { duration: 80 } }
+                Behavior on border.color { ColorAnimation { duration: 80 } }
 
                 Image {
                     anchors.centerIn: parent
@@ -52,6 +56,7 @@ Rectangle {
                 }
 
                 MouseArea {
+                    id: actionPressArea
                     anchors.fill: parent
                     onClicked: root.actionRequested(root.buttonActions[index])
                 }

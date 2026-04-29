@@ -469,12 +469,17 @@ Item {
         property string hint: "locked"
         property string iconName: ""
         property bool selected: false
+        property bool pressed: false
 
-        color: selected ? "#1b2b2e" : "#101718"
+        color: tileRoot.pressed && tileRoot.enabled ? "#182528" : selected ? "#1b2b2e" : "#101718"
+        scale: tileRoot.pressed && tileRoot.enabled ? 0.97 : 1.0
         opacity: tileRoot.enabled ? selected ? 1.0 : 0.9 : 0.46
-        border.color: selected ? root.selectedAccent : "#48565a"
+        border.color: tileRoot.pressed && tileRoot.enabled ? Theme.text : selected ? root.selectedAccent : "#48565a"
         border.width: 1
         radius: Math.round(Math.min(width, height) * 0.18)
+        Behavior on scale { NumberAnimation { duration: 80; easing.type: Easing.OutQuad } }
+        Behavior on color { ColorAnimation { duration: 80 } }
+        Behavior on border.color { ColorAnimation { duration: 80 } }
 
         Rectangle {
             anchors.fill: parent
@@ -530,12 +535,17 @@ Item {
         id: directionRoot
         property string title: ""
         property string direction: "up"
+        property bool pressed: false
 
-        color: "#101718"
+        color: directionRoot.pressed && directionRoot.enabled ? "#182528" : "#101718"
+        scale: directionRoot.pressed && directionRoot.enabled ? 0.96 : 1.0
         opacity: directionRoot.enabled ? 1.0 : 0.46
-        border.color: "#536165"
+        border.color: directionRoot.pressed && directionRoot.enabled ? Theme.text : "#536165"
         border.width: 1
         radius: Math.round(Math.min(width, height) * 0.18)
+        Behavior on scale { NumberAnimation { duration: 80; easing.type: Easing.OutQuad } }
+        Behavior on color { ColorAnimation { duration: 80 } }
+        Behavior on border.color { ColorAnimation { duration: 80 } }
 
         Rectangle {
             anchors.fill: parent
@@ -578,12 +588,17 @@ Item {
         property string hint: ""
         property string iconName: ""
         property bool selected: false
+        property bool pressed: false
 
-        color: selected ? "#1b2b2e" : "#101718"
+        color: actionRoot.pressed && actionRoot.enabled ? "#182528" : selected ? "#1b2b2e" : "#101718"
+        scale: actionRoot.pressed && actionRoot.enabled ? 0.97 : 1.0
         opacity: actionRoot.enabled ? 1.0 : 0.46
-        border.color: selected ? root.selectedAccent : "#536165"
+        border.color: actionRoot.pressed && actionRoot.enabled ? Theme.text : selected ? root.selectedAccent : "#536165"
         border.width: 1
         radius: Math.round(Math.min(width, height) * 0.18)
+        Behavior on scale { NumberAnimation { duration: 80; easing.type: Easing.OutQuad } }
+        Behavior on color { ColorAnimation { duration: 80 } }
+        Behavior on border.color { ColorAnimation { duration: 80 } }
 
         Rectangle {
             anchors.fill: parent
@@ -638,12 +653,17 @@ Item {
         property string value: "0.00"
         property string plusAction: ""
         property string minusAction: ""
+        property bool pressed: false
 
-        color: "#101718"
+        color: tiltRoot.pressed && tiltRoot.enabled ? "#182528" : "#101718"
+        scale: tiltRoot.pressed && tiltRoot.enabled ? 0.97 : 1.0
         opacity: tiltRoot.enabled ? 1.0 : 0.46
-        border.color: "#536165"
+        border.color: tiltRoot.pressed && tiltRoot.enabled ? Theme.text : "#536165"
         border.width: 1
         radius: Math.round(Math.min(width, height) * 0.14)
+        Behavior on scale { NumberAnimation { duration: 80; easing.type: Easing.OutQuad } }
+        Behavior on color { ColorAnimation { duration: 80 } }
+        Behavior on border.color { ColorAnimation { duration: 80 } }
 
         ColumnLayout {
             anchors.fill: parent
@@ -678,6 +698,7 @@ Item {
                 MouseArea {
                     anchors.fill: parent
                     enabled: root.actionAllowed(tiltRoot.plusAction)
+                    onPressedChanged: tiltRoot.pressed = pressed
                     onClicked: root.moveActionRequested(
                         tiltRoot.plusAction,
                         parseFloat(root.selectedTiltDistance),
@@ -748,6 +769,7 @@ Item {
                 MouseArea {
                     anchors.fill: parent
                     enabled: root.actionAllowed(tiltRoot.minusAction)
+                    onPressedChanged: tiltRoot.pressed = pressed
                     onClicked: root.moveActionRequested(
                         tiltRoot.minusAction,
                         parseFloat(root.selectedTiltDistance),
@@ -812,6 +834,7 @@ Item {
                             MouseArea {
                                 anchors.fill: parent
                                 enabled: root.actionAllowed(modelData.action)
+                                onPressedChanged: parent.pressed = pressed
                                 onClicked: root.moveActionRequested(modelData.action, parseFloat(root.selectedDistance), root.speedForAction(modelData.action))
                             }
                         }
@@ -829,6 +852,7 @@ Item {
                         MouseArea {
                             anchors.fill: parent
                             enabled: root.actionAllowed("home_xy")
+                            onPressedChanged: parent.pressed = pressed
                             onClicked: root.moveActionRequested("home_xy", 0, 0)
                         }
                     }
@@ -860,6 +884,7 @@ Item {
                         MouseArea {
                             anchors.fill: parent
                             enabled: root.actionAllowed("z_plus")
+                            onPressedChanged: parent.pressed = pressed
                             onClicked: root.moveActionRequested(
                                 "z_plus",
                                 parseFloat(root.selectedDistance),
@@ -880,6 +905,7 @@ Item {
                         MouseArea {
                             anchors.fill: parent
                             enabled: root.actionAllowed("home_z")
+                            onPressedChanged: parent.pressed = pressed
                             onClicked: root.moveActionRequested("home_z", 0, 0)
                         }
                     }
@@ -896,6 +922,7 @@ Item {
                         MouseArea {
                             anchors.fill: parent
                             enabled: root.actionAllowed("z_minus")
+                            onPressedChanged: parent.pressed = pressed
                             onClicked: root.moveActionRequested(
                                 "z_minus",
                                 parseFloat(root.selectedDistance),
@@ -945,6 +972,7 @@ Item {
                             MouseArea {
                                 anchors.fill: parent
                                 enabled: root.actionAllowed(modelData.action)
+                                onPressedChanged: parent.pressed = pressed
                                 onClicked: {
                                     if (modelData.action === "bed_tilt") {
                                         root.showBedTilt()
@@ -1031,13 +1059,18 @@ Item {
 
                             Rectangle {
                                 required property var modelData
+                                property bool pressed: false
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
-                                color: "#0b1112"
+                                color: pressed && root.actionAllowed(modelData.action) ? "#182528" : "#0b1112"
+                                scale: pressed && root.actionAllowed(modelData.action) ? 0.97 : 1.0
                                 opacity: root.actionAllowed(modelData.action) ? 1.0 : 0.46
-                                border.color: "#263233"
+                                border.color: pressed && root.actionAllowed(modelData.action) ? Theme.text : "#263233"
                                 border.width: 1
                                 radius: Math.round(root.metrics.fontSize * 0.18)
+                                Behavior on scale { NumberAnimation { duration: 80; easing.type: Easing.OutQuad } }
+                                Behavior on color { ColorAnimation { duration: 80 } }
+                                Behavior on border.color { ColorAnimation { duration: 80 } }
 
                                 RowLayout {
                                     anchors.fill: parent
@@ -1068,6 +1101,7 @@ Item {
                                 MouseArea {
                                     anchors.fill: parent
                                     enabled: root.actionAllowed(modelData.action)
+                                    onPressedChanged: parent.pressed = pressed
                                     onClicked: root.handleMoreAction(modelData.action)
                                 }
                             }
@@ -1163,6 +1197,7 @@ Item {
 
                             MouseArea {
                                 anchors.fill: parent
+                                onPressedChanged: parent.pressed = pressed
                                 onClicked: root.selectDistance(modelData)
                             }
                         }
@@ -1219,14 +1254,19 @@ Item {
 
                     Rectangle {
                         required property var modelData
+                        property bool pressed: false
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         Layout.minimumHeight: Math.max(54, Math.round(root.metrics.fontSize * 3.2))
-                        color: "#101617"
+                        color: pressed && root.actionAllowed(modelData.action) ? "#182528" : "#101617"
+                        scale: pressed && root.actionAllowed(modelData.action) ? 0.97 : 1.0
                         opacity: root.actionAllowed(modelData.action) ? 1.0 : 0.46
-                        border.color: "#263233"
+                        border.color: pressed && root.actionAllowed(modelData.action) ? Theme.text : "#263233"
                         border.width: 1
                         radius: Math.round(root.metrics.fontSize * 0.28)
+                        Behavior on scale { NumberAnimation { duration: 80; easing.type: Easing.OutQuad } }
+                        Behavior on color { ColorAnimation { duration: 80 } }
+                        Behavior on border.color { ColorAnimation { duration: 80 } }
 
                         ColumnLayout {
                             anchors.centerIn: parent
@@ -1269,6 +1309,7 @@ Item {
                         MouseArea {
                             anchors.fill: parent
                             enabled: root.actionAllowed(modelData.action)
+                            onPressedChanged: parent.pressed = pressed
                             onClicked: root.handleMoreAction(modelData.action)
                         }
                     }
@@ -1591,6 +1632,7 @@ Item {
 
                             MouseArea {
                                 anchors.fill: parent
+                                onPressedChanged: parent.pressed = pressed
                                 onClicked: root.selectTiltDistance(modelData)
                             }
                         }
@@ -1608,6 +1650,7 @@ Item {
 
                         MouseArea {
                             anchors.fill: parent
+                            onPressedChanged: parent.pressed = pressed
                             onClicked: root.selectedTiltSpeed = root.selectedTiltSpeed === "2" ? "5" : "2"
                         }
                     }
@@ -1636,6 +1679,7 @@ Item {
                     MouseArea {
                         anchors.fill: parent
                         enabled: root.actionAllowed("home_uvw")
+                        onPressedChanged: parent.pressed = pressed
                         onClicked: root.requestConfirmedAction("home_uvw")
                     }
                 }
@@ -1652,6 +1696,7 @@ Item {
                     MouseArea {
                         anchors.fill: parent
                         enabled: root.actionAllowed("accelerator_level")
+                        onPressedChanged: parent.pressed = pressed
                         onClicked: root.requestConfirmedAction("accelerator_level")
                     }
                 }
@@ -1668,6 +1713,7 @@ Item {
                     MouseArea {
                         anchors.fill: parent
                         enabled: root.actionAllowed("z_tilt_adjust")
+                        onPressedChanged: parent.pressed = pressed
                         onClicked: root.requestConfirmedAction("z_tilt_adjust")
                     }
                 }
@@ -1736,10 +1782,11 @@ Item {
                             font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.9))
                         }
                         background: Rectangle {
-                            color: "#0b1112"
+                            color: cancelConfirmButton.down ? "#182528" : "#0b1112"
                             border.color: "#536165"
                             border.width: 1
                             radius: Math.round(root.metrics.fontSize * 0.28)
+                            Behavior on color { ColorAnimation { duration: 80 } }
                         }
                     }
 
@@ -1758,10 +1805,11 @@ Item {
                             font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.9))
                         }
                         background: Rectangle {
-                            color: "#1b2b2e"
+                            color: confirmActionButton.down ? "#24383c" : "#1b2b2e"
                             border.color: root.selectedAccent
                             border.width: 1
                             radius: Math.round(root.metrics.fontSize * 0.28)
+                            Behavior on color { ColorAnimation { duration: 80 } }
                         }
                     }
                 }

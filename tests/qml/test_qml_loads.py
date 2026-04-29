@@ -36,11 +36,35 @@ def test_action_bar_uses_material_dark_icon_tiles() -> None:
 
     assert "signal actionRequested(string actionName)" in qml
     assert "id: iconButton" in qml
-    assert "color: Theme.buttonsBg" in qml
+    assert 'color: actionPressArea.pressed ? "#182124" : Theme.buttonsBg' in qml
     assert "radius: Math.round(Math.min(width, height) * 0.18)" in qml
-    assert "border.color: Theme.actionBarBg" in qml
+    assert "border.color: actionPressArea.pressed ? Theme.text : Theme.actionBarBg" in qml
     assert "anchors.centerIn: parent" in qml
     assert "onClicked: root.actionRequested(root.buttonActions[index])" in qml
+
+
+def test_action_bar_buttons_have_press_feedback() -> None:
+    qml = Path("src/klippertouch/qml/components/ActionBar.qml").read_text(encoding="utf-8")
+
+    assert "id: actionPressArea" in qml
+    assert "scale: actionPressArea.pressed ? 0.96 : 1.0" in qml
+    assert 'color: actionPressArea.pressed ? "#182124" : Theme.buttonsBg' in qml
+    assert "border.color: actionPressArea.pressed ? Theme.text : Theme.actionBarBg" in qml
+    assert "Behavior on scale" in qml
+    assert "NumberAnimation { duration: 80" in qml
+    assert "ColorAnimation { duration: 80" in qml
+
+
+def test_menu_tile_has_press_feedback() -> None:
+    qml = Path("src/klippertouch/qml/components/MenuTile.qml").read_text(encoding="utf-8")
+
+    assert "id: tilePressArea" in qml
+    assert "scale: tilePressArea.pressed ? 0.97 : 1.0" in qml
+    assert 'color: tilePressArea.pressed ? "#182124" : Theme.buttonsBg' in qml
+    assert "border.color: tilePressArea.pressed ? Theme.text : root.accent" in qml
+    assert "Behavior on scale" in qml
+    assert "NumberAnimation { duration: 80" in qml
+    assert "ColorAnimation { duration: 80" in qml
 
 
 def test_action_bar_buttons_fill_available_axis() -> None:
@@ -117,7 +141,9 @@ def test_core_qml_components_use_shared_theme_library() -> None:
         assert 'import "../Theme.js" as Theme' in qml or 'import "Theme.js" as Theme' in qml
 
     assert 'color: Theme.bg' in files[1].read_text(encoding="utf-8")
-    assert 'color: Theme.buttonsBg' in files[2].read_text(encoding="utf-8")
+    assert 'color: tilePressArea.pressed ? "#182124" : Theme.buttonsBg' in files[2].read_text(
+        encoding="utf-8"
+    )
     assert 'color: Theme.titleBarBg' in files[3].read_text(encoding="utf-8")
 
 
@@ -836,6 +862,18 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert '"label": "Z-"' in qml
     assert "component LockedTile: Rectangle" in qml
     assert "component DirectionButton: Rectangle" in qml
+    assert "property bool pressed: false" in qml
+    assert "scale: tileRoot.pressed && tileRoot.enabled ? 0.97 : 1.0" in qml
+    assert "scale: directionRoot.pressed && directionRoot.enabled ? 0.96 : 1.0" in qml
+    assert "scale: actionRoot.pressed && actionRoot.enabled ? 0.97 : 1.0" in qml
+    assert "scale: tiltRoot.pressed && tiltRoot.enabled ? 0.97 : 1.0" in qml
+    assert "onPressedChanged: parent.pressed = pressed" in qml
+    assert "onPressedChanged: tiltRoot.pressed = pressed" in qml
+    assert 'color: cancelConfirmButton.down ? "#182528" : "#0b1112"' in qml
+    assert 'color: confirmActionButton.down ? "#24383c" : "#1b2b2e"' in qml
+    assert "Behavior on scale" in qml
+    assert "NumberAnimation { duration: 80" in qml
+    assert "ColorAnimation { duration: 80" in qml
     assert "function arrowGlyph(direction)" in qml
     assert "id: bedRectCanvas" in qml
     assert '"#eef3fb"' not in qml
@@ -1335,8 +1373,8 @@ def test_menu_tile_uses_material_dark_button_and_svg_icon() -> None:
     assert "signal activated()" in qml
     assert "MouseArea {" in qml
     assert "onClicked: root.activated()" in qml
-    assert "color: Theme.buttonsBg" in qml
-    assert "border.color: root.accent" in qml
+    assert 'color: tilePressArea.pressed ? "#182124" : Theme.buttonsBg' in qml
+    assert "border.color: tilePressArea.pressed ? Theme.text : root.accent" in qml
     assert "radius: Math.round(root.fontSize)" in qml
     assert "source: Theme.iconSource(root.iconText)" in qml
 

@@ -10,12 +10,17 @@ Rectangle {
     property real fontSize: 16
     signal activated()
 
-    color: Theme.buttonsBg
-    border.color: root.accent
+    color: tilePressArea.pressed ? "#182124" : Theme.buttonsBg
+    scale: tilePressArea.pressed ? 0.97 : 1.0
+    border.color: tilePressArea.pressed ? Theme.text : root.accent
     border.width: Math.max(2, Math.round(root.fontSize * 0.12))
     radius: Math.round(root.fontSize)
+    Behavior on scale { NumberAnimation { duration: 80; easing.type: Easing.OutQuad } }
+    Behavior on color { ColorAnimation { duration: 80 } }
+    Behavior on border.color { ColorAnimation { duration: 80 } }
 
     MouseArea {
+        id: tilePressArea
         anchors.fill: parent
         onClicked: root.activated()
     }
