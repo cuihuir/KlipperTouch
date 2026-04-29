@@ -43,8 +43,8 @@ def test_app_registers_notification_context() -> None:
 
     assert "NotificationModel" in source
     assert "notification_model = NotificationModel()" in source
-    assert "notification_model.addMoonrakerWarnings(initial_status.moonraker_warnings)" in source
-    assert "notification_model.addKlipperWarnings(initial_status.klipper_warnings)" in source
+    assert "notification_model.addMoonrakerWarnings(status.moonraker_warnings)" in source
+    assert "notification_model.addKlipperWarnings(status.klipper_warnings)" in source
     assert 'setContextProperty("notificationModel", notification_model)' in source
     assert "engine.notification_model = notification_model" in source
 
@@ -89,3 +89,20 @@ def test_run_app_wires_optional_read_only_status_stream() -> None:
     assert 'notification_model.showToast("info", "Printer message", message)' in source
     assert "status_stream.start()" in source
     assert "engine.status_stream = status_stream" in source
+
+
+def test_run_app_bootstraps_initial_moonraker_data_after_qml_load() -> None:
+    source = app.Path(app.__file__).read_text(encoding="utf-8")
+
+    assert "StartupDataLoader" in source
+    assert "startup_loader.start()" in source
+    assert source.index("engine.load(") < source.index("startup_loader.start()")
+    assert "engine.startup_loader = startup_loader" in source
+
+
+def test_run_app_stops_background_loaders_when_app_exits() -> None:
+    source = app.Path(app.__file__).read_text(encoding="utf-8")
+
+    assert "try:\n        return app.exec()\n    finally:" in source
+    assert "startup_loader.stop()" in source
+    assert "file_refresh.stop()" in source

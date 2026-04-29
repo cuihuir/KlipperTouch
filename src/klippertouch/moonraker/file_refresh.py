@@ -1,4 +1,4 @@
-from PySide6.QtCore import QObject, QTimer, Slot
+from PySide6.QtCore import QObject, QThread, QTimer, Signal, Slot
 
 from klippertouch.domain.gcode_files import files_from_moonraker
 from klippertouch.moonraker.client import MoonrakerClient
@@ -6,7 +6,26 @@ from klippertouch.qt_models.gcode_file_model import GCodeFileListModel
 from klippertouch.qt_models.status_model import StatusModel
 
 
+class _FileListWorker(QObject):
+    completed = Signal(object)
+    finished = Signal()
+
+    def __init__(self, client: MoonrakerClient) -> None:
+        super().__init__()
+        self._client = client
+
+    @Slot()
+    def run(self) -> None:
+        try:
+            self.completed.emit(self._client.get_gcode_file_list())
+        except Exception:
+            pass
+        self.finished.emit()
+
+
 class GCodeFileRefresh(QObject):
+    refreshFinished = Signal()
+
     def __init__(
         self,
         client: MoonrakerClient,
@@ -27,6 +46,8 @@ class GCodeFileRefresh(QObject):
         self._metadata_timer.timeout.connect(self.refresh_metadata_once)
         self._metadata_queue: list[str] = []
         self._metadata_loaded: set[str] = set()
+        self._file_refresh_thread: QThread | None = None
+        self._file_refresh_worker: _FileListWorker | None = None
         if self._status_model is not None:
             self._status_model.activePanelChanged.connect(self._sync_active_panel)
             self._status_model.printChanged.connect(self._queue_current_print_metadata)
@@ -38,14 +59,41 @@ class GCodeFileRefresh(QObject):
         self.refresh_once()
         self._timer.start()
 
+    def stop(self, timeout_ms: int = 5000) -> None:
+        self._timer.stop()
+        self._metadata_timer.stop()
+        thread = self._file_refresh_thread
+        if thread is None:
+            return
+        if thread.isRunning():
+            thread.quit()
+            thread.wait(timeout_ms)
+        self._file_refresh_thread = None
+        self._file_refresh_worker = None
+
     @Slot()
     def refresh_once(self) -> None:
         if not self._is_active():
             return
-        try:
-            files = self._client.get_gcode_file_list()
-        except Exception:
+        if self._file_refresh_worker is not None:
             return
+        thread = QThread(self)
+        self._file_refresh_worker = _FileListWorker(self._client)
+        self._file_refresh_worker.moveToThread(thread)
+        thread.started.connect(self._file_refresh_worker.run)
+        self._file_refresh_worker.completed.connect(self._apply_files)
+        self._file_refresh_worker.finished.connect(thread.quit)
+        self._file_refresh_worker.finished.connect(self._file_refresh_worker.deleteLater)
+        thread.finished.connect(thread.deleteLater)
+        thread.finished.connect(self._clear_file_refresh_worker)
+        self._file_refresh_thread = thread
+        thread.start()
+
+    @Slot(object)
+    def _apply_files(self, value: object) -> None:
+        if not self._is_active() or not isinstance(value, list):
+            return
+        files = [item for item in value if isinstance(item, dict)]
         self._model.set_files(files_from_moonraker(files))
         self._queue_metadata(files)
 
@@ -108,3 +156,9 @@ class GCodeFileRefresh(QObject):
 
     def _thumbnail_base_url(self) -> str:
         return f"{self._client.endpoint}/server/files/gcodes/"
+
+    @Slot()
+    def _clear_file_refresh_worker(self) -> None:
+        self._file_refresh_thread = None
+        self._file_refresh_worker = None
+        self.refreshFinished.emit()

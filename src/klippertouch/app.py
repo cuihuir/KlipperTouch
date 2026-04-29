@@ -9,6 +9,12 @@ from klippertouch.domain.gcode_files import files_from_moonraker
 from klippertouch.domain.printer import PrinterStatus
 from klippertouch.moonraker.client import MoonrakerClient
 from klippertouch.moonraker.file_refresh import GCodeFileRefresh
+from klippertouch.moonraker.startup_loader import (
+    StartupDataLoader,
+    coerce_file_list,
+    coerce_mapping,
+    coerce_printer_status,
+)
 from klippertouch.moonraker.status_stream import MoonrakerStatusStream
 from klippertouch.qt_models.gcode_file_model import GCodeFileListModel
 from klippertouch.qt_models.job_control_model import JobControlModel
@@ -60,9 +66,8 @@ def run_app(
     gcode_file_model = create_gcode_file_model(initial_files)
     job_control_model = JobControlModel(job_control_client)
     notification_model = NotificationModel()
-    if initial_status is not None:
-        notification_model.addMoonrakerWarnings(initial_status.moonraker_warnings)
-        notification_model.addKlipperWarnings(initial_status.klipper_warnings)
+    startup_loader: StartupDataLoader | None = None
+    file_refresh: GCodeFileRefresh | None = None
     engine.rootContext().setContextProperty("statusModel", status_model)
     engine.rootContext().setContextProperty("temperatureDeviceModel", temperature_device_model)
     engine.rootContext().setContextProperty("gcodeFileModel", gcode_file_model)
@@ -74,17 +79,48 @@ def run_app(
     )
     engine.job_control_model = job_control_model  # type: ignore[attr-defined]
     engine.notification_model = notification_model  # type: ignore[attr-defined]
-    qml_path = Path(__file__).parent / "qml" / "main.qml"
-    engine.load(QUrl.fromLocalFile(str(qml_path)))
-    if not engine.rootObjects():
-        return 1
-    if initial_status is not None and status_stream_client is not None:
-        status_stream = MoonrakerStatusStream(status_stream_client, status_model, initial_status)
+
+    def start_status_stream(status: PrinterStatus) -> None:
+        status_model.set_status(status)
+        notification_model.addMoonrakerWarnings(status.moonraker_warnings)
+        notification_model.addKlipperWarnings(status.klipper_warnings)
+        if status_stream_client is None or hasattr(engine, "status_stream"):
+            return
+        status_stream = MoonrakerStatusStream(status_stream_client, status_model, status)
         status_stream.gcodeResponseReceived.connect(
             lambda message: notification_model.showToast("info", "Printer message", message)
         )
         status_stream.start()
         engine.status_stream = status_stream  # type: ignore[attr-defined]
+
+    def apply_startup_status(value: object) -> None:
+        status = coerce_printer_status(value)
+        if status is not None:
+            start_status_stream(status)
+
+    def apply_startup_temperature_store(value: object) -> None:
+        store = coerce_mapping(value)
+        if store is not None:
+            temperature_device_model.initialize_history(store)
+
+    def apply_startup_files(value: object) -> None:
+        files = coerce_file_list(value)
+        if files is not None:
+            gcode_file_model.set_files(files_from_moonraker(files))
+
+    qml_path = Path(__file__).parent / "qml" / "main.qml"
+    engine.load(QUrl.fromLocalFile(str(qml_path)))
+    if not engine.rootObjects():
+        return 1
+    if initial_status is not None:
+        start_status_stream(initial_status)
+    elif status_stream_client is not None:
+        startup_loader = StartupDataLoader(status_stream_client)
+        startup_loader.statusLoaded.connect(apply_startup_status)
+        startup_loader.temperatureStoreLoaded.connect(apply_startup_temperature_store)
+        startup_loader.filesLoaded.connect(apply_startup_files)
+        startup_loader.start()
+        engine.startup_loader = startup_loader  # type: ignore[attr-defined]
     if file_refresh_client is not None:
         file_refresh = GCodeFileRefresh(
             file_refresh_client,
@@ -93,7 +129,13 @@ def run_app(
         )
         file_refresh.start()
         engine.gcode_file_refresh = file_refresh  # type: ignore[attr-defined]
-    return app.exec()
+    try:
+        return app.exec()
+    finally:
+        if startup_loader is not None:
+            startup_loader.stop()
+        if file_refresh is not None:
+            file_refresh.stop()
 
 
 def main(argv: list[str] | None = None) -> int:

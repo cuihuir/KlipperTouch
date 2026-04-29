@@ -1659,9 +1659,13 @@ def test_main_keeps_files_and_job_status_as_separate_routes() -> None:
     assert "jobControlBridgeModel.requestClearJob()" in main_qml
     assert "jobControlBridgeModel.requestSkipObject(objectName)" in main_qml
     assert "function requestFileControl(action, path)" in main_qml
+    assert "Qt.callLater(function() { jobControlBridgeModel.requestStartPrint(path) })" in main_qml
     assert "jobControlBridgeModel.requestStartPrint(path)" in main_qml
     assert "panelLoader.item.handleFilePrintStarted(path)" in main_qml
-    assert "window.jobControlBridgeModel.lastError.length <= 0" in main_qml
+    assert main_qml.index('window.showPanel("job_status")') < main_qml.index(
+        "jobControlBridgeModel.requestStartPrint(path)"
+    )
+    assert "window.jobControlBridgeModel.lastError.length <= 0" not in main_qml
     assert "jobControlBridgeModel.requestDeleteFile(path)" in main_qml
     assert "function onFileDeleted(path)" in main_qml
     assert "window.gcodeFileBridgeModel.removeFile(path)" in main_qml

@@ -50,9 +50,6 @@ def main() -> int:
             flush=True,
         )
 
-    initial_status = None
-    initial_temperature_store = None
-    initial_files = None
     client = None
     try:
         printer = settings.printers[settings.default_printer]
@@ -60,19 +57,11 @@ def main() -> int:
         client = MoonrakerClient(printer, policy=policy)
         if args.debug:
             print(f"Moonraker endpoint: {client.endpoint}", flush=True)
-        initial_status = build_status_from_client(client)
-        initial_temperature_store = client.get_temperature_store()
-        initial_files = client.get_gcode_file_list()
-        if args.debug:
-            print(f"Initial G-Code files: {len(initial_files)}", flush=True)
     except Exception as exc:
         if args.debug:
-            print(f"Read-only startup probe failed: {exc}", flush=True)
+            print(f"Moonraker client setup failed: {exc}", flush=True)
     return run_app(
         sys.argv,
-        initial_status=initial_status,
-        initial_temperature_store=initial_temperature_store,
-        initial_files=initial_files,
         status_stream_client=client,
         file_refresh_client=client,
         job_control_client=client,

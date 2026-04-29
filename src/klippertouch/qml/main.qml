@@ -303,14 +303,12 @@ ApplicationWindow {
             return
         }
         if (action === "print") {
-            jobControlBridgeModel.requestStartPrint(path)
-            if (window.jobControlBridgeModel.lastError.length <= 0) {
-                if (panelLoader.item
-                        && typeof panelLoader.item.handleFilePrintStarted === "function") {
-                    panelLoader.item.handleFilePrintStarted(path)
-                }
-                window.showPanel("job_status")
+            if (panelLoader.item
+                    && typeof panelLoader.item.handleFilePrintStarted === "function") {
+                panelLoader.item.handleFilePrintStarted(path)
             }
+            window.showPanel("job_status")
+            Qt.callLater(function() { jobControlBridgeModel.requestStartPrint(path) })
         } else if (action === "delete") {
             jobControlBridgeModel.requestDeleteFile(path)
         }

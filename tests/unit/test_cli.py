@@ -24,24 +24,23 @@ def test_parse_args_accepts_config_and_debug() -> None:
     assert args.debug is True
 
 
-def test_main_attempts_read_only_status_before_gui() -> None:
+def test_main_starts_gui_without_blocking_on_initial_status_probe() -> None:
     source = Path("src/klippertouch/__main__.py").read_text(encoding="utf-8")
 
-    assert "initial_status = None" in source
     assert "Config path:" in source
     assert "Control mode:" in source
     assert "Moonraker endpoint:" in source
-    assert "Initial G-Code files:" in source
     assert "policy = CommandPolicy(read_only=settings.read_only)" in source
     assert "settings = _apply_control_override(settings, args)" in source
     assert "client = MoonrakerClient(printer, policy=policy)" in source
-    assert "initial_status = build_status_from_client(client)" in source
-    assert "initial_temperature_store = client.get_temperature_store()" in source
-    assert "initial_files = client.get_gcode_file_list()" in source
+    assert "initial_status = build_status_from_client(client)" not in source
+    assert "initial_temperature_store = client.get_temperature_store()" not in source
+    assert "initial_files = client.get_gcode_file_list()" not in source
     assert "status_stream_client=client" in source
     assert "file_refresh_client=client" in source
     assert "job_control_client=client" in source
-    assert "initial_files=initial_files" in source
+    assert "initial_status=" not in source
+    assert "initial_files=" not in source
     assert "material_system_enabled=settings.material_system_enabled" in source
 
 

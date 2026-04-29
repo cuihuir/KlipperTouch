@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 
 from klippertouch.config.models import PrinterConfig
@@ -13,9 +14,10 @@ def test_file_refresh_updates_model_from_read_only_file_list() -> None:
 
     assert "class GCodeFileRefresh" in source
     assert "QTimer" in source
+    assert "QThread" in source
     assert "refresh_interval_ms: int = 10000" in source
     assert "self._timer.timeout.connect(self.refresh_once)" in source
-    assert "self._client.get_gcode_file_list()" in source
+    assert "self._file_refresh_worker = _FileListWorker" in source
     assert "self._model.set_files(files_from_moonraker(files))" in source
     assert "printer.gcode.script" not in source
     assert "printer.print.start" not in source
@@ -46,24 +48,35 @@ def test_file_refresh_updates_model_and_keeps_existing_files_on_failure(qtbot) -
 
     with qtbot.waitSignal(model.modelReset, timeout=1000):
         refresh.refresh_once()
+    with qtbot.waitSignal(refresh.refreshFinished, timeout=1000):
+        pass
 
     assert model.rowCount() == 1
 
 
-def test_file_refresh_start_refreshes_immediately(qtbot) -> None:
+def test_file_refresh_start_schedules_refresh_without_blocking(qtbot) -> None:
     class FakeClient(MoonrakerClient):
         def __init__(self) -> None:
             super().__init__(PrinterConfig(name="p", moonraker_host="host"))
+            self.calls = 0
 
         def get_gcode_file_list(self) -> list[dict[str, object]]:
+            self.calls += 1
+            time.sleep(0.05)
             return [{"path": "cube.gcode", "size": 2048, "permissions": "rw"}]
 
+    client = FakeClient()
     model = GCodeFileListModel()
-    refresh = GCodeFileRefresh(FakeClient(), model)
+    refresh = GCodeFileRefresh(client, model)
+    started = time.monotonic()
 
+    refresh.start()
+    assert time.monotonic() - started < 0.04
     with qtbot.waitSignal(model.modelReset, timeout=1000):
-        refresh.start()
-
+        pass
+    with qtbot.waitSignal(refresh.refreshFinished, timeout=1000):
+        pass
+    assert client.calls == 1
     assert model.rowCount() == 1
 
 
@@ -90,6 +103,8 @@ def test_file_refresh_only_runs_while_files_panel_is_active(qtbot) -> None:
 
     with qtbot.waitSignal(model.modelReset, timeout=1000):
         status_model.setActivePanel("print")
+    with qtbot.waitSignal(refresh.refreshFinished, timeout=1000):
+        pass
 
     assert client.calls == 1
     assert model.rowCount() == 1
@@ -122,7 +137,10 @@ def test_file_refresh_lazily_loads_one_metadata_entry_per_tick(qtbot) -> None:
     model = GCodeFileListModel()
     refresh = GCodeFileRefresh(client, model)
 
-    refresh.refresh_once()
+    with qtbot.waitSignal(model.modelReset, timeout=1000):
+        refresh.refresh_once()
+    with qtbot.waitSignal(refresh.refreshFinished, timeout=1000):
+        pass
 
     assert client.metadata_calls == []
 
