@@ -160,12 +160,14 @@ class MoonrakerClient:
     def disable_motors(self) -> dict[str, Any]:
         return self.run_gcode_script("M84")
 
-    def jog_toolhead(self, axis: str, distance: float) -> dict[str, Any]:
+    def jog_toolhead(self, axis: str, distance: float, speed: float) -> dict[str, Any]:
         normalized_axis = axis.lower()
         if normalized_axis not in {"x", "y", "z"}:
             raise ValueError("Invalid jog axis")
-        speed = 600 if normalized_axis == "z" else 6000
-        script = f"_CLIENT_LINEAR_MOVE {normalized_axis.upper()}={distance:.3f} F={speed}"
+        if speed <= 0:
+            raise ValueError("Invalid jog speed")
+        feedrate = float(speed) * 60
+        script = f"_CLIENT_LINEAR_MOVE {normalized_axis.upper()}={distance:.3f} F={feedrate:.0f}"
         return self.run_gcode_script(script)
 
     def home_axes(self, *axes: str) -> dict[str, Any]:

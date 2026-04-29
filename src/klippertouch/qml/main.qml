@@ -236,7 +236,7 @@ ApplicationWindow {
         jobControlBridgeModel.requestEmergencyStop()
     }
 
-    function requestMoveControl(action, distance) {
+    function requestMoveControl(action, distance, speed) {
         if (!jobControlBridgeModel) {
             return
         }
@@ -253,7 +253,7 @@ ApplicationWindow {
         } else if (action === "x_minus" || action === "x_plus"
                    || action === "y_minus" || action === "y_plus"
                    || action === "z_minus" || action === "z_plus") {
-            jobControlBridgeModel.requestMoveJog(action, distance)
+            jobControlBridgeModel.requestMoveJog(action, distance, speed)
         }
     }
 
@@ -566,8 +566,8 @@ ApplicationWindow {
                 webhooksState: window.webhooksState
                 controlStatus: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastStatus : ""
                 controlError: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastError : ""
-                onMoveActionRequested: function(action, distance) {
-                    window.requestMoveControl(action, distance)
+                onMoveActionRequested: function(action, distance, speed) {
+                    window.requestMoveControl(action, distance, speed)
                 }
             }
         }

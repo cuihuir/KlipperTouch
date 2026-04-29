@@ -40,7 +40,11 @@ Item {
         {"placeholder": true}
     ]
     property var distances: [".1", ".5", "1", "5", "10", "25", "50"]
+    property var xySpeeds: ["25", "50", "100", "150"]
+    property var zSpeeds: ["2", "5", "10", "15"]
     property string selectedDistance: "10"
+    property string selectedXYSpeed: "100"
+    property string selectedZSpeed: "10"
     property bool moreVisible: false
     property string detailPage: "main"
     property real positionX: 0
@@ -53,7 +57,7 @@ Item {
     property string controlStatus: ""
     property string controlError: ""
     readonly property color selectedAccent: "#7f9298"
-    signal moveActionRequested(string action, real distance)
+    signal moveActionRequested(string action, real distance, real speed)
 
     function selectDistance(distance) {
         root.selectedDistance = distance
@@ -79,11 +83,48 @@ Item {
         if (!root.actionAllowed(action)) {
             return
         }
-        if (action === "home_all" || action === "disable_motors") {
-            root.moveActionRequested(action, 0)
+        if (action === "speed_xy") {
+            root.cycleSpeed("xy")
             return
         }
-        root.moveActionRequested("placeholder_" + action, 0)
+        if (action === "speed_z") {
+            root.cycleSpeed("z")
+            return
+        }
+        if (action === "home_all" || action === "disable_motors") {
+            root.moveActionRequested(action, 0, 0)
+            return
+        }
+        root.moveActionRequested("placeholder_" + action, 0, 0)
+    }
+
+    function speedForAction(action) {
+        if (root.actionAxis(action) === "z") {
+            return parseFloat(root.selectedZSpeed)
+        }
+        return parseFloat(root.selectedXYSpeed)
+    }
+
+    function cycleSpeed(kind) {
+        var values = kind === "z" ? root.zSpeeds : root.xySpeeds
+        var selected = kind === "z" ? root.selectedZSpeed : root.selectedXYSpeed
+        var index = values.indexOf(selected)
+        var nextValue = values[(index + 1) % values.length]
+        if (kind === "z") {
+            root.selectedZSpeed = nextValue
+            return
+        }
+        root.selectedXYSpeed = nextValue
+    }
+
+    function moreActionHint(action, fallback) {
+        if (action === "speed_xy") {
+            return root.selectedXYSpeed + " mm/s"
+        }
+        if (action === "speed_z") {
+            return root.selectedZSpeed + " mm/s"
+        }
+        return fallback
     }
 
     function printerReady() {
@@ -380,7 +421,7 @@ Item {
                             MouseArea {
                                 anchors.fill: parent
                                 enabled: root.actionAllowed(modelData.action)
-                                onClicked: root.moveActionRequested(modelData.action, parseFloat(root.selectedDistance))
+                                onClicked: root.moveActionRequested(modelData.action, parseFloat(root.selectedDistance), root.speedForAction(modelData.action))
                             }
                         }
                     }
@@ -396,7 +437,7 @@ Item {
                         MouseArea {
                             anchors.fill: parent
                             enabled: root.actionAllowed("home_xy")
-                            onClicked: root.moveActionRequested("home_xy", 0)
+                            onClicked: root.moveActionRequested("home_xy", 0, 0)
                         }
                     }
                 }
@@ -429,7 +470,8 @@ Item {
                             enabled: root.actionAllowed("z_plus")
                             onClicked: root.moveActionRequested(
                                 "z_plus",
-                                parseFloat(root.selectedDistance)
+                                parseFloat(root.selectedDistance),
+                                root.speedForAction("z_plus")
                             )
                         }
                     }
@@ -445,7 +487,7 @@ Item {
                         MouseArea {
                             anchors.fill: parent
                             enabled: root.actionAllowed("home_z")
-                            onClicked: root.moveActionRequested("home_z", 0)
+                            onClicked: root.moveActionRequested("home_z", 0, 0)
                         }
                     }
 
@@ -463,7 +505,8 @@ Item {
                             enabled: root.actionAllowed("z_minus")
                             onClicked: root.moveActionRequested(
                                 "z_minus",
-                                parseFloat(root.selectedDistance)
+                                parseFloat(root.selectedDistance),
+                                root.speedForAction("z_minus")
                             )
                         }
                     }
@@ -503,7 +546,7 @@ Item {
                                     if (modelData.action === "more") {
                                         root.showMore()
                                     } else {
-                                        root.moveActionRequested(modelData.action, 0)
+                                        root.moveActionRequested(modelData.action, 0, 0)
                                     }
                                 }
                             }
@@ -784,7 +827,7 @@ Item {
                             Label {
                                 Layout.fillWidth: true
                                 color: Theme.mutedText
-                                text: modelData.hint
+                                text: root.moreActionHint(modelData.action, modelData.hint)
                                 horizontalAlignment: Text.AlignHCenter
                                 elide: Text.ElideRight
                                 font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.62))

@@ -363,13 +363,13 @@ def test_client_sends_print_control_when_controls_enabled(
         ("disable_motors", None, "M84"),
         (
             "jog_toolhead",
-            ("x", -10.0),
-            "_CLIENT_LINEAR_MOVE X=-10.000 F=6000",
+            ("x", -10.0, 80.0),
+            "_CLIENT_LINEAR_MOVE X=-10.000 F=4800",
         ),
         (
             "jog_toolhead",
-            ("z", 0.5),
-            "_CLIENT_LINEAR_MOVE Z=0.500 F=600",
+            ("z", 0.5, 5.0),
+            "_CLIENT_LINEAR_MOVE Z=0.500 F=300",
         ),
         ("home_axes", ("x", "y"), "G28 X Y"),
         ("home_axes", ("z",), "G28 Z"),

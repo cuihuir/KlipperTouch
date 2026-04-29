@@ -699,7 +699,14 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert '"action": "speed_xy"' in qml
     assert 'property bool moreVisible' in qml
     assert 'property string detailPage: "main"' in qml
-    assert 'signal moveActionRequested(string action, real distance)' in qml
+    assert 'signal moveActionRequested(string action, real distance, real speed)' in qml
+    assert 'property var xySpeeds: ["25", "50", "100", "150"]' in qml
+    assert 'property var zSpeeds: ["2", "5", "10", "15"]' in qml
+    assert 'property string selectedXYSpeed: "100"' in qml
+    assert 'property string selectedZSpeed: "10"' in qml
+    assert "function speedForAction(action)" in qml
+    assert "function cycleSpeed(kind)" in qml
+    assert "function moreActionHint(action, fallback)" in qml
     assert '"action": "y_plus"' in qml
     assert '"action": "x_minus"' in qml
     assert '"action": "x_plus"' in qml
@@ -739,8 +746,8 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert "placeholder" in qml
     assert 'title: "Home"' in qml
     assert 'title: "Z Home"' in qml
-    assert 'root.moveActionRequested("home_xy", 0)' in qml
-    assert 'root.moveActionRequested("home_z", 0)' in qml
+    assert 'root.moveActionRequested("home_xy", 0, 0)' in qml
+    assert 'root.moveActionRequested("home_z", 0, 0)' in qml
     assert "root.handleMoreAction(modelData.action)" in qml
     assert "function handleMoreAction(action)" in qml
     assert '"label": "Disable Motors"' in qml
@@ -755,7 +762,10 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert 'root.detailPage = "more"' in qml
     assert "function goBack()" in qml
     assert "visible: root.moreVisible && root.metrics.ultraWide" in qml
-    assert "root.moveActionRequested(modelData.action, parseFloat(root.selectedDistance))" in qml
+    assert (
+        "root.moveActionRequested(modelData.action, parseFloat(root.selectedDistance), "
+        "root.speedForAction(modelData.action))"
+    ) in qml
     assert "id: distanceGrid" in qml
     assert "id: positionGrid" in qml
     assert "M18" not in qml
@@ -1677,9 +1687,9 @@ def test_main_routes_move_and_extrude_to_locked_panels() -> None:
         'controlError: window.jobControlBridgeModel ? '
         'window.jobControlBridgeModel.lastError : ""'
     ) in main_qml
-    assert "onMoveActionRequested: function(action, distance)" in main_qml
-    assert "function requestMoveControl(action, distance)" in main_qml
-    assert "jobControlBridgeModel.requestMoveJog(action, distance)" in main_qml
+    assert "onMoveActionRequested: function(action, distance, speed)" in main_qml
+    assert "function requestMoveControl(action, distance, speed)" in main_qml
+    assert "jobControlBridgeModel.requestMoveJog(action, distance, speed)" in main_qml
     assert 'jobControlBridgeModel.requestHome("xy")' in main_qml
     assert 'jobControlBridgeModel.requestHome("z")' in main_qml
     assert 'jobControlBridgeModel.requestHome("all")' in main_qml
