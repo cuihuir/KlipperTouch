@@ -242,12 +242,14 @@ Item {
                     width: parent.width - root.metrics.gap * 2
                     spacing: Math.max(3, Math.round(root.metrics.fontSize * 0.2))
 
-                    Label {
-                        Layout.fillWidth: true
-                        color: "#d9e0e2"
-                        text: "⬟"
-                        horizontalAlignment: Text.AlignHCenter
-                        font.pixelSize: Math.max(42, Math.round(root.metrics.fontSize * 3.6))
+                    Image {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.preferredWidth: Math.max(44, Math.round(root.metrics.fontSize * 3.6))
+                        Layout.preferredHeight: Layout.preferredWidth
+                        source: Theme.iconSource("extruder")
+                        sourceSize.width: Layout.preferredWidth
+                        sourceSize.height: Layout.preferredHeight
+                        fillMode: Image.PreserveAspectFit
                     }
 
                     Label {

@@ -825,6 +825,8 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "id: nozzleStage" in qml
     assert "id: retractButton" in qml
     assert "id: nozzleIcon" in qml
+    assert 'source: Theme.iconSource("extruder")' in qml
+    assert 'text: "⬟"' not in qml
     assert "id: extrudeButton" in qml
     assert (
         'root.extrudeActionRequested("retract", parseFloat(root.selectedDistance), '
