@@ -11,7 +11,6 @@ Item {
     property int pageIndex: 0
     property bool showTargets: true
     property bool compact: false
-    property bool portrait: root.height > root.width
     property bool hasExternalTemperatureModel: typeof temperatureModel !== "undefined"
         && temperatureModel !== null
     property var activeTemperatureModel: root.hasExternalTemperatureModel
@@ -150,7 +149,7 @@ Item {
     }
 
     function editorMinimumHeight() {
-        if (!root.portrait) {
+        if (!root.targetEditorPortrait()) {
             return root.touchTargetSize * 5
                 + Math.max(6, Math.round(root.fontSize * 0.4)) * 3
                 + root.targetEditorMargin * 2
@@ -166,6 +165,10 @@ Item {
 
     function editorParentHeight() {
         return targetEditorPopup.parent ? targetEditorPopup.parent.height : root.height
+    }
+
+    function targetEditorPortrait() {
+        return root.editorParentHeight() > root.editorParentWidth()
     }
 
     function rootRectInEditorParent() {
@@ -650,7 +653,7 @@ Item {
 
         ColumnLayout {
             id: landscapeTargetEditor
-            visible: !root.portrait
+            visible: !root.targetEditorPortrait()
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
@@ -777,7 +780,7 @@ Item {
         }
 
         ColumnLayout {
-            visible: root.portrait
+            visible: root.targetEditorPortrait()
             anchors.fill: parent
             spacing: Math.max(8, Math.round(root.fontSize * 0.55))
 

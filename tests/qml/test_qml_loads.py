@@ -1217,6 +1217,8 @@ def test_temperature_device_pager_uses_page_based_navigation() -> None:
     assert "property var entry: root.itemAt(index, root.modelRevision)" in qml
     assert "property int touchTargetSize:" in qml
     assert "property bool targetEditorFullscreen: false" in qml
+    assert "function targetEditorPortrait()" in qml
+    assert "return root.editorParentHeight() > root.editorParentWidth()" in qml
     assert "targetColumnWidth" in qml
     assert "actualTargetGrid" in qml
     assert "signal targetTemperatureRequested(string deviceName, real target)" in qml
@@ -1234,10 +1236,12 @@ def test_temperature_device_pager_uses_page_based_navigation() -> None:
     assert "parent: Overlay.overlay" in qml
     assert "id: targetKeypadGrid" in qml
     assert "id: landscapeTargetEditor" in qml
+    assert "visible: !root.targetEditorPortrait()" in qml
     assert "id: landscapeTargetKeypadGrid" in qml
     assert "id: landscapeBackspaceButton" in qml
     assert "id: landscapeCancelButton" in qml
     assert "id: landscapeSetButton" in qml
+    assert "visible: root.targetEditorPortrait()" in qml
     assert 'model: ["1", "2", "3", "4", "5", "6", "7", "8", "9"]' in qml
     assert "Layout.minimumWidth: root.touchTargetSize" in qml
     assert "Layout.minimumHeight: root.touchTargetSize" in qml
