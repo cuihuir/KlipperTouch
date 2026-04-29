@@ -1615,9 +1615,14 @@ def test_move_panel_is_locked_and_responsive() -> None:
     assert "root.controlFeedbackText()" in qml
     assert "function printerReady()" in qml
     assert "function movementGuardText()" in qml
+    assert "function actionAxis(action)" in qml
+    assert "function axisHomed(axis)" in qml
+    assert "function jogAction(action)" in qml
     assert "function actionRequiresReady(action)" in qml
     assert "function actionAllowed(action)" in qml
     assert 'return "Printer not ready"' in qml
+    assert 'return "Home axis first"' in qml
+    assert 'root.axisHomed(root.actionAxis(action))' in qml
     assert "enabled: root.actionAllowed(modelData.action)" in qml
     assert 'enabled: root.actionAllowed("home_xy")' in qml
     assert 'enabled: root.actionAllowed("home_z")' in qml

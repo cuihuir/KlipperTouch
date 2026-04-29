@@ -92,7 +92,31 @@ Item {
     }
 
     function movementGuardText() {
+        if (root.printerReady()) {
+            return "Home axis first"
+        }
         return "Printer not ready"
+    }
+
+    function actionAxis(action) {
+        if (action === "x_minus" || action === "x_plus") {
+            return "x"
+        }
+        if (action === "y_minus" || action === "y_plus") {
+            return "y"
+        }
+        if (action === "z_minus" || action === "z_plus") {
+            return "z"
+        }
+        return ""
+    }
+
+    function axisHomed(axis) {
+        return axis.length <= 0 || root.homedAxes.indexOf(axis) >= 0
+    }
+
+    function jogAction(action) {
+        return root.actionAxis(action).length > 0
     }
 
     function actionRequiresReady(action) {
@@ -109,7 +133,16 @@ Item {
     }
 
     function actionAllowed(action) {
-        return !root.actionRequiresReady(action) || root.printerReady()
+        if (!root.actionRequiresReady(action)) {
+            return true
+        }
+        if (!root.printerReady()) {
+            return false
+        }
+        if (root.jogAction(action)) {
+            return root.axisHomed(root.actionAxis(action))
+        }
+        return true
     }
 
     function controlFeedbackText() {
@@ -120,6 +153,9 @@ Item {
             return root.controlStatus
         }
         if (!root.printerReady()) {
+            return root.movementGuardText()
+        }
+        if (root.homedAxes.length <= 0) {
             return root.movementGuardText()
         }
         return "Controls ready"
