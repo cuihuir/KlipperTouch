@@ -68,6 +68,30 @@ Item {
         }
     }
 
+    component PageControlButton: Button {
+        id: pageButton
+
+        width: root.touchTargetSize
+        height: root.touchTargetSize
+        font.pixelSize: Math.max(14, Math.round(root.fontSize))
+
+        contentItem: Label {
+            text: pageButton.text
+            color: pageButton.enabled ? Theme.text : Theme.mutedText
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            font: pageButton.font
+        }
+
+        background: Rectangle {
+            color: "#101819"
+            border.color: pageButton.enabled ? Theme.color4 : "#465456"
+            border.width: 1
+            radius: Math.round(root.fontSize * 0.3)
+            opacity: pageButton.enabled ? 1.0 : 0.42
+        }
+    }
+
     function modelCount() {
         if (!root.activeTemperatureModel) {
             return 0
@@ -622,13 +646,10 @@ Item {
         spacing: root.pageControlSpacing
         visible: root.pageCount() > 1
 
-        Button {
+        PageControlButton {
             id: previousPageButton
-            width: root.touchTargetSize
-            height: root.touchTargetSize
             enabled: root.pageIndex > 0
             text: "<"
-            font.pixelSize: Math.max(14, Math.round(root.fontSize))
             onClicked: root.goToPreviousPage()
         }
 
@@ -640,13 +661,10 @@ Item {
             font.pixelSize: Math.max(10, Math.round(root.fontSize * 0.72))
         }
 
-        Button {
+        PageControlButton {
             id: nextPageButton
-            width: root.touchTargetSize
-            height: root.touchTargetSize
             enabled: root.pageIndex < root.pageCount() - 1
             text: ">"
-            font.pixelSize: Math.max(14, Math.round(root.fontSize))
             onClicked: root.goToNextPage()
         }
     }

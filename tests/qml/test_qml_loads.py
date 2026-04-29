@@ -1385,6 +1385,9 @@ def test_temperature_device_pager_uses_page_based_navigation() -> None:
     assert "model: root.currentItemCount" in qml
     assert "id: previousPageButton" in qml
     assert "id: nextPageButton" in qml
+    assert "component PageControlButton: Button" in qml
+    assert "color: pageButton.enabled ? Theme.text : Theme.mutedText" in qml
+    assert "border.color: pageButton.enabled ? Theme.color4 : \"#465456\"" in qml
     assert "property int pageControlReservedHeight:" in qml
     assert "anchors.bottomMargin: root.pageControlReservedHeight" in qml
     assert "enabled: root.pageIndex > 0" in qml

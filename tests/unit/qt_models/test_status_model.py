@@ -445,10 +445,12 @@ def test_temperature_device_list_model_keeps_read_only_graph_toggle_enabled(qtbo
     model = TemperatureDeviceListModel()
     model.set_status(PrinterStatus(objects=("temperature_sensor chamber",)))
 
+    assert model.rowData(0)["graphVisible"] is False
+
     with qtbot.waitSignal(model.graphSelectionChanged, timeout=1000):
         model.toggleGraphDevice("temperature_sensor chamber")
 
-    assert model.rowData(0)["graphVisible"] is False
+    assert model.rowData(0)["graphVisible"] is True
 
 
 def test_temperature_device_list_model_ignores_read_only_pending_targets(qtbot) -> None:
@@ -680,13 +682,16 @@ def test_temperature_device_list_model_initializes_history_from_temperature_stor
         "extruder_target",
         "heater_bed",
         "heater_bed_target",
-        "temperature_sensor chamber",
     ]
     assert model.graphSeriesModel[0]["dashed"] is False
     assert model.graphSeriesModel[1]["dashed"] is True
     assert model.graphSeriesModel[2]["series"] == [50.0, 55.0, 58.0]
     assert model.graphSeriesModel[3]["dashed"] is True
-    assert model.graphSeriesModel[4]["series"] == [29.0, 31.0, 33.0]
+    with qtbot.waitSignal(model.graphSelectionChanged, timeout=1000):
+        model.toggleGraphDevice("temperature_sensor chamber")
+
+    assert model.graphSeriesModel[-1]["name"] == "temperature_sensor chamber"
+    assert model.graphSeriesModel[-1]["series"] == [29.0, 31.0, 33.0]
 
 
 def test_temperature_device_list_model_downsamples_large_temperature_store_for_graph(
@@ -901,7 +906,6 @@ def test_temperature_device_list_model_adds_target_series_for_heaters(qtbot) -> 
         "extruder",
         "extruder_target",
         "heater_bed",
-        "temperature_sensor chamber",
     ]
     assert model.graphSeriesModel[1]["series"] == [220.0, 220.0, 220.0]
     assert model.graphSeriesModel[1]["dashed"] is True

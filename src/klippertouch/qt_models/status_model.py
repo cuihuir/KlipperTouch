@@ -53,11 +53,12 @@ class TemperatureDeviceListModel(QAbstractListModel):
     def set_status(self, status: PrinterStatus) -> None:
         scope = _graph_scope_for_status(status)
         scope_changed = scope != self._settings_scope
+        new_devices = status.temperature_devices
         if scope != self._settings_scope:
             self._settings_scope = scope
             self._graph_visible = self._load_graph_visibility()
+            self._migrate_graph_visibility_defaults(new_devices)
 
-        new_devices = status.temperature_devices
         old_names = tuple(device.name for device in self._devices)
         new_names = tuple(device.name for device in new_devices)
         structure_changed = scope_changed or old_names != new_names
@@ -77,7 +78,7 @@ class TemperatureDeviceListModel(QAbstractListModel):
 
         history_changed = False
         for device in self._devices:
-            self._ensure_graph_visibility_default(device.name)
+            self._ensure_graph_visibility_default(device)
             if device.name in self._local_targets and device.target is not None:
                 del self._local_targets[device.name]
             values = self._history.setdefault(device.name, [])
@@ -392,11 +393,10 @@ class TemperatureDeviceListModel(QAbstractListModel):
             if name not in valid_names:
                 del self._local_targets[name]
 
-    def _ensure_graph_visibility_default(self, name: str) -> None:
-        if name in self._graph_visible:
+    def _ensure_graph_visibility_default(self, device: TemperatureDeviceStatus) -> None:
+        if device.name in self._graph_visible:
             return
-        self._graph_visible[name] = True
-        self._persist_graph_visibility(name)
+        self._graph_visible[device.name] = bool(device.target_settable)
 
     def _load_graph_visibility(self) -> dict[str, bool]:
         if self._settings_scope is None:
@@ -404,9 +404,30 @@ class TemperatureDeviceListModel(QAbstractListModel):
         self._settings.beginGroup(f"temperature_graph/{self._settings_scope}")
         values: dict[str, bool] = {}
         for key in self._settings.childKeys():
+            if key.startswith("_"):
+                continue
             values[key] = bool(self._settings.value(key, True, type=bool))
         self._settings.endGroup()
         return values
+
+    def _migrate_graph_visibility_defaults(
+        self,
+        devices: tuple[TemperatureDeviceStatus, ...],
+    ) -> None:
+        if self._settings_scope is None:
+            return
+        self._settings.beginGroup(f"temperature_graph/{self._settings_scope}")
+        raw_version = self._settings.value("_defaults_version", 0, type=int)
+        version = raw_version if isinstance(raw_version, int) else 0
+        if version < 2:
+            for device in devices:
+                if device.target_settable:
+                    continue
+                self._graph_visible[device.name] = False
+                self._settings.setValue(device.name, False)
+            self._settings.setValue("_defaults_version", 2)
+        self._settings.endGroup()
+        self._settings.sync()
 
     def _persist_graph_visibility(self, name: str) -> None:
         if self._settings_scope is None:

@@ -155,6 +155,7 @@ def make_sample_status(
     bed_temperature: float,
     *,
     state: str = "printing",
+    sample_many_sensors: bool = False,
 ) -> PrinterStatus:
     status = dict(SAMPLE_STATUS)
     status["print_state"] = state
@@ -167,7 +168,7 @@ def make_sample_status(
         status["print_message"] = "Cancelled"
     elif state == "error":
         status["print_message"] = "Error"
-    status["temperature_devices"] = (
+    temperature_devices = [
         TemperatureDeviceStatus(
             name="extruder",
             display_name="Extruder",
@@ -182,7 +183,49 @@ def make_sample_status(
             temperature=bed_temperature,
             target=60.0,
         ),
-    )
+    ]
+    if sample_many_sensors:
+        temperature_devices.extend(
+            (
+                TemperatureDeviceStatus(
+                    name="temperature_sensor Box",
+                    display_name="Box",
+                    icon="heat-up",
+                    temperature=51.2,
+                ),
+                TemperatureDeviceStatus(
+                    name="temperature_sensor cartographer",
+                    display_name="Cartographer",
+                    icon="heat-up",
+                    temperature=40.7,
+                ),
+                TemperatureDeviceStatus(
+                    name="temperature_sensor cartographer_coil",
+                    display_name="Cartographer Coil",
+                    icon="heat-up",
+                    temperature=25.7,
+                ),
+                TemperatureDeviceStatus(
+                    name="temperature_sensor E3",
+                    display_name="E3",
+                    icon="heat-up",
+                    temperature=44.8,
+                ),
+                TemperatureDeviceStatus(
+                    name="temperature_sensor FLY-π",
+                    display_name="FLY-π",
+                    icon="heat-up",
+                    temperature=34.4,
+                ),
+                TemperatureDeviceStatus(
+                    name="temperature_host FLY-π",
+                    display_name="FLY-π Host",
+                    icon="heat-up",
+                    temperature=34.4,
+                ),
+            )
+        )
+    status["temperature_devices"] = tuple(temperature_devices)
     return PrinterStatus(**status)
 
 
@@ -227,6 +270,7 @@ def capture(
     sample_files: bool = False,
     sample_status: bool = False,
     sample_state: str = "printing",
+    sample_many_sensors: bool = False,
     job_detail_pages: tuple[str, ...] = (),
     extrude_detail_pages: tuple[str, ...] = (),
     job_action_previews: tuple[str, ...] = (),
@@ -258,7 +302,12 @@ def capture(
             if sample_status:
                 first_extruder, first_bed = SAMPLE_HISTORY[0]
                 status_model, temperature_model = create_status_models(
-                    make_sample_status(first_extruder, first_bed, state=sample_state)
+                    make_sample_status(
+                        first_extruder,
+                        first_bed,
+                        state=sample_state,
+                        sample_many_sensors=sample_many_sensors,
+                    )
                 )
                 for extruder_temperature, bed_temperature in SAMPLE_HISTORY[1:]:
                     status_model.set_status(
@@ -266,6 +315,7 @@ def capture(
                             extruder_temperature,
                             bed_temperature,
                             state=sample_state,
+                            sample_many_sensors=sample_many_sensors,
                         )
                     )
                 engine.rootContext().setContextProperty("statusModel", status_model)
@@ -480,6 +530,11 @@ def main(argv: list[str] | None = None) -> int:
         help="Inject sample printer/job status into the QML context before capturing.",
     )
     parser.add_argument(
+        "--sample-many-sensors",
+        action="store_true",
+        help="Include additional read-only temperature sensors in --sample-status captures.",
+    )
+    parser.add_argument(
         "--sample-state",
         choices=SAMPLE_STATES,
         default="printing",
@@ -540,6 +595,7 @@ def main(argv: list[str] | None = None) -> int:
         sample_files=args.sample_files,
         sample_status=args.sample_status,
         sample_state=args.sample_state,
+        sample_many_sensors=args.sample_many_sensors,
         job_detail_pages=tuple(args.job_detail_pages),
         extrude_detail_pages=tuple(args.extrude_detail_pages),
         job_action_previews=tuple(args.job_action_previews),

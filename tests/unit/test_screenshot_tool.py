@@ -24,7 +24,11 @@ def test_screenshot_tool_captures_common_panels_and_sizes() -> None:
     assert "artifacts/screenshots" in source
     assert "--sample-files" in source
     assert "--sample-status" in source
+    assert "--sample-many-sensors" in source
     assert "--sample-state" in source
+    assert '"temperature_sensor Box"' in source
+    assert '"temperature_host FLY-π"' in source
+    assert "sample_many_sensors" in source
     assert "create_gcode_file_model" in source
     assert "create_status_models" in source
     assert "SAMPLE_STATUS" in source
