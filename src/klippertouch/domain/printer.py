@@ -46,11 +46,18 @@ class TemperatureDeviceStatus:
     icon: str
     temperature: float | None = None
     target: float | None = None
+    target_settable: bool | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "name", str(self.name))
         object.__setattr__(self, "display_name", str(self.display_name))
         object.__setattr__(self, "icon", str(self.icon))
+        target_settable = (
+            _temperature_device_supports_target(self.name)
+            if self.target_settable is None
+            else bool(self.target_settable)
+        )
+        object.__setattr__(self, "target_settable", target_settable)
 
 
 @dataclass(frozen=True)
@@ -498,6 +505,16 @@ def _temperature_device_sort_key(device: TemperatureDeviceStatus) -> tuple[int, 
     if device.name == "heater_bed":
         return (2, device.name)
     return (3, device.display_name)
+
+
+def _temperature_device_supports_target(name: str) -> bool:
+    return (
+        name == "extruder"
+        or name.startswith("extruder")
+        or name == "heater_bed"
+        or name.startswith("heater_generic ")
+        or name.startswith("temperature_fan ")
+    )
 
 
 def _filament_sensor_sort_key(sensor: FilamentSensorStatus) -> tuple[str, str]:

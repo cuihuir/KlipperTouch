@@ -1319,6 +1319,10 @@ def test_temperature_device_pager_uses_page_based_navigation() -> None:
     assert "actualTargetGrid" in qml
     assert "signal targetTemperatureRequested(string deviceName, real target)" in qml
     assert "function openTargetEditor(deviceName, displayName, actual, target)" in qml
+    assert (
+        "function openTargetEditorIfSettable(deviceName, displayName, actual, "
+        "target, targetSettable)"
+    ) in qml
     assert "function positionTargetEditor()" in qml
     assert "function bestExternalEditorRegion(minWidth, minHeight)" in qml
     assert "targetEditorPopup.parent" in qml
@@ -1361,10 +1365,16 @@ def test_temperature_device_pager_uses_page_based_navigation() -> None:
         'property string targetState: entry.targetState === undefined '
         '? "actual" : entry.targetState'
     ) in qml
+    assert (
+        'property bool targetSettable: entry.targetSettable === undefined '
+        '? false : entry.targetSettable'
+    ) in qml
+    assert "enabled: targetSettable" in qml
+    assert "opacity: targetSettable ? 1.0 : 0.46" in qml
     assert "function targetColor()" in qml
     assert 'if (targetState === "failed")' in qml
     assert 'if (targetState === "pending")' in qml
-    assert "color: targetColor()" in qml
+    assert "color: targetSettable ? targetColor() : Theme.mutedText" in qml
     assert 'text: "Target"' in qml
     assert "visible: root.showTargets" in qml
     assert "WheelHandler {" in qml

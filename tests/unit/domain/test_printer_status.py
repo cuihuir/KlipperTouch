@@ -61,6 +61,34 @@ def test_temperature_device_status_normalizes_values() -> None:
     assert device.display_name == "Heater Bed"
     assert device.temperature == 24.6
     assert device.target == 60.2
+    assert device.target_settable is True
+
+
+def test_temperature_device_status_marks_read_only_sensors() -> None:
+    assert (
+        TemperatureDeviceStatus(
+            name="temperature_host SOC散热",
+            display_name="SOC散热 Host",
+            icon="heat-up",
+        ).target_settable
+        is False
+    )
+    assert (
+        TemperatureDeviceStatus(
+            name="temperature_sensor chamber",
+            display_name="Chamber",
+            icon="heat-up",
+        ).target_settable
+        is False
+    )
+    assert (
+        TemperatureDeviceStatus(
+            name="temperature_fan chamber",
+            display_name="Chamber Fan",
+            icon="heat-up",
+        ).target_settable
+        is True
+    )
 
 
 def test_printer_status_derives_read_only_temperature_devices_from_objects() -> None:
@@ -105,12 +133,19 @@ def test_temperature_device_display_names_remove_klipper_object_prefixes() -> No
     )
 
     display_names = {device.name: device.display_name for device in status.temperature_devices}
+    target_settable = {device.name: device.target_settable for device in status.temperature_devices}
 
     assert display_names == {
         "heater_generic chamber heater": "Chamber Heater",
         "temperature_fan SOC散热": "SOC散热 Fan",
         "temperature_host SOC散热": "SOC散热 Host",
         "temperature_sensor chamber": "Chamber",
+    }
+    assert target_settable == {
+        "heater_generic chamber heater": True,
+        "temperature_fan SOC散热": True,
+        "temperature_host SOC散热": False,
+        "temperature_sensor chamber": False,
     }
 
 

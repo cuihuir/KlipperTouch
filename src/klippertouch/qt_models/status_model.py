@@ -31,6 +31,7 @@ class TemperatureDeviceListModel(QAbstractListModel):
     GRAPH_VISIBLE_ROLE = int(Qt.ItemDataRole.UserRole) + 6
     TARGET_PENDING_ROLE = int(Qt.ItemDataRole.UserRole) + 7
     TARGET_STATE_ROLE = int(Qt.ItemDataRole.UserRole) + 8
+    TARGET_SETTABLE_ROLE = int(Qt.ItemDataRole.UserRole) + 9
 
     def __init__(self, settings: QSettings | None = None) -> None:
         super().__init__()
@@ -140,7 +141,12 @@ class TemperatureDeviceListModel(QAbstractListModel):
             )
             target_points = self._target_history.get(device.name, [])
             effective_target = self._effective_target(device)
-            if target_points and effective_target is not None and effective_target > 0:
+            if (
+                device.target_settable
+                and target_points
+                and effective_target is not None
+                and effective_target > 0
+            ):
                 active_target_points = _active_target_series(target_points)
                 series.append(
                     {
@@ -229,6 +235,8 @@ class TemperatureDeviceListModel(QAbstractListModel):
             return self._target_state(device.name) == "pending"
         if role == self.TARGET_STATE_ROLE:
             return self._target_state(device.name)
+        if role == self.TARGET_SETTABLE_ROLE:
+            return bool(device.target_settable)
         return None
 
     def roleNames(self) -> dict[int, QByteArray]:  # noqa: N802
@@ -241,6 +249,7 @@ class TemperatureDeviceListModel(QAbstractListModel):
             self.GRAPH_VISIBLE_ROLE: QByteArray(b"graphVisible"),
             self.TARGET_PENDING_ROLE: QByteArray(b"targetPending"),
             self.TARGET_STATE_ROLE: QByteArray(b"targetState"),
+            self.TARGET_SETTABLE_ROLE: QByteArray(b"targetSettable"),
         }
 
     @Slot(int, result="QVariantMap")
@@ -257,6 +266,7 @@ class TemperatureDeviceListModel(QAbstractListModel):
             "graphVisible": self._graph_visible.get(device.name, True),
             "targetPending": self._target_state(device.name) == "pending",
             "targetState": self._target_state(device.name),
+            "targetSettable": bool(device.target_settable),
         }
 
     @Slot(str)
@@ -289,7 +299,14 @@ class TemperatureDeviceListModel(QAbstractListModel):
         self._set_local_target(name, target, "failed")
 
     def _set_local_target(self, name: str, target: float, state: str) -> None:
-        row = next((index for index, device in enumerate(self._devices) if device.name == name), -1)
+        row = next(
+            (
+                index
+                for index, device in enumerate(self._devices)
+                if device.name == name and device.target_settable
+            ),
+            -1,
+        )
         if row < 0:
             return
         self._local_targets[name] = (float(target), state)
@@ -312,6 +329,8 @@ class TemperatureDeviceListModel(QAbstractListModel):
     def _effective_target(self, device: TemperatureDeviceStatus) -> float | None:
         if device.name in self._local_targets:
             return self._local_targets[device.name][0]
+        if not device.target_settable:
+            return None
         if device.target is not None and device.target > 0:
             return device.target
         target_history = self._target_history.get(device.name, [])
@@ -343,6 +362,7 @@ class TemperatureDeviceListModel(QAbstractListModel):
             self.GRAPH_VISIBLE_ROLE: self._graph_visible.get(device.name, True),
             self.TARGET_PENDING_ROLE: self._target_state(device.name) == "pending",
             self.TARGET_STATE_ROLE: self._target_state(device.name),
+            self.TARGET_SETTABLE_ROLE: bool(device.target_settable),
         }
 
     def _changed_roles(
@@ -361,6 +381,7 @@ class TemperatureDeviceListModel(QAbstractListModel):
                 self.GRAPH_VISIBLE_ROLE,
                 self.TARGET_PENDING_ROLE,
                 self.TARGET_STATE_ROLE,
+                self.TARGET_SETTABLE_ROLE,
             )
             if old_values.get(role) != new_values.get(role)
         ]

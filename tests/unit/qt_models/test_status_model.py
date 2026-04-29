@@ -404,10 +404,12 @@ def test_temperature_device_list_model_exposes_qml_roles(qtbot) -> None:
         "graphVisible": Qt.ItemDataRole.UserRole + 6,
         "targetPending": Qt.ItemDataRole.UserRole + 7,
         "targetState": Qt.ItemDataRole.UserRole + 8,
+        "targetSettable": Qt.ItemDataRole.UserRole + 9,
     }
     assert model.data(first_index, roles["name"]) == "extruder"
     assert model.data(first_index, roles["displayName"]) == "Extruder"
     assert model.data(first_index, roles["icon"]) == "extruder"
+    assert model.data(first_index, roles["targetSettable"]) is True
     assert model.rowData(0) == {
         "name": "extruder",
         "displayName": "Extruder",
@@ -417,7 +419,47 @@ def test_temperature_device_list_model_exposes_qml_roles(qtbot) -> None:
         "graphVisible": True,
         "targetPending": False,
         "targetState": "actual",
+        "targetSettable": True,
     }
+
+
+def test_temperature_device_list_model_marks_read_only_sensor_targets(qtbot) -> None:
+    model = TemperatureDeviceListModel()
+
+    with qtbot.waitSignal(model.modelReset, timeout=1000):
+        model.set_status(
+            PrinterStatus(
+                objects=("extruder", "temperature_host SOC散热", "temperature_sensor chamber")
+            )
+        )
+
+    roles = {bytes(value).decode(): key for key, value in model.roleNames().items()}
+
+    assert model.rowData(0)["targetSettable"] is True
+    assert model.rowData(1)["targetSettable"] is False
+    assert model.rowData(2)["targetSettable"] is False
+    assert model.data(model.index(1, 0), roles["targetSettable"]) is False
+
+
+def test_temperature_device_list_model_keeps_read_only_graph_toggle_enabled(qtbot) -> None:
+    model = TemperatureDeviceListModel()
+    model.set_status(PrinterStatus(objects=("temperature_sensor chamber",)))
+
+    with qtbot.waitSignal(model.graphSelectionChanged, timeout=1000):
+        model.toggleGraphDevice("temperature_sensor chamber")
+
+    assert model.rowData(0)["graphVisible"] is False
+
+
+def test_temperature_device_list_model_ignores_read_only_pending_targets(qtbot) -> None:
+    model = TemperatureDeviceListModel()
+    model.set_status(PrinterStatus(objects=("temperature_sensor chamber",)))
+
+    model.setPendingTarget("temperature_sensor chamber", 60.0)
+
+    assert model.rowData(0)["target"] is None
+    assert model.rowData(0)["targetPending"] is False
+    assert model.rowData(0)["targetState"] == "actual"
 
 
 def test_temperature_device_list_model_records_read_only_history(qtbot) -> None:

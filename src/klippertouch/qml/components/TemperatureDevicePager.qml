@@ -117,6 +117,7 @@ Item {
                 "temperature": entry.temperature,
                 "target": entry.target,
                 "graphVisible": entry.graphVisible === undefined ? false : entry.graphVisible,
+                "targetSettable": entry.targetSettable === undefined ? false : entry.targetSettable,
             }
         }
         return {}
@@ -238,6 +239,13 @@ Item {
         targetEditorPopup.open()
     }
 
+    function openTargetEditorIfSettable(deviceName, displayName, actual, target, targetSettable) {
+        if (!targetSettable) {
+            return
+        }
+        root.openTargetEditor(deviceName, displayName, actual, target)
+    }
+
     function appendTargetDigit(digit) {
         if (root.targetEditorValue.length >= 3) {
             return
@@ -339,6 +347,7 @@ Item {
                 : entry.displayName
             property var targetValue: typeof entry.target === "undefined" ? null : entry.target
             property string targetState: entry.targetState === undefined ? "actual" : entry.targetState
+            property bool targetSettable: entry.targetSettable === undefined ? false : entry.targetSettable
             property var temperatureValue: typeof entry.temperature === "undefined" ? null : entry.temperature
 
             function targetColor() {
@@ -442,6 +451,7 @@ Item {
                         id: compactValueArea
                         width: parent.width * root.compactValueColumnWidth
                         height: Math.max(root.touchTargetSize, parent.height)
+                        opacity: targetSettable ? 1.0 : 0.46
 
                         Row {
                             anchors.fill: parent
@@ -459,7 +469,7 @@ Item {
                             }
 
                             Label {
-                                color: targetColor()
+                                color: targetSettable ? targetColor() : Theme.mutedText
                                 visible: root.showTargets
                                 text: targetValue === null
                                     ? "--"
@@ -473,11 +483,13 @@ Item {
 
                         MouseArea {
                             anchors.fill: parent
-                            onClicked: root.openTargetEditor(
+                            enabled: targetSettable
+                            onClicked: root.openTargetEditorIfSettable(
                                 deviceKey,
                                 resolvedName,
                                 temperatureValue,
-                                targetValue
+                                targetValue,
+                                targetSettable
                             )
                         }
                     }
@@ -545,6 +557,7 @@ Item {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         Layout.minimumHeight: root.touchTargetSize
+                        opacity: targetSettable ? 1.0 : 0.46
 
                         GridLayout {
                             id: actualTargetGrid
@@ -577,7 +590,7 @@ Item {
 
                             Label {
                                 Layout.fillWidth: true
-                                color: targetColor()
+                                color: targetSettable ? targetColor() : Theme.mutedText
                                 visible: root.showTargets
                                 text: targetValue === null ? "--" : Math.round(targetValue) + "°"
                                 font.pixelSize: Math.max(20, Math.round(root.fontSize * 1.42))
@@ -586,11 +599,13 @@ Item {
 
                         MouseArea {
                             anchors.fill: parent
-                            onClicked: root.openTargetEditor(
+                            enabled: targetSettable
+                            onClicked: root.openTargetEditorIfSettable(
                                 deviceKey,
                                 resolvedName,
                                 temperatureValue,
-                                targetValue
+                                targetValue,
+                                targetSettable
                             )
                         }
                     }
