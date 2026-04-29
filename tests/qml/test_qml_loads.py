@@ -796,6 +796,12 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "id: nozzleTemperatureArea" in qml
     assert "id: targetEditorPopup" in qml
     assert "id: targetKeypadGrid" in qml
+    assert "id: landscapeTargetEditor" in qml
+    assert "id: landscapeBackspaceButton" in qml
+    assert "id: landscapeCancelButton" in qml
+    assert "id: landscapeSetButton" in qml
+    assert 'model: ["1", "2", "3", "4", "5", "6", "7", "8", "9"]' in qml
+    assert 'text: "."' in qml
     assert "Layout.minimumWidth: root.touchTargetSize" in qml
     assert "Layout.minimumHeight: root.touchTargetSize" in qml
     assert 'signal extrudeActionRequested(string action, real distance, real speed)' in qml

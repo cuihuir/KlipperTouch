@@ -129,6 +129,31 @@ Item {
         }
     }
 
+    component KeypadButton: Button {
+        id: keyRoot
+        property bool primary: false
+
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.minimumWidth: root.touchTargetSize
+        Layout.minimumHeight: root.touchTargetSize
+
+        contentItem: Label {
+            color: keyRoot.enabled ? Theme.text : Theme.mutedText
+            text: keyRoot.text
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.1))
+        }
+
+        background: Rectangle {
+            color: keyRoot.primary && keyRoot.enabled ? "#1b2b2e" : "#101819"
+            border.color: keyRoot.primary && keyRoot.enabled ? root.selectedAccent : "#536165"
+            border.width: 1
+            radius: Math.round(root.metrics.fontSize * 0.28)
+        }
+    }
+
     component NozzleStage: Rectangle {
         id: stageRoot
 
@@ -248,6 +273,15 @@ Item {
         root.targetEditorValue += digit
     }
 
+    function appendTargetDecimal() {
+        if (root.targetEditorValue.indexOf(".") >= 0 || root.targetEditorValue.length >= 4) {
+            return
+        }
+        root.targetEditorValue = root.targetEditorValue.length > 0
+            ? root.targetEditorValue + "."
+            : "0."
+    }
+
     function deleteTargetDigit() {
         root.targetEditorValue = root.targetEditorValue.slice(0, -1)
     }
@@ -258,6 +292,9 @@ Item {
 
     function confirmTargetEditor() {
         if (root.targetEditorValue.length <= 0) {
+            return
+        }
+        if (root.targetEditorValue === "." || root.targetEditorValue === "0.") {
             return
         }
         var value = Math.max(0, Math.min(350, Number(root.targetEditorValue)))
@@ -785,10 +822,18 @@ Item {
         modal: true
         focus: true
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-        width: Math.min(parent ? parent.width - root.metrics.margin * 2 : root.width,
-                        Math.max(300, Math.round(root.width * 0.42)))
-        height: Math.min(parent ? parent.height - root.metrics.margin * 2 : root.height,
-                         Math.max(360, Math.round(root.height * 0.82)))
+        width: Math.min(
+            parent ? parent.width - root.metrics.margin * 2 : root.width,
+            root.metrics.portrait
+                ? Math.max(300, Math.round(root.width * 0.62))
+                : Math.max(500, Math.round(root.width * 0.42))
+        )
+        height: Math.min(
+            parent ? parent.height - root.metrics.margin * 2 : root.height,
+            root.metrics.portrait
+                ? Math.max(360, Math.round(root.height * 0.82))
+                : Math.max(360, Math.round(root.height * 0.78))
+        )
         x: parent ? Math.round((parent.width - width) / 2) : 0
         y: parent ? Math.round((parent.height - height) / 2) : 0
         padding: Math.max(8, Math.round(root.metrics.fontSize * 0.7))
@@ -801,6 +846,137 @@ Item {
         }
 
         ColumnLayout {
+            id: landscapeTargetEditor
+            visible: !root.metrics.portrait
+            anchors.fill: parent
+            spacing: Math.max(8, Math.round(root.metrics.fontSize * 0.55))
+
+            Label {
+                Layout.fillWidth: true
+                color: Theme.text
+                text: "Nozzle target"
+                elide: Text.ElideRight
+                font.bold: true
+                font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.2))
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Math.max(8, Math.round(root.metrics.fontSize * 0.5))
+                Label {
+                    Layout.fillWidth: true
+                    color: Theme.mutedText
+                    text: "Actual " + Math.round(root.extruderTemperature) + "°"
+                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
+                }
+
+                Label {
+                    color: Theme.mutedText
+                    text: "Max 350°"
+                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.preferredHeight: Math.max(root.touchTargetSize, Math.round(root.metrics.fontSize * 3.0))
+                spacing: Math.max(8, Math.round(root.metrics.fontSize * 0.5))
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Layout.minimumHeight: root.touchTargetSize
+                    color: "#050808"
+                    border.color: "#465456"
+                    border.width: 1
+                    radius: Math.round(root.metrics.fontSize * 0.3)
+
+                    Label {
+                        anchors.fill: parent
+                        anchors.margins: Math.max(8, Math.round(root.metrics.fontSize * 0.5))
+                        color: Theme.text
+                        text: root.targetEditorValue === "" ? "--" : root.targetEditorValue + "°"
+                        horizontalAlignment: Text.AlignRight
+                        verticalAlignment: Text.AlignVCenter
+                        font.pixelSize: Math.max(26, Math.round(root.metrics.fontSize * 1.8))
+                    }
+                }
+
+                KeypadButton {
+                    id: landscapeBackspaceButton
+                    Layout.preferredWidth: Math.max(root.touchTargetSize, Math.round(root.metrics.fontSize * 4.6))
+                    Layout.fillWidth: false
+                    text: "←"
+                    onClicked: root.deleteTargetDigit()
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: false
+                Layout.preferredHeight: root.touchTargetSize * 3
+                    + Math.max(6, Math.round(root.metrics.fontSize * 0.4)) * 2
+                spacing: Math.max(8, Math.round(root.metrics.fontSize * 0.5))
+
+                GridLayout {
+                    id: targetKeypadGrid
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    columns: 3
+                    columnSpacing: Math.max(6, Math.round(root.metrics.fontSize * 0.4))
+                    rowSpacing: columnSpacing
+
+                    Repeater {
+                        model: ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
+
+                        KeypadButton {
+                            required property string modelData
+                            text: modelData
+                            onClicked: {
+                                root.appendTargetDigit(modelData)
+                            }
+                        }
+                    }
+                }
+
+                KeypadButton {
+                    id: landscapeCancelButton
+                    Layout.preferredWidth: Math.max(root.touchTargetSize, Math.round(root.metrics.fontSize * 5.0))
+                    Layout.fillWidth: false
+                    text: "Cancel"
+                    onClicked: targetEditorPopup.close()
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Math.max(8, Math.round(root.metrics.fontSize * 0.5))
+
+                KeypadButton {
+                    Layout.fillWidth: true
+                    text: "."
+                    onClicked: root.appendTargetDecimal()
+                }
+
+                KeypadButton {
+                    Layout.fillWidth: true
+                    text: "0"
+                    onClicked: root.appendTargetDigit("0")
+                }
+
+                KeypadButton {
+                    id: landscapeSetButton
+                    Layout.fillWidth: true
+                    text: "Set"
+                    enabled: root.targetEditorValue !== ""
+                    primary: true
+                    onClicked: root.confirmTargetEditor()
+                }
+            }
+        }
+
+        ColumnLayout {
+            visible: root.metrics.portrait
             anchors.fill: parent
             spacing: Math.max(8, Math.round(root.metrics.fontSize * 0.55))
 
@@ -833,10 +1009,7 @@ Item {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.minimumHeight: root.touchTargetSize
-                Layout.preferredHeight: Math.max(
-                    root.touchTargetSize,
-                    Math.round(root.metrics.fontSize * 3.0)
-                )
+                Layout.preferredHeight: Math.max(root.touchTargetSize, Math.round(root.metrics.fontSize * 3.0))
                 color: "#050808"
                 border.color: "#465456"
                 border.width: 1
@@ -854,7 +1027,7 @@ Item {
             }
 
             GridLayout {
-                id: targetKeypadGrid
+                id: targetPortraitKeypadGrid
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 columns: 3
@@ -869,30 +1042,9 @@ Item {
                         "Clear", "0", "Del"
                     ]
 
-                    Button {
+                    KeypadButton {
                         required property string modelData
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        Layout.minimumWidth: root.touchTargetSize
-                        Layout.minimumHeight: root.touchTargetSize
                         text: modelData
-                        contentItem: Label {
-                            color: Theme.text
-                            text: parent.text
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                            font.pixelSize: Math.max(
-                                16,
-                                Math.round(root.metrics.fontSize * 1.1)
-                            )
-                        }
-                        background: Rectangle {
-                            color: "#101819"
-                            border.color: "#536165"
-                            border.width: 1
-                            radius: Math.round(root.metrics.fontSize * 0.28)
-                        }
-                        font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.1))
                         onClicked: {
                             if (modelData === "Clear") {
                                 root.clearTargetEditor()
@@ -910,46 +1062,17 @@ Item {
                 Layout.fillWidth: true
                 spacing: Math.max(8, Math.round(root.metrics.fontSize * 0.5))
 
-                Button {
+                KeypadButton {
                     Layout.fillWidth: true
-                    Layout.minimumHeight: root.touchTargetSize
                     text: "Cancel"
-                    contentItem: Label {
-                        color: Theme.text
-                        text: parent.text
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
-                    }
-                    background: Rectangle {
-                        color: "#101819"
-                        border.color: "#536165"
-                        border.width: 1
-                        radius: Math.round(root.metrics.fontSize * 0.28)
-                    }
-                    font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
                     onClicked: targetEditorPopup.close()
                 }
 
-                Button {
+                KeypadButton {
                     Layout.fillWidth: true
-                    Layout.minimumHeight: root.touchTargetSize
                     text: "Set"
                     enabled: root.targetEditorValue !== ""
-                    contentItem: Label {
-                        color: parent.enabled ? Theme.text : Theme.mutedText
-                        text: parent.text
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
-                    }
-                    background: Rectangle {
-                        color: parent.enabled ? "#1b2b2e" : "#101819"
-                        border.color: parent.enabled ? root.selectedAccent : "#536165"
-                        border.width: 1
-                        radius: Math.round(root.metrics.fontSize * 0.28)
-                    }
-                    font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
+                    primary: true
                     onClicked: root.confirmTargetEditor()
                 }
             }
