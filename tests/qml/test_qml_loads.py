@@ -796,6 +796,8 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "function jobHeroHeight()" in qml
     assert "function temperatureStripHeight()" in qml
     assert "function summaryTemperatureStripVisible()" in qml
+    assert "function ultraWideThumbnailSize()" in qml
+    assert "function ultraWideActionButtonHeight()" in qml
     assert "function groupedSummaryModel()" in qml
     assert "function summaryZoneRows(zone)" in qml
     assert "function detailTitle()" in qml
@@ -1036,6 +1038,17 @@ def test_job_status_summary_scrolls_on_small_portrait_screens() -> None:
 
     assert "id: summaryFlickable" in qml
     assert "visible: root.detailPage === \"summary\"" in qml
+    assert 'visible: root.detailPage === "summary" && root.metrics.ultraWide' in qml
+    assert 'visible: root.detailPage === "summary" && !root.metrics.ultraWide' in qml
+    assert "id: ultraWideSummaryGrid" in qml
+    assert 'visible: !(root.detailPage === "summary" && root.metrics.ultraWide)' in qml
+    assert "id: ultraWideThumbnailFrame" in qml
+    assert "id: ultraWideFileHeader" in qml
+    assert "id: ultraWideStatusPill" in qml
+    assert "id: ultraWideProgressBar" in qml
+    assert "id: ultraWideKeyInfoGrid" in qml
+    assert "id: ultraWideActionGrid" in qml
+    assert "Layout.preferredHeight: root.ultraWideActionButtonHeight()" in qml
     assert "contentHeight: summaryContent.implicitHeight + root.summaryBottomSafeArea()" in qml
     assert "id: summaryContent" in qml
     assert "id: summaryBottomSafeAreaItem" in qml
