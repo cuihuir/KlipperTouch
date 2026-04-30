@@ -1,3 +1,5 @@
+from PySide6.QtGui import QSurfaceFormat
+
 from klippertouch import app
 from klippertouch.domain.printer import PrinterStatus
 
@@ -58,6 +60,55 @@ def test_app_registers_material_system_context() -> None:
 
     assert "material_system_enabled: bool = False" in source
     assert 'setContextProperty(\n        "configuredMaterialSystemEnabled"' in source
+
+
+def test_app_registers_fullscreen_context() -> None:
+    source = app.Path(app.__file__).read_text(encoding="utf-8")
+
+    assert "full_screen: bool = False" in source
+    assert 'setContextProperty("configuredFullScreen", full_screen)' in source
+
+
+def test_resolve_display_rotation_normalizes_supported_values(monkeypatch) -> None:
+    monkeypatch.setenv("KLIPPERTOUCH_DISPLAY_ROTATION", " RIGHT ")
+    assert app.resolve_display_rotation() == "right"
+
+    monkeypatch.setenv("KLIPPERTOUCH_DISPLAY_ROTATION", "90")
+    assert app.resolve_display_rotation() == "right"
+
+    monkeypatch.setenv("KLIPPERTOUCH_DISPLAY_ROTATION", "-90")
+    assert app.resolve_display_rotation() == "left"
+
+    monkeypatch.setenv("KLIPPERTOUCH_DISPLAY_ROTATION", "none")
+    assert app.resolve_display_rotation() == ""
+
+
+def test_app_registers_display_rotation_context() -> None:
+    source = app.Path(app.__file__).read_text(encoding="utf-8")
+
+    assert "resolve_display_rotation()" in source
+    assert 'setContextProperty("configuredDisplayRotation", display_rotation)' in source
+
+
+def test_app_configures_x11_egl_surface_format(monkeypatch) -> None:
+    original_format = QSurfaceFormat.defaultFormat()
+    try:
+        QSurfaceFormat.setDefaultFormat(QSurfaceFormat())
+        monkeypatch.setenv("QT_XCB_GL_INTEGRATION", "xcb_egl")
+
+        app.configure_scenegraph_surface_format()
+
+        surface_format = QSurfaceFormat.defaultFormat()
+        assert surface_format.renderableType() == QSurfaceFormat.RenderableType.OpenGLES
+        assert surface_format.redBufferSize() == 8
+        assert surface_format.greenBufferSize() == 8
+        assert surface_format.blueBufferSize() == 8
+        assert surface_format.alphaBufferSize() == 0
+        assert surface_format.depthBufferSize() == 0
+        assert surface_format.stencilBufferSize() == 0
+        assert surface_format.samples() == 0
+    finally:
+        QSurfaceFormat.setDefaultFormat(original_format)
 
 
 def test_create_status_models_applies_initial_status(qtbot) -> None:

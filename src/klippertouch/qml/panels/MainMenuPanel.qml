@@ -6,6 +6,7 @@ import "../models"
 Item {
     id: root
     required property var metrics
+    property Item popupParent: null
     property var temperatureModel: null
     signal panelRequested(string panelName)
     signal targetTemperatureRequested(string deviceName, real target)
@@ -28,6 +29,7 @@ Item {
     TemperatureSummary {
         id: temperatureSummary
         metrics: root.metrics
+        popupParent: root.popupParent
         temperatureModel: root.temperatureModel
         anchors.left: parent.left
         anchors.top: parent.top

@@ -1,0 +1,37 @@
+[Unit]
+Description=KlipperTouch Touchscreen GUI
+StartLimitIntervalSec=0
+After=systemd-user-sessions.service plymouth-quit-wait.service
+After=dbus.socket systemd-logind.service network-online.target moonraker.service
+Wants=dbus.socket systemd-logind.service network-online.target
+ConditionPathExists=/dev/tty0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=2
+User=tope
+WorkingDirectory=/home/tope/klippertouch
+Environment=PYTHONUNBUFFERED=1
+Environment=QT_QPA_PLATFORM=xcb
+Environment=QT_QUICK_BACKEND=software
+Environment=QSG_INFO=1
+Environment=KLIPPERTOUCH_RENDER_BACKEND=software
+Environment=KLIPPERTOUCH_DISPLAY=:0
+Environment=KLIPPERTOUCH_OUTPUT=HDMI-1
+Environment=KLIPPERTOUCH_ROTATE=right
+Environment=KLIPPERTOUCH_LOG=/home/tope/printer_data/logs/klippertouch.log
+Environment=KLIPPERTOUCH_RESET_OUTPUT=1
+Environment=KLIPPERTOUCH_TOUCH_HID_PATTERN=1A86
+Environment="KLIPPERTOUCH_XCLIENT=/home/tope/klippertouch/venv/bin/klippertouch --config /home/tope/printer_data/config/KlipperTouch.conf --debug --allow-controls --fullscreen"
+ExecStart=/usr/local/bin/klippertouch-start.sh
+PAMName=%u
+TTYPath=/dev/tty7
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+UtmpIdentifier=tty7
+UtmpMode=user
+
+[Install]
+WantedBy=multi-user.target

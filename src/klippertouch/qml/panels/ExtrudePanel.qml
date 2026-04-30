@@ -7,6 +7,7 @@ Item {
     id: root
     objectName: "extrudePanel"
     required property var metrics
+    property Item popupParent: null
     property var distances: ["5", "10", "15", "25"]
     property var speeds: ["1", "2", "5", "25"]
     property var actionButtons: [
@@ -337,18 +338,18 @@ Item {
         var parentHeight = targetEditorPopup.parent ? targetEditorPopup.parent.height : root.height
         var margin = root.metrics.margin
         if (root.metrics.portrait) {
-            targetEditorPopup.width = Math.min(parentWidth - margin * 2, Math.max(300, Math.round(parentWidth * 0.72)))
-            targetEditorPopup.height = Math.min(parentHeight - margin * 2, Math.max(360, Math.round(parentHeight * 0.82)))
-            targetEditorPopup.x = Math.round((parentWidth - targetEditorPopup.width) / 2)
-            targetEditorPopup.y = Math.round((parentHeight - targetEditorPopup.height) / 2)
+            targetEditorPopup.dialogWidth = Math.min(parentWidth - margin * 2, Math.max(300, Math.round(parentWidth * 0.72)))
+            targetEditorPopup.dialogHeight = Math.min(parentHeight - margin * 2, Math.max(360, Math.round(parentHeight * 0.82)))
+            targetEditorPopup.dialogX = Math.round((parentWidth - targetEditorPopup.dialogWidth) / 2)
+            targetEditorPopup.dialogY = Math.round((parentHeight - targetEditorPopup.dialogHeight) / 2)
             return
         }
 
         var safeTop = Math.max(margin, Math.round(parentHeight * 0.22))
-        targetEditorPopup.width = Math.min(parentWidth - margin * 2, Math.max(560, Math.round(parentWidth * 0.54)))
-        targetEditorPopup.height = Math.min(parentHeight - safeTop - margin, Math.max(360, Math.round(parentHeight * 0.72)))
-        targetEditorPopup.x = Math.max(margin, parentWidth - targetEditorPopup.width - margin)
-        targetEditorPopup.y = Math.max(safeTop, parentHeight - targetEditorPopup.height - margin)
+        targetEditorPopup.dialogWidth = Math.min(parentWidth - margin * 2, Math.max(560, Math.round(parentWidth * 0.54)))
+        targetEditorPopup.dialogHeight = Math.min(parentHeight - safeTop - margin, Math.max(360, Math.round(parentHeight * 0.72)))
+        targetEditorPopup.dialogX = Math.max(margin, parentWidth - targetEditorPopup.dialogWidth - margin)
+        targetEditorPopup.dialogY = Math.max(safeTop, parentHeight - targetEditorPopup.dialogHeight - margin)
     }
 
     function openTargetEditor() {
@@ -403,18 +404,18 @@ Item {
         var parentHeight = pressureAdvancePopup.parent ? pressureAdvancePopup.parent.height : root.height
         var margin = root.metrics.margin
         if (root.metrics.portrait) {
-            pressureAdvancePopup.width = Math.min(parentWidth - margin * 2, Math.max(320, Math.round(parentWidth * 0.78)))
-            pressureAdvancePopup.height = Math.min(parentHeight - margin * 2, Math.max(420, Math.round(parentHeight * 0.86)))
-            pressureAdvancePopup.x = Math.round((parentWidth - pressureAdvancePopup.width) / 2)
-            pressureAdvancePopup.y = Math.round((parentHeight - pressureAdvancePopup.height) / 2)
+            pressureAdvancePopup.dialogWidth = Math.min(parentWidth - margin * 2, Math.max(320, Math.round(parentWidth * 0.78)))
+            pressureAdvancePopup.dialogHeight = Math.min(parentHeight - margin * 2, Math.max(420, Math.round(parentHeight * 0.86)))
+            pressureAdvancePopup.dialogX = Math.round((parentWidth - pressureAdvancePopup.dialogWidth) / 2)
+            pressureAdvancePopup.dialogY = Math.round((parentHeight - pressureAdvancePopup.dialogHeight) / 2)
             return
         }
 
         var safeTop = Math.max(margin, Math.round(parentHeight * 0.18))
-        pressureAdvancePopup.width = Math.min(parentWidth - margin * 2, Math.max(620, Math.round(parentWidth * 0.58)))
-        pressureAdvancePopup.height = Math.min(parentHeight - safeTop - margin, Math.max(420, Math.round(parentHeight * 0.78)))
-        pressureAdvancePopup.x = Math.max(margin, parentWidth - pressureAdvancePopup.width - margin)
-        pressureAdvancePopup.y = Math.max(safeTop, parentHeight - pressureAdvancePopup.height - margin)
+        pressureAdvancePopup.dialogWidth = Math.min(parentWidth - margin * 2, Math.max(620, Math.round(parentWidth * 0.58)))
+        pressureAdvancePopup.dialogHeight = Math.min(parentHeight - safeTop - margin, Math.max(420, Math.round(parentHeight * 0.78)))
+        pressureAdvancePopup.dialogX = Math.max(margin, parentWidth - pressureAdvancePopup.dialogWidth - margin)
+        pressureAdvancePopup.dialogY = Math.max(safeTop, parentHeight - pressureAdvancePopup.dialogHeight - margin)
     }
 
     function openPressureAdvanceEditor() {
@@ -1355,27 +1356,53 @@ Item {
         }
     }
 
-    Popup {
+    Item {
         id: pressureAdvancePopup
-        parent: Overlay.overlay
-        modal: true
-        focus: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-        width: 620
-        height: 440
-        x: 0
-        y: 0
-        padding: Math.max(8, Math.round(root.metrics.fontSize * 0.7))
+        parent: root.popupParent === null ? root : root.popupParent
+        anchors.fill: parent
+        visible: false
+        z: 200
+        focus: visible
+        property int padding: Math.max(8, Math.round(root.metrics.fontSize * 0.7))
+        property real dialogX: 0
+        property real dialogY: 0
+        property real dialogWidth: 620
+        property real dialogHeight: 440
 
-        background: Rectangle {
+        function open() {
+            pressureAdvancePopup.visible = true
+            pressureAdvancePopup.forceActiveFocus()
+        }
+
+        function close() {
+            pressureAdvancePopup.visible = false
+        }
+
+        Keys.onEscapePressed: pressureAdvancePopup.close()
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: pressureAdvancePopup.close()
+        }
+
+        Rectangle {
+            id: pressureAdvanceSurface
+            x: pressureAdvancePopup.dialogX
+            y: pressureAdvancePopup.dialogY
+            width: pressureAdvancePopup.dialogWidth
+            height: pressureAdvancePopup.dialogHeight
             color: "#101617"
             border.color: Theme.color4
             border.width: 2
             radius: Math.round(root.metrics.fontSize * 0.45)
-        }
+
+            MouseArea {
+                anchors.fill: parent
+            }
 
         ColumnLayout {
             anchors.fill: parent
+            anchors.margins: pressureAdvancePopup.padding
             spacing: Math.max(6, Math.round(root.metrics.fontSize * 0.4))
 
             Label {
@@ -1540,29 +1567,57 @@ Item {
         }
     }
 
-    Popup {
-        id: targetEditorPopup
-        parent: Overlay.overlay
-        modal: true
-        focus: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-        width: 560
-        height: 432
-        x: 0
-        y: 0
-        padding: Math.max(8, Math.round(root.metrics.fontSize * 0.7))
+    }
 
-        background: Rectangle {
+    Item {
+        id: targetEditorPopup
+        parent: root.popupParent === null ? root : root.popupParent
+        anchors.fill: parent
+        visible: false
+        z: 200
+        focus: visible
+        property int padding: Math.max(8, Math.round(root.metrics.fontSize * 0.7))
+        property real dialogX: 0
+        property real dialogY: 0
+        property real dialogWidth: 560
+        property real dialogHeight: 432
+
+        function open() {
+            targetEditorPopup.visible = true
+            targetEditorPopup.forceActiveFocus()
+        }
+
+        function close() {
+            targetEditorPopup.visible = false
+        }
+
+        Keys.onEscapePressed: targetEditorPopup.close()
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: targetEditorPopup.close()
+        }
+
+        Rectangle {
+            id: targetEditorSurface
+            x: targetEditorPopup.dialogX
+            y: targetEditorPopup.dialogY
+            width: targetEditorPopup.dialogWidth
+            height: targetEditorPopup.dialogHeight
             color: "#101617"
             border.color: Theme.color4
             border.width: 2
             radius: Math.round(root.metrics.fontSize * 0.45)
-        }
+
+            MouseArea {
+                anchors.fill: parent
+            }
 
         ColumnLayout {
             id: landscapeTargetEditor
             visible: !root.metrics.portrait
             anchors.fill: parent
+            anchors.margins: targetEditorPopup.padding
             spacing: Math.max(6, Math.round(root.metrics.fontSize * 0.4))
 
             RowLayout {
@@ -1693,6 +1748,7 @@ Item {
         ColumnLayout {
             visible: root.metrics.portrait
             anchors.fill: parent
+            anchors.margins: targetEditorPopup.padding
             spacing: Math.max(8, Math.round(root.metrics.fontSize * 0.55))
 
             Label {
@@ -1792,5 +1848,6 @@ Item {
                 }
             }
         }
+    }
     }
 }

@@ -7,6 +7,7 @@ import "../models"
 Item {
     id: root
     property var temperatureModel: null
+    property Item popupParent: null
     property int deviceColumns: 1
     property int pageIndex: 0
     property bool showTargets: true
@@ -273,18 +274,18 @@ Item {
         var region = root.bestExternalEditorRegion(minWidth, minHeight)
         if (region !== null) {
             root.targetEditorFullscreen = false
-            targetEditorPopup.width = Math.min(region.width, Math.max(minWidth, Math.round(parentWidth * 0.5)))
-            targetEditorPopup.height = Math.min(region.height, Math.max(minHeight, Math.round(parentHeight * 0.82)))
-            targetEditorPopup.x = Math.round(region.x + (region.width - targetEditorPopup.width) / 2)
-            targetEditorPopup.y = Math.round(region.y + (region.height - targetEditorPopup.height) / 2)
+            targetEditorPopup.dialogWidth = Math.min(region.width, Math.max(minWidth, Math.round(parentWidth * 0.5)))
+            targetEditorPopup.dialogHeight = Math.min(region.height, Math.max(minHeight, Math.round(parentHeight * 0.82)))
+            targetEditorPopup.dialogX = Math.round(region.x + (region.width - targetEditorPopup.dialogWidth) / 2)
+            targetEditorPopup.dialogY = Math.round(region.y + (region.height - targetEditorPopup.dialogHeight) / 2)
             return
         }
 
         root.targetEditorFullscreen = true
-        targetEditorPopup.width = Math.max(minWidth, parentWidth - margin * 2)
-        targetEditorPopup.height = Math.max(minHeight, parentHeight - margin * 2)
-        targetEditorPopup.x = Math.round((parentWidth - targetEditorPopup.width) / 2)
-        targetEditorPopup.y = Math.round((parentHeight - targetEditorPopup.height) / 2)
+        targetEditorPopup.dialogWidth = Math.max(minWidth, parentWidth - margin * 2)
+        targetEditorPopup.dialogHeight = Math.max(minHeight, parentHeight - margin * 2)
+        targetEditorPopup.dialogX = Math.round((parentWidth - targetEditorPopup.dialogWidth) / 2)
+        targetEditorPopup.dialogY = Math.round((parentHeight - targetEditorPopup.dialogHeight) / 2)
     }
 
     function openTargetEditor(deviceName, displayName, actual, target) {
@@ -713,20 +714,49 @@ Item {
         }
     }
 
-    Popup {
+    Item {
         id: targetEditorPopup
-        parent: Overlay.overlay
-        modal: true
-        focus: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-        padding: root.targetEditorMargin
+        parent: root.popupParent === null ? root : root.popupParent
+        anchors.fill: parent
+        visible: false
+        z: 200
+        focus: visible
+        property int padding: root.targetEditorMargin
+        property real dialogX: 0
+        property real dialogY: 0
+        property real dialogWidth: 0
+        property real dialogHeight: 0
 
-        background: Rectangle {
+        function open() {
+            targetEditorPopup.visible = true
+            targetEditorPopup.forceActiveFocus()
+        }
+
+        function close() {
+            targetEditorPopup.visible = false
+        }
+
+        Keys.onEscapePressed: targetEditorPopup.close()
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: targetEditorPopup.close()
+        }
+
+        Rectangle {
+            id: targetEditorSurface
+            x: targetEditorPopup.dialogX
+            y: targetEditorPopup.dialogY
+            width: targetEditorPopup.dialogWidth
+            height: targetEditorPopup.dialogHeight
             color: "#101617"
             border.color: Theme.color4
             border.width: 2
             radius: Math.round(root.fontSize * 0.45)
-        }
+
+            MouseArea {
+                anchors.fill: parent
+            }
 
         ColumnLayout {
             id: landscapeTargetEditor
@@ -734,6 +764,7 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
+            anchors.margins: targetEditorPopup.padding
             height: implicitHeight
             spacing: Math.max(6, Math.round(root.fontSize * 0.4))
 
@@ -859,6 +890,7 @@ Item {
         ColumnLayout {
             visible: root.targetEditorPortrait()
             anchors.fill: parent
+            anchors.margins: targetEditorPopup.padding
             spacing: Math.max(8, Math.round(root.fontSize * 0.55))
 
             Label {
@@ -953,5 +985,6 @@ Item {
                 }
             }
         }
+    }
     }
 }
