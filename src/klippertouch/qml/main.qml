@@ -71,7 +71,9 @@ ApplicationWindow {
     property string toastMessage: ""
     property string currentPanel: "main"
     property var panelStack: ["main"]
-    property bool startupSplashVisible: !window.printerReadyForUi() && !window.systemFaultVisible
+    property bool startupSplashHoldComplete: false
+    property bool startupSplashVisible: !window.startupSplashHoldComplete
+        || (!window.printerReadyForUi() && !window.systemFaultVisible)
     property bool systemFaultVisible: window.bootstrapComplete && !window.printerReadyForUi() && (
         window.moonrakerFaultActive()
         || window.webhooksFaultActive()
@@ -237,6 +239,8 @@ ApplicationWindow {
 
     function requestRecoveryControl(action) {
         if (action === "retry" && bridgeModel) {
+            window.startupSplashHoldComplete = false
+            startupSplashHoldTimer.restart()
             bridgeModel.requestStatusRetry()
             return
         }
@@ -368,6 +372,14 @@ ApplicationWindow {
     }
     Component.onCompleted: window.syncJobStatusPanel()
 
+    Timer {
+        id: startupSplashHoldTimer
+        interval: 2000
+        running: true
+        repeat: false
+        onTriggered: window.startupSplashHoldComplete = true
+    }
+
     Connections {
         target: window.jobControlBridgeModel
 
@@ -461,6 +473,7 @@ ApplicationWindow {
                 webhooksState: window.webhooksState
                 webhooksMessage: window.webhooksMessage
                 connecting: window.startupSplashVisible && !window.systemFaultVisible
+                ready: window.printerReadyForUi()
                 controlStatus: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastStatus : ""
                 controlError: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastError : ""
                 onRecoveryActionRequested: function(action) {

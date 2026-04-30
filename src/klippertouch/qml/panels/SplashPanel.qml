@@ -14,6 +14,7 @@ Item {
     property string controlStatus: ""
     property string controlError: ""
     property bool connecting: false
+    property bool ready: false
     property string activeDetailText: root.detail()
     property bool compactVertical: root.height < 380
     property int recoveryColumns: root.width > 560 ? 3 : 1
@@ -49,6 +50,9 @@ Item {
         if (root.webhooksState === "ready") {
             return "Printer is ready"
         }
+        if (root.ready) {
+            return "Printer is ready"
+        }
         if (root.connecting) {
             return "Connecting..."
         }
@@ -56,6 +60,9 @@ Item {
     }
 
     function headline() {
+        if (root.ready) {
+            return "Printer is ready"
+        }
         if (root.connecting) {
             if (root.moonrakerOffline()) {
                 return "Connecting to Moonraker"
@@ -78,6 +85,9 @@ Item {
     }
 
     function detail() {
+        if (root.ready) {
+            return "Preparing interface..."
+        }
         if (root.connecting) {
             if (root.moonrakerOffline()) {
                 return "Waiting for Moonraker. KlipperTouch will continue when Moonraker responds."

@@ -25,14 +25,17 @@ Item {
         : Math.max(root.touchTargetSize * 2, Math.round(root.fontSize * 7.9))
     property int pageControlSpacing: Math.max(6, Math.round(root.fontSize * 0.4))
     property int rawAvailableRows: Math.max(1, Math.floor(root.height / rowHeight))
-    property bool needsPageControls: root.modelCount() > root.deviceColumns * root.rawAvailableRows
+    property bool needsPageControls: root.modelCount(root.modelRevision) > root.deviceColumns * root.rawAvailableRows
     property int pageControlReservedHeight: root.needsPageControls
         ? root.touchTargetSize + root.pageControlSpacing
         : 0
     property int availableRows: Math.max(1, Math.floor(deviceGrid.height / rowHeight))
     property int pageSize: Math.max(1, root.deviceColumns * root.availableRows)
-    property int currentItemCount: Math.max(0, Math.min(root.pageSize, root.modelCount() - root.pageIndex * root.pageSize))
     property int modelRevision: 0
+    property int currentItemCount: Math.max(0, Math.min(
+        root.pageSize,
+        root.modelCount(root.modelRevision) - root.pageIndex * root.pageSize
+    ))
     property real targetColumnWidth: root.showTargets ? 0.27 : 0
     property real compactValueColumnWidth: root.showTargets ? 0.46 : 0.32
     property string targetEditorDeviceName: ""
@@ -92,7 +95,8 @@ Item {
         }
     }
 
-    function modelCount() {
+    function modelCount(revision) {
+        revision
         if (!root.activeTemperatureModel) {
             return 0
         }
@@ -106,7 +110,7 @@ Item {
     }
 
     function pageCount() {
-        var total = root.modelCount()
+        var total = root.modelCount(root.modelRevision)
         return Math.max(1, Math.ceil(total / root.pageSize))
     }
 
@@ -126,7 +130,7 @@ Item {
         revision
         var source = root.activeTemperatureModel
         var row = root.pageIndex * root.pageSize + pageRow
-        if (!source || row < 0 || row >= root.modelCount()) {
+        if (!source || row < 0 || row >= root.modelCount(revision)) {
             return {}
         }
         if (typeof source.rowData === "function") {
@@ -304,6 +308,7 @@ Item {
     }
 
     onPageSizeChanged: clampPageIndex()
+    onActiveTemperatureModelChanged: root.refreshVisibleItems()
 
     TemperatureDeviceModel {
         id: fallbackTemperatureModel

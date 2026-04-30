@@ -1268,7 +1268,13 @@ def test_splash_panel_handles_system_fault_states() -> None:
     assert "property string webhooksState" in main_qml
     assert "property string webhooksMessage" in main_qml
     assert "property bool bootstrapComplete" in main_qml
+    assert "property bool startupSplashHoldComplete: false" in main_qml
     assert "property bool startupSplashVisible:" in main_qml
+    assert "!window.startupSplashHoldComplete" in main_qml
+    assert "id: startupSplashHoldTimer" in main_qml
+    assert "interval: 2000" in main_qml
+    assert "window.startupSplashHoldComplete = true" in main_qml
+    assert "startupSplashHoldTimer.restart()" in main_qml
     assert "function printerReadyForUi()" in main_qml
     assert "property bool systemFaultVisible:" in main_qml
     assert "window.startupSplashVisible || window.systemFaultVisible" in main_qml
@@ -1301,6 +1307,9 @@ def test_splash_panel_handles_system_fault_states() -> None:
     assert "property string controlStatus" in panel_qml
     assert "property string controlError" in panel_qml
     assert "property bool connecting" in panel_qml
+    assert "property bool ready: false" in panel_qml
+    assert "ready: window.printerReadyForUi()" in main_qml
+    assert 'return "Preparing interface..."' in panel_qml
     assert "property bool compactVertical" in panel_qml
     assert "root.height < 380" in panel_qml
     assert "function recoveryStatusText()" in panel_qml
@@ -1492,11 +1501,13 @@ def test_temperature_device_pager_uses_page_based_navigation() -> None:
     assert "property int pageIndex: 0" in qml
     assert "property int pageSize:" in qml
     assert "property int currentItemCount:" in qml
+    assert "root.modelCount(root.modelRevision)" in qml
     assert "function pageCount()" in qml
     assert "function pagedModel()" in qml
     assert "function itemAt(pageRow, revision)" in qml
     assert "property int modelRevision: 0" in qml
     assert "function refreshVisibleItems()" in qml
+    assert "onActiveTemperatureModelChanged: root.refreshVisibleItems()" in qml
     assert "function goToPreviousPage()" in qml
     assert "function goToNextPage()" in qml
     assert "function onDataChanged()" in qml
