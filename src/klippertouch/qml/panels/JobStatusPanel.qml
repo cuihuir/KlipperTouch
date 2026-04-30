@@ -45,6 +45,7 @@ Item {
     property string controlStatus: ""
     property string controlError: ""
     property string requestedPrintState: ""
+    property int ultraWideInfoPage: 0
     readonly property color neutralAccent: "#8b9496"
     readonly property color mutedDangerAccent: "#9a8582"
     readonly property color accentColor: root.stateAccentColor()
@@ -1076,6 +1077,27 @@ Item {
         ctx.restore()
     }
 
+    function ultraWideInfoPageModel(page) {
+        if (page === 1) {
+            return [
+                {"label": "Filament", "value": root.filamentLabel()},
+                {"label": "File total", "value": root.fileFilamentTotalLabel()},
+                {"label": "Flow", "value": root.percentLabel(root.extrudeFactor)},
+                {"label": "X", "value": root.positionX.toFixed(2) + " mm"},
+                {"label": "Y", "value": root.positionY.toFixed(2) + " mm"},
+                {"label": "Z", "value": root.positionZ.toFixed(2) + " mm"}
+            ]
+        }
+        return [
+            {"label": "Elapsed", "value": root.durationLabel(root.printDuration)},
+            {"label": "Remaining", "value": root.remainingLabel()},
+            {"label": "Total", "value": root.durationLabel(root.totalDuration)},
+            {"label": "Layer", "value": root.layerLabel()},
+            {"label": "Z offset", "value": root.zOffsetCompactLabel()},
+            {"label": "Speed", "value": root.percentLabel(root.speedFactor)}
+        ]
+    }
+
     function summaryZoneRows(zone) {
         if (zone === "time") {
             return [
@@ -1427,34 +1449,87 @@ Item {
                         font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.94))
                     }
 
-                    GridLayout {
-                        id: ultraWideKeyInfoGrid
+                    ColumnLayout {
+                        id: ultraWideInfoTextList
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        columns: 3
-                        rowSpacing: root.metrics.gap
-                        columnSpacing: root.metrics.gap
+                        spacing: Math.max(7, Math.round(root.metrics.fontSize * 0.42))
 
                         Repeater {
-                            model: [
-                                {"label": "Elapsed", "value": root.durationLabel(root.printDuration)},
-                                {"label": "Total", "value": root.durationLabel(root.totalDuration)},
-                                {"label": "Remain", "value": root.remainingLabel()},
-                                {"label": "Layer", "value": root.layerLabel()},
-                                {"label": "Used", "value": root.filamentLabel()},
-                                {"label": "Total", "value": root.fileFilamentTotalLabel()},
-                                {"label": "Z", "value": root.zOffsetCompactLabel()},
-                                {"label": "Speed", "value": root.percentLabel(root.speedFactor)},
-                                {"label": "Flow", "value": root.percentLabel(root.extrudeFactor)}
-                            ]
+                            model: root.ultraWideInfoPageModel(root.ultraWideInfoPage)
 
-                            MetricPill {
+                            delegate: RowLayout {
                                 Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                label: modelData.label
-                                value: modelData.value
-                                accent: "#263233"
+                                Layout.preferredHeight: Math.max(28, Math.round(root.metrics.fontSize * 1.85))
+                                spacing: root.metrics.gap
+
+                                Label {
+                                    Layout.preferredWidth: Math.max(110, Math.round(root.metrics.fontSize * 7.0))
+                                    color: Theme.mutedText
+                                    text: modelData.label
+                                    elide: Text.ElideRight
+                                    verticalAlignment: Text.AlignVCenter
+                                    font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 0.96))
+                                }
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    color: Theme.text
+                                    text: modelData.value
+                                    elide: Text.ElideRight
+                                    horizontalAlignment: Text.AlignRight
+                                    verticalAlignment: Text.AlignVCenter
+                                    font.bold: true
+                                    font.pixelSize: Math.max(19, Math.round(root.metrics.fontSize * 1.28))
+                                }
                             }
+                        }
+                    }
+
+                    RowLayout {
+                        id: ultraWideInfoPageControls
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: Math.max(34, Math.round(root.metrics.fontSize * 2.1))
+                        spacing: root.metrics.gap
+
+                        TactileButton {
+                            Layout.preferredWidth: Math.max(88, Math.round(root.metrics.fontSize * 5.4))
+                            Layout.fillHeight: true
+                            text: "Prev"
+                            enabled: root.ultraWideInfoPage > 0
+                            fontSize: root.metrics.fontSize
+                            iconName: "back"
+                            baseColor: "#1e292b"
+                            pressedColor: "#142022"
+                            disabledColor: "#111819"
+                            accentColor: root.neutralAccent
+                            disabledAccentColor: "#263233"
+                            iconSize: Math.max(18, Math.round(root.metrics.fontSize * 1.1))
+                            onClicked: root.ultraWideInfoPage = Math.max(0, root.ultraWideInfoPage - 1)
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.mutedText
+                            text: (root.ultraWideInfoPage + 1) + " / 2"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.9))
+                        }
+
+                        TactileButton {
+                            Layout.preferredWidth: Math.max(88, Math.round(root.metrics.fontSize * 5.4))
+                            Layout.fillHeight: true
+                            text: "Next"
+                            enabled: root.ultraWideInfoPage < 1
+                            fontSize: root.metrics.fontSize
+                            baseColor: "#1e292b"
+                            pressedColor: "#142022"
+                            disabledColor: "#111819"
+                            accentColor: root.neutralAccent
+                            disabledAccentColor: "#263233"
+                            iconSize: Math.max(18, Math.round(root.metrics.fontSize * 1.1))
+                            onClicked: root.ultraWideInfoPage = Math.min(1, root.ultraWideInfoPage + 1)
                         }
                     }
                 }

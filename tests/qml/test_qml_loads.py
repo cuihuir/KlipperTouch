@@ -1051,7 +1051,18 @@ def test_job_status_summary_scrolls_on_small_portrait_screens() -> None:
     assert "id: ultraWideStatusPill" in qml
     assert "id: ultraWideInfoCard" in qml
     assert "Layout.preferredWidth: Math.max(560, Math.round(root.width * 0.34))" in qml
-    assert "id: ultraWideKeyInfoGrid" in qml
+    assert "property int ultraWideInfoPage" in qml
+    assert "function ultraWideInfoPageModel(page)" in qml
+    assert "id: ultraWideInfoTextList" in qml
+    assert "root.ultraWideInfoPageModel(root.ultraWideInfoPage)" in qml
+    assert "id: ultraWideInfoPageControls" in qml
+    assert "root.ultraWideInfoPage = Math.max(0, root.ultraWideInfoPage - 1)" in qml
+    assert "root.ultraWideInfoPage = Math.min(1, root.ultraWideInfoPage + 1)" in qml
+    assert "id: ultraWideKeyInfoGrid" not in qml
+    ultra_wide_info_section = qml.split("id: ultraWideInfoCard", 1)[1].split(
+        "id: ultraWideActionPanel", 1
+    )[0]
+    assert "MetricPill" not in ultra_wide_info_section
     assert "id: ultraWideActionGrid" in qml
     assert "Layout.preferredHeight: root.ultraWideActionButtonHeight()" in qml
     assert "contentHeight: summaryContent.implicitHeight + root.summaryBottomSafeArea()" in qml
