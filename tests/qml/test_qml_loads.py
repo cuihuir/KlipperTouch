@@ -1043,9 +1043,14 @@ def test_job_status_summary_scrolls_on_small_portrait_screens() -> None:
     assert "id: ultraWideSummaryGrid" in qml
     assert 'visible: !(root.detailPage === "summary" && root.metrics.ultraWide)' in qml
     assert "id: ultraWideThumbnailFrame" in qml
+    assert "id: ultraWideProgressDialCard" in qml
+    assert "id: ultraWideProgressCanvas" in qml
+    assert "function drawUltraWideProgressDial(ctx)" in qml
+    assert "ctx.arc(center, center, radius" in qml
     assert "id: ultraWideFileHeader" in qml
     assert "id: ultraWideStatusPill" in qml
-    assert "id: ultraWideProgressBar" in qml
+    assert "id: ultraWideInfoCard" in qml
+    assert "Layout.preferredWidth: Math.max(560, Math.round(root.width * 0.34))" in qml
     assert "id: ultraWideKeyInfoGrid" in qml
     assert "id: ultraWideActionGrid" in qml
     assert "Layout.preferredHeight: root.ultraWideActionButtonHeight()" in qml

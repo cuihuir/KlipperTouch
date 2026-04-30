@@ -1052,6 +1052,30 @@ Item {
         return Math.max(98, Math.min(132, Math.round((root.height - root.metrics.margin * 2 - root.metrics.gap * 8) / 2.7)))
     }
 
+    function drawUltraWideProgressDial(ctx) {
+        var size = Math.min(ultraWideProgressCanvas.width, ultraWideProgressCanvas.height)
+        ctx.clearRect(0, 0, ultraWideProgressCanvas.width, ultraWideProgressCanvas.height)
+        if (size <= 0) {
+            return
+        }
+        var center = size / 2
+        var radius = Math.max(1, center - Math.max(12, Math.round(root.metrics.fontSize * 1.0)))
+        var lineWidth = Math.max(12, Math.round(root.metrics.fontSize * 0.9))
+        ctx.save()
+        ctx.translate((ultraWideProgressCanvas.width - size) / 2, (ultraWideProgressCanvas.height - size) / 2)
+        ctx.lineCap = "round"
+        ctx.lineWidth = lineWidth
+        ctx.strokeStyle = "#172426"
+        ctx.beginPath()
+        ctx.arc(center, center, radius, 0, Math.PI * 2)
+        ctx.stroke()
+        ctx.strokeStyle = root.accentColor
+        ctx.beginPath()
+        ctx.arc(center, center, radius, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * root.stateProgressValue())
+        ctx.stroke()
+        ctx.restore()
+    }
+
     function summaryZoneRows(zone) {
         if (zone === "time") {
             return [
@@ -1297,12 +1321,68 @@ Item {
                     }
                 }
 
+                Rectangle {
+                    id: ultraWideProgressDialCard
+                    Layout.preferredWidth: root.ultraWideThumbnailSize() + root.metrics.gap * 2
+                    Layout.fillHeight: true
+                    color: "#081112"
+                    border.color: "#263233"
+                    border.width: 1
+                    radius: Math.round(root.metrics.fontSize * 0.32)
+                    clip: true
+
+                    Canvas {
+                        id: ultraWideProgressCanvas
+                        width: root.ultraWideThumbnailSize()
+                        height: width
+                        anchors.centerIn: parent
+                        antialiasing: true
+                        renderStrategy: Canvas.Threaded
+                        onPaint: root.drawUltraWideProgressDial(getContext("2d"))
+                        onWidthChanged: requestPaint()
+                        onHeightChanged: requestPaint()
+                        Component.onCompleted: requestPaint()
+                    }
+
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        width: Math.max(120, Math.round(root.ultraWideThumbnailSize() * 0.62))
+                        spacing: Math.max(2, Math.round(root.metrics.fontSize * 0.16))
+
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.text
+                            text: Math.round(root.stateProgressValue() * 100) + "%"
+                            horizontalAlignment: Text.AlignHCenter
+                            font.bold: true
+                            font.pixelSize: Math.max(44, Math.round(root.metrics.fontSize * 3.2))
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.mutedText
+                            text: root.timePrimaryLabel()
+                            horizontalAlignment: Text.AlignHCenter
+                            font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.86))
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.text
+                            text: root.timePrimaryValue()
+                            horizontalAlignment: Text.AlignHCenter
+                            elide: Text.ElideRight
+                            font.pixelSize: Math.max(24, Math.round(root.metrics.fontSize * 1.6))
+                        }
+                    }
+                }
+
                 StatusCard {
-                    id: ultraWideProgressCard
-                    Layout.preferredWidth: Math.max(430, Math.round(root.width * 0.30))
+                    id: ultraWideInfoCard
+                    Layout.preferredWidth: Math.max(560, Math.round(root.width * 0.34))
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    accent: root.accentColor
+                    accent: "#354346"
 
                     RowLayout {
                         id: ultraWideFileHeader
@@ -1347,118 +1427,11 @@ Item {
                         font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.94))
                     }
 
-                    ProgressBar {
-                        id: ultraWideProgressBar
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: Math.max(24, Math.round(root.metrics.fontSize * 1.55))
-                        value: root.stateProgressValue()
-                        background: Rectangle {
-                            color: "#050809"
-                            border.color: "#2c3b3e"
-                            border.width: 1
-                            radius: height / 2
-                        }
-                        contentItem: Item {
-                            Rectangle {
-                                anchors.fill: parent
-                                anchors.margins: 2
-                                color: "#071112"
-                                radius: height / 2
-
-                                Rectangle {
-                                    anchors.left: parent.left
-                                    anchors.top: parent.top
-                                    anchors.bottom: parent.bottom
-                                    width: Math.max(height, ultraWideProgressBar.visualPosition * parent.width)
-                                    radius: height / 2
-                                    gradient: Gradient {
-                                        GradientStop { position: 0.0; color: "#687477" }
-                                        GradientStop { position: 1.0; color: root.accentColor }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: root.metrics.gap
-
-                        Label {
-                            color: Theme.text
-                            text: Math.round(root.stateProgressValue() * 100) + "%"
-                            font.bold: true
-                            font.pixelSize: Math.max(34, Math.round(root.metrics.fontSize * 2.25))
-                        }
-
-                        ColumnLayout {
-                            Layout.fillWidth: true
-                            spacing: 0
-
-                            Label {
-                                Layout.fillWidth: true
-                                color: Theme.text
-                                text: root.timePrimaryLabel()
-                                horizontalAlignment: Text.AlignRight
-                                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.82))
-                            }
-
-                            Label {
-                                Layout.fillWidth: true
-                                color: Theme.mutedText
-                                text: root.timePrimaryValue()
-                                horizontalAlignment: Text.AlignRight
-                                elide: Text.ElideRight
-                                font.pixelSize: Math.max(21, Math.round(root.metrics.fontSize * 1.35))
-                            }
-                        }
-                    }
-
-                    Item {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: root.metrics.gap
-
-                        MetricPill {
-                            Layout.fillWidth: true
-                            label: "Layer"
-                            value: root.layerLabel()
-                            accent: "#263233"
-                        }
-
-                        MetricPill {
-                            Layout.fillWidth: true
-                            label: "Used"
-                            value: root.filamentLabel()
-                            accent: "#263233"
-                        }
-                    }
-                }
-
-                StatusCard {
-                    id: ultraWideInfoCard
-                    Layout.preferredWidth: Math.max(340, Math.round(root.width * 0.22))
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    accent: "#354346"
-
-                    Label {
-                        Layout.fillWidth: true
-                        color: Theme.text
-                        text: "Key Info"
-                        font.bold: true
-                        font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.08))
-                    }
-
                     GridLayout {
                         id: ultraWideKeyInfoGrid
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        columns: 2
+                        columns: 3
                         rowSpacing: root.metrics.gap
                         columnSpacing: root.metrics.gap
 
@@ -1466,10 +1439,13 @@ Item {
                             model: [
                                 {"label": "Elapsed", "value": root.durationLabel(root.printDuration)},
                                 {"label": "Total", "value": root.durationLabel(root.totalDuration)},
+                                {"label": "Remain", "value": root.remainingLabel()},
+                                {"label": "Layer", "value": root.layerLabel()},
+                                {"label": "Used", "value": root.filamentLabel()},
+                                {"label": "Total", "value": root.fileFilamentTotalLabel()},
                                 {"label": "Z", "value": root.zOffsetCompactLabel()},
                                 {"label": "Speed", "value": root.percentLabel(root.speedFactor)},
-                                {"label": "Flow", "value": root.percentLabel(root.extrudeFactor)},
-                                {"label": "Remain", "value": root.remainingLabel()}
+                                {"label": "Flow", "value": root.percentLabel(root.extrudeFactor)}
                             ]
 
                             MetricPill {
