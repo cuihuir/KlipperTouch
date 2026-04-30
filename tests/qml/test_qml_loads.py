@@ -206,6 +206,36 @@ def test_material_dark_svg_assets_are_vendored() -> None:
     assert {path.name for path in images.glob("*.svg")} == expected
 
 
+def test_action_button_icon_contract_is_explicit() -> None:
+    qml_paths = [
+        Path("src/klippertouch/qml/panels/MovePanel.qml"),
+        Path("src/klippertouch/qml/panels/ExtrudePanel.qml"),
+        Path("src/klippertouch/qml/panels/SplashPanel.qml"),
+    ]
+
+    for qml_path in qml_paths:
+        for line in qml_path.read_text(encoding="utf-8").splitlines():
+            if '{"label":' in line and '"action":' in line and '"direction":' not in line:
+                assert '"iconName":' in line, f"{qml_path}:{line.strip()}"
+
+    job_qml = Path("src/klippertouch/qml/panels/JobStatusPanel.qml").read_text(
+        encoding="utf-8"
+    )
+    files_qml = Path("src/klippertouch/qml/panels/FilesPanel.qml").read_text(
+        encoding="utf-8"
+    )
+    tactile_qml = Path("src/klippertouch/qml/components/TactileButton.qml").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'iconName: modelData.delta < 0 ? "back" : "confirm"' in job_qml
+    assert 'text: "Skip"' in job_qml
+    assert 'iconName: "object"' in job_qml
+    assert "property string iconName" in files_qml
+    assert "property string iconName" in tactile_qml
+    assert "Theme.iconSource(control.iconName)" in tactile_qml
+
+
 def test_qml_theme_library_centralizes_material_dark_tokens() -> None:
     theme = Path("src/klippertouch/qml/Theme.js").read_text(encoding="utf-8")
 

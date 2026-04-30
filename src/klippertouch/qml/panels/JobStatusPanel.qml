@@ -1484,6 +1484,7 @@ Item {
                                     Layout.preferredHeight: root.jobButtonHeight
                                     Layout.alignment: Qt.AlignVCenter
                                     text: modelData.text
+                                    iconName: modelData.delta < 0 ? "back" : "confirm"
                                     onClicked: {
                                         if (adjustmentCard.adjustmentTarget === "z") {
                                             root.zOffsetAdjustRequested(modelData.delta)
@@ -1610,6 +1611,7 @@ Item {
                                 Layout.preferredHeight: root.jobButtonHeight
                                 Layout.alignment: Qt.AlignVCenter
                                 text: "Skip"
+                                iconName: "object"
                                 enabled: root.excludedObjectNames.indexOf(modelData) < 0
                                 onClicked: root.requestJobAction("skip", modelData)
                             }
