@@ -31,6 +31,7 @@ Item {
         {"label": "W", "actionPlus": "w_plus", "actionMinus": "w_minus", "position": "right"}
     ]
     property var actionButtons: [
+        {"label": "Home All", "action": "home_all", "hint": "XYZ", "iconName": "home"},
         {"label": "Disable Motors", "action": "disable_motors", "hint": "M84", "iconName": "motor-off"},
         {"label": "Bed Tilt", "action": "bed_tilt", "hint": "UVW", "iconName": "tilt", "requires": "five_axis"},
         {"label": "More", "action": "more", "hint": "settings", "iconName": "settings"}
@@ -120,12 +121,29 @@ Item {
 
     function visibleActionButtons() {
         var actions = []
+        var moreAction = null
         for (var index = 0; index < root.actionButtons.length; index += 1) {
-            if (root.fiveAxisActionVisible(root.actionButtons[index])) {
-                actions.push(root.actionButtons[index])
+            var action = root.actionButtons[index]
+            if (action.action === "more") {
+                moreAction = action
+                continue
+            }
+            if (root.fiveAxisActionVisible(action)) {
+                actions.push(action)
             }
         }
+        if (moreAction !== null) {
+            var columns = root.actionButtonColumns()
+            if (columns > 1 && actions.length % columns === 0) {
+                actions.push({"placeholder": true})
+            }
+            actions.push(moreAction)
+        }
         return actions
+    }
+
+    function actionButtonColumns() {
+        return root.metrics.portrait || root.fiveAxisAvailable ? 2 : 1
     }
 
     function visibleMoreActions() {
@@ -949,7 +967,7 @@ Item {
                     y: root.metrics.portrait ? zMovePad.y : Math.round((parent.height - height) / 2)
                     anchors.right: parent.right
                     anchors.rightMargin: 0
-                    columns: root.metrics.portrait || root.fiveAxisAvailable ? 2 : 1
+                    columns: root.actionButtonColumns()
                     rows: Math.ceil(root.visibleActionButtons().length / columns)
                     rowSpacing: root.motionSectionGap
                     columnSpacing: root.motionSectionGap
@@ -957,29 +975,37 @@ Item {
                     Repeater {
                         model: root.visibleActionButtons()
 
-                        ActionIconButton {
+                        Item {
                             required property var modelData
 
                             Layout.fillWidth: true
                             Layout.fillHeight: true
-                            title: modelData.label
-                            hint: root.actionHint(modelData.action, modelData.hint)
-                            iconName: modelData.iconName
-                            enabled: root.actionAllowed(modelData.action)
-                            selected: modelData.action === "more"
-                                && (root.moreVisible || root.detailPage === "more")
 
-                            MouseArea {
+                            ActionIconButton {
                                 anchors.fill: parent
-                                enabled: root.actionAllowed(modelData.action)
-                                onPressedChanged: parent.pressed = pressed
-                                onClicked: {
-                                    if (modelData.action === "bed_tilt") {
-                                        root.showBedTilt()
-                                    } else if (modelData.action === "more") {
-                                        root.showMore()
-                                    } else {
-                                        root.requestConfirmedAction(modelData.action)
+                                visible: !modelData.placeholder
+                                title: modelData.placeholder ? "" : modelData.label
+                                hint: modelData.placeholder
+                                    ? ""
+                                    : root.actionHint(modelData.action, modelData.hint)
+                                iconName: modelData.placeholder ? "" : modelData.iconName
+                                enabled: !modelData.placeholder && root.actionAllowed(modelData.action)
+                                selected: !modelData.placeholder
+                                    && modelData.action === "more"
+                                    && (root.moreVisible || root.detailPage === "more")
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    enabled: !modelData.placeholder && root.actionAllowed(modelData.action)
+                                    onPressedChanged: parent.pressed = pressed
+                                    onClicked: {
+                                        if (modelData.action === "bed_tilt") {
+                                            root.showBedTilt()
+                                        } else if (modelData.action === "more") {
+                                            root.showMore()
+                                        } else {
+                                            root.requestConfirmedAction(modelData.action)
+                                        }
                                     }
                                 }
                             }

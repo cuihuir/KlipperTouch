@@ -787,7 +787,17 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     )[0]
     assert '"action": "bed_tilt"' in action_buttons
     assert '"action": "disable_motors"' in action_buttons
+    assert '"action": "home_all"' in action_buttons
     assert '"action": "more"' in action_buttons
+    assert action_buttons.index('"action": "home_all"') < action_buttons.index(
+        '"action": "disable_motors"'
+    )
+    assert action_buttons.index('"action": "disable_motors"') < action_buttons.index(
+        '"action": "bed_tilt"'
+    )
+    assert action_buttons.index('"action": "bed_tilt"') < action_buttons.index(
+        '"action": "more"'
+    )
     assert '"action": "home_uvw"' not in action_buttons
     assert '"action": "accelerator_level"' not in action_buttons
     assert '"label": "Home All"' in qml
@@ -803,6 +813,11 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert '"action": "z_tilt_adjust"' in qml
     assert '"iconName": "tilt"' in qml
     assert "function visibleMoreActions()" in qml
+    assert "function actionButtonColumns()" in qml
+    assert "var moreAction = null" in qml
+    assert 'action.action === "more"' in qml
+    assert "actions.length % columns === 0" in qml
+    assert '{"placeholder": true}' in qml
     assert "function positionItems()" in qml
     assert "property bool confirmVisible" in qml
     assert "property string pendingConfirmAction" in qml
@@ -1988,7 +2003,8 @@ def test_move_panel_is_locked_and_responsive() -> None:
     assert 'return "Z tilt unavailable"' in qml
     assert "var reason = root.actionUnavailableReason(action)" in qml
     assert "return reason.length > 0 ? reason : fallback" in qml
-    assert "hint: root.actionHint(modelData.action, modelData.hint)" in qml
+    assert 'hint: modelData.placeholder' in qml
+    assert ': root.actionHint(modelData.action, modelData.hint)' in qml
     assert 'hint: root.actionHint("home_uvw", "UVW_HOME")' in qml
     assert 'hint: root.actionHint("accelerator_level", "MOVE=1")' in qml
     assert 'hint: root.actionHint("z_tilt_adjust", "adjust")' in qml
@@ -1996,7 +2012,7 @@ def test_move_panel_is_locked_and_responsive() -> None:
     assert 'return "#d8dee0"' in qml
     assert 'color: root.controlFeedbackColor()' in qml
     assert 'root.axisHomed(root.actionAxis(action))' in qml
-    assert "enabled: root.actionAllowed(modelData.action)" in qml
+    assert "enabled: !modelData.placeholder && root.actionAllowed(modelData.action)" in qml
     assert 'enabled: root.actionAllowed("home_xy")' in qml
     assert 'enabled: root.actionAllowed("home_z")' in qml
     assert "root.metrics.portrait" in qml
