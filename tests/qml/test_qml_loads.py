@@ -713,6 +713,7 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "root.fileModel.fileLayerHeightLabelFor(root.printFilename)" in qml
     assert "id: jobThumbnail" in qml
     assert "source: root.fileModel && root.fileModel.thumbnailRevision >= 0" in qml
+    assert "jobThumbnail.status === Image.Ready" in qml
     assert "id: thumbnailFrame" in qml
     assert "id: thumbnailPlaceholder" in qml
     assert "visible: !jobThumbnail.visible" in qml
@@ -728,6 +729,8 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "root.filamentLabel()" in qml
     assert "root.layerLabel()" in qml
     assert "function remainingLabel" in qml
+    assert "function timePrimaryLabel()" in qml
+    assert "function timePrimaryValue()" in qml
     assert "function stateHeadline" in qml
     assert "function stateMessage" in qml
     assert "function stateAccentColor" in qml
@@ -756,6 +759,8 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "Completed" in qml
     assert "Printer error" in qml
     assert "Remaining" in qml
+    assert 'return root.terminalJobState() ? "Elapsed" : "Remaining"' in qml
+    assert "return root.terminalJobState()" in qml
     assert "id: jobActionGrid" in qml
     assert "component StatusCard: Rectangle" in qml
     assert "component MetricPill: Rectangle" in qml
@@ -779,7 +784,11 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "gradient: Gradient" in qml
     assert "id: statusPill" in qml
     assert "id: jobHeroLayout" in qml
+    assert "function compactHeroLayout()" in qml
+    assert "columns: root.compactHeroLayout() ? 2 : 1" in qml
     assert "id: compactProgressBox" in qml
+    assert "id: portraitMetricStrip" in qml
+    assert "visible: root.metrics.portrait" in qml
     assert "function jobHeroHeight()" in qml
     assert "function temperatureStripHeight()" in qml
     assert "function summaryTemperatureStripVisible()" in qml
@@ -872,7 +881,8 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "root.pendingJobAction === \"cancel\"" in qml
     assert 'root.pendingJobAction === "skip"' in qml
     assert 'root.pendingJobAction === "staged_pause"' not in qml
-    assert 'root.confirmationRequired() ? "Confirmation preview only" : "Action staged"' in qml
+    assert 'root.confirmationRequired() ? "Confirm action" : "Action sent"' in qml
+    assert "Confirmation preview only" not in qml
     assert "readonly property bool confirmButtonVisible: root.confirmationRequired()" in qml
     assert "visible: previewRoot.confirmButtonVisible" in qml
     assert 'text: "Confirm"' in qml
@@ -880,6 +890,9 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert 'text: "Dismiss"' in qml
     assert "onClicked: root.clearJobAction()" in qml
     assert "id: advancedPage" in qml
+    assert "id: advancedControlGrid" in qml
+    assert "function advancedCardHeight()" in qml
+    assert "Layout.preferredHeight: root.advancedCardHeight()" in qml
     assert "id: excludePage" in qml
     assert "root.currentObject" in qml
     assert "model: root.excludeObjectNames" in qml
@@ -902,13 +915,15 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "root.clearJobAction()" in qml
     assert "root.jobActionRequested(root.pendingJobAction, root.pendingJobObject)" in qml
     assert "root.zOffsetLabel()" in qml
+    assert "function zOffsetCompactLabel()" in qml
+    assert "root.zOffsetCompactLabel()" in qml
     assert "root.percentLabel(root.speedFactor)" in qml
     assert "root.percentLabel(root.extrudeFactor)" in qml
     assert "signal zOffsetAdjustRequested(real delta)" in qml
     assert "signal speedFactorAdjustRequested(real delta)" in qml
     assert "signal extrudeFactorAdjustRequested(real delta)" in qml
     assert "id: advancedControlRepeater" in qml
-    assert "Layout.maximumHeight: 0" in qml
+    assert "Layout.maximumHeight: 0" not in qml
     assert "id: advancedPageSpacer" in qml
     assert "root.zOffsetAdjustRequested(modelData.delta)" in qml
     assert "root.speedFactorAdjustRequested(modelData.delta)" in qml
@@ -937,6 +952,8 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert '"label": "Homed axes"' in qml
     assert '"label": "Filament used"' in qml
     assert '"label": "Flow factor"' in qml
+    assert '"label": "File estimate"' not in qml
+    assert '"label": "Filament estimate"' not in qml
     assert "id: quickInfoGrid" not in qml
     assert "function quickInfoLimit()" not in qml
     assert "function summaryInfoModel()" not in qml
@@ -990,7 +1007,9 @@ def test_job_status_summary_scrolls_on_small_portrait_screens() -> None:
     assert "function summaryBottomSafeArea()" in qml
     assert "function summaryZoneGridHeight()" in qml
     assert "Layout.preferredHeight: root.summaryZoneGridHeight()" in qml
-    assert "return Math.max(168, Math.round(root.metrics.fontSize * 10.2))" in qml
+    assert "function compactHeroLayout()" in qml
+    assert "Math.max(132, Math.round(root.metrics.fontSize * 8.1))" in qml
+    assert "Math.max(168, Math.round(root.metrics.fontSize * 10.2))" in qml
     assert "Math.max(72, Math.round(root.metrics.fontSize * 4.2))" in qml
     assert "ScrollBar.vertical: ScrollBar" in qml
 

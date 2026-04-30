@@ -105,8 +105,13 @@ Item {
             spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.3))
 
             Label {
+                Layout.preferredWidth: Math.max(
+                    14,
+                    Math.round(root.metrics.fontSize * (metricRoot.label.length <= 1 ? 1.2 : 3.2))
+                )
                 color: Theme.mutedText
                 text: metricRoot.label
+                elide: Text.ElideRight
                 font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
             }
 
@@ -173,7 +178,7 @@ Item {
                 Label {
                     Layout.fillWidth: true
                     color: Theme.text
-                    text: root.confirmationRequired() ? "Confirmation preview only" : "Action staged"
+                    text: root.confirmationRequired() ? "Confirm action" : "Action sent"
                     font.bold: true
                     font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.88))
                 }
@@ -357,6 +362,16 @@ Item {
         return root.durationLabel(Math.max(0, root.totalDuration - root.printDuration))
     }
 
+    function timePrimaryLabel() {
+        return root.terminalJobState() ? "Elapsed" : "Remaining"
+    }
+
+    function timePrimaryValue() {
+        return root.terminalJobState()
+            ? root.durationLabel(root.printDuration)
+            : root.remainingLabel()
+    }
+
     function filamentLabel() {
         return (root.filamentUsed / 1000).toFixed(1) + " m"
     }
@@ -391,6 +406,10 @@ Item {
 
     function zOffsetLabel() {
         return root.zOffset.toFixed(2) + " mm"
+    }
+
+    function zOffsetCompactLabel() {
+        return root.zOffset.toFixed(2)
     }
 
     function positionLabel() {
@@ -649,9 +668,21 @@ Item {
 
     function jobHeroHeight() {
         if (root.metrics.portrait) {
-            return Math.max(168, Math.round(root.metrics.fontSize * 10.2))
+            return root.compactHeroLayout()
+                ? Math.max(132, Math.round(root.metrics.fontSize * 8.1))
+                : Math.max(168, Math.round(root.metrics.fontSize * 10.2))
         }
         return Math.max(146, Math.round(root.metrics.fontSize * 9.2))
+    }
+
+    function compactHeroLayout() {
+        return !root.metrics.portrait || root.width >= 420
+    }
+
+    function advancedCardHeight() {
+        return root.metrics.portrait
+            ? Math.max(88, Math.round(root.metrics.fontSize * 5.6))
+            : Math.max(70, Math.round(root.metrics.fontSize * 4.3))
     }
 
     function temperatureStripHeight() {
@@ -712,8 +743,8 @@ Item {
         return [
             {
                 "title": "Time",
-                "primaryLabel": "Remaining",
-                "primaryValue": root.remainingLabel(),
+                "primaryLabel": root.timePrimaryLabel(),
+                "primaryValue": root.timePrimaryValue(),
                 "rows": root.summaryZoneRows("time")
             },
             {
@@ -757,8 +788,6 @@ Item {
                 {"label": "Remaining", "value": root.remainingLabel()},
                 {"label": "Estimated total", "value": root.durationLabel(root.totalDuration)},
                 {"label": "Slicer estimate", "value": root.fileEstimatedTimeLabel()},
-                {"label": "File estimate", "value": "-"},
-                {"label": "Filament estimate", "value": "-"},
                 {"label": "File size", "value": root.fileModel ? root.fileModel.fileSizeLabelFor(root.printFilename) : "-"},
                 {"label": "Modified", "value": root.fileModel ? root.fileModel.fileModifiedLabelFor(root.printFilename) : "-"},
                 {"label": "Path", "value": root.fileModel ? root.fileModel.filePathFor(root.printFilename) : ""}
@@ -887,18 +916,22 @@ Item {
                             id: jobHeroLayout
                             Layout.fillWidth: true
                             Layout.fillHeight: true
-                            columns: root.metrics.portrait ? 1 : 2
-                            rows: root.metrics.portrait ? 2 : 1
+                            columns: root.compactHeroLayout() ? 2 : 1
+                            rows: root.compactHeroLayout() ? 1 : 2
                             rowSpacing: root.metrics.gap
                             columnSpacing: root.metrics.gap
 
                             Rectangle {
                                 id: thumbnailFrame
                                 Layout.preferredWidth: root.metrics.portrait
-                                    ? Math.min(parent.width, Math.max(180, Math.round(root.metrics.fontSize * 13.6)))
+                                    ? root.compactHeroLayout()
+                                        ? Math.max(96, Math.round(root.metrics.fontSize * 6.6))
+                                        : Math.min(parent.width, Math.max(180, Math.round(root.metrics.fontSize * 13.6)))
                                     : Math.max(126, Math.round(root.metrics.fontSize * 8.8))
                                 Layout.preferredHeight: root.metrics.portrait
-                                    ? Math.max(72, Math.round(root.metrics.fontSize * 4.2))
+                                    ? root.compactHeroLayout()
+                                        ? Math.max(96, Math.round(root.metrics.fontSize * 6.6))
+                                        : Math.max(72, Math.round(root.metrics.fontSize * 4.2))
                                     : Math.max(96, Math.round(root.metrics.fontSize * 6.6))
                                 Layout.fillHeight: !root.metrics.portrait
                                 Layout.alignment: Qt.AlignHCenter
@@ -916,7 +949,12 @@ Item {
                                         ? root.fileModel.filePreviewThumbnailUrlFor(root.printFilename)
                                         : ""
                                     fillMode: Image.PreserveAspectFit
+                                    asynchronous: source.toString().indexOf("file:") !== 0
+                                    cache: true
+                                    sourceSize.width: width
+                                    sourceSize.height: height
                                     visible: source.toString().length > 0
+                                        && jobThumbnail.status === Image.Ready
                                 }
 
                                 ColumnLayout {
@@ -1019,6 +1057,28 @@ Item {
                                         horizontalAlignment: Text.AlignRight
                                         verticalAlignment: Text.AlignVCenter
                                         font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
+                                    }
+                                }
+
+                                RowLayout {
+                                    id: portraitMetricStrip
+                                    visible: root.metrics.portrait
+                                    Layout.fillWidth: true
+                                    spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.28))
+
+                                    Repeater {
+                                        model: [
+                                            {"label": "Z", "value": root.zOffsetCompactLabel()},
+                                            {"label": "S", "value": root.percentLabel(root.speedFactor)},
+                                            {"label": "F", "value": root.percentLabel(root.extrudeFactor)}
+                                        ]
+
+                                        MetricPill {
+                                            Layout.fillWidth: true
+                                            label: modelData.label
+                                            value: modelData.value
+                                            accent: "#263233"
+                                        }
                                     }
                                 }
 
@@ -1358,113 +1418,119 @@ Item {
                 Layout.fillHeight: true
                 spacing: root.metrics.gap
 
-                Repeater {
-                    id: advancedControlRepeater
-                    Layout.minimumHeight: 0
-                    Layout.preferredHeight: 0
-                    Layout.maximumHeight: 0
-                    model: [
-                        {
-                            "label": "Z offset",
-                            "value": root.zOffsetLabel(),
-                            "minus": "-0.05",
-                            "plus": "+0.05",
-                            "negativeDelta": -0.05,
-                            "positiveDelta": 0.05,
-                            "target": "z"
-                        },
-                        {
-                            "label": "Speed factor",
-                            "value": root.percentLabel(root.speedFactor),
-                            "minus": "-5%",
-                            "plus": "+5%",
-                            "negativeDelta": -5,
-                            "positiveDelta": 5,
-                            "target": "speed"
-                        },
-                        {
-                            "label": "Extrude factor",
-                            "value": root.percentLabel(root.extrudeFactor),
-                            "minus": "-5%",
-                            "plus": "+5%",
-                            "negativeDelta": -5,
-                            "positiveDelta": 5,
-                            "target": "extrude"
-                        }
-                    ]
+                GridLayout {
+                    id: advancedControlGrid
+                    Layout.fillWidth: true
+                    Layout.fillHeight: false
+                    columns: 1
+                    rowSpacing: root.metrics.gap
+                    columnSpacing: root.metrics.gap
 
-                    Rectangle {
-                        id: adjustmentCard
-                        property string adjustmentTarget: modelData.target
-
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: Math.max(root.jobButtonHeight + root.metrics.gap * 2, Math.round(root.metrics.fontSize * 3.8))
-                        color: "#101617"
-                        border.color: "#263233"
-                        border.width: 1
-                        radius: Math.round(root.metrics.fontSize * 0.32)
-                        gradient: Gradient {
-                            GradientStop { position: 0.0; color: "#101a1d" }
-                            GradientStop { position: 1.0; color: "#071011" }
-                        }
+                    Repeater {
+                        id: advancedControlRepeater
+                        model: [
+                            {
+                                "label": "Z offset",
+                                "value": root.zOffsetLabel(),
+                                "minus": "-0.05",
+                                "plus": "+0.05",
+                                "negativeDelta": -0.05,
+                                "positiveDelta": 0.05,
+                                "target": "z"
+                            },
+                            {
+                                "label": "Speed factor",
+                                "value": root.percentLabel(root.speedFactor),
+                                "minus": "-5%",
+                                "plus": "+5%",
+                                "negativeDelta": -5,
+                                "positiveDelta": 5,
+                                "target": "speed"
+                            },
+                            {
+                                "label": "Extrude factor",
+                                "value": root.percentLabel(root.extrudeFactor),
+                                "minus": "-5%",
+                                "plus": "+5%",
+                                "negativeDelta": -5,
+                                "positiveDelta": 5,
+                                "target": "extrude"
+                            }
+                        ]
 
                         Rectangle {
-                            anchors.left: parent.left
-                            anchors.top: parent.top
-                            anchors.bottom: parent.bottom
-                            width: 3
-                            color: root.accentColor
-                            opacity: 0.7
-                            radius: parent.radius
-                        }
+                            id: adjustmentCard
+                            property string adjustmentTarget: modelData.target
 
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.margins: root.metrics.gap
-                            spacing: root.metrics.gap
-
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                spacing: 0
-
-                                Label {
-                                    Layout.fillWidth: true
-                                    color: Theme.mutedText
-                                    text: modelData.label
-                                    font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
-                                }
-
-                                Label {
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    color: Theme.text
-                                    text: modelData.value
-                                    verticalAlignment: Text.AlignVCenter
-                                    font.bold: true
-                                    font.pixelSize: Math.max(20, Math.round(root.metrics.fontSize * 1.45))
-                                }
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: root.advancedCardHeight()
+                            color: "#101617"
+                            border.color: "#263233"
+                            border.width: 1
+                            radius: Math.round(root.metrics.fontSize * 0.32)
+                            gradient: Gradient {
+                                GradientStop { position: 0.0; color: "#101a1d" }
+                                GradientStop { position: 1.0; color: "#071011" }
                             }
 
-                            Repeater {
-                                model: [
-                                    {"text": modelData.minus, "delta": modelData.negativeDelta},
-                                    {"text": modelData.plus, "delta": modelData.positiveDelta}
-                                ]
+                            Rectangle {
+                                anchors.left: parent.left
+                                anchors.top: parent.top
+                                anchors.bottom: parent.bottom
+                                width: 3
+                                color: root.accentColor
+                                opacity: 0.7
+                                radius: parent.radius
+                            }
 
-                                JobButton {
-                                    Layout.preferredWidth: root.jobButtonWidth
-                                    Layout.preferredHeight: root.jobButtonHeight
-                                    Layout.alignment: Qt.AlignVCenter
-                                    text: modelData.text
-                                    iconName: modelData.delta < 0 ? "back" : "confirm"
-                                    onClicked: {
-                                        if (adjustmentCard.adjustmentTarget === "z") {
-                                            root.zOffsetAdjustRequested(modelData.delta)
-                                        } else if (adjustmentCard.adjustmentTarget === "speed") {
-                                            root.speedFactorAdjustRequested(modelData.delta)
-                                        } else if (adjustmentCard.adjustmentTarget === "extrude") {
-                                            root.extrudeFactorAdjustRequested(modelData.delta)
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.margins: root.metrics.gap
+                                spacing: root.metrics.gap
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    spacing: 0
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        color: Theme.mutedText
+                                        text: modelData.label
+                                        font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                                    }
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        Layout.fillHeight: true
+                                        color: Theme.text
+                                        text: modelData.value
+                                        verticalAlignment: Text.AlignVCenter
+                                        font.bold: true
+                                        font.pixelSize: Math.max(20, Math.round(root.metrics.fontSize * 1.45))
+                                    }
+                                }
+
+                                Repeater {
+                                    model: [
+                                        {"text": modelData.minus, "delta": modelData.negativeDelta},
+                                        {"text": modelData.plus, "delta": modelData.positiveDelta}
+                                    ]
+
+                                    JobButton {
+                                        Layout.preferredWidth: root.jobButtonWidth
+                                        Layout.preferredHeight: root.jobButtonHeight
+                                        Layout.alignment: Qt.AlignVCenter
+                                        text: modelData.text
+                                        iconName: modelData.delta < 0 ? "back" : "confirm"
+                                        onClicked: {
+                                            if (adjustmentCard.adjustmentTarget === "z") {
+                                                root.zOffsetAdjustRequested(modelData.delta)
+                                            } else if (adjustmentCard.adjustmentTarget === "speed") {
+                                                root.speedFactorAdjustRequested(modelData.delta)
+                                            } else if (adjustmentCard.adjustmentTarget === "extrude") {
+                                                root.extrudeFactorAdjustRequested(modelData.delta)
+                                            }
                                         }
                                     }
                                 }
