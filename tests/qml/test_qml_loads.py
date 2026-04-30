@@ -13,6 +13,58 @@ def test_main_qml_loads(qapp) -> None:
     assert engine.rootObjects()
 
 
+def test_main_qml_supports_context_controlled_fullscreen() -> None:
+    qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
+
+    assert "import QtQuick.Window" in qml
+    assert "width: window.startFullScreen ? Screen.width : 1024" in qml
+    assert "height: window.startFullScreen ? Screen.height : 600" in qml
+    assert "property bool startFullScreen:" in qml
+    assert 'typeof configuredFullScreen === "undefined" ? false : configuredFullScreen' in qml
+    assert "visibility: window.startFullScreen ? Window.FullScreen : Window.Windowed" in qml
+
+
+def test_main_qml_supports_context_controlled_display_rotation() -> None:
+    qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
+
+    assert "property string displayRotation:" in qml
+    assert (
+        'typeof configuredDisplayRotation === "undefined" ? "" : configuredDisplayRotation'
+        in qml
+    )
+    assert "property bool displayRotated:" in qml
+    assert "property int sceneWidth: window.displayRotated ? window.height : window.width" in qml
+    assert "property int sceneHeight: window.displayRotated ? window.width : window.height" in qml
+    assert "viewportWidth: window.sceneWidth" in qml
+    assert "viewportHeight: window.sceneHeight" in qml
+    assert "id: sceneRoot" in qml
+    assert "width: window.sceneWidth" in qml
+    assert "height: window.sceneHeight" in qml
+    assert "rotation: window.displayRotation === \"right\" ? 90" in qml
+
+
+def test_numeric_editor_popups_are_parented_inside_rotated_scene() -> None:
+    main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
+    qml_paths = [
+        Path("src/klippertouch/qml/components/TemperatureDevicePager.qml"),
+        Path("src/klippertouch/qml/panels/ExtrudePanel.qml"),
+    ]
+
+    assert "id: scenePopupLayer" in main_qml
+    assert "popupParent: scenePopupLayer" in main_qml
+
+    for qml_path in qml_paths:
+        qml = qml_path.read_text(encoding="utf-8")
+
+        assert "Popup {" not in qml
+        assert "parent: Overlay.overlay" not in qml
+        assert "property Item popupParent: null" in qml
+        assert "parent: root.popupParent === null ? root : root.popupParent" in qml
+        assert "property real dialogWidth:" in qml
+        assert "function open()" in qml
+        assert "function close()" in qml
+
+
 def test_action_bar_has_at_most_four_shell_buttons() -> None:
     qml = Path("src/klippertouch/qml/components/ActionBar.qml").read_text(encoding="utf-8")
     marker = "property var buttonLabels:"
@@ -1028,8 +1080,8 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "id: landscapeInputRow" in qml
     assert "id: landscapeBottomRow" in qml
     assert "function positionTargetEditor()" in qml
-    assert "targetEditorPopup.x = Math.max(" in qml
-    assert "targetEditorPopup.y = Math.max(" in qml
+    assert "targetEditorPopup.dialogX = Math.max(" in qml
+    assert "targetEditorPopup.dialogY = Math.max(" in qml
     assert "id: landscapeBackspaceButton" in qml
     assert "id: landscapeCancelButton" in qml
     assert "id: landscapeSetButton" in qml
@@ -1557,6 +1609,7 @@ def test_temperature_summary_uses_klipperscreen_device_icons_and_theme() -> None
     assert 'import "../Theme.js" as Theme' in component_qml
     assert 'import "../models"' in component_qml
     assert "property var temperatureModel: null" in component_qml
+    assert "property Item popupParent: null" in component_qml
     assert "property var activeTemperatureModel:" in component_qml
     assert "clip: true" in component_qml
     assert 'ListElement { deviceName: "Extruder"; iconName: "extruder"; temperature: "21" }' in qml
@@ -1566,6 +1619,7 @@ def test_temperature_summary_uses_klipperscreen_device_icons_and_theme() -> None
     assert "id: fallbackTemperatureModel" in component_qml
     assert "TemperatureDevicePager {" in component_qml
     assert "temperatureModel: root.activeTemperatureModel" in component_qml
+    assert "popupParent: root.popupParent" in component_qml
     assert "signal targetTemperatureRequested(string deviceName, real target)" in component_qml
     assert "onTargetTemperatureRequested: function(deviceName, target)" in component_qml
     assert "root.targetTemperatureRequested(deviceName, target)" in component_qml
@@ -1626,12 +1680,14 @@ def test_temperature_device_pager_uses_page_based_navigation() -> None:
     assert "targetEditorPopup.parent" in qml
     assert "Math.round(parentWidth * 0.5)" in qml
     assert "Math.round(parentHeight * 0.82)" in qml
+    assert "targetEditorPopup.dialogWidth" in qml
+    assert "targetEditorPopup.dialogHeight" in qml
     assert "function appendTargetDigit(digit)" in qml
     assert "function confirmTargetEditor()" in qml
     assert 'typeof root.activeTemperatureModel.setPendingTarget === "function"' in qml
     assert "root.activeTemperatureModel.setPendingTarget(root.targetEditorDeviceName, value)" in qml
     assert "id: targetEditorPopup" in qml
-    assert "parent: Overlay.overlay" in qml
+    assert "parent: root.popupParent === null ? root : root.popupParent" in qml
     assert "id: targetKeypadGrid" in qml
     assert "id: landscapeTargetEditor" in qml
     assert "visible: !root.targetEditorPortrait()" in qml

@@ -1,0 +1,14 @@
+{
+  "device": "/dev/dri/card0",
+  "hwcursor": false,
+  "pbuffers": true,
+  "outputs": [
+    {
+      "name": "HDMI-A-1",
+      "mode": "preferred",
+      "primary": true,
+      "physicalWidth": 250,
+      "physicalHeight": 60
+    }
+  ]
+}

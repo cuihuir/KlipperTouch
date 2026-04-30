@@ -1,0 +1,5 @@
+python3.11-venv
+xinit
+x11-xserver-utils
+xserver-xorg
+libxcb-cursor0

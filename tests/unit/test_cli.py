@@ -10,6 +10,7 @@ def test_parse_args_defaults_to_configured_control_policy() -> None:
     assert args.allow_controls is False
     assert args.config is None
     assert args.debug is False
+    assert args.fullscreen is False
     assert args.probe is False
 
 
@@ -22,6 +23,12 @@ def test_parse_args_accepts_config_and_debug() -> None:
     args = parse_args(["--config", "/tmp/KlipperTouch.conf", "--debug"])
     assert args.config == Path("/tmp/KlipperTouch.conf")
     assert args.debug is True
+
+
+def test_parse_args_accepts_fullscreen_launch_mode() -> None:
+    args = parse_args(["--fullscreen"])
+
+    assert args.fullscreen is True
 
 
 def test_main_starts_gui_without_blocking_on_initial_status_probe() -> None:
@@ -39,6 +46,7 @@ def test_main_starts_gui_without_blocking_on_initial_status_probe() -> None:
     assert "status_stream_client=client" in source
     assert "file_refresh_client=client" in source
     assert "job_control_client=client" in source
+    assert "full_screen=args.fullscreen" in source
     assert "initial_status=" not in source
     assert "initial_files=" not in source
     assert "material_system_enabled=settings.material_system_enabled" in source

@@ -1,0 +1,31 @@
+[Unit]
+Description=KlipperTouch EGLFS Touchscreen GUI Experiment
+Conflicts=klippertouch.service
+After=systemd-user-sessions.service plymouth-quit-wait.service
+After=dbus.socket systemd-logind.service network-online.target moonraker.service
+Wants=dbus.socket systemd-logind.service network-online.target
+ConditionPathExists=/dev/dri/card0
+
+[Service]
+Type=simple
+User=tope
+WorkingDirectory=/home/tope/klippertouch
+Environment=PYTHONUNBUFFERED=1
+Environment=QT_QPA_PLATFORM=eglfs
+Environment=QT_QPA_EGLFS_INTEGRATION=eglfs_kms
+Environment=QT_QPA_EGLFS_KMS_CONFIG=/home/tope/printer_data/config/klippertouch-eglfs-kms.json
+Environment=QT_QPA_EGLFS_ALWAYS_SET_MODE=1
+Environment=QSG_RHI_BACKEND=opengl
+Environment=QSG_INFO=1
+Environment="QT_LOGGING_RULES=qt.qpa.egldeviceintegration=true;qt.qpa.eglfs.kms=true"
+Environment=KLIPPERTOUCH_DISPLAY_ROTATION=right
+Environment=KLIPPERTOUCH_LOG=/home/tope/printer_data/logs/klippertouch-eglfs.log
+Environment="KLIPPERTOUCH_EGLFS_CLIENT=/home/tope/klippertouch/venv/bin/klippertouch --config /home/tope/printer_data/config/KlipperTouch.conf --debug --read-only --fullscreen"
+ExecStart=/usr/local/bin/klippertouch-eglfs-start.sh
+PAMName=%u
+TTYPath=/dev/tty7
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+UtmpIdentifier=tty7
+UtmpMode=user

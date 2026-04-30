@@ -1,22 +1,29 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Window
 import "Theme.js" as Theme
 import "components"
 import "panels"
 
 ApplicationWindow {
     id: window
-    width: 1024
-    height: 600
+    width: window.startFullScreen ? Screen.width : 1024
+    height: window.startFullScreen ? Screen.height : 600
     visible: true
     title: "KlipperTouch"
+    visibility: window.startFullScreen ? Window.FullScreen : Window.Windowed
 
     property var bridgeModel: typeof statusModel === "undefined" ? null : statusModel
     property var temperatureBridgeModel: typeof temperatureDeviceModel === "undefined" ? null : temperatureDeviceModel
     property var gcodeFileBridgeModel: typeof gcodeFileModel === "undefined" ? null : gcodeFileModel
     property var jobControlBridgeModel: typeof jobControlModel === "undefined" ? null : jobControlModel
     property var notificationBridgeModel: typeof notificationModel === "undefined" ? null : notificationModel
+    property bool startFullScreen: typeof configuredFullScreen === "undefined" ? false : configuredFullScreen
+    property string displayRotation: typeof configuredDisplayRotation === "undefined" ? "" : configuredDisplayRotation
+    property bool displayRotated: window.displayRotation === "right" || window.displayRotation === "left"
+    property int sceneWidth: window.displayRotated ? window.height : window.width
+    property int sceneHeight: window.displayRotated ? window.width : window.height
     property bool materialSystemEnabled: typeof configuredMaterialSystemEnabled === "undefined" ? false : configuredMaterialSystemEnabled
     property string requestedPrintState: jobControlBridgeModel ? jobControlBridgeModel.requestedPrintState : ""
     property string hostname: bridgeModel ? bridgeModel.hostname : "offline"
@@ -359,8 +366,8 @@ ApplicationWindow {
 
     Metrics {
         id: appMetrics
-        viewportWidth: window.width
-        viewportHeight: window.height
+        viewportWidth: window.sceneWidth
+        viewportHeight: window.sceneHeight
     }
 
     onPrintStateChanged: window.syncJobStatusPanel()
@@ -413,8 +420,16 @@ ApplicationWindow {
         }
     }
 
-    BaseShell {
-        anchors.fill: parent
+    Item {
+        id: sceneRoot
+        width: window.sceneWidth
+        height: window.sceneHeight
+        anchors.centerIn: parent
+        rotation: window.displayRotation === "right" ? 90 : window.displayRotation === "left" ? -90 : 0
+        transformOrigin: Item.Center
+
+        BaseShell {
+            anchors.fill: parent
         metrics: appMetrics
         hostname: window.hostname
         state: window.klippyState
@@ -445,6 +460,7 @@ ApplicationWindow {
 
             MainMenuPanel {
                 metrics: appMetrics
+                popupParent: scenePopupLayer
                 temperatureModel: window.temperatureBridgeModel
                 onPanelRequested: function(panelName) { window.showPanel(panelName) }
                 onTargetTemperatureRequested: function(deviceName, target) {
@@ -488,6 +504,7 @@ ApplicationWindow {
 
             TemperaturePanel {
                 metrics: appMetrics
+                popupParent: scenePopupLayer
                 temperatureModel: window.temperatureBridgeModel
                 onTargetTemperatureRequested: function(deviceName, target) {
                     window.requestTemperatureTarget(deviceName, target)
@@ -626,6 +643,7 @@ ApplicationWindow {
 
             ExtrudePanel {
                 metrics: appMetrics
+                popupParent: scenePopupLayer
                 extruderTemperature: window.extruderTemperature
                 extruderTarget: window.extruderTarget
                 extruderCanExtrude: window.extruderCanExtrude
@@ -650,8 +668,14 @@ ApplicationWindow {
                     }
                 }
             }
+            }
         }
-    }
+
+        Item {
+            id: scenePopupLayer
+            anchors.fill: parent
+            z: 200
+        }
 
     Timer {
         id: toastTimer
@@ -709,5 +733,6 @@ ApplicationWindow {
                 toastTimer.stop()
             }
         }
+    }
     }
 }

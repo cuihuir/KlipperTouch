@@ -1,7 +1,9 @@
+import os
 import sys
 from pathlib import Path
 
 from PySide6.QtCore import QSettings, QUrl
+from PySide6.QtGui import QSurfaceFormat
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtWidgets import QApplication
 
@@ -44,6 +46,32 @@ def create_gcode_file_model(
     return model
 
 
+def configure_scenegraph_surface_format() -> None:
+    if os.environ.get("QT_XCB_GL_INTEGRATION") != "xcb_egl":
+        return
+
+    surface_format = QSurfaceFormat()
+    surface_format.setRenderableType(QSurfaceFormat.RenderableType.OpenGLES)
+    surface_format.setVersion(3, 2)
+    surface_format.setRedBufferSize(8)
+    surface_format.setGreenBufferSize(8)
+    surface_format.setBlueBufferSize(8)
+    surface_format.setAlphaBufferSize(0)
+    surface_format.setDepthBufferSize(0)
+    surface_format.setStencilBufferSize(0)
+    surface_format.setSamples(0)
+    QSurfaceFormat.setDefaultFormat(surface_format)
+
+
+def resolve_display_rotation() -> str:
+    rotation = os.environ.get("KLIPPERTOUCH_DISPLAY_ROTATION", "").strip().lower()
+    if rotation in {"right", "90", "clockwise", "cw"}:
+        return "right"
+    if rotation in {"left", "-90", "270", "counterclockwise", "ccw"}:
+        return "left"
+    return ""
+
+
 def run_app(
     argv: list[str] | None = None,
     initial_status: PrinterStatus | None = None,
@@ -53,7 +81,10 @@ def run_app(
     file_refresh_client: MoonrakerClient | None = None,
     job_control_client: MoonrakerClient | None = None,
     material_system_enabled: bool = False,
+    full_screen: bool = False,
 ) -> int:
+    configure_scenegraph_surface_format()
+    display_rotation = resolve_display_rotation()
     app = QApplication(argv or [])
     app.setOrganizationName("KlipperTouch")
     app.setApplicationName("KlipperTouch")
@@ -77,6 +108,8 @@ def run_app(
         "configuredMaterialSystemEnabled",
         material_system_enabled,
     )
+    engine.rootContext().setContextProperty("configuredFullScreen", full_screen)
+    engine.rootContext().setContextProperty("configuredDisplayRotation", display_rotation)
     engine.job_control_model = job_control_model  # type: ignore[attr-defined]
     engine.notification_model = notification_model  # type: ignore[attr-defined]
 

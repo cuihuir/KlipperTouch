@@ -8,6 +8,7 @@ import "../models"
 Item {
     id: root
     required property var metrics
+    property Item popupParent: null
     property var temperatureModel: null
     property int deviceColumns: root.metrics.portrait ? 1 : 2
     property bool hasExternalTemperatureModel: typeof temperatureModel !== "undefined"
@@ -83,6 +84,7 @@ Item {
                     id: devicePager
                     Layout.fillWidth: true
                     Layout.fillHeight: true
+                    popupParent: root.popupParent
                     temperatureModel: root.activeTemperatureModel
                     deviceColumns: root.deviceColumns
                     compact: false
