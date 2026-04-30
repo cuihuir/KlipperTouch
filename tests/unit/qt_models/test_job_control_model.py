@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from klippertouch.moonraker.safety import UnsafeCommandError
@@ -167,6 +168,25 @@ def test_job_control_model_sends_pause_resume_cancel_requests(qtbot) -> None:
     assert statuses == ["Pause sent", "Resume sent", "Cancel sent"]
     assert model.lastError == ""
     assert model.requestedPrintState == "cancelled"
+
+
+def test_job_control_model_audits_command_queue_success_and_failure(qtbot, caplog) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+    blocked = JobControlModel(BlockingClient())
+
+    with caplog.at_level(logging.INFO, logger="klippertouch.controls"):
+        model.requestPause()
+        wait_for_calls(qtbot, model, client, 1)
+        model.requestStartPrint("")
+        blocked.requestPause()
+        wait_for_error(qtbot, blocked, "blocked")
+
+    messages = [record.getMessage() for record in caplog.records]
+    assert "command queued: Pause" in messages
+    assert "command succeeded: Pause" in messages
+    assert "command rejected: Filename is required" in messages
+    assert "command failed: Pause: blocked" in messages
 
 
 def test_job_control_model_threads_do_not_use_qobject_parent_lifetime() -> None:

@@ -1,9 +1,12 @@
+import logging
 from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Protocol
 
 from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot
+
+CONTROL_AUDIT_LOG = logging.getLogger("klippertouch.controls")
 
 
 class JobControlClient(Protocol):
@@ -336,6 +339,7 @@ class JobControlModel(QObject):
             self._set_error("Job control client is unavailable")
             return
         client = self._client
+        CONTROL_AUDIT_LOG.info("command queued: %s", label)
         self._command_queue.append(
             _PendingJobCommand(
                 label=label,
@@ -374,6 +378,7 @@ class JobControlModel(QObject):
             self._set_requested_print_state(requested_print_state)
         if on_success is not None:
             on_success()
+        CONTROL_AUDIT_LOG.info("command succeeded: %s", label)
         self._set_status(f"{label} sent")
 
     def _set_status(self, value: str) -> None:
@@ -382,7 +387,11 @@ class JobControlModel(QObject):
         self.statusChanged.emit()
         self.errorChanged.emit()
 
-    def _set_error(self, value: str) -> None:
+    def _set_error(self, value: str, audit_message: str | None = None) -> None:
+        if audit_message is not None:
+            CONTROL_AUDIT_LOG.info(audit_message)
+        else:
+            CONTROL_AUDIT_LOG.info("command rejected: %s", value)
         self._last_error = value
         self._last_status = ""
         self.errorChanged.emit()
@@ -409,7 +418,7 @@ class JobControlModel(QObject):
                 pending.on_success,
             )
         else:
-            self._set_error(error)
+            self._set_error(error, f"command failed: {pending.label}: {error}")
         self._start_next_control()
 
 
