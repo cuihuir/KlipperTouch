@@ -16,6 +16,7 @@ from PySide6.QtQuick import QQuickWindow  # noqa: F401
 
 from klippertouch.app import create_gcode_file_model, create_status_models
 from klippertouch.domain.printer import (
+    FanStatus,
     FilamentSensorStatus,
     McuStatus,
     PrinterStatus,
@@ -97,6 +98,9 @@ SAMPLE_STATUS = {
         "gcode_move",
         "exclude_object",
         "filament_switch_sensor runout",
+        "fan",
+        "fan_generic chamber",
+        "controller_fan 驱动",
         "independent_3z",
         "z_tilt",
         "configfile",
@@ -151,6 +155,21 @@ SAMPLE_STATUS = {
             sensor_type="switch",
             enabled=True,
             filament_detected=True,
+        ),
+    ),
+    "fan_devices": (
+        FanStatus(name="fan", display_name="Part Fan", speed=45.0, speed_settable=True),
+        FanStatus(
+            name="fan_generic chamber",
+            display_name="Chamber",
+            speed=25.0,
+            speed_settable=True,
+        ),
+        FanStatus(
+            name="controller_fan 驱动",
+            display_name="驱动 Fan",
+            speed=100.0,
+            speed_settable=False,
         ),
     ),
 }

@@ -103,6 +103,7 @@ def test_material_dark_svg_assets_are_vendored() -> None:
         "emergency.svg",
         "extruder.svg",
         "extrude.svg",
+        "fan.svg",
         "heat-up.svg",
         "home.svg",
         "load.svg",
@@ -298,6 +299,7 @@ def test_responsive_layout_components_exist() -> None:
         qml_dir / "panels" / "FilesPanel.qml",
         qml_dir / "panels" / "JobStatusPanel.qml",
         qml_dir / "panels" / "InfoPanel.qml",
+        qml_dir / "panels" / "FanPanel.qml",
         qml_dir / "panels" / "MovePanel.qml",
         qml_dir / "panels" / "ExtrudePanel.qml",
     ]
@@ -1981,6 +1983,8 @@ def test_main_routes_more_to_read_only_info_panel() -> None:
     assert "return moreMenuComponent" in main_qml
     assert 'case "system":' in main_qml
     assert "return infoComponent" in main_qml
+    assert 'case "fans":' in main_qml
+    assert "return fanComponent" in main_qml
     assert 'case "network":' in main_qml
     assert 'case "logs":' in main_qml
     assert 'case "language":' in main_qml
@@ -1989,11 +1993,13 @@ def test_main_routes_more_to_read_only_info_panel() -> None:
     assert "iconName: window.panelIcons[window.currentPanel]" in main_qml
     assert '"more": "More"' in main_qml
     assert '"system": "System"' in main_qml
+    assert '"fans": "Fans"' in main_qml
     assert '"network": "Network"' in main_qml
     assert '"logs": "Logs"' in main_qml
     assert '"language": "Language"' in main_qml
     assert '"update": "Update"' in main_qml
     assert "InfoPanel {" in main_qml
+    assert "FanPanel {" in main_qml
     assert "MoreMenuPanel {" in main_qml
     assert "hostname: window.hostname" in main_qml
     assert "klippyState: window.klippyState" in main_qml
@@ -2001,6 +2007,28 @@ def test_main_routes_more_to_read_only_info_panel() -> None:
     assert "moonrakerVersion: window.moonrakerVersion" in main_qml
     assert "mcuInfos: window.mcuInfos" in main_qml
     assert "serviceVersions: window.serviceVersions" in main_qml
+
+
+def test_fan_panel_lists_read_only_and_settable_fans() -> None:
+    qml = Path("src/klippertouch/qml/panels/FanPanel.qml").read_text(encoding="utf-8")
+    model_qml = Path("src/klippertouch/qml/models/MoreMenuModel.qml").read_text(
+        encoding="utf-8"
+    )
+    main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
+
+    assert 'objectName: "fanPanel"' in qml
+    assert "property var fanDevices" in qml
+    assert "signal fanSpeedRequested(string deviceName, real percent)" in qml
+    assert "modelData.speed_settable" in qml
+    assert 'model: [0, 25, 50, 75, 100]' in qml
+    assert "root.fanSpeedRequested(fanCard.modelData.name, percent)" in qml
+    assert '"auto"' in qml
+    assert 'ListElement { tileLabel: "Fans"; tileIcon: "fan"' in model_qml
+    assert 'panelName: "fans"' in model_qml
+    assert "property var fanDevices: bridgeModel ? bridgeModel.fanDevices : []" in main_qml
+    assert "fanDevices: window.fanDevices" in main_qml
+    assert "onFanSpeedRequested: function(deviceName, percent)" in main_qml
+    assert "jobControlBridgeModel.requestFanSpeed(deviceName, percent)" in main_qml
 
 
 def test_main_routes_network_and_logs_to_safe_placeholder_panels() -> None:

@@ -63,6 +63,7 @@ ApplicationWindow {
     property real extruderPressureAdvance: bridgeModel ? bridgeModel.extruderPressureAdvance : 0
     property real extruderSmoothTime: bridgeModel ? bridgeModel.extruderSmoothTime : 0
     property var filamentSensors: bridgeModel ? bridgeModel.filamentSensors : []
+    property var fanDevices: bridgeModel ? bridgeModel.fanDevices : []
     property var excludeObjectNames: bridgeModel ? bridgeModel.excludeObjectNames : []
     property var excludedObjectNames: bridgeModel ? bridgeModel.excludedObjectNames : []
     property string currentObject: bridgeModel ? bridgeModel.currentObject : ""
@@ -80,8 +81,8 @@ ApplicationWindow {
         || window.webhooksFaultActive()
         || window.klippyFaultActive()
     )
-    property var panelTitles: ({"main": "Home", "move": "Move", "temperature": "Temperature", "extrude": "Extrude", "more": "More", "system": "System", "network": "Network", "logs": "Logs", "language": "Language", "update": "Update", "print": "Print", "job_status": "Job Status", "notifications": "Notifications", "splash": "Printer Status"})
-    property var panelIcons: ({"main": "main", "move": "move", "temperature": "heat-up", "extrude": "extrude", "more": "settings", "system": "settings", "network": "network", "logs": "logs", "language": "language", "update": "update", "print": "printer", "job_status": "printer", "notifications": "notification", "splash": "printer"})
+    property var panelTitles: ({"main": "Home", "move": "Move", "temperature": "Temperature", "extrude": "Extrude", "more": "More", "system": "System", "fans": "Fans", "network": "Network", "logs": "Logs", "language": "Language", "update": "Update", "print": "Print", "job_status": "Job Status", "notifications": "Notifications", "splash": "Printer Status"})
+    property var panelIcons: ({"main": "main", "move": "move", "temperature": "heat-up", "extrude": "extrude", "more": "settings", "system": "settings", "fans": "fan", "network": "network", "logs": "logs", "language": "language", "update": "update", "print": "printer", "job_status": "printer", "notifications": "notification", "splash": "printer"})
 
     function shouldAutoEnterJobStatus() {
         return window.printState === "printing" || window.printState === "paused"
@@ -197,6 +198,8 @@ ApplicationWindow {
             return moreMenuComponent
         case "system":
             return infoComponent
+        case "fans":
+            return fanComponent
         case "network":
             return placeholderComponent
         case "logs":
@@ -315,6 +318,13 @@ ApplicationWindow {
                 && typeof temperatureBridgeModel.setFailedTarget === "function") {
             temperatureBridgeModel.setFailedTarget(deviceName, target)
         }
+    }
+
+    function requestFanSpeed(deviceName, percent) {
+        if (!jobControlBridgeModel) {
+            return
+        }
+        jobControlBridgeModel.requestFanSpeed(deviceName, percent)
     }
 
     function requestFileControl(action, path) {
@@ -595,6 +605,22 @@ ApplicationWindow {
                 moonrakerVersion: window.moonrakerVersion
                 mcuInfos: window.mcuInfos
                 serviceVersions: window.serviceVersions
+            }
+        }
+
+        Component {
+            id: fanComponent
+
+            FanPanel {
+                metrics: appMetrics
+                fanDevices: window.fanDevices
+                controlStatus: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastStatus : ""
+                controlError: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastError : ""
+                onFanSpeedRequested: function(deviceName, percent) {
+                    if (window.jobControlBridgeModel) {
+                        jobControlBridgeModel.requestFanSpeed(deviceName, percent)
+                    }
+                }
             }
         }
 
