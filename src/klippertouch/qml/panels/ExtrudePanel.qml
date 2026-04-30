@@ -851,6 +851,7 @@ Item {
                                 Layout.fillHeight: true
                                 Layout.minimumHeight: Math.max(root.metrics.portrait ? 32 : 38, Math.round(root.metrics.fontSize * (root.metrics.portrait ? 2.0 : 2.6)))
                                 title: modelData + " mm"
+                                iconName: "length"
                                 selected: root.selectedDistance === modelData
 
                                 MouseArea {
@@ -883,6 +884,7 @@ Item {
                                 Layout.fillHeight: true
                                 Layout.minimumHeight: Math.max(root.metrics.portrait ? 32 : 38, Math.round(root.metrics.fontSize * (root.metrics.portrait ? 2.0 : 2.6)))
                                 title: root.metrics.ultraWide ? modelData + " mm/s" : modelData
+                                iconName: "speed"
                                 selected: root.selectedSpeed === modelData
 
                                 MouseArea {
@@ -1215,6 +1217,7 @@ Item {
                 Layout.fillHeight: true
                 title: "Length " + root.selectedDistance + " mm"
                 hint: "tap to change"
+                iconName: "length"
 
                 MouseArea {
                     anchors.fill: parent
@@ -1228,6 +1231,7 @@ Item {
                 Layout.fillHeight: true
                 title: "Speed " + root.selectedSpeed
                 hint: "tap to change"
+                iconName: "speed"
 
                 MouseArea {
                     anchors.fill: parent
@@ -1332,6 +1336,7 @@ Item {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         title: modelData + " mm"
+                        iconName: "length"
                         selected: root.selectedDistance === modelData
 
                         MouseArea {
@@ -1367,6 +1372,7 @@ Item {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         title: modelData + " mm/s"
+                        iconName: "speed"
                         selected: root.selectedSpeed === modelData
 
                         MouseArea {

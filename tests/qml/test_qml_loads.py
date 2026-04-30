@@ -185,6 +185,7 @@ def test_material_dark_svg_assets_are_vendored() -> None:
         "load.svg",
         "logs.svg",
         "language.svg",
+        "length.svg",
         "main.svg",
         "material.svg",
         "motor-off.svg",
@@ -1260,6 +1261,8 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert '"label": "Materials"' in qml
     assert '"action": "materials"' in qml
     assert '"iconName": "material"' in qml
+    assert 'iconName: "length"' in qml
+    assert 'iconName: "speed"' in qml
     assert '"hint": "AFC / AMS"' in qml
     assert "component ActionTile: Rectangle" in qml
     assert (
