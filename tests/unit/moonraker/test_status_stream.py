@@ -274,6 +274,30 @@ def test_status_from_websocket_message_recovers_from_webhooks_shutdown() -> None
     assert updated.webhooks_message == "Printer is ready"
 
 
+def test_status_from_websocket_message_enters_shutdown_from_klippy_notification() -> None:
+    status = PrinterStatus(
+        klippy_state="ready",
+        moonraker_version="v0.10.0",
+        objects=("webhooks",),
+        webhooks_state="ready",
+        webhooks_message="Printer is ready",
+    )
+    message = json.dumps(
+        {
+            "jsonrpc": "2.0",
+            "method": "notify_klippy_shutdown",
+            "params": ["Shutdown due to webhooks request"],
+        }
+    )
+
+    updated = status_from_websocket_message(status, message)
+
+    assert updated is not None
+    assert updated.klippy_state == "shutdown"
+    assert updated.webhooks_state == "shutdown"
+    assert updated.webhooks_message == "Shutdown due to webhooks request"
+
+
 def test_status_from_websocket_message_applies_subscription_snapshot() -> None:
     status = PrinterStatus(
         objects=(

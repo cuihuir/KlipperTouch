@@ -117,6 +117,36 @@ def _status_update_from_payload(payload: dict[str, Any]) -> dict[str, Any] | Non
         if isinstance(params, list) and params and isinstance(params[0], dict):
             return params[0]
         return None
+    if method == "notify_klippy_ready":
+        return {"webhooks": {"state": "ready", "state_message": "Printer is ready"}}
+    if method == "notify_klippy_started":
+        return {
+            "webhooks": {
+                "state": "startup",
+                "state_message": _notification_message(payload, "Klipper is attempting to start"),
+            }
+        }
+    if method == "notify_klippy_shutdown":
+        return {
+            "webhooks": {
+                "state": "shutdown",
+                "state_message": _notification_message(payload, "Shutdown due to webhooks request"),
+            }
+        }
+    if method == "notify_klippy_disconnected":
+        return {
+            "webhooks": {
+                "state": "disconnected",
+                "state_message": _notification_message(payload, "Moonraker disconnected"),
+            }
+        }
+    if method == "notify_klippy_error":
+        return {
+            "webhooks": {
+                "state": "error",
+                "state_message": _notification_message(payload, "Klipper error"),
+            }
+        }
 
     result = payload.get("result")
     if isinstance(result, dict):
@@ -124,6 +154,21 @@ def _status_update_from_payload(payload: dict[str, Any]) -> dict[str, Any] | Non
         if isinstance(status, dict):
             return status
     return None
+
+
+def _notification_message(payload: dict[str, Any], default: str) -> str:
+    params = payload.get("params")
+    if isinstance(params, list) and params:
+        first = params[0]
+        if isinstance(first, str) and first.strip():
+            return first.strip()
+        if isinstance(first, dict):
+            message = str(first.get("state_message") or first.get("message") or "").strip()
+            if message:
+                return message
+    if isinstance(params, str) and params.strip():
+        return params.strip()
+    return default
 
 
 class _RecoveryPollWorker(QObject):
