@@ -2080,6 +2080,11 @@ def test_fan_panel_lists_read_only_and_settable_fans() -> None:
     assert "stepSize: 0" in qml
     assert "hasRpm" in qml
     assert "Math.round(fanCard.rpmValue) + \" RPM\"" in qml
+    assert "property real savedContentY" in qml
+    assert "function restoreScrollPosition()" in qml
+    assert "onModelChanged: restoreScrollPosition()" in qml
+    assert "onCountChanged: restoreScrollPosition()" in qml
+    assert "footer: Item" in qml
     assert "root.fanSpeedRequested(fanCard.modelData.name, fanCard.draftSpeed)" in qml
     assert 'model: [0, 100]' in qml
     assert 'model: [0, 25, 50, 75, 100]' not in qml

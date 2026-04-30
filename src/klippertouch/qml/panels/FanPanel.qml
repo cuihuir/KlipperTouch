@@ -63,7 +63,36 @@ Item {
             clip: true
             spacing: root.metrics.gap
             boundsBehavior: Flickable.StopAtBounds
+            property real savedContentY: 0
+            property bool restoringContentY: false
             model: root.fanDevices
+
+            function boundedContentY(value) {
+                return Math.max(0, Math.min(value, Math.max(0, contentHeight - height)))
+            }
+
+            function restoreScrollPosition() {
+                var targetY = savedContentY
+                Qt.callLater(function() {
+                    restoringContentY = true
+                    contentY = boundedContentY(targetY)
+                    restoringContentY = false
+                })
+            }
+
+            onContentYChanged: {
+                if (!restoringContentY && (moving || dragging || flicking)) {
+                    savedContentY = boundedContentY(contentY)
+                }
+            }
+            onMovementEnded: savedContentY = boundedContentY(contentY)
+            onModelChanged: restoreScrollPosition()
+            onCountChanged: restoreScrollPosition()
+
+            footer: Item {
+                width: fanList.width
+                height: root.metrics.gap
+            }
 
             delegate: Rectangle {
                 id: fanCard
