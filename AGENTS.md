@@ -27,6 +27,8 @@ Use 4-space indentation and keep Python compatible with 3.10+. Ruff enforces imp
 
 QML files use `PascalCase.qml` for components and panels. Python modules use `snake_case.py`. Match existing names such as `TemperaturePanel.qml`, `status_model.py`, and `test_status_model.py`.
 
+QML action buttons should use SVG icons by default through `iconName`. If a specific icon is missing, add a themed SVG asset or use `placeholder.svg` until a proper icon exists. Pure numeric controls, distance selectors, and numeric keypad buttons should not use icons.
+
 ## Testing Guidelines
 Write pytest tests for every behavior change. Add unit tests beside the affected area and update `tests/qml/test_qml_loads.py` when changing QML structure. For UI work, generate screenshots with `tools/capture_qml_screenshots.py` and inspect target sizes such as `800x480` and `480x800`.
 

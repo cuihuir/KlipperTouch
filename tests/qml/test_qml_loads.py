@@ -225,6 +225,16 @@ def test_material_dark_svg_assets_are_vendored() -> None:
 
 
 def test_action_button_icon_contract_is_explicit() -> None:
+    images = Path("src/klippertouch/qml/assets/material-dark/images")
+    available_icons = {path.stem for path in images.glob("*.svg")}
+    allowed_iconless_control_hints = (
+        "KeypadButton",
+        "distance",
+        "Distance",
+        "distances",
+        "modelData",
+        "placeholder",
+    )
     qml_paths = [
         Path("src/klippertouch/qml/panels/MovePanel.qml"),
         Path("src/klippertouch/qml/panels/ExtrudePanel.qml"),
@@ -235,6 +245,8 @@ def test_action_button_icon_contract_is_explicit() -> None:
         for line in qml_path.read_text(encoding="utf-8").splitlines():
             if '{"label":' in line and '"action":' in line and '"direction":' not in line:
                 assert '"iconName":' in line, f"{qml_path}:{line.strip()}"
+                icon_name = line.split('"iconName":', 1)[1].split('"', 2)[1]
+                assert icon_name in available_icons or icon_name == "placeholder"
 
     job_qml = Path("src/klippertouch/qml/panels/JobStatusPanel.qml").read_text(
         encoding="utf-8"
@@ -254,6 +266,12 @@ def test_action_button_icon_contract_is_explicit() -> None:
     assert "component RetryButton: TactileButton" in files_qml
     assert "property string iconName" in tactile_qml
     assert "Theme.iconSource(control.iconName)" in tactile_qml
+    icon_rule = (
+        "Pure numeric controls, distance selectors, and numeric keypad buttons "
+        "should not use icons"
+    )
+    assert icon_rule in Path("AGENTS.md").read_text(encoding="utf-8")
+    assert all(hint for hint in allowed_iconless_control_hints)
 
 
 def test_qml_theme_library_centralizes_material_dark_tokens() -> None:
