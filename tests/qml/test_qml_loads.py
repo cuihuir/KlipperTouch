@@ -561,11 +561,15 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "required property string thumbnailUrl" in qml
     assert "source: thumbnailUrl" in qml
     assert "activeFileModel.requestMetadata(path)" in qml
+    assert "function ensureThumbnailMetadata()" in qml
+    assert "Component.onCompleted: ensureThumbnailMetadata()" in qml
+    assert "onPathChanged: ensureThumbnailMetadata()" in qml
+    assert "cacheBuffer: Math.max" in qml
     assert 'asynchronous: thumbnailUrl.indexOf("file:") !== 0' in qml
     assert "cache: true" in qml
     assert "sourceSize.width" in qml
     assert "thumbnailImage.status === Image.Ready" in qml
-    assert "thumbnailImage.status !== Image.Ready" in qml
+    assert "thumbnailImage.status === Image.Error" in qml
     assert "root.activeFileModel.selectedPreviewThumbnailUrl" in qml
     assert "id: detailPageView" in qml
     assert "id: selectedPreviewAndMetadataLayout" in qml
@@ -621,7 +625,8 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "id: selectedActionFeedback" in qml
     assert "visible: root.controlFeedbackText().length > 0" in qml
     assert 'root.pendingFileAction === "delete"' in qml
-    assert 'text: "Confirmation preview only"' in qml
+    assert 'text: "Confirm file action"' in qml
+    assert 'text: "Confirmation preview only"' not in qml
     assert 'text: "Confirm"' in qml
     assert 'text: "Confirm disabled"' not in qml
     assert "root.fileActionRequested(" in qml
@@ -638,6 +643,8 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "visible: !chipMouse.pressed && root.isChipEnabled(modelData.sortKey)" in qml
     assert "visible: !fileRowMouse.pressed" in qml
     assert "Behavior on scale" in qml
+    assert "File browser; select a file to inspect or manage it." in qml
+    assert "Read-only file browser; print actions stay out of this page." not in qml
     assert "NumberAnimation { duration: 70" in qml
     assert 'baseColor: "#121b1d"' in qml
     assert 'baseColor: "#101617"' in qml

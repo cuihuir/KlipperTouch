@@ -29,6 +29,7 @@ from klippertouch.moonraker.safety import CommandPolicy
 from klippertouch.probe import build_status_from_client
 
 DEFAULT_SIZES = ("800x480", "1024x600", "480x800")
+LIVE_METADATA_PREFETCH_LIMIT = 12
 DEFAULT_PANELS = (
     "main",
     "print",
@@ -751,7 +752,7 @@ def main(argv: list[str] | None = None) -> int:
             for path in (str(item.get("path", "")).strip().strip("/"),)
             if path and (not current_path or path.startswith(f"{current_path}/"))
         )
-        for path in live_metadata_paths[:1]:
+        for path in live_metadata_paths[:LIVE_METADATA_PREFETCH_LIMIT]:
             live_metadata_by_path[path] = live_client.get_gcode_file_metadata(path)
 
     captured = capture(

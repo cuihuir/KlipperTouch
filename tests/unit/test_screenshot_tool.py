@@ -9,6 +9,7 @@ def test_screenshot_tool_captures_common_panels_and_sizes() -> None:
     assert '"1024x600"' in source
     assert '"480x800"' in source
     assert "DEFAULT_PANELS = " in source
+    assert "LIVE_METADATA_PREFETCH_LIMIT = 12" in source
     assert '"print"' in source
     assert '"more"' in source
     assert '"notifications"' in source
@@ -36,6 +37,7 @@ def test_screenshot_tool_captures_common_panels_and_sizes() -> None:
     assert "live_client.get_gcode_file_list()" in source
     assert "live_metadata_by_path" in source
     assert "live_client.get_gcode_file_metadata(path)" in source
+    assert "live_metadata_paths[:LIVE_METADATA_PREFETCH_LIMIT]" in source
     assert "CommandPolicy(read_only=True)" in source
     assert "sample_status=args.sample_status or live_status is not None" in source
     assert "--sample-many-sensors" in source

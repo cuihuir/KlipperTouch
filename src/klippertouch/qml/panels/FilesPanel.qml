@@ -518,6 +518,7 @@ Item {
                 model: root.activeFileModel
                 boundsBehavior: Flickable.StopAtBounds
                 flickDeceleration: 2600
+                cacheBuffer: Math.max(height, Math.round(root.metrics.fontSize * 18))
                 property real savedContentY: 0
                 property bool restoringContentY: false
 
@@ -563,6 +564,12 @@ Item {
                     required property string modifiedLabel
                     required property string permissions
                     required property string thumbnailUrl
+
+                    function ensureThumbnailMetadata() {
+                        if (!isDirectory && thumbnailUrl.length <= 0 && root.activeFileModel) {
+                            root.activeFileModel.requestMetadata(path)
+                        }
+                    }
 
                     width: fileList.width
                     height: Math.max(46, Math.round(root.metrics.fontSize * (root.metrics.portrait ? 4.2 : 3.3)))
@@ -634,7 +641,7 @@ Item {
                                 text: isDirectory ? "DIR" : "G"
                                 visible: isDirectory
                                     || thumbnailUrl.length <= 0
-                                    || thumbnailImage.status !== Image.Ready
+                                    || thumbnailImage.status === Image.Error
                                 font.bold: true
                                 font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
                             }
@@ -686,11 +693,8 @@ Item {
                         onClicked: root.enterPath(path, isDirectory)
                     }
 
-                    Component.onCompleted: {
-                        if (!isDirectory && thumbnailUrl.length <= 0 && root.activeFileModel) {
-                            activeFileModel.requestMetadata(path)
-                        }
-                    }
+                    Component.onCompleted: ensureThumbnailMetadata()
+                    onPathChanged: ensureThumbnailMetadata()
                 }
             }
 
@@ -887,7 +891,7 @@ Item {
                             Label {
                                 Layout.fillWidth: true
                                 color: Theme.text
-                                text: "Confirmation preview only"
+                                text: "Confirm file action"
                                 font.bold: true
                                 font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.88))
                             }
@@ -986,7 +990,7 @@ Item {
                         color: Theme.mutedText
                         text: root.loadError.length > 0
                             ? root.loadError
-                            : "Read-only file browser; print actions stay out of this page."
+                            : "File browser; select a file to inspect or manage it."
                         horizontalAlignment: Text.AlignHCenter
                         wrapMode: Text.WordWrap
                         font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))

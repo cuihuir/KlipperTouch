@@ -474,6 +474,42 @@ def test_gcode_file_list_model_preserves_loaded_thumbnail_on_refresh(qtbot) -> N
     )
 
 
+def test_gcode_file_list_model_drops_cached_metadata_when_file_changes(qtbot) -> None:
+    model = GCodeFileListModel()
+    model.set_files(
+        (
+            GCodeFile(
+                path="cube.gcode",
+                display_name="cube.gcode",
+                modified=100,
+                size=2048,
+            ),
+        )
+    )
+    model.setFileMetadata(
+        "cube.gcode",
+        {
+            "estimated_time": 1661.0,
+            "thumbnails": [{"size": 1200, "relative_path": ".thumbs/cube.png"}],
+        },
+        "http://host:7125/server/files/gcodes/",
+    )
+
+    model.set_files(
+        (
+            GCodeFile(
+                path="cube.gcode",
+                display_name="cube.gcode",
+                modified=200,
+                size=4096,
+            ),
+        )
+    )
+
+    assert model.fileEstimatedTimeLabelFor("cube.gcode") == "-"
+    assert model.fileThumbnailUrlFor("cube.gcode") == ""
+
+
 def test_gcode_file_list_model_exposes_selected_thumbnail_url(qtbot) -> None:
     model = GCodeFileListModel()
     model.set_files((GCodeFile(path="cube.gcode", display_name="cube.gcode", size=2048),))

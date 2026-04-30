@@ -56,7 +56,7 @@ class GCodeFileRefresh(QObject):
         client: MoonrakerClient,
         model: GCodeFileListModel,
         refresh_interval_ms: int = 10000,
-        metadata_interval_ms: int = 350,
+        metadata_interval_ms: int = 150,
         status_model: StatusModel | None = None,
     ) -> None:
         super().__init__()
@@ -71,6 +71,9 @@ class GCodeFileRefresh(QObject):
         self._metadata_timer.timeout.connect(self.refresh_metadata_once)
         self._metadata_queue: list[str] = []
         self._metadata_loaded: set[str] = set()
+        self._metadata_file_identity: dict[str, tuple[float, int]] = {}
+        self._metadata_inflight: set[str] = set()
+        self._metadata_active_path = ""
         self._file_refresh_thread: QThread | None = None
         self._file_refresh_worker: _FileListWorker | None = None
         self._metadata_refresh_thread: QThread | None = None
@@ -115,6 +118,9 @@ class GCodeFileRefresh(QObject):
             metadata_thread.wait(timeout_ms)
         self._metadata_refresh_thread = None
         self._metadata_refresh_worker = None
+        self._metadata_queue.clear()
+        self._metadata_inflight.clear()
+        self._metadata_active_path = ""
         self._set_loading(False)
         self._release_retired_threads()
 
@@ -143,6 +149,7 @@ class GCodeFileRefresh(QObject):
             return
         self._set_last_error("")
         files = [item for item in value if isinstance(item, dict)]
+        self._sync_metadata_file_identity(files)
         self._model.set_files(files_from_moonraker(files))
         self._queue_selected_metadata()
 
@@ -157,6 +164,8 @@ class GCodeFileRefresh(QObject):
         if self._metadata_refresh_worker is not None:
             return
         filename = self._metadata_queue.pop(0)
+        self._metadata_active_path = filename
+        self._metadata_inflight.add(filename)
         thread = QThread()
         self._metadata_refresh_worker = _MetadataWorker(self._client, filename)
         self._metadata_refresh_worker.moveToThread(thread)
@@ -217,12 +226,33 @@ class GCodeFileRefresh(QObject):
 
     def _queue_metadata_path(self, path: str, *, front: bool = False) -> None:
         clean = path.strip().strip("/")
-        if not clean or clean in self._metadata_loaded or clean in self._metadata_queue:
+        if (
+            not clean
+            or clean in self._metadata_loaded
+            or clean in self._metadata_inflight
+            or clean in self._metadata_queue
+        ):
             return
         if front:
             self._metadata_queue.insert(0, clean)
         else:
             self._metadata_queue.append(clean)
+
+    def _sync_metadata_file_identity(self, files: list[dict[str, object]]) -> None:
+        next_identity = {
+            path: (_float_or_default(item.get("modified")), _int_or_default(item.get("size")))
+            for item in files
+            for path in (str(item.get("path", "")).strip().strip("/"),)
+            if path
+        }
+        stale = {
+            path
+            for path in self._metadata_loaded
+            if self._metadata_file_identity.get(path) != next_identity.get(path)
+        }
+        if stale:
+            self._metadata_loaded.difference_update(stale)
+        self._metadata_file_identity = next_identity
 
     @Slot()
     def _queue_current_print_metadata(self) -> None:
@@ -255,6 +285,9 @@ class GCodeFileRefresh(QObject):
         self._retire_thread(self._metadata_refresh_thread, self._metadata_refresh_worker)
         self._metadata_refresh_thread = None
         self._metadata_refresh_worker = None
+        if self._metadata_active_path:
+            self._metadata_inflight.discard(self._metadata_active_path)
+            self._metadata_active_path = ""
         QTimer.singleShot(0, self._release_retired_threads)
         self.metadataRefreshFinished.emit()
 
@@ -282,3 +315,25 @@ class GCodeFileRefresh(QObject):
             return
         self._last_error = message
         self.errorChanged.emit()
+
+
+def _float_or_default(value: object) -> float:
+    if isinstance(value, bool):
+        return 0.0
+    if isinstance(value, int | float | str):
+        try:
+            return float(value)
+        except ValueError:
+            return 0.0
+    return 0.0
+
+
+def _int_or_default(value: object) -> int:
+    if isinstance(value, bool):
+        return 0
+    if isinstance(value, int | float | str):
+        try:
+            return int(value)
+        except ValueError:
+            return 0
+    return 0

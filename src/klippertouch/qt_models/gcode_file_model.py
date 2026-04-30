@@ -490,28 +490,32 @@ def _preserve_loaded_thumbnails(
     }
     if not previous_by_path:
         return files
-    return tuple(
-        replace(
-            file,
-            thumbnail_url=file.thumbnail_url or previous_by_path[file.path].thumbnail_url,
-            preview_thumbnail_url=file.preview_thumbnail_url
-            or previous_by_path[file.path].preview_thumbnail_url,
-            estimated_time=file.estimated_time or previous_by_path[file.path].estimated_time,
-            filament_total=file.filament_total or previous_by_path[file.path].filament_total,
-            object_height=file.object_height or previous_by_path[file.path].object_height,
-            layer_height=file.layer_height or previous_by_path[file.path].layer_height,
-            slicer=file.slicer or previous_by_path[file.path].slicer,
-            slicer_version=file.slicer_version or previous_by_path[file.path].slicer_version,
-            nozzle_diameter=file.nozzle_diameter
-            or previous_by_path[file.path].nozzle_diameter,
-            filament_type=file.filament_type or previous_by_path[file.path].filament_type,
-            filament_name=file.filament_name or previous_by_path[file.path].filament_name,
-            filament_weight_total=file.filament_weight_total
-            or previous_by_path[file.path].filament_weight_total,
-        )
-        if file.path in previous_by_path
-        else file
-        for file in files
+    return tuple(_preserve_previous_metadata(file, previous_by_path) for file in files)
+
+
+def _preserve_previous_metadata(
+    file: GCodeFile,
+    previous_by_path: dict[str, GCodeFile],
+) -> GCodeFile:
+    previous = previous_by_path.get(file.path)
+    if previous is None:
+        return file
+    if file.modified != previous.modified or file.size != previous.size:
+        return file
+    return replace(
+        file,
+        thumbnail_url=file.thumbnail_url or previous.thumbnail_url,
+        preview_thumbnail_url=file.preview_thumbnail_url or previous.preview_thumbnail_url,
+        estimated_time=file.estimated_time or previous.estimated_time,
+        filament_total=file.filament_total or previous.filament_total,
+        object_height=file.object_height or previous.object_height,
+        layer_height=file.layer_height or previous.layer_height,
+        slicer=file.slicer or previous.slicer,
+        slicer_version=file.slicer_version or previous.slicer_version,
+        nozzle_diameter=file.nozzle_diameter or previous.nozzle_diameter,
+        filament_type=file.filament_type or previous.filament_type,
+        filament_name=file.filament_name or previous.filament_name,
+        filament_weight_total=file.filament_weight_total or previous.filament_weight_total,
     )
 
 
