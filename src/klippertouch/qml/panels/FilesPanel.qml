@@ -326,13 +326,19 @@ Item {
         Layout.preferredHeight: Math.max(44, Math.round(root.metrics.fontSize * 3.0))
         enabled: root.activeFileModel && root.activeFileModel.selectedPath.length > 0
         opacity: enabled ? 1.0 : 0.55
+        scale: control.down ? 0.97 : 1.0
+        transformOrigin: Item.Center
         font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
         onClicked: {
             if (actionRole.length > 0) {
                 root.requestFileAction(actionRole)
             }
         }
+        Behavior on scale {
+            NumberAnimation { duration: 70; easing.type: Easing.OutQuad }
+        }
         contentItem: Label {
+            y: control.down ? Math.max(1, Math.round(root.metrics.fontSize * 0.08)) : 0
             color: enabled ? Theme.text : Theme.mutedText
             text: parent.text
             elide: Text.ElideRight
@@ -340,11 +346,71 @@ Item {
             verticalAlignment: Text.AlignVCenter
             font.pixelSize: parent.font.pixelSize
         }
-        background: Rectangle {
-            color: control.down ? "#1b2b2e" : "#121b1d"
-            border.color: control.down ? "#7f9298" : "#354346"
-            border.width: control.down ? 2 : 1
-            radius: Math.round(root.metrics.fontSize * 0.28)
+        background: Item {
+            Rectangle {
+                id: fileActionDepth
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: Math.max(3, Math.round(root.metrics.fontSize * 0.22))
+                visible: !control.down && control.enabled
+                color: "#050808"
+                radius: Math.round(root.metrics.fontSize * 0.28)
+            }
+
+            Rectangle {
+                id: fileActionSurface
+                anchors.fill: parent
+                anchors.topMargin: control.down ? Math.max(2, Math.round(root.metrics.fontSize * 0.14)) : 0
+                anchors.bottomMargin: control.down ? 0 : Math.max(3, Math.round(root.metrics.fontSize * 0.22))
+                color: control.down ? "#172528" : "#121b1d"
+                border.color: control.down ? "#8da0a5" : "#354346"
+                border.width: control.down ? 2 : 1
+                radius: Math.round(root.metrics.fontSize * 0.28)
+            }
+        }
+    }
+
+    component RetryButton: Button {
+        id: retryControl
+
+        enabled: !root.loading
+        opacity: enabled ? 1.0 : 0.55
+        scale: retryControl.down ? 0.97 : 1.0
+        transformOrigin: Item.Center
+        text: "Retry"
+        Behavior on scale {
+            NumberAnimation { duration: 70; easing.type: Easing.OutQuad }
+        }
+        contentItem: Label {
+            y: retryControl.down ? Math.max(1, Math.round(root.metrics.fontSize * 0.08)) : 0
+            color: parent.enabled ? Theme.text : Theme.mutedText
+            text: parent.text
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            font.pixelSize: parent.font.pixelSize
+        }
+        background: Item {
+            Rectangle {
+                id: retryButtonDepth
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: Math.max(3, Math.round(root.metrics.fontSize * 0.20))
+                visible: !retryControl.down && retryControl.enabled
+                color: "#050808"
+                radius: Math.round(root.metrics.fontSize * 0.32)
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                anchors.topMargin: retryControl.down ? Math.max(2, Math.round(root.metrics.fontSize * 0.12)) : 0
+                anchors.bottomMargin: retryControl.down ? 0 : Math.max(3, Math.round(root.metrics.fontSize * 0.20))
+                color: retryControl.down ? "#172528" : "#101617"
+                border.color: retryControl.down ? "#8da0a5" : "#465456"
+                border.width: retryControl.down ? 2 : 1
+                radius: Math.round(root.metrics.fontSize * 0.32)
+            }
         }
     }
 
@@ -377,8 +443,12 @@ Item {
                     ]
 
                     Rectangle {
+                        readonly property bool pressedFeedback: chipMouse.pressed
+
                         Layout.preferredWidth: chipText.implicitWidth + root.metrics.gap * 1.4
                         Layout.preferredHeight: Math.max(30, Math.round(root.metrics.fontSize * 2.2))
+                        scale: chipMouse.pressed ? 0.96 : 1.0
+                        transformOrigin: Item.Center
                         color: chipMouse.pressed
                             ? "#26373b"
                             : root.isSortActive(modelData.sortKey) ? "#1b2b2e" : "#101617"
@@ -386,6 +456,21 @@ Item {
                         border.color: chipMouse.pressed ? "#7f9298" : "#263233"
                         border.width: chipMouse.pressed ? 2 : 1
                         radius: Math.round(root.metrics.fontSize * 0.32)
+                        Behavior on scale {
+                            NumberAnimation { duration: 70; easing.type: Easing.OutQuad }
+                        }
+
+                        Rectangle {
+                            id: sortChipDepth
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.bottom: parent.bottom
+                            height: Math.max(2, Math.round(root.metrics.fontSize * 0.16))
+                            visible: !chipMouse.pressed && root.isChipEnabled(modelData.sortKey)
+                            color: "#050808"
+                            opacity: 0.85
+                            radius: parent.radius
+                        }
 
                         Label {
                             id: chipText
@@ -446,27 +531,12 @@ Item {
                     font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.8))
                 }
 
-                Button {
+                RetryButton {
                     visible: root.loadError.length > 0
-                    enabled: !root.loading
-                    text: "Retry"
                     Layout.preferredWidth: Math.max(76, Math.round(root.metrics.fontSize * 5.4))
                     Layout.preferredHeight: Math.max(30, Math.round(root.metrics.fontSize * 2.2))
                     font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.8))
                     onClicked: root.refreshRequested()
-                    contentItem: Label {
-                        color: parent.enabled ? Theme.text : Theme.mutedText
-                        text: parent.text
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        font.pixelSize: parent.font.pixelSize
-                    }
-                    background: Rectangle {
-                        color: parent.down ? "#1b2b2e" : "#101617"
-                        border.color: "#465456"
-                        border.width: 1
-                        radius: Math.round(root.metrics.fontSize * 0.32)
-                    }
                 }
 
                 Label {
@@ -523,6 +593,8 @@ Item {
                 }
 
                 delegate: Rectangle {
+                    readonly property bool pressedFeedback: fileRowMouse.pressed
+
                     required property string path
                     required property string displayName
                     required property string sizeLabel
@@ -534,6 +606,8 @@ Item {
 
                     width: fileList.width
                     height: Math.max(46, Math.round(root.metrics.fontSize * (root.metrics.portrait ? 4.2 : 3.3)))
+                    scale: fileRowMouse.pressed ? 0.985 : 1.0
+                    transformOrigin: Item.Center
                     color: fileRowMouse.pressed
                         ? "#203236"
                         : !isDirectory && root.activeFileModel && root.activeFileModel.selectedPath === path
@@ -546,6 +620,21 @@ Item {
                         : "#263233"
                     border.width: fileRowMouse.pressed ? 2 : 1
                     radius: Math.round(root.metrics.fontSize * 0.32)
+                    Behavior on scale {
+                        NumberAnimation { duration: 70; easing.type: Easing.OutQuad }
+                    }
+
+                    Rectangle {
+                        id: fileRowDepth
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        height: Math.max(2, Math.round(root.metrics.fontSize * 0.18))
+                        visible: !fileRowMouse.pressed
+                        color: "#050808"
+                        opacity: 0.75
+                        radius: parent.radius
+                    }
 
                     GridLayout {
                         anchors.fill: parent
@@ -939,28 +1028,13 @@ Item {
                         font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
                     }
 
-                    Button {
+                    RetryButton {
                         visible: root.loadError.length > 0
-                        enabled: !root.loading
                         Layout.alignment: Qt.AlignHCenter
                         Layout.preferredWidth: Math.max(132, Math.round(root.metrics.fontSize * 8.8))
                         Layout.preferredHeight: Math.max(44, Math.round(root.metrics.fontSize * 3.0))
-                        text: "Retry"
                         font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.88))
                         onClicked: root.refreshRequested()
-                        contentItem: Label {
-                            color: parent.enabled ? Theme.text : Theme.mutedText
-                            text: parent.text
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                            font.pixelSize: parent.font.pixelSize
-                        }
-                        background: Rectangle {
-                            color: parent.down ? "#1b2b2e" : "#121b1d"
-                            border.color: "#465456"
-                            border.width: 1
-                            radius: Math.round(root.metrics.fontSize * 0.32)
-                        }
                     }
                 }
             }

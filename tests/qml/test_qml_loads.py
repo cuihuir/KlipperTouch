@@ -526,8 +526,17 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "readonly property bool pressedFeedback" in qml
     assert "fileRowMouse.pressed" in qml
     assert "chipMouse.pressed" in qml
-    assert "control.down ? \"#1b2b2e\"" in qml
-    assert "border.width: control.down ? 2 : 1" in qml
+    assert "scale: control.down ? 0.97 : 1.0" in qml
+    assert "scale: chipMouse.pressed ? 0.96 : 1.0" in qml
+    assert "scale: fileRowMouse.pressed ? 0.985 : 1.0" in qml
+    assert "id: fileActionDepth" in qml
+    assert "id: sortChipDepth" in qml
+    assert "id: fileRowDepth" in qml
+    assert "visible: !control.down && control.enabled" in qml
+    assert "visible: !chipMouse.pressed && root.isChipEnabled(modelData.sortKey)" in qml
+    assert "visible: !fileRowMouse.pressed" in qml
+    assert "Behavior on scale" in qml
+    assert "NumberAnimation { duration: 70" in qml
     assert "contentItem: Label" in qml
     assert "color: enabled ? Theme.text : Theme.mutedText" in qml
     assert "printer.print.start" not in qml
