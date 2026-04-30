@@ -9,7 +9,7 @@ import os
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import QObject, QUrl
+from PySide6.QtCore import QEventLoop, QObject, QTimer, QUrl
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuick import QQuickWindow  # noqa: F401
@@ -307,6 +307,8 @@ def capture(
     live_status: PrinterStatus | None = None,
     live_temperature_store: dict[str, object] | None = None,
     live_files: list[dict[str, object]] | None = None,
+    metadata_by_path: dict[str, dict[str, object]] | None = None,
+    metadata_thumbnail_base_url: str = "",
     sample_state: str = "printing",
     sample_many_sensors: bool = False,
     job_detail_pages: tuple[str, ...] = (),
@@ -335,11 +337,14 @@ def capture(
                 file_model = create_gcode_file_model(
                     live_files if live_files is not None else list(SAMPLE_FILES)
                 )
+                metadata_base = metadata_thumbnail_base_url or thumbnail_base
                 file_model.setFileMetadata(
                     "OrcaCube_PLA_27m41s.gcode",
                     SAMPLE_METADATA,
-                    thumbnail_base,
+                    metadata_base,
                 )
+                for path, metadata in (metadata_by_path or {}).items():
+                    file_model.setFileMetadata(path, metadata, metadata_base)
                 engine.rootContext().setContextProperty("gcodeFileModel", file_model)
                 engine.gcode_file_model = file_model  # type: ignore[attr-defined]
             if live_status is not None:
@@ -427,6 +432,9 @@ def capture(
                         elif panel == "print":
                             _set_files_action_preview(root, action_preview)
                         app.processEvents()
+                    _prepare_panel_capture(root, panel)
+                    app.processEvents()
+                    _settle_qml(app)
                     image = root.grabWindow()
                     target_name = f"{panel}_{detail_page}" if detail_page else panel
                     if action_preview:
@@ -441,9 +449,19 @@ def capture(
 def _prepare_panel_capture(root: QObject, panel: str) -> None:
     if panel == "splash":
         return
+    root.setProperty("klippyState", "ready")
+    root.setProperty("webhooksState", "ready")
+    root.setProperty("moonrakerVersion", "screenshot")
     root.setProperty("startupSplashHoldComplete", True)
     root.setProperty("startupSplashVisible", False)
     root.setProperty("systemFaultVisible", False)
+
+
+def _settle_qml(app: QGuiApplication, milliseconds: int = 120) -> None:
+    loop = QEventLoop()
+    QTimer.singleShot(milliseconds, loop.quit)
+    loop.exec()
+    app.processEvents()
 
 
 def _prepare_files_panel(
@@ -453,10 +471,7 @@ def _prepare_files_panel(
     sample_files_error: str,
     file_current_path: str,
 ) -> None:
-    panel = root.findChild(QObject, "filesPanel")
-    if panel is None:
-        loader = root.findChild(QObject, "panelLoader")
-        panel = loader.property("item") if loader is not None else None
+    panel = _loaded_panel(root, "filesPanel")
     if panel is None:
         return
     panel.setProperty("loading", sample_files_loading)
@@ -498,20 +513,14 @@ def _action_previews_for_panel(
 
 
 def _set_job_status_detail_page(root: QObject, page: str) -> None:
-    panel = root.findChild(QObject, "jobStatusPanel")
-    if panel is None:
-        loader = root.findChild(QObject, "panelLoader")
-        panel = loader.property("item") if loader is not None else None
+    panel = _loaded_panel(root, "jobStatusPanel")
     if panel is None:
         raise RuntimeError("Failed to find jobStatusPanel for detail screenshot")
     panel.setProperty("detailPage", page)
 
 
 def _set_job_status_action_preview(root: QObject, action: str) -> None:
-    panel = root.findChild(QObject, "jobStatusPanel")
-    if panel is None:
-        loader = root.findChild(QObject, "panelLoader")
-        panel = loader.property("item") if loader is not None else None
+    panel = _loaded_panel(root, "jobStatusPanel")
     if panel is None:
         raise RuntimeError("Failed to find jobStatusPanel for action preview screenshot")
     panel.setProperty("pendingJobAction", action)
@@ -520,43 +529,42 @@ def _set_job_status_action_preview(root: QObject, action: str) -> None:
 
 
 def _set_files_detail_page(root: QObject, page: str) -> None:
-    panel = root.findChild(QObject, "filesPanel")
-    if panel is None:
-        loader = root.findChild(QObject, "panelLoader")
-        panel = loader.property("item") if loader is not None else None
+    panel = _loaded_panel(root, "filesPanel")
     if panel is None:
         raise RuntimeError("Failed to find filesPanel for detail screenshot")
     panel.setProperty("detailPage", page == "detail")
 
 
 def _set_extrude_detail_page(root: QObject, page: str) -> None:
-    panel = root.findChild(QObject, "extrudePanel")
-    if panel is None:
-        loader = root.findChild(QObject, "panelLoader")
-        panel = loader.property("item") if loader is not None else None
+    panel = _loaded_panel(root, "extrudePanel")
     if panel is None:
         raise RuntimeError("Failed to find extrudePanel for detail screenshot")
     panel.setProperty("detailPage", page)
 
 
 def _set_move_detail_page(root: QObject, page: str) -> None:
-    panel = root.findChild(QObject, "movePanel")
-    if panel is None:
-        loader = root.findChild(QObject, "panelLoader")
-        panel = loader.property("item") if loader is not None else None
+    panel = _loaded_panel(root, "movePanel")
     if panel is None:
         raise RuntimeError("Failed to find movePanel for detail screenshot")
     panel.setProperty("detailPage", page)
 
 
 def _set_files_action_preview(root: QObject, action: str) -> None:
-    panel = root.findChild(QObject, "filesPanel")
-    if panel is None:
-        loader = root.findChild(QObject, "panelLoader")
-        panel = loader.property("item") if loader is not None else None
+    panel = _loaded_panel(root, "filesPanel")
     if panel is None:
         raise RuntimeError("Failed to find filesPanel for action preview screenshot")
     panel.setProperty("pendingFileAction", action)
+
+
+def _loaded_panel(root: QObject, object_name: str) -> QObject | None:
+    panel = root.findChild(QObject, object_name)
+    if panel is not None:
+        return panel
+    loader = root.findChild(QObject, "panelLoader")
+    item = loader.property("item") if loader is not None else None
+    if isinstance(item, QObject) and item.objectName() == object_name:
+        return item
+    return None
 
 
 def write_index(output_dir: Path, captured: list[Path]) -> Path:
@@ -724,6 +732,8 @@ def main(argv: list[str] | None = None) -> int:
     live_status = None
     live_temperature_store = None
     live_files = None
+    live_metadata_by_path: dict[str, dict[str, object]] = {}
+    live_metadata_thumbnail_base_url = ""
     live_read_only = True
     if args.live_config is not None:
         settings = load_config(args.live_config)
@@ -733,6 +743,16 @@ def main(argv: list[str] | None = None) -> int:
         live_status = build_status_from_client(live_client)
         live_temperature_store = live_client.get_temperature_store()
         live_files = live_client.get_gcode_file_list()
+        live_metadata_thumbnail_base_url = f"{live_client.endpoint}/server/files/gcodes/"
+        current_path = args.file_current_path.strip().strip("/")
+        live_metadata_paths = sorted(
+            path
+            for item in live_files
+            for path in (str(item.get("path", "")).strip().strip("/"),)
+            if path and (not current_path or path.startswith(f"{current_path}/"))
+        )
+        for path in live_metadata_paths[:1]:
+            live_metadata_by_path[path] = live_client.get_gcode_file_metadata(path)
 
     captured = capture(
         qml_path=args.qml,
@@ -747,6 +767,8 @@ def main(argv: list[str] | None = None) -> int:
         live_status=live_status,
         live_temperature_store=live_temperature_store,
         live_files=live_files,
+        metadata_by_path=live_metadata_by_path,
+        metadata_thumbnail_base_url=live_metadata_thumbnail_base_url,
         sample_state=args.sample_state,
         sample_many_sensors=args.sample_many_sensors,
         job_detail_pages=tuple(args.job_detail_pages),

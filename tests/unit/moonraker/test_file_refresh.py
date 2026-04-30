@@ -47,6 +47,9 @@ def test_file_refresh_updates_model_and_keeps_existing_files_on_failure(qtbot) -
                 raise RuntimeError("offline")
             return [{"path": "cube.gcode", "size": 2048, "permissions": "rw"}]
 
+        def get_gcode_file_metadata(self, filename: str) -> dict[str, object]:
+            return {}
+
     model = GCodeFileListModel()
     refresh = GCodeFileRefresh(FakeClient(), model)
 
@@ -68,6 +71,9 @@ def test_file_refresh_start_schedules_refresh_without_blocking(qtbot) -> None:
             self.calls += 1
             time.sleep(0.05)
             return [{"path": "cube.gcode", "size": 2048, "permissions": "rw"}]
+
+        def get_gcode_file_metadata(self, filename: str) -> dict[str, object]:
+            return {}
 
     client = FakeClient()
     model = GCodeFileListModel()
@@ -93,6 +99,9 @@ def test_file_refresh_only_runs_while_files_panel_is_active(qtbot) -> None:
         def get_gcode_file_list(self) -> list[dict[str, object]]:
             self.calls += 1
             return [{"path": "cube.gcode", "size": 2048, "permissions": "rw"}]
+
+        def get_gcode_file_metadata(self, filename: str) -> dict[str, object]:
+            return {}
 
     client = FakeClient()
     model = GCodeFileListModel()
@@ -124,6 +133,9 @@ def test_file_refresh_exposes_loading_and_file_list_errors(qtbot) -> None:
             if self.fail:
                 raise RuntimeError("moonraker offline")
             return [{"path": "cube.gcode", "size": 2048, "permissions": "rw"}]
+
+        def get_gcode_file_metadata(self, filename: str) -> dict[str, object]:
+            return {}
 
     client = FakeClient()
     model = GCodeFileListModel()
@@ -206,6 +218,38 @@ def test_file_refresh_lazily_loads_requested_metadata_off_gui_thread(qtbot) -> N
         pass
 
     assert client.metadata_calls == ["a.gcode", "b.gcode"]
+
+
+def test_file_refresh_loads_selected_file_metadata_after_list_refresh(qtbot) -> None:
+    class FakeClient(MoonrakerClient):
+        def __init__(self) -> None:
+            super().__init__(PrinterConfig(name="p", moonraker_host="host"))
+            self.metadata_calls: list[str] = []
+
+        def get_gcode_file_list(self) -> list[dict[str, object]]:
+            return [
+                {"path": "selected.gcode", "size": 2048, "permissions": "rw"},
+                {"path": "other.gcode", "size": 4096, "permissions": "rw"},
+            ]
+
+        def get_gcode_file_metadata(self, filename: str) -> dict[str, object]:
+            self.metadata_calls.append(filename)
+            return {"estimated_time": 600.0}
+
+    client = FakeClient()
+    model = GCodeFileListModel()
+    refresh = GCodeFileRefresh(client, model, metadata_interval_ms=1)
+
+    with qtbot.waitSignal(model.modelReset, timeout=1000):
+        refresh.refresh_once()
+    with qtbot.waitSignal(refresh.refreshFinished, timeout=1000):
+        pass
+    with qtbot.waitSignal(refresh.metadataRefreshFinished, timeout=1000):
+        pass
+
+    assert client.metadata_calls == ["other.gcode"]
+    assert model.selectedPath == "other.gcode"
+    assert model.fileEstimatedTimeLabelFor("other.gcode") == "10m"
 
 
 def test_file_refresh_stop_cleans_metadata_thread_without_file_list_thread() -> None:

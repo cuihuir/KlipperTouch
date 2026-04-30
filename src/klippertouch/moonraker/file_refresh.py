@@ -80,6 +80,7 @@ class GCodeFileRefresh(QObject):
         self._loading = False
         self._last_error = ""
         self._model.metadataRequested.connect(self._queue_requested_metadata)
+        self._model.selectedPathChanged.connect(self._queue_selected_metadata)
         if self._status_model is not None:
             self._status_model.activePanelChanged.connect(self._sync_active_panel)
             self._status_model.printChanged.connect(self._queue_current_print_metadata)
@@ -143,6 +144,7 @@ class GCodeFileRefresh(QObject):
         self._set_last_error("")
         files = [item for item in value if isinstance(item, dict)]
         self._model.set_files(files_from_moonraker(files))
+        self._queue_selected_metadata()
 
     @Slot(str)
     def _apply_file_error(self, message: str) -> None:
@@ -205,6 +207,13 @@ class GCodeFileRefresh(QObject):
             self._metadata_timer.start()
         if self._metadata_is_active():
             self.refresh_metadata_once()
+
+    @Slot()
+    def _queue_selected_metadata(self) -> None:
+        path = str(self._model.selectedPath or "").strip()
+        self._queue_metadata_path(path, front=True)
+        if self._metadata_is_active() and not self._metadata_timer.isActive():
+            self._metadata_timer.start()
 
     def _queue_metadata_path(self, path: str, *, front: bool = False) -> None:
         clean = path.strip().strip("/")

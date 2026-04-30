@@ -20,6 +20,8 @@ def test_screenshot_tool_captures_common_panels_and_sizes() -> None:
     assert '"update"' in source
     assert '"job_status"' in source
     assert "root.grabWindow()" in source
+    assert "QEventLoop" in source
+    assert "_settle_qml(app)" in source
     assert "QT_QPA_PLATFORM" in source
     assert "artifacts/screenshots" in source
     assert "--sample-files" in source
@@ -32,6 +34,8 @@ def test_screenshot_tool_captures_common_panels_and_sizes() -> None:
     assert "build_status_from_client(live_client)" in source
     assert "live_client.get_temperature_store()" in source
     assert "live_client.get_gcode_file_list()" in source
+    assert "live_metadata_by_path" in source
+    assert "live_client.get_gcode_file_metadata(path)" in source
     assert "CommandPolicy(read_only=True)" in source
     assert "sample_status=args.sample_status or live_status is not None" in source
     assert "--sample-many-sensors" in source
@@ -59,6 +63,7 @@ def test_screenshot_tool_captures_common_panels_and_sizes() -> None:
     assert "_write_sample_thumbnail" in source
     assert "thumbnail_base = _write_sample_thumbnail(output_dir).as_uri()" in source
     assert "setFileMetadata" in source
+    assert "metadata_by_path" in source
     assert "write_index" in source
     assert "index.html" in source
     assert "--no-index" in source
@@ -96,6 +101,10 @@ def test_screenshot_tool_captures_common_panels_and_sizes() -> None:
     assert 'panel.setProperty("pendingFileAction", action)' in source
     assert 'f"{panel}_{detail_page}"' in source
     assert "_prepare_panel_capture(root, panel)" in source
+    assert source.count("_prepare_panel_capture(root, panel)") >= 2
     assert 'root.setProperty("startupSplashHoldComplete", True)' in source
     assert 'root.setProperty("startupSplashVisible", False)' in source
     assert 'root.setProperty("systemFaultVisible", False)' in source
+    assert 'root.setProperty("klippyState", "ready")' in source
+    assert 'root.setProperty("webhooksState", "ready")' in source
+    assert 'root.setProperty("moonrakerVersion", "screenshot")' in source
