@@ -37,6 +37,7 @@ Item {
     property string detailPage: "summary"
     property string pendingJobAction: ""
     property string pendingJobObject: ""
+    property string selectedExcludeObject: ""
     property string controlStatus: ""
     property string controlError: ""
     property string requestedPrintState: ""
@@ -54,6 +55,7 @@ Item {
     onExcludeObjectsChanged: root.requestObjectMapRepaint()
     onExcludedObjectNamesChanged: root.requestObjectMapRepaint()
     onCurrentObjectChanged: root.requestObjectMapRepaint()
+    onSelectedExcludeObjectChanged: root.requestObjectMapRepaint()
 
     component StatusCard: Rectangle {
         id: statusCard
@@ -655,6 +657,35 @@ Item {
         }
     }
 
+    function selectExcludeObject(objectName) {
+        if (objectName.length > 0 && root.excludedObjectNames.indexOf(objectName) < 0) {
+            root.selectedExcludeObject = objectName
+        }
+    }
+
+    function selectedExcludeObjectName() {
+        if (root.selectedExcludeObject.length > 0
+                && root.excludedObjectNames.indexOf(root.selectedExcludeObject) < 0
+                && root.excludeObjectNames.indexOf(root.selectedExcludeObject) >= 0) {
+            return root.selectedExcludeObject
+        }
+        if (root.currentObject.length > 0
+                && root.excludedObjectNames.indexOf(root.currentObject) < 0
+                && root.excludeObjectNames.indexOf(root.currentObject) >= 0) {
+            return root.currentObject
+        }
+        for (var i = 0; i < root.excludeObjectNames.length; i += 1) {
+            if (root.excludedObjectNames.indexOf(root.excludeObjectNames[i]) < 0) {
+                return root.excludeObjectNames[i]
+            }
+        }
+        return ""
+    }
+
+    function activeExcludeObjectName() {
+        return root.selectedExcludeObjectName()
+    }
+
     function excludeObjectHasPolygon(objectInfo) {
         return objectInfo && objectInfo.polygon && objectInfo.polygon.length >= 3
     }
@@ -778,6 +809,7 @@ Item {
             }
             var excluded = root.excludedObjectNames.indexOf(objectInfo.name) >= 0
             var current = objectInfo.name === root.currentObject
+            var selected = objectInfo.name === root.activeExcludeObjectName()
             ctx.beginPath()
             for (var j = 0; j < objectInfo.polygon.length; j += 1) {
                 var point = objectInfo.polygon[j]
@@ -790,9 +822,9 @@ Item {
                 }
             }
             ctx.closePath()
-            ctx.fillStyle = excluded ? "#202020" : current ? "#2d3d40" : "#141f21"
-            ctx.strokeStyle = current ? root.neutralAccent : "#4b5659"
-            ctx.lineWidth = current ? 2 : 1
+            ctx.fillStyle = excluded ? "#202020" : selected ? "#33464a" : current ? "#243539" : "#141f21"
+            ctx.strokeStyle = selected ? root.neutralAccent : current ? "#6f7b7e" : "#4b5659"
+            ctx.lineWidth = selected ? 3 : current ? 2 : 1
             ctx.fill()
             ctx.stroke()
         }
@@ -1714,53 +1746,13 @@ Item {
                 spacing: root.metrics.gap
 
                 Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: Math.max(64, Math.round(root.metrics.fontSize * 4.6))
-                    color: "#101617"
-                    border.color: root.currentObject.length > 0 ? root.neutralAccent : "#263233"
-                    border.width: 1
-                    radius: Math.round(root.metrics.fontSize * 0.32)
-                    gradient: Gradient {
-                        GradientStop { position: 0.0; color: "#101a1d" }
-                        GradientStop { position: 1.0; color: "#071011" }
-                    }
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.margins: root.metrics.gap
-                        spacing: root.metrics.gap
-
-                        Label {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            color: Theme.text
-                            text: root.currentObject.length > 0 ? root.currentObject : "No current object"
-                            elide: Text.ElideMiddle
-                            verticalAlignment: Text.AlignVCenter
-                            font.bold: true
-                            font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.12))
-                        }
-
-                        JobButton {
-                            Layout.preferredWidth: root.jobButtonWidth
-                            Layout.preferredHeight: root.jobButtonHeight
-                            Layout.alignment: Qt.AlignVCenter
-                            text: "Skip Current"
-                            iconName: "object"
-                            enabled: root.currentObject.length > 0
-                                && root.excludedObjectNames.indexOf(root.currentObject) < 0
-                            onClicked: root.requestJobAction("skip_current", "")
-                        }
-                    }
-                }
-
-                Rectangle {
                     id: objectMapFrame
                     visible: root.objectMapHasPolygons()
                     Layout.fillWidth: true
+                    Layout.fillHeight: true
                     Layout.preferredHeight: root.metrics.portrait
-                        ? Math.max(180, Math.round(root.metrics.fontSize * 12.0))
-                        : Math.max(190, Math.round(root.metrics.fontSize * 12.6))
+                        ? Math.max(320, Math.round(root.metrics.fontSize * 20.0))
+                        : Math.max(260, Math.round(root.metrics.fontSize * 16.0))
                     color: "#081112"
                     border.color: "#263233"
                     border.width: 1
@@ -1785,76 +1777,70 @@ Item {
                         onClicked: {
                             var objectName = root.objectAtPoint(mouse.x, mouse.y)
                             if (objectName.length > 0) {
-                                root.requestJobAction("skip", objectName)
+                                root.selectExcludeObject(objectName)
                             }
                         }
                     }
                 }
 
-                ListView {
+                Rectangle {
                     Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    clip: true
-                    spacing: root.metrics.gap
-                    model: root.excludeObjectNames
-                    boundsBehavior: Flickable.StopAtBounds
-                    ScrollBar.vertical: ScrollBar {
-                        policy: ScrollBar.AsNeeded
+                    Layout.preferredHeight: root.metrics.portrait
+                        ? Math.max(104, Math.round(root.metrics.fontSize * 7.1))
+                        : Math.max(96, Math.round(root.metrics.fontSize * 6.2))
+                    color: "#101617"
+                    border.color: root.activeExcludeObjectName().length > 0 ? root.neutralAccent : "#263233"
+                    border.width: 1
+                    radius: Math.round(root.metrics.fontSize * 0.32)
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: "#101a1d" }
+                        GradientStop { position: 1.0; color: "#071011" }
                     }
 
-                    delegate: Rectangle {
-                        width: ListView.view.width
-                        height: Math.max(58, Math.round(root.metrics.fontSize * 4.1))
-                        color: root.excludedObjectNames.indexOf(modelData) >= 0
-                            ? "#171717"
-                            : "#101617"
-                        border.color: modelData === root.currentObject ? root.neutralAccent : "#263233"
-                        border.width: modelData === root.currentObject ? 2 : 1
-                        radius: Math.round(root.metrics.fontSize * 0.32)
-                        gradient: Gradient {
-                            GradientStop {
-                                position: 0.0
-                                color: modelData === root.currentObject ? "#172023" : "#101a1d"
-                            }
-                            GradientStop { position: 1.0; color: "#071011" }
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: root.metrics.gap
+                        spacing: root.metrics.gap
+
+                        Label {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: Math.max(26, Math.round(root.metrics.fontSize * 1.8))
+                            color: Theme.text
+                            text: root.activeExcludeObjectName().length > 0
+                                ? root.activeExcludeObjectName()
+                                : "Select an object"
+                            elide: Text.ElideMiddle
+                            verticalAlignment: Text.AlignVCenter
+                            font.bold: true
+                            font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.12))
                         }
 
                         RowLayout {
-                            anchors.fill: parent
-                            anchors.margins: root.metrics.gap
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
                             spacing: root.metrics.gap
 
-                            ColumnLayout {
+                            JobButton {
+                                id: selectedObjectSkipButton
                                 Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                spacing: 0
-
-                                Label {
-                                    Layout.fillWidth: true
-                                    color: Theme.text
-                                    text: String(modelData)
-                                    elide: Text.ElideMiddle
-                                    font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize))
-                                }
-
-                                Label {
-                                    Layout.fillWidth: true
-                                    color: Theme.mutedText
-                                    text: root.excludedObjectNames.indexOf(modelData) >= 0
-                                        ? "Excluded"
-                                        : modelData === root.currentObject ? "Printing now" : "Available"
-                                    font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
-                                }
+                                Layout.preferredHeight: root.jobButtonHeight
+                                Layout.alignment: Qt.AlignVCenter
+                                text: "Skip Selected"
+                                iconName: "object"
+                                enabled: root.activeExcludeObjectName().length > 0
+                                onClicked: root.requestJobAction("skip", root.activeExcludeObjectName())
                             }
 
                             JobButton {
-                                Layout.preferredWidth: root.jobButtonWidth
+                                id: currentObjectSkipButton
+                                Layout.fillWidth: true
                                 Layout.preferredHeight: root.jobButtonHeight
                                 Layout.alignment: Qt.AlignVCenter
-                                text: "Skip"
+                                text: "Skip Current"
                                 iconName: "object"
-                                enabled: root.excludedObjectNames.indexOf(modelData) < 0
-                                onClicked: root.requestJobAction("skip", modelData)
+                                enabled: root.currentObject.length > 0
+                                    && root.excludedObjectNames.indexOf(root.currentObject) < 0
+                                onClicked: root.requestJobAction("skip_current", "")
                             }
                         }
                     }

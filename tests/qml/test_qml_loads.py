@@ -247,7 +247,8 @@ def test_action_button_icon_contract_is_explicit() -> None:
     )
 
     assert 'iconName: modelData.delta < 0 ? "back" : "confirm"' in job_qml
-    assert 'text: "Skip"' in job_qml
+    assert 'text: "Skip Selected"' in job_qml
+    assert 'text: "Skip Current"' in job_qml
     assert 'iconName: "object"' in job_qml
     assert "component FileActionButton: TactileButton" in files_qml
     assert "component RetryButton: TactileButton" in files_qml
@@ -896,15 +897,24 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "Layout.preferredHeight: root.advancedCardHeight()" in qml
     assert "id: excludePage" in qml
     assert "root.currentObject" in qml
+    assert "property string selectedExcludeObject" in qml
+    assert "function selectedExcludeObjectName()" in qml
+    assert "function selectExcludeObject(objectName)" in qml
+    assert "function activeExcludeObjectName()" in qml
     assert "id: objectMapCanvas" in qml
     assert "root.excludeObjects.length" in qml
     assert "function objectMapBounds()" in qml
     assert "function objectAtPoint(screenX, screenY)" in qml
     assert "function drawExcludeObjectMap(ctx)" in qml
+    assert "id: selectedObjectSkipButton" in qml
+    assert "id: currentObjectSkipButton" in qml
+    assert "root.requestJobAction(\"skip\", root.activeExcludeObjectName())" in qml
     assert "root.requestJobAction(\"skip_current\", \"\")" in qml
-    assert "model: root.excludeObjectNames" in qml
-    assert "root.excludedObjectNames.indexOf(modelData) >= 0" in qml
-    assert 'root.requestJobAction("skip", modelData)' in qml
+    assert "root.selectExcludeObject(objectName)" in qml
+    assert 'root.requestJobAction("skip", objectName)' not in qml
+    assert "ListView {" not in qml.split("id: excludePage", 1)[1]
+    assert "model: root.excludeObjectNames" not in qml
+    assert 'root.requestJobAction("skip", modelData)' not in qml
     assert "qmllint disable missing-property" in qml
     assert "function goBack()" in qml
     assert 'if (root.pendingJobAction.length > 0)' in qml
