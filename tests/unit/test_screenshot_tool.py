@@ -78,3 +78,7 @@ def test_screenshot_tool_captures_common_panels_and_sizes() -> None:
     assert 'panel.setProperty("detailPage", page)' in source
     assert 'panel.setProperty("pendingFileAction", action)' in source
     assert 'f"{panel}_{detail_page}"' in source
+    assert "_prepare_panel_capture(root, panel)" in source
+    assert 'root.setProperty("startupSplashHoldComplete", True)' in source
+    assert 'root.setProperty("startupSplashVisible", False)' in source
+    assert 'root.setProperty("systemFaultVisible", False)' in source

@@ -343,6 +343,7 @@ def capture(
             root.setProperty("height", height)
             root.setProperty("panelStack", [panel])
             root.setProperty("currentPanel", panel)
+            _prepare_panel_capture(root, panel)
             app.processEvents()
             for detail_page in _detail_pages_for_panel(
                 panel,
@@ -382,6 +383,14 @@ def capture(
                         raise RuntimeError(f"Failed to save screenshot {target}")
                     captured.append(target)
     return captured
+
+
+def _prepare_panel_capture(root: QObject, panel: str) -> None:
+    if panel == "splash":
+        return
+    root.setProperty("startupSplashHoldComplete", True)
+    root.setProperty("startupSplashVisible", False)
+    root.setProperty("systemFaultVisible", False)
 
 
 def _detail_pages_for_panel(
