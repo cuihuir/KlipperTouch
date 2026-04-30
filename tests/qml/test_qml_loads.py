@@ -770,6 +770,23 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     )
 
 
+def test_job_status_summary_scrolls_on_small_portrait_screens() -> None:
+    qml = Path("src/klippertouch/qml/panels/JobStatusPanel.qml").read_text(encoding="utf-8")
+
+    assert "id: summaryFlickable" in qml
+    assert "visible: root.detailPage === \"summary\"" in qml
+    assert "contentHeight: summaryContent.implicitHeight + root.summaryBottomSafeArea()" in qml
+    assert "id: summaryContent" in qml
+    assert "id: summaryBottomSafeAreaItem" in qml
+    assert "Layout.preferredHeight: root.summaryBottomSafeArea()" in qml
+    assert "function summaryBottomSafeArea()" in qml
+    assert "function summaryZoneGridHeight()" in qml
+    assert "Layout.preferredHeight: root.summaryZoneGridHeight()" in qml
+    assert "return Math.max(168, Math.round(root.metrics.fontSize * 10.2))" in qml
+    assert "Math.max(72, Math.round(root.metrics.fontSize * 4.2))" in qml
+    assert "ScrollBar.vertical: ScrollBar" in qml
+
+
 def test_move_panel_exposes_read_only_position_without_controls() -> None:
     qml = Path("src/klippertouch/qml/panels/MovePanel.qml").read_text(encoding="utf-8")
 
