@@ -246,6 +246,12 @@ Item {
         return width >= previewAndGap ? 2 : 1
     }
 
+    function selectedActionPreviewHeight() {
+        return root.metrics.portrait
+            ? Math.max(92, Math.round(root.metrics.fontSize * 5.7))
+            : Math.max(62, Math.round(root.metrics.fontSize * 4.2))
+    }
+
     component MetadataGroupCard: Rectangle {
         id: metadataGroupCard
         property string sectionTitle: ""
@@ -729,7 +735,7 @@ Item {
                     id: selectedActionPreview
                     visible: root.pendingFileAction.length > 0
                     Layout.fillWidth: true
-                    Layout.preferredHeight: visible ? Math.max(62, Math.round(root.metrics.fontSize * 4.2)) : 0
+                    Layout.preferredHeight: visible ? root.selectedActionPreviewHeight() : 0
                     Layout.maximumHeight: Layout.preferredHeight
                     Layout.fillHeight: false
                     color: root.pendingFileAction === "delete" ? "#181311" : "#111819"
@@ -737,13 +743,17 @@ Item {
                     border.width: 1
                     radius: Math.round(root.metrics.fontSize * 0.32)
 
-                    RowLayout {
+                    GridLayout {
+                        id: selectedActionPreviewLayout
                         anchors.fill: parent
                         anchors.margins: root.metrics.gap
-                        spacing: root.metrics.gap
+                        columns: root.metrics.portrait ? 1 : 2
+                        rowSpacing: Math.max(4, Math.round(root.metrics.fontSize * 0.28))
+                        columnSpacing: root.metrics.gap
 
                         ColumnLayout {
                             Layout.fillWidth: true
+                            Layout.fillHeight: true
                             spacing: 0
 
                             Label {
@@ -764,22 +774,32 @@ Item {
                             }
                         }
 
-                        FileActionButton {
-                            text: "Confirm"
-                            enabled: true
-                            onClicked: {
-                                root.fileActionRequested(
-                                    root.pendingFileAction,
-                                    root.activeFileModel ? root.activeFileModel.selectedPath : ""
-                                )
-                                root.clearFileAction()
-                            }
-                        }
+                        RowLayout {
+                            id: selectedActionPreviewButtonRow
+                            Layout.fillWidth: root.metrics.portrait
+                            Layout.alignment: root.metrics.portrait ? Qt.AlignRight : Qt.AlignVCenter
+                            Layout.preferredHeight: Math.max(44, Math.round(root.metrics.fontSize * 3.0))
+                            spacing: root.metrics.gap
 
-                        FileActionButton {
-                            text: "Dismiss"
-                            enabled: true
-                            onClicked: root.clearFileAction()
+                            FileActionButton {
+                                Layout.fillWidth: root.metrics.portrait
+                                text: "Confirm"
+                                enabled: true
+                                onClicked: {
+                                    root.fileActionRequested(
+                                        root.pendingFileAction,
+                                        root.activeFileModel ? root.activeFileModel.selectedPath : ""
+                                    )
+                                    root.clearFileAction()
+                                }
+                            }
+
+                            FileActionButton {
+                                Layout.fillWidth: root.metrics.portrait
+                                text: "Dismiss"
+                                enabled: true
+                                onClicked: root.clearFileAction()
+                            }
                         }
                     }
                 }

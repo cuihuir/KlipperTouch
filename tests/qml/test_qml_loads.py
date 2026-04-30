@@ -438,6 +438,13 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "if (actionRole.length > 0)" in qml
     assert "id: selectedActionPreview" in qml
     assert "visible: root.pendingFileAction.length > 0" in qml
+    assert "Layout.preferredHeight: visible ? root.selectedActionPreviewHeight() : 0" in qml
+    assert "function selectedActionPreviewHeight()" in qml
+    assert "id: selectedActionPreviewLayout" in qml
+    assert "columns: root.metrics.portrait ? 1 : 2" in qml
+    assert "id: selectedActionPreviewButtonRow" in qml
+    assert "Layout.fillWidth: root.metrics.portrait" in qml
+    assert "Layout.alignment: root.metrics.portrait ? Qt.AlignRight : Qt.AlignVCenter" in qml
     assert "id: selectedActionFeedback" in qml
     assert "visible: root.controlFeedbackText().length > 0" in qml
     assert 'root.pendingFileAction === "delete"' in qml
@@ -467,7 +474,6 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert 'text: "Pause"' not in qml
     assert 'text: "Cancel"' not in qml
     assert "id: detailsPanel" not in qml
-    assert "columns: root.metrics.portrait ? 1 : 2" not in qml
 
 
 def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
