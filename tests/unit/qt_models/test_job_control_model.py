@@ -105,6 +105,10 @@ class FakeClient:
         self.calls.append(("pressure_advance", f"{advance}:{smooth_time}"))
         return {"ok": True}
 
+    def set_fan_speed(self, device_name: str, percent: float) -> dict[str, bool]:
+        self.calls.append(("fan_speed", f"{device_name}:{percent}"))
+        return {"ok": True}
+
 
 class BlockingClient(FakeClient):
     def pause_print(self) -> dict[str, bool]:
@@ -525,6 +529,34 @@ def test_job_control_model_sends_pressure_advance_request(qtbot) -> None:
 
     assert client.calls == [("pressure_advance", "0.045:0.04")]
     assert model.lastStatus == "Pressure advance sent"
+
+
+def test_job_control_model_sends_validated_fan_speed(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestFanSpeed("fan", 50)
+    wait_for_calls(qtbot, model, client, 1)
+
+    assert client.calls == [("fan_speed", "fan:50.0")]
+    assert model.lastStatus == "Fan speed sent"
+
+
+def test_job_control_model_rejects_invalid_fan_speed(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestFanSpeed("", 50)
+    assert client.calls == []
+    assert model.lastError == "Fan device is required"
+
+    model.requestFanSpeed("fan", -1)
+    assert client.calls == []
+    assert model.lastError == "Fan speed must be between 0 and 100"
+
+    model.requestFanSpeed("fan", 101)
+    assert client.calls == []
+    assert model.lastError == "Fan speed must be between 0 and 100"
 
 
 def test_job_control_model_rejects_invalid_pressure_advance(qtbot) -> None:

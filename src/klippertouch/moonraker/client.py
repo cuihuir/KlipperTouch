@@ -212,6 +212,20 @@ class MoonrakerClient:
             f"SET_PRESSURE_ADVANCE ADVANCE={advance:.3f} SMOOTH_TIME={smooth_time:.3f}"
         )
 
+    def set_fan_speed(self, device_name: str, percent: float) -> dict[str, Any]:
+        clean_name = device_name.strip()
+        if percent < 0 or percent > 100:
+            raise ValueError("Fan speed must be between 0 and 100")
+        if clean_name == "fan":
+            pwm = round(float(percent) * 255 / 100)
+            return self.run_gcode_script(f"M106 S{pwm:.0f}")
+        if clean_name.startswith("fan_generic "):
+            fan_name = clean_name.removeprefix("fan_generic ").strip()
+            return self.run_gcode_script(
+                f'SET_FAN_SPEED FAN="{fan_name}" SPEED={float(percent) / 100:.3f}'
+            )
+        raise ValueError("Fan is not controllable")
+
     def delete_gcode_file(self, filename: str) -> dict[str, Any]:
         return self.delete(f"server/files/gcodes/{filename.strip('/')}")
 

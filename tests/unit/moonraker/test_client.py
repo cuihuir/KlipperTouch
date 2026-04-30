@@ -449,6 +449,12 @@ def test_client_sends_print_control_when_controls_enabled(
             (0.045, 0.04),
             "SET_PRESSURE_ADVANCE ADVANCE=0.045 SMOOTH_TIME=0.040",
         ),
+        ("set_fan_speed", ("fan", 50.0), "M106 S128"),
+        (
+            "set_fan_speed",
+            ("fan_generic chamber", 25.0),
+            'SET_FAN_SPEED FAN="chamber" SPEED=0.250',
+        ),
     ],
 )
 def test_client_sends_gcode_control_scripts_when_controls_enabled(
@@ -539,8 +545,24 @@ def test_client_blocks_print_control_in_read_only_mode(monkeypatch) -> None:
         client.delete_gcode_file("cube.gcode")
     with pytest.raises(UnsafeCommandError):
         client.clear_sdcard_file()
+    with pytest.raises(UnsafeCommandError):
+        client.set_fan_speed("fan", 50)
 
     assert calls == []
+
+
+def test_client_rejects_uncontrollable_or_invalid_fan_speed() -> None:
+    client = MoonrakerClient(
+        PrinterConfig(name="p", moonraker_host="host"),
+        policy=CommandPolicy(read_only=False),
+    )
+
+    with pytest.raises(ValueError, match="Fan speed must be between 0 and 100"):
+        client.set_fan_speed("fan", -1)
+    with pytest.raises(ValueError, match="Fan speed must be between 0 and 100"):
+        client.set_fan_speed("fan", 101)
+    with pytest.raises(ValueError, match="Fan is not controllable"):
+        client.set_fan_speed("heater_fan hotend_fan", 50)
 
 
 def test_client_deletes_gcode_file_when_controls_enabled(monkeypatch) -> None:

@@ -58,6 +58,8 @@ class JobControlClient(Protocol):
 
     def set_pressure_advance(self, advance: float, smooth_time: float) -> dict[str, object]: ...
 
+    def set_fan_speed(self, device_name: str, percent: float) -> dict[str, object]: ...
+
 
 @dataclass
 class _PendingJobCommand:
@@ -262,6 +264,20 @@ class JobControlModel(QObject):
         self._run_control(
             "Pressure advance",
             lambda client: client.set_pressure_advance(float(advance), float(smooth_time)),
+        )
+
+    @Slot(str, float)
+    def requestFanSpeed(self, device_name: str, percent: float) -> None:  # noqa: N802
+        clean_name = device_name.strip()
+        if not clean_name:
+            self._set_error("Fan device is required")
+            return
+        if percent < 0 or percent > 100:
+            self._set_error("Fan speed must be between 0 and 100")
+            return
+        self._run_control(
+            "Fan speed",
+            lambda client: client.set_fan_speed(clean_name, float(percent)),
         )
 
     @Slot(str)
