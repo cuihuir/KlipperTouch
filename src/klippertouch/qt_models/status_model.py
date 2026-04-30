@@ -479,6 +479,7 @@ class StatusModel(QObject):
     extruderTemperatureChanged = Signal()
     filamentSensorChanged = Signal()
     bootstrapChanged = Signal()
+    statusRetryRequested = Signal()
 
     def __init__(
         self,
@@ -532,6 +533,18 @@ class StatusModel(QObject):
             return
         self._bootstrap_complete = True
         self.bootstrapChanged.emit()
+
+    @Slot()
+    def markBootstrapPending(self) -> None:  # noqa: N802
+        if not self._bootstrap_complete:
+            return
+        self._bootstrap_complete = False
+        self.bootstrapChanged.emit()
+
+    @Slot()
+    def requestStatusRetry(self) -> None:  # noqa: N802
+        self.markBootstrapPending()
+        self.statusRetryRequested.emit()
 
     @Property(str, notify=activePanelChanged)
     def activePanel(self) -> str:

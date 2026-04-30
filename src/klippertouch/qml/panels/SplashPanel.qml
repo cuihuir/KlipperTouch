@@ -13,13 +13,16 @@ Item {
     property string webhooksMessage: ""
     property string controlStatus: ""
     property string controlError: ""
+    property bool connecting: false
+    property string activeDetailText: root.detail()
     property bool compactVertical: root.height < 380
-    property int recoveryColumns: root.width > 720 ? 4 : 2
-    property int recoveryRows: root.recoveryColumns === 4 ? 1 : 2
+    property int recoveryColumns: root.width > 560 ? 3 : 1
+    property int recoveryRows: root.recoveryColumns === 3 ? 1 : 3
     property int recoveryNavHeight: root.recoveryRows === 1
         ? Math.max(72, Math.round(root.metrics.fontSize * 4.4))
         : Math.max(106, Math.round(root.metrics.fontSize * 6.2))
     signal recoveryActionRequested(string action)
+    onActiveDetailTextChanged: messagePager.currentIndex = 0
 
     function moonrakerOffline() {
         return root.moonrakerVersion.length <= 0 || root.moonrakerVersion === "unknown"
@@ -46,10 +49,19 @@ Item {
         if (root.webhooksState === "ready") {
             return "Printer is ready"
         }
+        if (root.connecting) {
+            return "Connecting..."
+        }
         return ""
     }
 
     function headline() {
+        if (root.connecting) {
+            if (root.moonrakerOffline()) {
+                return "Connecting to Moonraker"
+            }
+            return "Connecting to printer"
+        }
         if (root.moonrakerOffline()) {
             return "Moonraker offline"
         }
@@ -66,6 +78,12 @@ Item {
     }
 
     function detail() {
+        if (root.connecting) {
+            if (root.moonrakerOffline()) {
+                return "Waiting for Moonraker. KlipperTouch will continue when Moonraker responds."
+            }
+            return "Waiting for Klippy ready. Current state: " + root.klippyState
+        }
         if (root.moonrakerOffline()) {
             return "KlipperTouch cannot reach Moonraker. Check host, network, and Moonraker service."
         }
@@ -94,12 +112,12 @@ Item {
     }
 
     function detailPageCount() {
-        return Math.max(1, Math.ceil(root.detail().length / root.detailPageSize()))
+        return Math.max(1, Math.ceil(root.activeDetailText.length / root.detailPageSize()))
     }
 
     function detailPageText(pageIndex) {
         var pageSize = root.detailPageSize()
-        return root.detail().slice(pageIndex * pageSize, (pageIndex + 1) * pageSize)
+        return root.activeDetailText.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize)
     }
 
     Rectangle {
@@ -123,6 +141,7 @@ Item {
 
         SwipeView {
             id: messagePager
+            currentIndex: 0
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
@@ -320,8 +339,7 @@ Item {
                 model: [
                     {"label": "Firmware Restart", "action": "firmware_restart", "placeholder": false},
                     {"label": "Restart Klipper", "action": "restart_klipper", "placeholder": false},
-                    {"label": "Restart Moonraker", "action": "restart_moonraker", "placeholder": true},
-                    {"label": "Emergency Stop", "action": "emergency_stop", "placeholder": false}
+                    {"label": "Retry", "action": "retry", "placeholder": false}
                 ]
 
                 Rectangle {

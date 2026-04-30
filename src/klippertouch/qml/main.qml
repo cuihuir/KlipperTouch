@@ -71,7 +71,8 @@ ApplicationWindow {
     property string toastMessage: ""
     property string currentPanel: "main"
     property var panelStack: ["main"]
-    property bool systemFaultVisible: window.bootstrapComplete && (
+    property bool startupSplashVisible: !window.printerReadyForUi() && !window.systemFaultVisible
+    property bool systemFaultVisible: window.bootstrapComplete && !window.printerReadyForUi() && (
         window.moonrakerFaultActive()
         || window.webhooksFaultActive()
         || window.klippyFaultActive()
@@ -92,6 +93,16 @@ ApplicationWindow {
 
     function moonrakerFaultActive() {
         return !bridgeModel || window.moonrakerVersion.length <= 0 || window.moonrakerVersion === "unknown"
+    }
+
+    function moonrakerConnected() {
+        return !window.moonrakerFaultActive()
+    }
+
+    function printerReadyForUi() {
+        return window.moonrakerConnected()
+            && window.klippyState === "ready"
+            && (window.webhooksState === "ready" || window.webhooksState.length <= 0)
     }
 
     function klippyFaultActive() {
@@ -225,6 +236,10 @@ ApplicationWindow {
     }
 
     function requestRecoveryControl(action) {
+        if (action === "retry" && bridgeModel) {
+            bridgeModel.requestStatusRetry()
+            return
+        }
         if (!jobControlBridgeModel) {
             return
         }
@@ -232,10 +247,6 @@ ApplicationWindow {
             jobControlBridgeModel.requestFirmwareRestart()
         } else if (action === "restart_klipper") {
             jobControlBridgeModel.requestKlipperRestart()
-        } else if (action === "restart_moonraker") {
-            jobControlBridgeModel.requestPlaceholderControl("Restart Moonraker")
-        } else if (action === "emergency_stop") {
-            jobControlBridgeModel.requestEmergencyStop()
         }
     }
 
@@ -411,7 +422,7 @@ ApplicationWindow {
             id: panelLoader
             objectName: "panelLoader"
             anchors.fill: parent
-            sourceComponent: window.systemFaultVisible
+            sourceComponent: window.startupSplashVisible || window.systemFaultVisible
                 ? splashComponent
                 : window.componentForPanel(window.currentPanel)
         }
@@ -449,6 +460,7 @@ ApplicationWindow {
                 moonrakerVersion: window.moonrakerVersion
                 webhooksState: window.webhooksState
                 webhooksMessage: window.webhooksMessage
+                connecting: window.startupSplashVisible && !window.systemFaultVisible
                 controlStatus: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastStatus : ""
                 controlError: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastError : ""
                 onRecoveryActionRequested: function(action) {

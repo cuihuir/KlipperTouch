@@ -86,6 +86,8 @@ def run_app(
         notification_model.addKlipperWarnings(status.klipper_warnings)
         if status_stream_client is None or hasattr(engine, "status_stream"):
             return
+        if not status.objects:
+            return
         status_stream = MoonrakerStatusStream(status_stream_client, status_model, status)
         status_stream.gcodeResponseReceived.connect(
             lambda message: notification_model.showToast("info", "Printer message", message)
@@ -120,6 +122,7 @@ def run_app(
         startup_loader.temperatureStoreLoaded.connect(apply_startup_temperature_store)
         startup_loader.filesLoaded.connect(apply_startup_files)
         startup_loader.finished.connect(status_model.markBootstrapComplete)
+        status_model.statusRetryRequested.connect(startup_loader.start)
         startup_loader.start()
         engine.startup_loader = startup_loader  # type: ignore[attr-defined]
     if file_refresh_client is not None:

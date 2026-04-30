@@ -85,6 +85,7 @@ def test_run_app_wires_optional_read_only_status_stream() -> None:
 
     assert "MoonrakerStatusStream" in source
     assert "status_stream_client" in source
+    assert "if not status.objects:" in source
     assert "status_stream.gcodeResponseReceived.connect" in source
     assert 'notification_model.showToast("info", "Printer message", message)' in source
     assert "status_stream.start()" in source
@@ -102,6 +103,7 @@ def test_run_app_bootstraps_initial_moonraker_data_after_qml_load() -> None:
         app.__file__
     ).with_name("moonraker").joinpath("startup_loader.py").read_text(encoding="utf-8")
     assert "startup_loader.finished.connect(status_model.markBootstrapComplete)" in source
+    assert "status_model.statusRetryRequested.connect(startup_loader.start)" in source
 
 
 def test_run_app_stops_background_loaders_when_app_exits() -> None:

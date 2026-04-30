@@ -142,6 +142,21 @@ def test_status_model_does_not_report_bootstrap_complete_before_first_status(qtb
     assert changes == [True]
 
 
+def test_status_model_can_mark_bootstrap_pending_and_request_retry(qtbot) -> None:
+    model = StatusModel()
+    retry_requests: list[bool] = []
+    bootstrap_changes: list[bool] = []
+    model.statusRetryRequested.connect(lambda: retry_requests.append(True))
+    model.bootstrapChanged.connect(lambda: bootstrap_changes.append(model.bootstrapComplete))
+    model.set_status(PrinterStatus(moonraker_version="v0.10.0", klippy_state="shutdown"))
+
+    model.requestStatusRetry()
+
+    assert model.bootstrapComplete is False
+    assert retry_requests == [True]
+    assert bootstrap_changes == [True, False]
+
+
 def test_status_model_exposes_webhooks_shutdown_fields(qtbot) -> None:
     model = StatusModel()
     changes: list[bool] = []
