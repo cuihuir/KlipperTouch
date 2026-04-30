@@ -7,6 +7,7 @@ import "../models"
 
 Item {
     id: root
+    objectName: "temperatureDevicePager"
     property var temperatureModel: null
     property Item popupParent: null
     property int deviceColumns: 1
@@ -758,11 +759,8 @@ Item {
         ColumnLayout {
             id: landscapeTargetEditor
             visible: !root.targetEditorPortrait()
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
+            anchors.fill: parent
             anchors.margins: targetEditorPopup.padding
-            height: implicitHeight
             spacing: Math.max(6, Math.round(root.fontSize * 0.4))
 
             RowLayout {
@@ -825,8 +823,9 @@ Item {
             }
 
             RowLayout {
+                id: landscapeDigitRow
                 Layout.fillWidth: true
-                Layout.fillHeight: false
+                Layout.fillHeight: true
                 Layout.preferredHeight: root.touchTargetSize * 3
                     + Math.max(6, Math.round(root.fontSize * 0.4)) * 2
                 spacing: Math.max(8, Math.round(root.fontSize * 0.5))

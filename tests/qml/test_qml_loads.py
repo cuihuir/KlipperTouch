@@ -1831,6 +1831,7 @@ def test_temperature_device_pager_uses_page_based_navigation() -> None:
     )
 
     assert 'import "../Theme.js" as Theme' in qml
+    assert 'objectName: "temperatureDevicePager"' in qml
     assert "property var temperatureModel: null" in qml
     assert "property int pageIndex: 0" in qml
     assert "property int pageSize:" in qml
@@ -1897,9 +1898,12 @@ def test_temperature_device_pager_uses_page_based_navigation() -> None:
     assert "id: targetKeypadGrid" in qml
     assert "id: landscapeTargetEditor" in qml
     assert "visible: !root.targetEditorPortrait()" in qml
+    assert "anchors.fill: parent" in qml
+    assert "Layout.fillHeight: true" in qml
     assert "id: landscapeTargetKeypadGrid" in qml
     assert "id: landscapeBackspaceButton" in qml
     assert "id: landscapeCancelButton" in qml
+    assert "id: landscapeDigitRow" in qml
     assert "id: landscapeSetButton" in qml
     assert "visible: root.targetEditorPortrait()" in qml
     assert 'model: ["1", "2", "3", "4", "5", "6", "7", "8", "9"]' in qml
