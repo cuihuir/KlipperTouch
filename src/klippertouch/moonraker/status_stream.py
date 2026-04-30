@@ -1,5 +1,6 @@
 import json
 from collections.abc import Iterable
+from dataclasses import replace
 from typing import Any
 
 from PySide6.QtCore import QObject, QThread, QTimer, QUrl, Signal, Slot
@@ -110,6 +111,21 @@ def status_needs_recovery_polling(status: PrinterStatus) -> bool:
     return status.klippy_state != "ready"
 
 
+def build_recovery_status_from_client(client: MoonrakerClient) -> PrinterStatus:
+    server_info = client.get_server_info()
+    klippy_state = str(server_info.get("klippy_state", "unknown"))
+    if klippy_state != "ready":
+        return PrinterStatus.from_probe(
+            server_info=server_info,
+            printer_info={},
+            objects={},
+            object_status={},
+            mcu_status={},
+            update_status={},
+        )
+    return build_status_from_client(client)
+
+
 def _status_update_from_payload(payload: dict[str, Any]) -> dict[str, Any] | None:
     method = payload.get("method")
     if method == "notify_status_update":
@@ -183,7 +199,7 @@ class _RecoveryPollWorker(QObject):
     @Slot()
     def run(self) -> None:
         try:
-            self.completed.emit(build_status_from_client(self._client))
+            self.completed.emit(build_recovery_status_from_client(self._client))
         except Exception:
             self.failed.emit()
         self.finished.emit()
@@ -224,9 +240,7 @@ class MoonrakerStatusStream(QObject):
         if not _subscription_objects(self._status):
             return
         if status_needs_recovery_polling(self._status):
-            if not self._poll_timer.isActive():
-                self._poll_timer.start()
-            self._start_recovery_poll()
+            self._enter_recovery_polling()
             return
         self._socket.open(build_websocket_request(self._client))
 
@@ -254,8 +268,7 @@ class MoonrakerStatusStream(QObject):
         self._status = status
         self._status_model.set_status(status)
         if status_needs_recovery_polling(status) and not self._poll_timer.isActive():
-            self._poll_timer.start()
-            self._start_recovery_poll()
+            self._enter_recovery_polling()
 
     def stop(self, timeout_ms: int = 5000) -> None:
         self._reconnect_timer.stop()
@@ -278,6 +291,14 @@ class MoonrakerStatusStream(QObject):
             return
         self._status = status
         self._status_model.set_status(status)
+
+    def _enter_recovery_polling(self) -> None:
+        if not _subscription_objects(self._status):
+            return
+        if not self._poll_timer.isActive():
+            self._poll_timer.start()
+        self._socket.close()
+        self._start_recovery_poll()
 
     @Slot()
     def _start_recovery_poll(self) -> None:
@@ -303,6 +324,14 @@ class MoonrakerStatusStream(QObject):
             return
         status = value
         if not status.objects:
+            if status_needs_recovery_polling(status):
+                self._status = replace(
+                    self._status,
+                    klippy_state=status.klippy_state,
+                    moonraker_version=status.moonraker_version,
+                )
+                self._status_model.set_status(self._status)
+                return
             self._set_webhooks_state("disconnected", "Moonraker disconnected")
             return
         self._status = status

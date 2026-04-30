@@ -8,6 +8,7 @@ from klippertouch.moonraker import status_stream
 from klippertouch.moonraker.client import MoonrakerClient
 from klippertouch.moonraker.status_stream import (
     MoonrakerStatusStream,
+    build_recovery_status_from_client,
     build_temperature_subscription_message,
     build_websocket_request,
     gcode_response_from_websocket_message,
@@ -128,7 +129,8 @@ def test_status_stream_schedules_read_only_reconnects() -> None:
     assert "if status_needs_recovery_polling(self._status)" in source
     assert "return" in source
     assert "if status_needs_recovery_polling(status)" in source
-    assert "build_status_from_client(self._client)" in source
+    assert "build_recovery_status_from_client(self._client)" in source
+    assert "server_info = client.get_server_info()" in source
     assert "if status.klippy_state == \"ready\" and status.webhooks_state == \"ready\":" in source
     assert "self._poll_timer.stop()" in source
     assert "self.start()" in source
@@ -136,6 +138,89 @@ def test_status_stream_schedules_read_only_reconnects() -> None:
     assert "printer.gcode.script" not in source
     assert '_set_webhooks_state("disconnected", "Moonraker disconnected")' in source
     assert '_set_webhooks_state("startup", "Klipper is attempting to start")' not in source
+
+
+def test_recovery_status_poll_uses_server_info_until_ready() -> None:
+    class Client:
+        def get_server_info(self) -> dict[str, object]:
+            return {"moonraker_version": "v0.10.0", "klippy_state": "shutdown"}
+
+        def __getattr__(self, name: str) -> object:
+            raise AssertionError(f"unexpected full probe call: {name}")
+
+    status = build_recovery_status_from_client(Client())  # type: ignore[arg-type]
+
+    assert status.moonraker_version == "v0.10.0"
+    assert status.klippy_state == "shutdown"
+    assert status.objects == ()
+
+
+def test_recovery_status_rebuilds_full_status_after_server_info_ready(monkeypatch) -> None:
+    calls: list[str] = []
+
+    class Client:
+        def get_server_info(self) -> dict[str, object]:
+            calls.append("server_info")
+            return {"moonraker_version": "v0.10.0", "klippy_state": "ready"}
+
+    def full_probe(_client: object) -> PrinterStatus:
+        calls.append("full_probe")
+        return PrinterStatus(
+            klippy_state="ready",
+            moonraker_version="v0.10.0",
+            objects=("webhooks",),
+            webhooks_state="ready",
+        )
+
+    monkeypatch.setattr(status_stream, "build_status_from_client", full_probe)
+
+    status = build_recovery_status_from_client(Client())  # type: ignore[arg-type]
+
+    assert calls == ["server_info", "full_probe"]
+    assert status.objects == ("webhooks",)
+    assert status.webhooks_state == "ready"
+
+
+def test_status_stream_closes_socket_before_polling_after_klippy_fault(qtbot) -> None:
+    class FakeSocket:
+        def __init__(self) -> None:
+            self.closed = False
+
+        def close(self) -> None:
+            self.closed = True
+
+    client = MoonrakerClient(PrinterConfig(name="p", moonraker_host="host"))
+    model = StatusModel()
+    stream = MoonrakerStatusStream(
+        client,
+        model,
+        PrinterStatus(
+            klippy_state="ready",
+            moonraker_version="v0.10.0",
+            objects=("webhooks",),
+            webhooks_state="ready",
+        ),
+        reconnect_interval_ms=1000,
+    )
+    fake_socket = FakeSocket()
+    stream._socket = fake_socket  # type: ignore[assignment]
+    stream._start_recovery_poll = lambda: None  # type: ignore[method-assign]
+
+    stream._handle_text_message(
+        json.dumps(
+            {
+                "jsonrpc": "2.0",
+                "method": "notify_klippy_shutdown",
+                "params": ["Shutdown due to webhooks request"],
+            }
+        )
+    )
+
+    try:
+        assert fake_socket.closed is True
+        assert stream._poll_timer.isActive()
+    finally:
+        stream.stop()
 
 
 def test_status_stream_recovery_polling_does_not_block_gui_thread(monkeypatch, qtbot) -> None:
@@ -152,7 +237,7 @@ def test_status_stream_recovery_polling_does_not_block_gui_thread(monkeypatch, q
             webhooks_state="shutdown",
         )
 
-    monkeypatch.setattr(status_stream, "build_status_from_client", slow_probe)
+    monkeypatch.setattr(status_stream, "build_recovery_status_from_client", slow_probe)
     client = MoonrakerClient(PrinterConfig(name="p", moonraker_host="host"))
     model = StatusModel()
     stream = MoonrakerStatusStream(

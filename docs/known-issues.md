@@ -24,5 +24,9 @@ Required fix direction:
 - Add tests for startup not-ready, explicit disconnect, intentional close, `server/info` polling,
   and ready-to-resubscribe recovery.
 
+Implementation status: lightweight `server/info` recovery is implemented in
+`MoonrakerStatusStream`. A real-printer fault/restart validation pass is still required before
+closing this issue.
+
 Validation target: leave KlipperTouch running while restarting Moonraker/Klipper or interrupting
 network connectivity, then verify temperatures and status resume without restarting the GUI.
