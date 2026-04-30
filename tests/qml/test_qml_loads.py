@@ -919,6 +919,10 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "function objectMapBounds()" in qml
     assert "root.bedMaxX > root.bedMinX" in qml
     assert "root.bedMaxY > root.bedMinY" in qml
+    assert "function objectMapMinObjectPixels(width, height)" in qml
+    assert "function objectMapDisplayPolygon(objectInfo, bounds, width, height)" in qml
+    assert "Math.max(originalWidth, minSize)" in qml
+    assert "Math.min(usableRight, Math.max(usableLeft, scaledX))" in qml
     assert "function objectAtPoint(screenX, screenY)" in qml
     assert "function drawExcludeObjectMap(ctx)" in qml
     assert "id: selectedObjectSkipButton" in qml

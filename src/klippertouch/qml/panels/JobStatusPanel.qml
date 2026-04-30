@@ -740,6 +740,12 @@ Item {
         return Math.max(12, Math.round(root.metrics.fontSize * 0.85))
     }
 
+    function objectMapMinObjectPixels(width, height) {
+        var padding = root.objectMapPadding()
+        var usableMin = Math.min(Math.max(1, width - padding * 2), Math.max(1, height - padding * 2))
+        return Math.max(44, Math.min(76, Math.round(usableMin * 0.18)))
+    }
+
     function objectMapXToCanvas(x, bounds, width) {
         var padding = root.objectMapPadding()
         return padding + ((x - bounds.minX) / Math.max(0.001, bounds.maxX - bounds.minX))
@@ -764,31 +770,106 @@ Item {
             * Math.max(0.001, bounds.maxY - bounds.minY)
     }
 
+    function objectMapDisplayPolygon(objectInfo, bounds, width, height) {
+        if (!root.excludeObjectHasPolygon(objectInfo)) {
+            return []
+        }
+        var padding = root.objectMapPadding()
+        var usableLeft = padding
+        var usableTop = padding
+        var usableRight = Math.max(usableLeft + 1, width - padding)
+        var usableBottom = Math.max(usableTop + 1, height - padding)
+        var points = []
+        var minX = Number.POSITIVE_INFINITY
+        var minY = Number.POSITIVE_INFINITY
+        var maxX = Number.NEGATIVE_INFINITY
+        var maxY = Number.NEGATIVE_INFINITY
+        for (var i = 0; i < objectInfo.polygon.length; i += 1) {
+            var point = objectInfo.polygon[i]
+            var canvasX = root.objectMapXToCanvas(point[0], bounds, width)
+            var canvasY = root.objectMapYToCanvas(point[1], bounds, height)
+            points.push({"x": canvasX, "y": canvasY})
+            minX = Math.min(minX, canvasX)
+            minY = Math.min(minY, canvasY)
+            maxX = Math.max(maxX, canvasX)
+            maxY = Math.max(maxY, canvasY)
+        }
+
+        var minSize = root.objectMapMinObjectPixels(width, height)
+        var originalWidth = Math.max(1, maxX - minX)
+        var originalHeight = Math.max(1, maxY - minY)
+        var targetWidth = Math.min(usableRight - usableLeft, Math.max(originalWidth, minSize))
+        var targetHeight = Math.min(usableBottom - usableTop, Math.max(originalHeight, minSize))
+        var scaleX = targetWidth / originalWidth
+        var scaleY = targetHeight / originalHeight
+        var centerX = (minX + maxX) / 2
+        var centerY = (minY + maxY) / 2
+        var scaled = []
+        var scaledMinX = Number.POSITIVE_INFINITY
+        var scaledMinY = Number.POSITIVE_INFINITY
+        var scaledMaxX = Number.NEGATIVE_INFINITY
+        var scaledMaxY = Number.NEGATIVE_INFINITY
+        for (var j = 0; j < points.length; j += 1) {
+            var scaledX = centerX + (points[j].x - centerX) * scaleX
+            var scaledY = centerY + (points[j].y - centerY) * scaleY
+            scaled.push({"x": scaledX, "y": scaledY})
+            scaledMinX = Math.min(scaledMinX, scaledX)
+            scaledMinY = Math.min(scaledMinY, scaledY)
+            scaledMaxX = Math.max(scaledMaxX, scaledX)
+            scaledMaxY = Math.max(scaledMaxY, scaledY)
+        }
+
+        var shiftX = 0
+        var shiftY = 0
+        if (scaledMinX < usableLeft) {
+            shiftX = usableLeft - scaledMinX
+        }
+        if (scaledMaxX + shiftX > usableRight) {
+            shiftX = usableRight - scaledMaxX
+        }
+        if (scaledMinY < usableTop) {
+            shiftY = usableTop - scaledMinY
+        }
+        if (scaledMaxY + shiftY > usableBottom) {
+            shiftY = usableBottom - scaledMaxY
+        }
+
+        var display = []
+        for (var k = 0; k < scaled.length; k += 1) {
+            var scaledX = scaled[k].x + shiftX
+            var scaledY = scaled[k].y + shiftY
+            display.push({
+                "x": Math.min(usableRight, Math.max(usableLeft, scaledX)),
+                "y": Math.min(usableBottom, Math.max(usableTop, scaledY))
+            })
+        }
+        return display
+    }
+
     function objectAtPoint(screenX, screenY) {
         var bounds = root.objectMapBounds()
         if (!bounds.valid) {
             return ""
         }
-        var bedX = root.objectMapCanvasToX(screenX, bounds, objectMapCanvas.width)
-        var bedY = root.objectMapCanvasToY(screenY, bounds, objectMapCanvas.height)
         for (var i = root.excludeObjects.length - 1; i >= 0; i -= 1) {
             var objectInfo = root.excludeObjects[i]
             if (!root.excludeObjectHasPolygon(objectInfo)
                     || root.excludedObjectNames.indexOf(objectInfo.name) >= 0) {
                 continue
             }
+            var displayPolygon = root.objectMapDisplayPolygon(objectInfo, bounds, objectMapCanvas.width, objectMapCanvas.height)
             var minX = Number.POSITIVE_INFINITY
             var minY = Number.POSITIVE_INFINITY
             var maxX = Number.NEGATIVE_INFINITY
             var maxY = Number.NEGATIVE_INFINITY
-            for (var j = 0; j < objectInfo.polygon.length; j += 1) {
-                var point = objectInfo.polygon[j]
-                minX = Math.min(minX, point[0])
-                minY = Math.min(minY, point[1])
-                maxX = Math.max(maxX, point[0])
-                maxY = Math.max(maxY, point[1])
+            for (var j = 0; j < displayPolygon.length; j += 1) {
+                var point = displayPolygon[j]
+                minX = Math.min(minX, point.x)
+                minY = Math.min(minY, point.y)
+                maxX = Math.max(maxX, point.x)
+                maxY = Math.max(maxY, point.y)
             }
-            if (bedX >= minX && bedX <= maxX && bedY >= minY && bedY <= maxY) {
+            if (screenX >= minX && screenX <= maxX && screenY >= minY && screenY <= maxY) {
                 return objectInfo.name
             }
         }
@@ -821,14 +902,13 @@ Item {
         ctx.strokeStyle = "#f0b24b"
         ctx.lineWidth = 4
         ctx.beginPath()
-        for (var j = 0; j < objectInfo.polygon.length; j += 1) {
-            var point = objectInfo.polygon[j]
-            var x = root.objectMapXToCanvas(point[0], bounds, objectMapCanvas.width)
-            var y = root.objectMapYToCanvas(point[1], bounds, objectMapCanvas.height)
+        var displayPolygon = root.objectMapDisplayPolygon(objectInfo, bounds, objectMapCanvas.width, objectMapCanvas.height)
+        for (var j = 0; j < displayPolygon.length; j += 1) {
+            var point = displayPolygon[j]
             if (j === 0) {
-                ctx.moveTo(x, y)
+                ctx.moveTo(point.x, point.y)
             } else {
-                ctx.lineTo(x, y)
+                ctx.lineTo(point.x, point.y)
             }
         }
         ctx.closePath()
@@ -864,15 +944,14 @@ Item {
             var excluded = root.excludedObjectNames.indexOf(objectInfo.name) >= 0
             var current = objectInfo.name === root.currentObject
             var selected = objectInfo.name === root.activeExcludeObjectName()
+            var displayPolygon = root.objectMapDisplayPolygon(objectInfo, bounds, objectMapCanvas.width, objectMapCanvas.height)
             ctx.beginPath()
-            for (var j = 0; j < objectInfo.polygon.length; j += 1) {
-                var point = objectInfo.polygon[j]
-                var x = root.objectMapXToCanvas(point[0], bounds, objectMapCanvas.width)
-                var y = root.objectMapYToCanvas(point[1], bounds, objectMapCanvas.height)
+            for (var j = 0; j < displayPolygon.length; j += 1) {
+                var point = displayPolygon[j]
                 if (j === 0) {
-                    ctx.moveTo(x, y)
+                    ctx.moveTo(point.x, point.y)
                 } else {
-                    ctx.lineTo(x, y)
+                    ctx.lineTo(point.x, point.y)
                 }
             }
             ctx.closePath()
@@ -881,7 +960,7 @@ Item {
             ctx.lineWidth = selected ? 3 : current ? 2 : 1
             ctx.fill()
             ctx.stroke()
-            if (current && selected) {
+            if (current) {
                 root.drawCurrentObjectMarker(ctx, objectInfo, bounds)
             }
         }
