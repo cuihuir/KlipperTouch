@@ -1087,13 +1087,16 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert 'import "../components"' in qml
     assert "scale: tileRoot.pressed && tileRoot.enabled ? 0.97 : 1.0" in qml
     assert "scale: directionRoot.pressed && directionRoot.enabled ? 0.96 : 1.0" in qml
-    assert "scale: actionRoot.pressed && actionRoot.enabled ? 0.97 : 1.0" in qml
+    assert "component ActionIconButton: IconTileButton" in qml
+    assert "pressedFeedback: pressed" in qml
+    assert "textMaximumLineCount: 2" in qml
+    assert "textFontScale: 0.68" in qml
     assert "scale: tiltRoot.pressed && tiltRoot.enabled ? 0.97 : 1.0" in qml
     assert "onPressedChanged: parent.pressed = pressed" in qml
     assert "onPressedChanged: tiltRoot.pressed = pressed" in qml
     assert "id: tileDepth" in qml
     assert "id: directionDepth" in qml
-    assert "id: actionDepth" in qml
+    assert "id: actionDepth" not in qml
     assert "id: tiltDepth" in qml
     assert "TactileButton {" in qml
     assert "id: cancelConfirmButton" in qml
@@ -1152,7 +1155,9 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert "function fittedMoveButtonSize(padWidth, padHeight)" in qml
     assert "Math.floor(padHeight / 3.08)" in qml
     assert 'source: tileRoot.iconName.length > 0 ? Theme.iconSource(tileRoot.iconName) : ""' in qml
-    assert "source: Theme.iconSource(actionRoot.iconName)" in qml
+    assert "source: Theme.iconSource(actionRoot.iconName)" not in qml
+    assert "selectedColor: \"#1b2b2e\"" in qml
+    assert "selectedAccentColor: root.selectedAccent" in qml
     assert "id: moveMorePanel" in qml
     assert "id: moveMorePage" in qml
     assert "source: Theme.iconSource(modelData.iconName)" in qml

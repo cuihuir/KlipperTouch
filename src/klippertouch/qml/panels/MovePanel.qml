@@ -638,81 +638,24 @@ Item {
         }
     }
 
-    component ActionIconButton: Rectangle {
-        id: actionRoot
+    component ActionIconButton: IconTileButton {
         property string title: ""
-        property string hint: ""
-        property string iconName: ""
-        property bool selected: false
         property bool pressed: false
 
-        color: actionRoot.pressed && actionRoot.enabled ? "#182528" : selected ? "#1b2b2e" : "#101718"
-        scale: actionRoot.pressed && actionRoot.enabled ? 0.97 : 1.0
-        opacity: actionRoot.enabled ? 1.0 : 0.46
-        border.color: actionRoot.pressed && actionRoot.enabled ? Theme.text : selected ? root.selectedAccent : "#536165"
-        border.width: 1
-        radius: Math.round(Math.min(width, height) * 0.18)
-        Behavior on scale { NumberAnimation { duration: 80; easing.type: Easing.OutQuad } }
-        Behavior on color { ColorAnimation { duration: 80 } }
-        Behavior on border.color { ColorAnimation { duration: 80 } }
-
-        Rectangle {
-            id: actionDepth
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            height: Math.max(2, Math.round(root.metrics.fontSize * 0.18))
-            visible: !actionRoot.pressed && actionRoot.enabled
-            color: "#050808"
-            opacity: 0.8
-            radius: parent.radius
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: Math.max(4, Math.round(root.metrics.fontSize * 0.22))
-            color: "transparent"
-            border.color: "#263235"
-            border.width: 1
-            radius: Math.round(parent.radius * 0.72)
-        }
-
-        ColumnLayout {
-            anchors.centerIn: parent
-            width: parent.width - root.metrics.gap
-            spacing: 0
-
-            Image {
-                Layout.fillWidth: true
-                Layout.preferredHeight: root.moveActionIconSize
-                source: Theme.iconSource(actionRoot.iconName)
-                sourceSize.width: root.moveActionIconSize
-                sourceSize.height: root.moveActionIconSize
-                fillMode: Image.PreserveAspectFit
-                opacity: actionRoot.enabled ? 1.0 : 0.6
-            }
-
-            Label {
-                Layout.fillWidth: true
-                text: actionRoot.title
-                color: Theme.text
-                font.bold: true
-                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.68))
-                horizontalAlignment: Text.AlignHCenter
-                wrapMode: Text.WordWrap
-                maximumLineCount: 2
-                elide: Text.ElideRight
-            }
-
-            Label {
-                Layout.fillWidth: true
-                text: actionRoot.hint
-                color: Theme.mutedText
-                font.pixelSize: Math.max(8, Math.round(root.metrics.fontSize * 0.5))
-                horizontalAlignment: Text.AlignHCenter
-                elide: Text.ElideRight
-            }
-        }
+        text: title
+        fontSize: root.metrics.fontSize
+        iconSize: root.moveActionIconSize
+        textFontScale: 0.68
+        hintFontScale: 0.5
+        textMaximumLineCount: 2
+        pressedFeedback: pressed
+        baseColor: "#101718"
+        selectedColor: "#1b2b2e"
+        pressedColor: "#182528"
+        accentColor: "#536165"
+        selectedAccentColor: root.selectedAccent
+        hintColor: Theme.mutedText
+        opacity: enabled ? 1.0 : 0.46
     }
 
     component TiltPointControl: Rectangle {
