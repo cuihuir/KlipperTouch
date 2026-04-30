@@ -912,7 +912,8 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "function objectMapFillColor(excluded, current, selected)" in qml
     assert "function objectMapStrokeColor(current, selected)" in qml
     assert "function drawCurrentObjectMarker(ctx, objectInfo, bounds)" in qml
-    assert 'return selected ? "#e0e6e8" : current ? "#5ea1bd"' in qml
+    assert 'return selected ? "#e0e6e8" : current ? "#f0b24b"' in qml
+    assert 'ctx.strokeStyle = "#f0b24b"' in qml
     assert "id: objectMapCanvas" in qml
     assert "root.excludeObjects.length" in qml
     assert "function objectMapBounds()" in qml

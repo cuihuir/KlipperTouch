@@ -809,7 +809,7 @@ Item {
     }
 
     function objectMapStrokeColor(current, selected) {
-        return selected ? "#e0e6e8" : current ? "#5ea1bd" : "#4b5659"
+        return selected ? "#e0e6e8" : current ? "#f0b24b" : "#4b5659"
     }
 
     function drawCurrentObjectMarker(ctx, objectInfo, bounds) {
@@ -817,9 +817,9 @@ Item {
             return
         }
         ctx.save()
-        ctx.setLineDash([4, 3])
-        ctx.strokeStyle = "#5ea1bd"
-        ctx.lineWidth = 1
+        ctx.setLineDash([])
+        ctx.strokeStyle = "#f0b24b"
+        ctx.lineWidth = 4
         ctx.beginPath()
         for (var j = 0; j < objectInfo.polygon.length; j += 1) {
             var point = objectInfo.polygon[j]
