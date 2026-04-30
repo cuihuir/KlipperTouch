@@ -21,6 +21,18 @@
 - `xinit`、`x11-xserver-utils`、`xserver-xorg`：X11 回退服务
 - `libxcb-cursor0`：PySide6 `xcb` 平台插件运行依赖
 
+从仓库 checkout 里安装或更新 systemd 资产：
+
+```bash
+sudo deploy/install-systemd.sh eglfs
+```
+
+该命令会安装 EGLFS 和 X11 两套服务文件、启用 EGLFS 服务、禁用 X11 服务、安装 KMS 配置。已有的 `KlipperTouch.conf` 默认不会被覆盖；只有设置 `KLIPPERTOUCH_OVERWRITE_CONFIG=1` 时才会重写配置。需要回退到 X11 服务时执行：
+
+```bash
+sudo deploy/install-systemd.sh x11
+```
+
 ## X11 回退服务
 
 `klippertouch.service` 采用类似 KlipperScreen 的 systemd 启动方式：systemd 启动 shell launcher，launcher 通过 `xinit` 启动 Xorg，然后在 X client 阶段旋转 HDMI 输出并启动 GUI。
@@ -36,7 +48,6 @@ GUI 启动命令为：
 ```bash
 /home/tope/klippertouch/venv/bin/klippertouch \
   --config /home/tope/printer_data/config/KlipperTouch.conf \
-  --debug \
   --allow-controls \
   --fullscreen
 ```
@@ -64,7 +75,7 @@ Environment=KLIPPERTOUCH_RENDER_BACKEND=software
 
 ## EGLFS 硬件加速服务
 
-`klippertouch-eglfs.service` 使用 EGLFS/GBM 直接走 DRM/KMS，不启动 Xorg。它与 `klippertouch.service` 冲突，因为 EGLFS 需要直接占用 `/dev/dri/card0` 和显示输出，不能和 Xorg 同时拥有显示设备。
+`klippertouch-eglfs.service` 是 RK3566 目标环境上验证通过的生产服务。它使用 EGLFS/GBM 直接走 DRM/KMS，不启动 Xorg。它与 `klippertouch.service` 冲突，因为 EGLFS 需要直接占用 `/dev/dri/card0` 和显示输出，不能和 Xorg 同时拥有显示设备。
 
 关键环境变量：
 
@@ -94,6 +105,8 @@ RENDERER: Mali-G52
 
 Qt Quick 场景由 QML 自己旋转。原因是 `QT_QPA_EGLFS_ROTATION` 对 OpenGL/Qt Quick 场景不可靠，不能完整解决画面方向问题。
 
+Qt scenegraph 和 KMS 详细日志默认关闭。只有排查渲染问题时，才在服务环境中临时设置 `QSG_INFO=1` 或 `QT_LOGGING_RULES`。
+
 ## 已遇到的问题和处理方案
 
 - X11 软件渲染：界面稳定可显示，但 CPU 占用高。保留为回退方案。
@@ -113,28 +126,30 @@ Qt Quick 场景由 QML 自己旋转。原因是 `QT_QPA_EGLFS_ROTATION` 对 Open
 - 主界面方向正常
 - 温度设置数字键盘方向和位置正常
 
+## 控制验证清单
+
+当前部署已经启用真实打印机控制模式，因此验收前需要在空闲或可控状态下验证每类命令：
+
+- 设置一个低风险温度目标，确认 Moonraker 收到的是目标设备的预期温度目标。
+- 只在轴已归零时验证运动控制，确认方向和距离正确。
+- 只在挤出保护允许时验证挤出/回抽；禁止挤出时应显示错误，不应发送 G-code。
+- 使用安全测试文件验证打印控制，包括选择文件、暂停、恢复、取消。
+- 确认急停入口可达，并发送预期 Moonraker emergency stop 命令。
+- 验证 Z offset、speed factor、extrusion factor 等调节项，最好使用空闲状态或一次可丢弃的验证任务。
+- 临时断开或阻断 Moonraker 一次，确认 UI 能报告命令失败，且不会静默重试状态改变请求。
+
 ## 设为开机默认
 
-当前 `klippertouch-eglfs.service` 仍按手动验证服务管理，尚未设为开机默认。最终验收后可以执行以下方向的变更：
-
-1. 给 `klippertouch-eglfs.service` 增加 `[Install]` 段：
-
-```ini
-[Install]
-WantedBy=multi-user.target
-```
-
-2. 禁用 X11 回退服务：
+当前 `klippertouch-eglfs.service` 已支持作为开机默认服务安装。最终验收后使用安装脚本切换：
 
 ```bash
-sudo systemctl disable klippertouch.service
+sudo deploy/install-systemd.sh eglfs
 ```
 
-3. 启用 EGLFS 服务：
+回退到 X11 服务时执行：
 
 ```bash
-sudo systemctl enable klippertouch-eglfs.service
+sudo deploy/install-systemd.sh x11
 ```
 
-4. 保留 `klippertouch.service` 文件和启动脚本作为回退方案。需要回退时，停止 EGLFS 服务并重新启用 X11 服务。
-
+切换开机默认后，还需要在操作者确认后做一次真实 reboot 验证，确认重启后 `klippertouch-eglfs.service` 能自动回到 `active`，不需要手动启动。

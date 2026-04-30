@@ -15,7 +15,6 @@ WorkingDirectory=/home/tope/klippertouch
 Environment=PYTHONUNBUFFERED=1
 Environment=QT_QPA_PLATFORM=xcb
 Environment=QT_QUICK_BACKEND=software
-Environment=QSG_INFO=1
 Environment=KLIPPERTOUCH_RENDER_BACKEND=software
 Environment=KLIPPERTOUCH_DISPLAY=:0
 Environment=KLIPPERTOUCH_OUTPUT=HDMI-1
@@ -23,7 +22,7 @@ Environment=KLIPPERTOUCH_ROTATE=right
 Environment=KLIPPERTOUCH_LOG=/home/tope/printer_data/logs/klippertouch.log
 Environment=KLIPPERTOUCH_RESET_OUTPUT=1
 Environment=KLIPPERTOUCH_TOUCH_HID_PATTERN=1A86
-Environment="KLIPPERTOUCH_XCLIENT=/home/tope/klippertouch/venv/bin/klippertouch --config /home/tope/printer_data/config/KlipperTouch.conf --debug --allow-controls --fullscreen"
+Environment="KLIPPERTOUCH_XCLIENT=/home/tope/klippertouch/venv/bin/klippertouch --config /home/tope/printer_data/config/KlipperTouch.conf --allow-controls --fullscreen"
 ExecStart=/usr/local/bin/klippertouch-start.sh
 PAMName=%u
 TTYPath=/dev/tty7

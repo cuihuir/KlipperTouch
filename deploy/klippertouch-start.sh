@@ -39,7 +39,7 @@ if [ "${1:-}" = "--xclient" ]; then
     reset_output="${KLIPPERTOUCH_RESET_OUTPUT:-0}"
     touch_pattern="${KLIPPERTOUCH_TOUCH_HID_PATTERN:-}"
     log_file="${KLIPPERTOUCH_LOG:-/home/tope/printer_data/logs/klippertouch.log}"
-    xclient="${KLIPPERTOUCH_XCLIENT:-/home/tope/klippertouch/venv/bin/klippertouch --config /home/tope/printer_data/config/KlipperTouch.conf --debug --allow-controls --fullscreen}"
+    xclient="${KLIPPERTOUCH_XCLIENT:-/home/tope/klippertouch/venv/bin/klippertouch --config /home/tope/printer_data/config/KlipperTouch.conf --allow-controls --fullscreen}"
     render_backend="${KLIPPERTOUCH_RENDER_BACKEND:-software}"
 
     export DISPLAY="$display"
@@ -53,7 +53,7 @@ if [ "${1:-}" = "--xclient" ]; then
         export QT_XCB_GL_INTEGRATION="${QT_XCB_GL_INTEGRATION:-xcb_egl}"
         export QSG_RHI_BACKEND="${QSG_RHI_BACKEND:-opengl}"
     fi
-    export QSG_INFO="${QSG_INFO:-1}"
+    export QSG_INFO="${QSG_INFO:-0}"
     mkdir -p "${log_file%/*}" 2>/dev/null || true
     printf 'KlipperTouch: starting xclient on %s with %s backend %s\n' \
         "$display" "$QT_QPA_PLATFORM" "$render_backend" >> "$log_file" 2>/dev/null || true
