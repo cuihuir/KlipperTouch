@@ -14,6 +14,7 @@ Rectangle {
     property real fontSize: 16
     property var temperatureModel: null
     property int notificationUnreadCount: 0
+    property bool interactionEnabled: true
     property bool hasExternalTemperatureModel: typeof temperatureModel !== "undefined"
         && temperatureModel !== null
     property var activeTemperatureModel: root.hasExternalTemperatureModel
@@ -143,6 +144,7 @@ Rectangle {
 
             MouseArea {
                 anchors.fill: parent
+                enabled: root.interactionEnabled
                 onClicked: root.notificationRequested()
             }
         }

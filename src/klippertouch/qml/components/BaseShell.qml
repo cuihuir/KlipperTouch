@@ -10,6 +10,7 @@ Rectangle {
     property var temperatureModel: null
     property string panelTitle: "Home"
     property int notificationUnreadCount: 0
+    property bool navigationEnabled: true
     default property alias panelContent: contentLayer.data
     signal backRequested()
     signal homeRequested()
@@ -27,7 +28,11 @@ Rectangle {
         anchors.left: parent.left
         anchors.top: root.metrics.portrait ? undefined : parent.top
         anchors.bottom: root.metrics.portrait ? parent.bottom : undefined
+        navigationEnabled: root.navigationEnabled
         onActionRequested: function(actionName) {
+            if (!root.navigationEnabled) {
+                return
+            }
             switch (actionName) {
             case "back":
                 root.backRequested()
@@ -59,6 +64,7 @@ Rectangle {
         panelTitle: root.panelTitle
         temperatureModel: root.temperatureModel
         notificationUnreadCount: root.notificationUnreadCount
+        interactionEnabled: root.navigationEnabled
         onNotificationRequested: root.notificationsRequested()
     }
 

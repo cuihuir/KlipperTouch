@@ -7,6 +7,7 @@ Rectangle {
     property var buttonLabels: ["Back", "Home", "Menu", "Stop"]
     property var buttonIcons: ["back", "main", "settings", "emergency"]
     property var buttonActions: ["back", "home", "menu", "stop"]
+    property bool navigationEnabled: true
     property int buttonCount: 4
     property int spacingSize: Math.max(4, Math.round((vertical ? width : height) * 0.06))
     signal actionRequested(string actionName)
@@ -36,10 +37,11 @@ Rectangle {
                 y: root.vertical ? index * (buttonGrid.cellHeight + buttonGrid.spacing) : 0
                 height: buttonGrid.cellHeight
                 width: buttonGrid.cellWidth
-                color: actionPressArea.pressed ? "#182124" : Theme.buttonsBg
-                scale: actionPressArea.pressed ? 0.96 : 1.0
+                color: root.navigationEnabled && actionPressArea.pressed ? "#182124" : Theme.buttonsBg
+                scale: root.navigationEnabled && actionPressArea.pressed ? 0.96 : 1.0
+                opacity: root.navigationEnabled ? 1.0 : 0.34
                 radius: Math.round(Math.min(width, height) * 0.18)
-                border.color: actionPressArea.pressed ? Theme.text : Theme.actionBarBg
+                border.color: root.navigationEnabled && actionPressArea.pressed ? Theme.text : Theme.actionBarBg
                 border.width: Math.max(1, Math.round(Math.min(width, height) * 0.035))
                 Behavior on scale { NumberAnimation { duration: 80; easing.type: Easing.OutQuad } }
                 Behavior on color { ColorAnimation { duration: 80 } }
@@ -58,6 +60,7 @@ Rectangle {
                 MouseArea {
                     id: actionPressArea
                     anchors.fill: parent
+                    enabled: root.navigationEnabled
                     onClicked: root.actionRequested(root.buttonActions[index])
                 }
             }

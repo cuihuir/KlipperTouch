@@ -36,9 +36,15 @@ def test_action_bar_uses_material_dark_icon_tiles() -> None:
 
     assert "signal actionRequested(string actionName)" in qml
     assert "id: iconButton" in qml
-    assert 'color: actionPressArea.pressed ? "#182124" : Theme.buttonsBg' in qml
+    assert (
+        'color: root.navigationEnabled && actionPressArea.pressed ? "#182124"'
+        " : Theme.buttonsBg"
+    ) in qml
     assert "radius: Math.round(Math.min(width, height) * 0.18)" in qml
-    assert "border.color: actionPressArea.pressed ? Theme.text : Theme.actionBarBg" in qml
+    assert (
+        "border.color: root.navigationEnabled && actionPressArea.pressed"
+        " ? Theme.text : Theme.actionBarBg"
+    ) in qml
     assert "anchors.centerIn: parent" in qml
     assert "onClicked: root.actionRequested(root.buttonActions[index])" in qml
 
@@ -47,9 +53,15 @@ def test_action_bar_buttons_have_press_feedback() -> None:
     qml = Path("src/klippertouch/qml/components/ActionBar.qml").read_text(encoding="utf-8")
 
     assert "id: actionPressArea" in qml
-    assert "scale: actionPressArea.pressed ? 0.96 : 1.0" in qml
-    assert 'color: actionPressArea.pressed ? "#182124" : Theme.buttonsBg' in qml
-    assert "border.color: actionPressArea.pressed ? Theme.text : Theme.actionBarBg" in qml
+    assert "scale: root.navigationEnabled && actionPressArea.pressed ? 0.96 : 1.0" in qml
+    assert (
+        'color: root.navigationEnabled && actionPressArea.pressed ? "#182124"'
+        " : Theme.buttonsBg"
+    ) in qml
+    assert (
+        "border.color: root.navigationEnabled && actionPressArea.pressed"
+        " ? Theme.text : Theme.actionBarBg"
+    ) in qml
     assert "Behavior on scale" in qml
     assert "NumberAnimation { duration: 80" in qml
     assert "ColorAnimation { duration: 80" in qml
@@ -1261,6 +1273,12 @@ def test_job_control_events_are_forwarded_to_notifications() -> None:
 
 def test_splash_panel_handles_system_fault_states() -> None:
     main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
+    shell_qml = Path("src/klippertouch/qml/components/BaseShell.qml").read_text(
+        encoding="utf-8"
+    )
+    action_bar_qml = Path("src/klippertouch/qml/components/ActionBar.qml").read_text(
+        encoding="utf-8"
+    )
     panel_qml = Path("src/klippertouch/qml/panels/SplashPanel.qml").read_text(
         encoding="utf-8"
     )
@@ -1294,6 +1312,20 @@ def test_splash_panel_handles_system_fault_states() -> None:
     assert "controlStatus: window.jobControlBridgeModel" in main_qml
     assert "controlError: window.jobControlBridgeModel" in main_qml
     assert "onRecoveryActionRequested: function(action)" in main_qml
+    assert (
+        "navigationEnabled: !(window.startupSplashVisible || window.systemFaultVisible)"
+        in main_qml
+    )
+    assert "property bool navigationEnabled: true" in shell_qml
+    assert "navigationEnabled: root.navigationEnabled" in shell_qml
+    assert "interactionEnabled: root.navigationEnabled" in shell_qml
+    assert "property bool navigationEnabled: true" in action_bar_qml
+    assert "enabled: root.navigationEnabled" in action_bar_qml
+    status_bar_qml = Path("src/klippertouch/qml/components/StatusBar.qml").read_text(
+        encoding="utf-8"
+    )
+    assert "property bool interactionEnabled: true" in status_bar_qml
+    assert "enabled: root.interactionEnabled" in status_bar_qml
     assert "function requestRecoveryControl(action)" in main_qml
     assert "jobControlBridgeModel.requestFirmwareRestart()" in main_qml
     assert "jobControlBridgeModel.requestKlipperRestart()" in main_qml
@@ -1308,6 +1340,9 @@ def test_splash_panel_handles_system_fault_states() -> None:
     assert "property string controlError" in panel_qml
     assert "property bool connecting" in panel_qml
     assert "property bool ready: false" in panel_qml
+    assert 'property string recoveryPage: "main"' in panel_qml
+    assert "function recoveryActionModel()" in panel_qml
+    assert "function handleRecoveryAction(action)" in panel_qml
     assert "ready: window.printerReadyForUi()" in main_qml
     assert 'return "Preparing interface..."' in panel_qml
     assert "property bool compactVertical" in panel_qml
@@ -1353,6 +1388,13 @@ def test_splash_panel_handles_system_fault_states() -> None:
     assert "signal recoveryActionRequested(string action)" in panel_qml
     assert '"Firmware Restart"' in panel_qml
     assert '"Restart Klipper"' in panel_qml
+    assert '"Shutdown"' in panel_qml
+    assert '"KlipperTouch Restart"' in panel_qml
+    assert '"System Shutdown"' in panel_qml
+    assert '"System Restart"' in panel_qml
+    assert "id: recoveryPressArea" in panel_qml
+    assert "scale: recoveryPressArea.pressed ? 0.97 : 1.0" in panel_qml
+    assert 'color: recoveryPressArea.pressed ? "#182124"' in panel_qml
     assert '"Retry"' in panel_qml
     assert '"Restart Moonraker"' not in panel_qml
     assert '"Emergency Stop"' not in panel_qml

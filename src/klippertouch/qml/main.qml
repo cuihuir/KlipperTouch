@@ -420,6 +420,7 @@ ApplicationWindow {
         state: window.klippyState
         objectCount: window.objectCount
         temperatureModel: window.temperatureBridgeModel
+        navigationEnabled: !(window.startupSplashVisible || window.systemFaultVisible)
         notificationUnreadCount: window.notificationBridgeModel
             ? window.notificationBridgeModel.unreadCount
             : 0

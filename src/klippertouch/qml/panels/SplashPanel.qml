@@ -17,9 +17,10 @@ Item {
     property bool ready: false
     property string activeDetailText: root.detail()
     property int detailPageIndex: 0
+    property string recoveryPage: "main"
     property bool compactVertical: root.height < 380
-    property int recoveryColumns: root.width > 560 ? 3 : 1
-    property int recoveryRows: root.recoveryColumns === 3 ? 1 : 3
+    property int recoveryColumns: root.width > 680 ? 4 : root.width > 420 ? 2 : 1
+    property int recoveryRows: Math.ceil(root.recoveryActionCount() / root.recoveryColumns)
     property int recoveryNavHeight: root.recoveryRows === 1
         ? Math.max(72, Math.round(root.metrics.fontSize * 4.4))
         : Math.max(106, Math.round(root.metrics.fontSize * 6.2))
@@ -138,6 +139,42 @@ Item {
 
     function setDetailPageIndex(pageIndex) {
         root.detailPageIndex = Math.max(0, Math.min(pageIndex, root.pagerPageCount() - 1))
+    }
+
+    function recoveryActionModel() {
+        if (root.recoveryPage === "shutdown") {
+            return [
+                {"label": "Back", "action": "recovery_main", "placeholder": false, "hint": "Return"},
+                {"label": "KlipperTouch Restart", "action": "placeholder", "placeholder": true, "hint": "Soon"},
+                {"label": "System Shutdown", "action": "placeholder", "placeholder": true, "hint": "Soon"},
+                {"label": "System Restart", "action": "placeholder", "placeholder": true, "hint": "Soon"}
+            ]
+        }
+        return [
+            {"label": "Firmware Restart", "action": "firmware_restart", "placeholder": false, "hint": "Send"},
+            {"label": "Restart Klipper", "action": "restart_klipper", "placeholder": false, "hint": "Send"},
+            {"label": "Retry", "action": "retry", "placeholder": false, "hint": "Send"},
+            {"label": "Shutdown", "action": "shutdown_menu", "placeholder": false, "hint": "Open"}
+        ]
+    }
+
+    function recoveryActionCount() {
+        return root.recoveryActionModel().length
+    }
+
+    function handleRecoveryAction(action) {
+        if (action === "shutdown_menu") {
+            root.recoveryPage = "shutdown"
+            return
+        }
+        if (action === "recovery_main") {
+            root.recoveryPage = "main"
+            return
+        }
+        if (action === "placeholder") {
+            return
+        }
+        root.recoveryActionRequested(action)
     }
 
     Rectangle {
@@ -410,24 +447,25 @@ Item {
             columnSpacing: root.metrics.gap
 
             Repeater {
-                model: [
-                    {"label": "Firmware Restart", "action": "firmware_restart", "placeholder": false},
-                    {"label": "Restart Klipper", "action": "restart_klipper", "placeholder": false},
-                    {"label": "Retry", "action": "retry", "placeholder": false}
-                ]
+                model: root.recoveryActionModel()
 
                 Rectangle {
                     required property string label
                     required property string action
                     required property bool placeholder
+                    required property string hint
 
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.minimumHeight: 0
                     radius: Math.round(height * 0.18)
-                    color: placeholder ? "#141b1d" : "#1a2528"
-                    border.color: placeholder ? "#3d474a" : "#667276"
+                    color: recoveryPressArea.pressed ? "#182124" : placeholder ? "#141b1d" : "#1a2528"
+                    scale: recoveryPressArea.pressed ? 0.97 : 1.0
+                    border.color: recoveryPressArea.pressed ? Theme.text : placeholder ? "#3d474a" : "#667276"
                     border.width: 1
+                    Behavior on scale { NumberAnimation { duration: 80; easing.type: Easing.OutQuad } }
+                    Behavior on color { ColorAnimation { duration: 80 } }
+                    Behavior on border.color { ColorAnimation { duration: 80 } }
 
                     Column {
                         anchors.centerIn: parent
@@ -446,7 +484,7 @@ Item {
 
                         Label {
                             width: parent.width
-                            text: placeholder ? "Soon" : "Send"
+                            text: hint
                             color: "#9aa7ad"
                             font.pixelSize: Math.max(9, Math.round(root.metrics.fontSize * 0.6))
                             horizontalAlignment: Text.AlignHCenter
@@ -455,8 +493,9 @@ Item {
                     }
 
                     MouseArea {
+                        id: recoveryPressArea
                         anchors.fill: parent
-                        onClicked: root.recoveryActionRequested(action)
+                        onClicked: root.handleRecoveryAction(action)
                     }
                 }
             }
