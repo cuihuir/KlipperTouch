@@ -1341,8 +1341,15 @@ def test_splash_panel_handles_system_fault_states() -> None:
     assert "property bool connecting" in panel_qml
     assert "property bool ready: false" in panel_qml
     assert 'property string recoveryPage: "main"' in panel_qml
-    assert "function recoveryActionModel()" in panel_qml
+    assert "property var mainRecoveryActions:" in panel_qml
+    assert "property var shutdownRecoveryActions:" in panel_qml
+    assert "property var activeRecoveryActions:" in panel_qml
+    assert "function recoveryActionModel()" not in panel_qml
     assert "function handleRecoveryAction(action)" in panel_qml
+    assert "function triggerRecoveryAction(action)" in panel_qml
+    assert 'property string recoveryFeedbackAction: ""' in panel_qml
+    assert "id: recoveryFeedbackTimer" in panel_qml
+    assert "interval: 160" in panel_qml
     assert "ready: window.printerReadyForUi()" in main_qml
     assert 'return "Preparing interface..."' in panel_qml
     assert "property bool compactVertical" in panel_qml
@@ -1387,6 +1394,8 @@ def test_splash_panel_handles_system_fault_states() -> None:
     assert "anchors.bottom: recoveryNavBar.top" in panel_qml
     assert "id: recoveryActions" in panel_qml
     assert "anchors.fill: recoveryNavBar" in panel_qml
+    assert "model: root.activeRecoveryActions" in panel_qml
+    assert "model: root.recoveryActionModel()" not in panel_qml
     assert "signal recoveryActionRequested(string action)" in panel_qml
     assert '"Firmware Restart"' in panel_qml
     assert '"Restart Klipper"' in panel_qml
@@ -1395,8 +1404,10 @@ def test_splash_panel_handles_system_fault_states() -> None:
     assert '"System Shutdown"' in panel_qml
     assert '"System Restart"' in panel_qml
     assert "id: recoveryPressArea" in panel_qml
-    assert "scale: recoveryPressArea.pressed ? 0.97 : 1.0" in panel_qml
-    assert 'color: recoveryPressArea.pressed ? "#182124"' in panel_qml
+    assert "property bool feedbackActive:" in panel_qml
+    assert "scale: feedbackActive ? 0.97 : 1.0" in panel_qml
+    assert 'color: feedbackActive ? "#182124"' in panel_qml
+    assert "onClicked: root.triggerRecoveryAction(action)" in panel_qml
     assert '"Retry"' in panel_qml
     assert '"Restart Moonraker"' not in panel_qml
     assert '"Emergency Stop"' not in panel_qml
@@ -1558,8 +1569,10 @@ def test_temperature_device_pager_uses_page_based_navigation() -> None:
     assert "property var temperatureModel: null" in qml
     assert "property int pageIndex: 0" in qml
     assert "property int pageSize:" in qml
-    assert "property int pageCountValue:" in qml
-    assert "property int totalItemCount:" in qml
+    assert "property int pageCountValue: 1" in qml
+    assert "property int totalItemCount: 0" in qml
+    assert "property int totalItemCount: root.modelCount" not in qml
+    assert "function refreshModelCount()" in qml
     assert "property int currentItemCount:" in qml
     assert "root.modelCount(root.modelRevision)" in qml
     assert "function pageCount()" in qml
@@ -1567,6 +1580,7 @@ def test_temperature_device_pager_uses_page_based_navigation() -> None:
     assert "function itemAt(pageRow, revision)" in qml
     assert "property int modelRevision: 0" in qml
     assert "function refreshVisibleItems()" in qml
+    assert "root.refreshModelCount()" in qml
     assert "onActiveTemperatureModelChanged: root.refreshVisibleItems()" in qml
     assert "function goToPreviousPage()" in qml
     assert "function goToNextPage()" in qml

@@ -24,7 +24,7 @@ Item {
         ? root.touchTargetSize
         : Math.max(root.touchTargetSize * 2, Math.round(root.fontSize * 7.9))
     property int pageControlSpacing: Math.max(6, Math.round(root.fontSize * 0.4))
-    property int totalItemCount: root.modelCount(root.modelRevision)
+    property int totalItemCount: 0
     property int rawAvailableRows: Math.max(1, Math.floor(root.height / rowHeight))
     property bool needsPageControls: root.totalItemCount > root.deviceColumns * root.rawAvailableRows
     property int pageControlReservedHeight: root.needsPageControls
@@ -35,7 +35,7 @@ Item {
         Math.floor(Math.max(0, root.height - root.pageControlReservedHeight) / rowHeight)
     )
     property int pageSize: Math.max(1, root.deviceColumns * root.availableRows)
-    property int pageCountValue: Math.max(1, Math.ceil(root.totalItemCount / root.pageSize))
+    property int pageCountValue: 1
     property int modelRevision: 0
     property int currentItemCount: Math.max(0, Math.min(
         root.pageSize,
@@ -118,6 +118,12 @@ Item {
         return root.pageCountValue
     }
 
+    function refreshModelCount() {
+        root.totalItemCount = root.modelCount(root.modelRevision)
+        root.pageCountValue = Math.max(1, Math.ceil(root.totalItemCount / root.pageSize))
+        root.clampPageIndex()
+    }
+
     function pagedModel() {
         var items = []
         var source = root.activeTemperatureModel
@@ -161,6 +167,7 @@ Item {
 
     function refreshVisibleItems() {
         root.modelRevision += 1
+        root.refreshModelCount()
     }
 
     function goToPreviousPage() {
@@ -311,8 +318,9 @@ Item {
         targetEditorPopup.close()
     }
 
-    onPageSizeChanged: clampPageIndex()
+    onPageSizeChanged: root.refreshModelCount()
     onActiveTemperatureModelChanged: root.refreshVisibleItems()
+    Component.onCompleted: root.refreshModelCount()
 
     TemperatureDeviceModel {
         id: fallbackTemperatureModel
@@ -323,7 +331,6 @@ Item {
         ignoreUnknownSignals: true
 
         function onModelReset() {
-            root.clampPageIndex()
             root.refreshVisibleItems()
         }
 
@@ -332,12 +339,10 @@ Item {
         }
 
         function onRowsInserted() {
-            root.clampPageIndex()
             root.refreshVisibleItems()
         }
 
         function onRowsRemoved() {
-            root.clampPageIndex()
             root.refreshVisibleItems()
         }
 
