@@ -165,7 +165,7 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.bottom: pagerIndicator.top
+            anchors.bottom: pagerControls.top
             anchors.bottomMargin: Math.max(2, Math.round(root.metrics.gap * 0.25))
             clip: true
             interactive: false

@@ -15,6 +15,9 @@ def test_file_refresh_updates_model_from_read_only_file_list() -> None:
     assert "class GCodeFileRefresh" in source
     assert "QTimer" in source
     assert "QThread" in source
+    assert "QThread(self)" not in source
+    assert "self._retired_threads: list[QThread]" in source
+    assert "QTimer.singleShot(0, self._release_retired_threads)" in source
     assert "refresh_interval_ms: int = 10000" in source
     assert "self._timer.timeout.connect(self.refresh_once)" in source
     assert "self._file_refresh_worker = _FileListWorker" in source

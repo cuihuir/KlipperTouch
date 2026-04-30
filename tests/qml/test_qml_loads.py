@@ -1330,6 +1330,8 @@ def test_splash_panel_handles_system_fault_states() -> None:
     assert "return root.webhooksMessage\n" not in panel_qml
     assert "id: messagePager" in panel_qml
     assert "SwipeView {" in panel_qml
+    assert "anchors.bottom: pagerControls.top" in panel_qml
+    assert "anchors.bottom: pagerIndicator.top" not in panel_qml
     assert "Repeater {" in panel_qml
     assert "model: root.detailPageCount()" in panel_qml
     assert "id: pagerIndicator" in panel_qml

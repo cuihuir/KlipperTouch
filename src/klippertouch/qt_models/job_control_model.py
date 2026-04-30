@@ -1,8 +1,9 @@
 from collections.abc import Callable
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Protocol
 
-from PySide6.QtCore import Property, QObject, QThread, Signal, Slot
+from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot
 
 
 class JobControlClient(Protocol):
@@ -55,26 +56,6 @@ class JobControlClient(Protocol):
     def set_pressure_advance(self, advance: float, smooth_time: float) -> dict[str, object]: ...
 
 
-class _JobCommandWorker(QObject):
-    succeeded = Signal()
-    failed = Signal(str)
-    finished = Signal()
-
-    def __init__(self, command: Callable[[], dict[str, object]]) -> None:
-        super().__init__()
-        self._command = command
-
-    @Slot()
-    def run(self) -> None:
-        try:
-            self._command()
-        except Exception as exc:
-            self.failed.emit(str(exc))
-        else:
-            self.succeeded.emit()
-        self.finished.emit()
-
-
 @dataclass
 class _PendingJobCommand:
     label: str
@@ -95,9 +76,13 @@ class JobControlModel(QObject):
         self._last_status = ""
         self._last_error = ""
         self._requested_print_state = ""
-        self._command_thread: QThread | None = None
-        self._command_worker: _JobCommandWorker | None = None
         self._command_queue: list[_PendingJobCommand] = []
+        self._active_command: _PendingJobCommand | None = None
+        self._command_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="KTouchJob")
+        self._command_future: Future[tuple[bool, str]] | None = None
+        self._command_poll_timer = QTimer(self)
+        self._command_poll_timer.setInterval(10)
+        self._command_poll_timer.timeout.connect(self._poll_command_future)
 
     @Property(str, notify=statusChanged)
     def lastStatus(self) -> str:  # noqa: N802
@@ -337,37 +322,22 @@ class JobControlModel(QObject):
         self._start_next_control()
 
     def _start_next_control(self) -> None:
-        if self._command_thread is not None or not self._command_queue:
+        if self._command_future is not None or not self._command_queue:
             return
         pending = self._command_queue.pop(0)
-        thread = QThread(self)
-        worker = _JobCommandWorker(pending.command)
-        worker.moveToThread(thread)
-        thread.started.connect(worker.run)
-        worker.succeeded.connect(
-            lambda: self._handle_control_success(
-                pending.label,
-                pending.requested_print_state,
-                pending.on_success,
-            )
-        )
-        worker.failed.connect(self._set_error)
-        worker.finished.connect(thread.quit)
-        worker.finished.connect(worker.deleteLater)
-        thread.finished.connect(thread.deleteLater)
-        thread.finished.connect(self._clear_command_worker)
-        self._command_thread = thread
-        self._command_worker = worker
-        thread.start()
+        self._active_command = pending
+        self._command_future = self._command_executor.submit(_execute_job_command, pending.command)
+        self._command_poll_timer.start()
 
     def stop(self, timeout_ms: int = 5000) -> None:
         self._command_queue.clear()
-        thread = self._command_thread
-        if thread is not None and thread.isRunning():
-            thread.quit()
-            thread.wait(timeout_ms)
-        self._command_thread = None
-        self._command_worker = None
+        self._command_poll_timer.stop()
+        future = self._command_future
+        if future is not None and not future.done():
+            future.cancel()
+        self._command_future = None
+        self._active_command = None
+        self._command_executor.shutdown(wait=False, cancel_futures=True)
 
     def _handle_control_success(
         self,
@@ -398,9 +368,23 @@ class JobControlModel(QObject):
         self.requestedPrintStateChanged.emit()
 
     @Slot()
-    def _clear_command_worker(self) -> None:
-        self._command_thread = None
-        self._command_worker = None
+    def _poll_command_future(self) -> None:
+        future = self._command_future
+        pending = self._active_command
+        if future is None or pending is None or not future.done():
+            return
+        self._command_poll_timer.stop()
+        self._command_future = None
+        self._active_command = None
+        ok, error = future.result()
+        if ok:
+            self._handle_control_success(
+                pending.label,
+                pending.requested_print_state,
+                pending.on_success,
+            )
+        else:
+            self._set_error(error)
         self._start_next_control()
 
 
@@ -410,3 +394,11 @@ def _normalize_gcode_filename(filename: str) -> str:
     if marker in clean_filename:
         clean_filename = clean_filename.rsplit(marker, 1)[1]
     return clean_filename.strip("/")
+
+
+def _execute_job_command(command: Callable[[], dict[str, object]]) -> tuple[bool, str]:
+    try:
+        command()
+    except Exception as exc:
+        return False, str(exc)
+    return True, ""

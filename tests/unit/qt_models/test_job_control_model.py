@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from klippertouch.moonraker.safety import UnsafeCommandError
 from klippertouch.qt_models.job_control_model import JobControlModel
 
@@ -120,7 +122,7 @@ def wait_for_calls(qtbot, model: JobControlModel, client: FakeClient, count: int
     qtbot.waitUntil(
         lambda: len(client.calls) >= count
         and not model._command_queue  # noqa: SLF001
-        and model._command_thread is None,  # noqa: SLF001
+        and model._command_future is None,  # noqa: SLF001
         timeout=1000,
     )
 
@@ -129,7 +131,7 @@ def wait_for_error(qtbot, model: JobControlModel, error: str) -> None:
     qtbot.waitUntil(
         lambda: model.lastError == error
         and not model._command_queue  # noqa: SLF001
-        and model._command_thread is None,  # noqa: SLF001
+        and model._command_future is None,  # noqa: SLF001
         timeout=1000,
     )
 
@@ -149,6 +151,17 @@ def test_job_control_model_sends_pause_resume_cancel_requests(qtbot) -> None:
     assert statuses == ["Pause sent", "Resume sent", "Cancel sent"]
     assert model.lastError == ""
     assert model.requestedPrintState == "cancelled"
+
+
+def test_job_control_model_threads_do_not_use_qobject_parent_lifetime() -> None:
+    source = Path("src/klippertouch/qt_models/job_control_model.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert "ThreadPoolExecutor(max_workers=1" in source
+    assert "self._command_poll_timer = QTimer(self)" in source
+    assert "self._command_future: Future" in source
+    assert "QThread" not in source
 
 
 def test_job_control_model_starts_selected_file(qtbot) -> None:

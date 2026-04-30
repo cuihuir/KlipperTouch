@@ -72,6 +72,8 @@ class GCodeFileRefresh(QObject):
         self._file_refresh_worker: _FileListWorker | None = None
         self._metadata_refresh_thread: QThread | None = None
         self._metadata_refresh_worker: _MetadataWorker | None = None
+        self._retired_threads: list[QThread] = []
+        self._retired_workers: list[QObject] = []
         self._model.metadataRequested.connect(self._queue_requested_metadata)
         if self._status_model is not None:
             self._status_model.activePanelChanged.connect(self._sync_active_panel)
@@ -101,6 +103,7 @@ class GCodeFileRefresh(QObject):
             metadata_thread.wait(timeout_ms)
         self._metadata_refresh_thread = None
         self._metadata_refresh_worker = None
+        self._release_retired_threads()
 
     @Slot()
     def refresh_once(self) -> None:
@@ -108,14 +111,13 @@ class GCodeFileRefresh(QObject):
             return
         if self._file_refresh_worker is not None:
             return
-        thread = QThread(self)
+        thread = QThread()
         self._file_refresh_worker = _FileListWorker(self._client)
         self._file_refresh_worker.moveToThread(thread)
         thread.started.connect(self._file_refresh_worker.run)
         self._file_refresh_worker.completed.connect(self._apply_files)
         self._file_refresh_worker.finished.connect(thread.quit)
         self._file_refresh_worker.finished.connect(self._file_refresh_worker.deleteLater)
-        thread.finished.connect(thread.deleteLater)
         thread.finished.connect(self._clear_file_refresh_worker)
         self._file_refresh_thread = thread
         thread.start()
@@ -134,14 +136,13 @@ class GCodeFileRefresh(QObject):
         if self._metadata_refresh_worker is not None:
             return
         filename = self._metadata_queue.pop(0)
-        thread = QThread(self)
+        thread = QThread()
         self._metadata_refresh_worker = _MetadataWorker(self._client, filename)
         self._metadata_refresh_worker.moveToThread(thread)
         thread.started.connect(self._metadata_refresh_worker.run)
         self._metadata_refresh_worker.completed.connect(self._apply_metadata)
         self._metadata_refresh_worker.finished.connect(thread.quit)
         self._metadata_refresh_worker.finished.connect(self._metadata_refresh_worker.deleteLater)
-        thread.finished.connect(thread.deleteLater)
         thread.finished.connect(self._clear_metadata_refresh_worker)
         self._metadata_refresh_thread = thread
         thread.start()
@@ -214,12 +215,29 @@ class GCodeFileRefresh(QObject):
 
     @Slot()
     def _clear_file_refresh_worker(self) -> None:
+        self._retire_thread(self._file_refresh_thread, self._file_refresh_worker)
         self._file_refresh_thread = None
         self._file_refresh_worker = None
+        QTimer.singleShot(0, self._release_retired_threads)
         self.refreshFinished.emit()
 
     @Slot()
     def _clear_metadata_refresh_worker(self) -> None:
+        self._retire_thread(self._metadata_refresh_thread, self._metadata_refresh_worker)
         self._metadata_refresh_thread = None
         self._metadata_refresh_worker = None
+        QTimer.singleShot(0, self._release_retired_threads)
         self.metadataRefreshFinished.emit()
+
+    def _retire_thread(self, thread: QThread | None, worker: QObject | None) -> None:
+        if thread is not None:
+            self._retired_threads.append(thread)
+        if worker is not None:
+            self._retired_workers.append(worker)
+
+    @Slot()
+    def _release_retired_threads(self) -> None:
+        for thread in self._retired_threads:
+            thread.deleteLater()
+        self._retired_threads.clear()
+        self._retired_workers.clear()
