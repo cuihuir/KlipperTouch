@@ -11,9 +11,11 @@ Implemented:
 - PySide6/QML application shell, responsive metrics, navigation stack, and top-level panels.
 - Read-only Moonraker startup probe, websocket subscription, file refresh, and safety allowlist.
 - Unicode Klipper object probing through read-only JSON-RPC fallback.
-- Read-only temperature, files, job status, move, extrude, and information panels.
+- Temperature, files, job status, move, extrude, and information panels with audited control
+  bridges where currently enabled.
 - Screenshot capture tooling for common target resolutions.
-- Real-printer read-only validation against the Orange Pi Moonraker endpoint.
+- Real-printer read-only validation against the Orange Pi Moonraker endpoint, including
+  warnings, five-axis capability flags, G-code file list, metadata, and thumbnail URLs.
 
 ## Phase 1: Research and Safety Blueprint
 
@@ -84,7 +86,7 @@ Deliverables:
 
 - Main menu layout matching KlipperScreen top-level concepts.
 - Files/Gcodes page as a file manager only.
-- Job Status page that appears automatically only during active print states.
+- Job Status page that appears automatically for active and terminal print states.
 - Temperature, Move, Extrude, More/System pages with live data and audited controls where implemented.
 - Screenshot regression set for `800x480`, `1024x600`, `480x800`, and later `1280x800`.
 
@@ -96,17 +98,17 @@ Exit criteria:
 
 ## Phase 5: Detailed Page Completion
 
-Status: planned
+Status: active
 
 Goal: fill each page to production-quality visual and data completeness before risky controls are enabled.
 
 Work packages:
 
-- Files: directory hierarchy, breadcrumbs, sorting, metadata, search/filter, thumbnails if available, empty/loading/error states.
-- Job Status: progress, filename, thumbnail, elapsed/remaining estimates, layers, filament, speed, flow, Z offset, current temperatures, pause state.
-- Temperature: dynamic heater/sensor grid, historical graph, target display, presets as disabled placeholders.
-- Move: homed axes, position cards, step size UI, jog, home, disable motors, speed settings placeholders.
-- Extrude: extruder temp, target temp, E position, extrude/retract, load/unload macros, filament sensor states where available.
+- Files: implemented directory hierarchy, sorting, metadata, search/filter, lazy thumbnails, large detail thumbnail, and print/delete confirmation. Remaining work is better loading/error affordance and deeper real-printer regression.
+- Job Status: implemented progress, filename, thumbnail, elapsed/remaining estimates, layers, filament, speed, flow, Z offset, terminal-state clear, object exclusion entry, and responsive summary/details. Remaining work is visual parity polish and richer current-temperature/context blocks.
+- Temperature: implemented dynamic heater/sensor grid, graph selection persistence, historical graph, target display, and bounded target controls. Remaining work is graph performance measurement on target hardware.
+- Move: implemented positions, step size UI, jog, home all, UVW/bed tilt subpage, disable motors, z tilt, accelerator leveling, and command confirmations where needed. Remaining work is final visual parity and real-motion hardware guards.
+- Extrude: implemented nozzle temp, pressure advance/smooth time controls, extrude/retract, load/unload, and optional material-system entry. Remaining work is filament sensor state display when available.
 - More/System: host info, Moonraker/Klipper versions, object list, network/runtime stats, logs entry, settings placeholders.
 
 Exit criteria:
@@ -179,18 +181,18 @@ Exit criteria:
 
 Batch 1: Files/Gcodes read-only browser
 
-- Complete directory hierarchy, sorting, metadata roles, breadcrumbs, and empty/loading states.
-- Keep delete, rename, upload, and start-print disabled or absent.
+- Completed core directory hierarchy, sorting, metadata roles, search, thumbnails, print, and delete.
+- Next: loading/error states and longer real-printer regression with nested directories.
 
 Batch 2: Job Status visual parity
 
-- Improve active-print layout, progress treatment, current job metadata, and temperature summary.
-- Keep pause, resume, cancel, speed override, and extrusion controls disabled or absent.
+- Completed active/paused/terminal state routing, summary/details split, thumbnail, action confirmations, clear status, advanced Z/speed/flow controls, and small-screen scrolling.
+- Next: compare against KlipperScreen for final information grouping and current-temperature treatment.
 
 Batch 3: Temperature page data completeness
 
-- Replace fake graph with real read-only temperature history buffer.
-- Improve dynamic layout for many heaters and sensors.
+- Completed real temperature history, local graph visibility persistence, settable/read-only target behavior, and 80 ms coalesced pager refresh.
+- Next: profile graph and pager CPU on Orange Pi class hardware.
 
 Batch 4: Screenshot regression workflow
 
@@ -205,6 +207,6 @@ Batch 5: Long-running read-only validation
 ## Safety Rules
 
 - Default mode is read-only.
-- Real movement, heating, extrusion, print control, file mutation, and emergency actions are not implemented until the command safety framework exists.
-- Any feature that sends a Moonraker method outside the read-only allowlist needs separate review, tests, and real-printer approval.
+- State-changing command groups must go through the audited control bridge and command policy.
+- Any new Moonraker method outside the existing allowlist needs separate review, tests, and real-printer approval.
 - QML pages should not contain raw Moonraker command strings for state-changing actions.

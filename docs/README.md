@@ -11,6 +11,8 @@ This documentation is organized for long-term maintenance rather than short-term
 - `docs/research/klipperscreen-architecture.md` maps KlipperScreen concepts to planned KlipperTouch modules.
 - `docs/research/printer-readonly-probe-2026-04-23.md` records the real-printer read-only validation result.
 - `docs/research/printer-readonly-probe-2026-04-24.md` records the current real-printer read-only validation result.
+- `docs/research/printer-readonly-probe-2026-04-30.md` records the current read-only
+  status, file-list, metadata, and thumbnail validation result.
 
 ## Planning
 
