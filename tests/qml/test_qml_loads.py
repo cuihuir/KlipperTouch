@@ -399,6 +399,15 @@ def test_move_bed_tilt_preview_maps_negative_uvw_toward_screen_top() -> None:
     assert "return Math.max(-18, Math.min(18, (value - average) * -2.4))" not in qml
 
 
+def test_move_bed_tilt_step_grid_fits_portrait() -> None:
+    qml = Path("src/klippertouch/qml/panels/MovePanel.qml").read_text(encoding="utf-8")
+
+    assert "id: bedTiltStepGrid" in qml
+    assert "columns: root.metrics.portrait ? 4 : 6" in qml
+    assert "Math.max(92, Math.round(root.metrics.fontSize * 5.6))" in qml
+    assert "Layout.columnSpan: root.metrics.portrait ? 3 : 1" in qml
+
+
 def test_responsive_layout_components_exist() -> None:
     qml_dir = Path("src/klippertouch/qml")
     expected = [

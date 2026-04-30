@@ -1500,9 +1500,10 @@ Item {
             }
 
             Rectangle {
+                id: bedTiltStepGrid
                 Layout.fillWidth: true
                 Layout.preferredHeight: root.metrics.portrait
-                    ? Math.max(72, Math.round(root.metrics.fontSize * 4.6))
+                    ? Math.max(92, Math.round(root.metrics.fontSize * 5.6))
                     : Math.max(58, Math.round(root.metrics.fontSize * 3.55))
                 color: "#101617"
                 border.color: "#263233"
@@ -1512,7 +1513,7 @@ Item {
                 GridLayout {
                     anchors.fill: parent
                     anchors.margins: Math.max(5, Math.round(root.metrics.gap * 0.55))
-                    columns: root.metrics.portrait ? 3 : 6
+                    columns: root.metrics.portrait ? 4 : 6
                     rowSpacing: Math.max(5, Math.round(root.metrics.gap * 0.5))
                     columnSpacing: Math.max(5, Math.round(root.metrics.gap * 0.5))
 
@@ -1540,6 +1541,7 @@ Item {
                     LockedTile {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
+                        Layout.columnSpan: root.metrics.portrait ? 3 : 1
                         Layout.minimumHeight: root.metrics.portrait
                             ? Math.max(34, Math.round(root.metrics.fontSize * 2.05))
                             : Math.max(28, Math.round(root.metrics.fontSize * 1.65))

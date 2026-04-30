@@ -15,6 +15,7 @@ from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuick import QQuickWindow  # noqa: F401
 
 from klippertouch.app import create_gcode_file_model, create_status_models
+from klippertouch.config.loader import load_config
 from klippertouch.domain.printer import (
     FanStatus,
     FilamentSensorStatus,
@@ -23,6 +24,9 @@ from klippertouch.domain.printer import (
     ServiceVersionStatus,
     TemperatureDeviceStatus,
 )
+from klippertouch.moonraker.client import MoonrakerClient
+from klippertouch.moonraker.safety import CommandPolicy
+from klippertouch.probe import build_status_from_client
 
 DEFAULT_SIZES = ("800x480", "1024x600", "480x800")
 DEFAULT_PANELS = (
@@ -300,6 +304,9 @@ def capture(
     sample_files_error: str = "",
     file_current_path: str = "",
     sample_status: bool = False,
+    live_status: PrinterStatus | None = None,
+    live_temperature_store: dict[str, object] | None = None,
+    live_files: list[dict[str, object]] | None = None,
     sample_state: str = "printing",
     sample_many_sensors: bool = False,
     job_detail_pages: tuple[str, ...] = (),
@@ -322,8 +329,10 @@ def capture(
                 "configuredMaterialSystemEnabled",
                 material_system,
             )
-            if sample_files:
-                file_model = create_gcode_file_model(list(SAMPLE_FILES))
+            if live_files is not None or sample_files:
+                file_model = create_gcode_file_model(
+                    live_files if live_files is not None else list(SAMPLE_FILES)
+                )
                 file_model.setFileMetadata(
                     "OrcaCube_PLA_27m41s.gcode",
                     SAMPLE_METADATA,
@@ -331,7 +340,19 @@ def capture(
                 )
                 engine.rootContext().setContextProperty("gcodeFileModel", file_model)
                 engine.gcode_file_model = file_model  # type: ignore[attr-defined]
-            if sample_status:
+            if live_status is not None:
+                status_model, temperature_model = create_status_models(
+                    live_status,
+                    initial_temperature_store=live_temperature_store,
+                )
+                engine.rootContext().setContextProperty("statusModel", status_model)
+                engine.rootContext().setContextProperty(
+                    "temperatureDeviceModel",
+                    temperature_model,
+                )
+                engine.status_model = status_model  # type: ignore[attr-defined]
+                engine.temperature_model = temperature_model  # type: ignore[attr-defined]
+            elif sample_status:
                 first_extruder, first_bed = SAMPLE_HISTORY[0]
                 status_model, temperature_model = create_status_models(
                     make_sample_status(
@@ -629,6 +650,12 @@ def main(argv: list[str] | None = None) -> int:
         help="Inject sample printer/job status into the QML context before capturing.",
     )
     parser.add_argument(
+        "--live-config",
+        type=Path,
+        default=None,
+        help="Read a KlipperTouch config, run a read-only Moonraker probe, and capture live UI.",
+    )
+    parser.add_argument(
         "--sample-many-sensors",
         action="store_true",
         help="Include additional read-only temperature sensors in --sample-status captures.",
@@ -692,6 +719,16 @@ def main(argv: list[str] | None = None) -> int:
         help="Inject a configured AFC/AMS material-system flag for Extrude screenshots.",
     )
     args = parser.parse_args(argv)
+    live_status = None
+    live_temperature_store = None
+    live_files = None
+    if args.live_config is not None:
+        settings = load_config(args.live_config)
+        printer = settings.printers[settings.default_printer]
+        live_client = MoonrakerClient(printer, policy=CommandPolicy(read_only=True))
+        live_status = build_status_from_client(live_client)
+        live_temperature_store = live_client.get_temperature_store()
+        live_files = live_client.get_gcode_file_list()
 
     captured = capture(
         qml_path=args.qml,
@@ -702,7 +739,10 @@ def main(argv: list[str] | None = None) -> int:
         sample_files_loading=args.sample_files_loading,
         sample_files_error=args.sample_files_error,
         file_current_path=args.file_current_path,
-        sample_status=args.sample_status,
+        sample_status=args.sample_status or live_status is not None,
+        live_status=live_status,
+        live_temperature_store=live_temperature_store,
+        live_files=live_files,
         sample_state=args.sample_state,
         sample_many_sensors=args.sample_many_sensors,
         job_detail_pages=tuple(args.job_detail_pages),

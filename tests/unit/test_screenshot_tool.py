@@ -27,6 +27,13 @@ def test_screenshot_tool_captures_common_panels_and_sizes() -> None:
     assert "--sample-files-error" in source
     assert "--file-current-path" in source
     assert "--sample-status" in source
+    assert "--live-config" in source
+    assert "load_config(args.live_config)" in source
+    assert "build_status_from_client(live_client)" in source
+    assert "live_client.get_temperature_store()" in source
+    assert "live_client.get_gcode_file_list()" in source
+    assert "CommandPolicy(read_only=True)" in source
+    assert "sample_status=args.sample_status or live_status is not None" in source
     assert "--sample-many-sensors" in source
     assert "--sample-state" in source
     assert '"temperature_sensor Box"' in source
