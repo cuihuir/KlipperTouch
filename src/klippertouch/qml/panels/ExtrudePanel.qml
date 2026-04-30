@@ -56,6 +56,7 @@ Item {
     readonly property color selectedAccent: "#7f9298"
     readonly property int touchTargetSize: Math.max(44, Math.round(root.metrics.fontSize * 2.8))
     property string targetEditorValue: ""
+    property bool targetEditorReplaceOnNextInput: false
     property string pressureAdvanceEditorField: "advance"
     property string pressureAdvanceEditorAdvanceValue: ""
     property string pressureAdvanceEditorSmoothValue: ""
@@ -373,11 +374,17 @@ Item {
 
     function openTargetEditor() {
         root.targetEditorValue = root.extruderTarget > 0 ? String(Math.round(root.extruderTarget)) : ""
+        root.targetEditorReplaceOnNextInput = root.targetEditorValue.length > 0
         root.positionTargetEditor()
         targetEditorPopup.open()
     }
 
     function appendTargetDigit(digit) {
+        if (root.targetEditorReplaceOnNextInput) {
+            root.targetEditorValue = digit
+            root.targetEditorReplaceOnNextInput = false
+            return
+        }
         if (root.targetEditorValue.length >= 3) {
             return
         }
@@ -389,6 +396,11 @@ Item {
     }
 
     function appendTargetDecimal() {
+        if (root.targetEditorReplaceOnNextInput) {
+            root.targetEditorValue = "0."
+            root.targetEditorReplaceOnNextInput = false
+            return
+        }
         if (root.targetEditorValue.indexOf(".") >= 0 || root.targetEditorValue.length >= 4) {
             return
         }
@@ -398,10 +410,12 @@ Item {
     }
 
     function deleteTargetDigit() {
+        root.targetEditorReplaceOnNextInput = false
         root.targetEditorValue = root.targetEditorValue.slice(0, -1)
     }
 
     function clearTargetEditor() {
+        root.targetEditorReplaceOnNextInput = false
         root.targetEditorValue = ""
     }
 

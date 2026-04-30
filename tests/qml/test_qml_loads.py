@@ -1209,6 +1209,11 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "signal pressureAdvanceRequested(real advance, real smoothTime)" in qml
     assert "function openTargetEditor()" in qml
     assert "function confirmTargetEditor()" in qml
+    assert "property bool targetEditorReplaceOnNextInput: false" in qml
+    assert "root.targetEditorReplaceOnNextInput = root.targetEditorValue.length > 0" in qml
+    assert "if (root.targetEditorReplaceOnNextInput) {" in qml
+    assert "root.targetEditorValue = digit" in qml
+    assert "root.targetEditorReplaceOnNextInput = false" in qml
     assert "function openPressureAdvanceEditor()" in qml
     assert "function confirmPressureAdvanceEditor()" in qml
     assert "isNaN(advance) || isNaN(smoothTime)" in qml
@@ -1856,6 +1861,7 @@ def test_temperature_device_pager_uses_page_based_navigation() -> None:
     assert "property var entry: root.itemAt(index, root.modelRevision)" in qml
     assert "property int touchTargetSize:" in qml
     assert "property bool targetEditorFullscreen: false" in qml
+    assert "property bool targetEditorReplaceOnNextInput: false" in qml
     assert "function targetEditorPortrait()" in qml
     assert "return root.editorParentHeight() > root.editorParentWidth()" in qml
     assert "targetColumnWidth" in qml
@@ -1874,6 +1880,10 @@ def test_temperature_device_pager_uses_page_based_navigation() -> None:
     assert "targetEditorPopup.dialogWidth" in qml
     assert "targetEditorPopup.dialogHeight" in qml
     assert "function appendTargetDigit(digit)" in qml
+    assert "root.targetEditorReplaceOnNextInput = root.targetEditorValue.length > 0" in qml
+    assert "if (root.targetEditorReplaceOnNextInput) {" in qml
+    assert "root.targetEditorValue = digit" in qml
+    assert "root.targetEditorReplaceOnNextInput = false" in qml
     assert "function confirmTargetEditor()" in qml
     assert 'typeof root.activeTemperatureModel.setPendingTarget === "function"' in qml
     assert "root.activeTemperatureModel.setPendingTarget(root.targetEditorDeviceName, value)" in qml

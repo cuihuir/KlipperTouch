@@ -49,6 +49,7 @@ Item {
     property string targetEditorDeviceName: ""
     property string targetEditorDisplayName: ""
     property string targetEditorValue: ""
+    property bool targetEditorReplaceOnNextInput: false
     property var targetEditorActual: null
     signal targetTemperatureRequested(string deviceName, real target)
 
@@ -283,6 +284,7 @@ Item {
         root.targetEditorValue = target === null || typeof target === "undefined"
             ? ""
             : String(Math.round(target))
+        root.targetEditorReplaceOnNextInput = root.targetEditorValue.length > 0
         root.positionTargetEditor()
         targetEditorPopup.open()
     }
@@ -295,6 +297,11 @@ Item {
     }
 
     function appendTargetDigit(digit) {
+        if (root.targetEditorReplaceOnNextInput) {
+            root.targetEditorValue = digit
+            root.targetEditorReplaceOnNextInput = false
+            return
+        }
         if (root.targetEditorValue.length >= 3) {
             return
         }
@@ -306,10 +313,12 @@ Item {
     }
 
     function deleteTargetDigit() {
+        root.targetEditorReplaceOnNextInput = false
         root.targetEditorValue = root.targetEditorValue.slice(0, -1)
     }
 
     function clearTargetEditor() {
+        root.targetEditorReplaceOnNextInput = false
         root.targetEditorValue = ""
     }
 
