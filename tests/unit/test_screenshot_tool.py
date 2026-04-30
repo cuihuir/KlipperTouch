@@ -70,6 +70,9 @@ def test_screenshot_tool_captures_common_panels_and_sizes() -> None:
     assert "--material-system" in source
     assert "--extrude-detail-pages" in source
     assert '"configuredMaterialSystemEnabled"' in source
+    assert '"configuredReadOnly"' in source
+    assert "live_read_only = settings.read_only" in source
+    assert "read_only=live_read_only" in source
     assert "_set_extrude_detail_page" in source
     assert "JOB_DETAIL_PAGES" in source
     assert "MOVE_DETAIL_PAGES" in source

@@ -24,6 +24,21 @@ def test_main_qml_supports_context_controlled_fullscreen() -> None:
     assert "visibility: window.startFullScreen ? Window.FullScreen : Window.Windowed" in qml
 
 
+def test_main_qml_supports_context_controlled_read_only_mode() -> None:
+    main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
+    files_qml = Path("src/klippertouch/qml/panels/FilesPanel.qml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "property bool readOnlyMode:" in main_qml
+    assert 'typeof configuredReadOnly === "undefined" ? true : configuredReadOnly' in main_qml
+    assert "readOnlyMode: window.readOnlyMode" in main_qml
+    assert "property bool readOnlyMode: true" in files_qml
+    assert 'root.readOnlyMode ? "readonly" : "controls"' in files_qml
+    assert 'root.readOnlyMode ? "Mode" : "Controls"' in files_qml
+    assert "enabled: !root.readOnlyMode" in files_qml
+
+
 def test_main_qml_supports_context_controlled_display_rotation() -> None:
     qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
 

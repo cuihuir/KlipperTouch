@@ -81,6 +81,7 @@ def run_app(
     file_refresh_client: MoonrakerClient | None = None,
     job_control_client: MoonrakerClient | None = None,
     material_system_enabled: bool = False,
+    read_only: bool = True,
     full_screen: bool = False,
 ) -> int:
     configure_scenegraph_surface_format()
@@ -115,6 +116,7 @@ def run_app(
         "configuredMaterialSystemEnabled",
         material_system_enabled,
     )
+    engine.rootContext().setContextProperty("configuredReadOnly", read_only)
     engine.rootContext().setContextProperty("configuredFullScreen", full_screen)
     engine.rootContext().setContextProperty("configuredDisplayRotation", display_rotation)
     engine.job_control_model = job_control_model  # type: ignore[attr-defined]

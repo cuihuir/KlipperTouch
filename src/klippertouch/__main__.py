@@ -66,6 +66,7 @@ def main() -> int:
         file_refresh_client=client,
         job_control_client=client,
         material_system_enabled=settings.material_system_enabled,
+        read_only=settings.read_only,
         full_screen=args.fullscreen,
     )
 

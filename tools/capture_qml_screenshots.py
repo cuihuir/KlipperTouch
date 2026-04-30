@@ -316,6 +316,7 @@ def capture(
     file_detail_pages: tuple[str, ...] = (),
     file_action_previews: tuple[str, ...] = (),
     material_system: bool = False,
+    read_only: bool = True,
 ) -> list[Path]:
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     app = QGuiApplication.instance() or QGuiApplication([])
@@ -329,6 +330,7 @@ def capture(
                 "configuredMaterialSystemEnabled",
                 material_system,
             )
+            engine.rootContext().setContextProperty("configuredReadOnly", read_only)
             if live_files is not None or sample_files:
                 file_model = create_gcode_file_model(
                     live_files if live_files is not None else list(SAMPLE_FILES)
@@ -722,9 +724,11 @@ def main(argv: list[str] | None = None) -> int:
     live_status = None
     live_temperature_store = None
     live_files = None
+    live_read_only = True
     if args.live_config is not None:
         settings = load_config(args.live_config)
         printer = settings.printers[settings.default_printer]
+        live_read_only = settings.read_only
         live_client = MoonrakerClient(printer, policy=CommandPolicy(read_only=True))
         live_status = build_status_from_client(live_client)
         live_temperature_store = live_client.get_temperature_store()
@@ -752,6 +756,7 @@ def main(argv: list[str] | None = None) -> int:
         file_detail_pages=tuple(args.file_detail_pages),
         file_action_previews=tuple(args.file_action_previews),
         material_system=args.material_system,
+        read_only=live_read_only,
     )
     if not args.no_index:
         print(write_index(args.output, captured))

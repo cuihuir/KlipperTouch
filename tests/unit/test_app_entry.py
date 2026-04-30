@@ -69,6 +69,13 @@ def test_app_registers_fullscreen_context() -> None:
     assert 'setContextProperty("configuredFullScreen", full_screen)' in source
 
 
+def test_app_registers_read_only_context() -> None:
+    source = app.Path(app.__file__).read_text(encoding="utf-8")
+
+    assert "read_only: bool = True" in source
+    assert 'setContextProperty("configuredReadOnly", read_only)' in source
+
+
 def test_resolve_display_rotation_normalizes_supported_values(monkeypatch) -> None:
     monkeypatch.setenv("KLIPPERTOUCH_DISPLAY_ROTATION", " RIGHT ")
     assert app.resolve_display_rotation() == "right"

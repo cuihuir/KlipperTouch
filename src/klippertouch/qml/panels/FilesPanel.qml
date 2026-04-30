@@ -13,6 +13,7 @@ Item {
     property string rootPath: "gcodes"
     property bool loading: false
     property string loadError: ""
+    property bool readOnlyMode: true
     property bool compactFileRows: root.metrics.portrait || width < 920
     property bool detailPage: false
     property string pendingFileAction: ""
@@ -175,7 +176,10 @@ Item {
                 "value": root.activeFileModel.fileFilamentWeightTotalLabelFor(root.activeFileModel.selectedPath)
             },
             {"label": "Permissions", "value": root.activeFileModel.selectedPermissions},
-            {"label": "Mode", "value": "readonly"}
+            {
+                "label": root.readOnlyMode ? "Mode" : "Controls",
+                "value": root.readOnlyMode ? "readonly" : "enabled"
+            }
         ]
     }
 
@@ -242,7 +246,10 @@ Item {
                         "value": root.activeFileModel.fileNozzleDiameterLabelFor(root.activeFileModel.selectedPath)
                     },
                     {"label": "Permissions", "value": root.activeFileModel.selectedPermissions},
-                    {"label": "Mode", "value": "readonly"}
+                    {
+                        "label": root.readOnlyMode ? "Mode" : "Controls",
+                        "value": root.readOnlyMode ? "readonly" : "enabled"
+                    }
                 ]
             }
         ]
@@ -337,7 +344,9 @@ Item {
 
         Layout.preferredWidth: Math.max(126, Math.round(root.metrics.fontSize * 8.8))
         Layout.preferredHeight: Math.max(44, Math.round(root.metrics.fontSize * 3.0))
-        enabled: root.activeFileModel && root.activeFileModel.selectedPath.length > 0
+        enabled: !root.readOnlyMode
+            && root.activeFileModel
+            && root.activeFileModel.selectedPath.length > 0
         fontSize: root.metrics.fontSize
         font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
         baseColor: "#121b1d"
@@ -492,7 +501,7 @@ Item {
 
                 Label {
                     color: Theme.mutedText
-                    text: "readonly"
+                    text: root.readOnlyMode ? "readonly" : "controls"
                     horizontalAlignment: Text.AlignRight
                     font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
                 }

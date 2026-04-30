@@ -26,6 +26,7 @@ ApplicationWindow {
     property int sceneWidth: window.displayRotated ? window.height : window.width
     property int sceneHeight: window.displayRotated ? window.width : window.height
     property bool materialSystemEnabled: typeof configuredMaterialSystemEnabled === "undefined" ? false : configuredMaterialSystemEnabled
+    property bool readOnlyMode: typeof configuredReadOnly === "undefined" ? true : configuredReadOnly
     property string requestedPrintState: jobControlBridgeModel ? jobControlBridgeModel.requestedPrintState : ""
     property string hostname: bridgeModel ? bridgeModel.hostname : "offline"
     property string klippyState: bridgeModel ? bridgeModel.klippyState : "disconnected"
@@ -526,6 +527,7 @@ ApplicationWindow {
             FilesPanel {
                 metrics: appMetrics
                 fileModel: window.gcodeFileBridgeModel
+                readOnlyMode: window.readOnlyMode
                 loading: window.fileRefreshBridgeModel ? window.fileRefreshBridgeModel.loading : false
                 loadError: window.fileRefreshBridgeModel ? window.fileRefreshBridgeModel.lastError : ""
                 controlStatus: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastStatus : ""
