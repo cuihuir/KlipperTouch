@@ -230,6 +230,54 @@ def test_printer_status_derives_fan_devices_from_status_query() -> None:
     assert updated.fan_devices[1].speed == 25.0
 
 
+def test_printer_status_derives_fan_devices_from_config_sections() -> None:
+    status = PrinterStatus.from_probe(
+        server_info={"moonraker_version": "v0.10.0", "klippy_state": "ready"},
+        printer_info={"state": "ready", "hostname": "toper1", "software_version": "v0.13.0"},
+        objects={
+            "objects": [
+                "configfile",
+                "fan",
+                "temperature_fan SOC散热",
+            ]
+        },
+        object_status={
+            "status": {
+                "fan": {"speed": 0.1},
+                "temperature_fan SOC散热": {"temperature": 45.0, "target": 40.0, "speed": 0.4},
+                "fan_generic partfan": {"speed": 0.2},
+                "heater_fan 喉管": {"speed": 0.6},
+                "controller_fan 驱动散热": {"speed": 1.0},
+                "configfile": {
+                    "settings": {
+                        "fan": {},
+                        "fan_generic partfan": {},
+                        "heater_fan 喉管": {},
+                        "controller_fan 驱动散热": {},
+                        "temperature_fan soc散热": {},
+                    }
+                },
+            }
+        },
+    )
+
+    assert tuple(fan.name for fan in status.fan_devices) == (
+        "fan",
+        "temperature_fan SOC散热",
+        "fan_generic partfan",
+        "heater_fan 喉管",
+        "controller_fan 驱动散热",
+    )
+    assert tuple(fan.speed for fan in status.fan_devices) == (10.0, 40.0, 20.0, 60.0, 100.0)
+    assert tuple(fan.speed_settable for fan in status.fan_devices) == (
+        True,
+        False,
+        True,
+        False,
+        False,
+    )
+
+
 def test_temperature_device_display_names_remove_klipper_object_prefixes() -> None:
     status = PrinterStatus.from_probe(
         server_info={"moonraker_version": "v0.10.0", "klippy_state": "ready"},

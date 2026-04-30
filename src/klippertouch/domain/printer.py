@@ -42,6 +42,9 @@ class WebhooksStatusFields(TypedDict, total=False):
     webhooks_message: str
 
 
+FAN_PREFIXES = ("fan_generic ", "controller_fan ", "heater_fan ", "temperature_fan ")
+
+
 @dataclass(frozen=True)
 class TemperatureDeviceStatus:
     name: str
@@ -591,7 +594,7 @@ def _fan_devices_from_status(
         status = {}
 
     fans: list[FanStatus] = []
-    for name in object_names:
+    for name in _fan_names_from_status(object_names, object_status):
         values = status.get(name, {})
         if not isinstance(values, dict):
             values = {}
@@ -599,6 +602,29 @@ def _fan_devices_from_status(
         if fan is not None:
             fans.append(fan)
     return tuple(fans)
+
+
+def _fan_names_from_status(
+    object_names: tuple[str, ...],
+    object_status: dict[str, Any],
+) -> tuple[str, ...]:
+    names: list[str] = []
+    seen: set[str] = set()
+
+    def add_name(name: str) -> None:
+        if not _is_fan_object_name(name):
+            return
+        key = _normalized_fan_name_key(name)
+        if key in seen:
+            return
+        seen.add(key)
+        names.append(name)
+
+    for name in object_names:
+        add_name(name)
+    for name in _configfile_sections_from_status(object_status):
+        add_name(name)
+    return tuple(names)
 
 
 def _mcu_statuses_from_probe(mcu_status: dict[str, Any]) -> tuple[McuStatus, ...]:
@@ -757,7 +783,22 @@ def _fan_from_object(
             speed=speed,
             speed_settable=False,
         )
+    if name.startswith("temperature_fan "):
+        return FanStatus(
+            name=name,
+            display_name=_prettify_name(name),
+            speed=speed,
+            speed_settable=False,
+        )
     return None
+
+
+def _is_fan_object_name(name: str) -> bool:
+    return name == "fan" or name.startswith(FAN_PREFIXES)
+
+
+def _normalized_fan_name_key(name: str) -> str:
+    return name.casefold()
 
 
 def _extruder_fields_from_status(object_status: dict[str, Any]) -> dict[str, Any]:

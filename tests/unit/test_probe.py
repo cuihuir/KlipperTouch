@@ -1,6 +1,6 @@
 import time
 
-from klippertouch.domain.printer import PrinterStatus
+from klippertouch.domain.printer import FanStatus, PrinterStatus
 from klippertouch.probe import (
     build_basic_status_from_client,
     build_status_from_client,
@@ -264,3 +264,84 @@ def test_build_status_from_client_uses_unfiltered_query_for_non_ascii_temperatur
         35.5,
         42.5,
     )
+
+
+def test_build_status_from_client_uses_jsonrpc_for_non_ascii_fan_status() -> None:
+    class NonAsciiFanClient(FakeClient):
+        def __init__(self) -> None:
+            self.queries: list[tuple[str, ...]] = []
+
+        def get_objects_list(self):
+            return {
+                "objects": [
+                    "configfile",
+                    "fan",
+                    "fan_generic partfan",
+                    "controller_fan 驱动散热",
+                    "temperature_fan SOC散热",
+                ]
+            }
+
+        def get_printer_objects_query(self, objects=()):
+            self.queries.append(tuple(objects))
+            return {
+                "status": {
+                    "fan": {"speed": 0.1},
+                    "fan_generic partfan": {"speed": 0.2},
+                    "temperature_fan SOC散热": {"temperature": 45.0, "target": 40.0},
+                    "configfile": {
+                        "settings": {
+                            "fan": {},
+                            "fan_generic partfan": {},
+                            "controller_fan 驱动散热": {},
+                            "temperature_fan soc散热": {},
+                        }
+                    },
+                }
+            }
+
+        def get_printer_objects_query_jsonrpc(self, objects):
+            self.queries.append(tuple(objects))
+            assert objects == {
+                "controller_fan 驱动散热": ["speed"],
+                "temperature_fan SOC散热": ["temperature", "target", "speed"],
+            }
+            return {
+                "status": {
+                    "controller_fan 驱动散热": {"speed": 0.6},
+                    "temperature_fan SOC散热": {
+                        "temperature": 46.0,
+                        "target": 40.0,
+                        "speed": 0.4,
+                    },
+                }
+            }
+
+        def get_printer_objects_query_fields(self, fields_by_object):
+            return {"status": {}}
+
+    status = build_status_from_client(NonAsciiFanClient())
+
+    assert status.fan_devices == (
+        FanStatus(name="fan", display_name="Part Fan", speed=10.0, speed_settable=True),
+        FanStatus(
+            name="fan_generic partfan",
+            display_name="Partfan",
+            speed=20.0,
+            speed_settable=True,
+        ),
+        FanStatus(
+            name="controller_fan 驱动散热",
+            display_name="驱动散热 Fan",
+            speed=60.0,
+            speed_settable=False,
+        ),
+        FanStatus(
+            name="temperature_fan SOC散热",
+            display_name="SOC散热 Fan",
+            speed=40.0,
+            speed_settable=False,
+        ),
+    )
+    assert status.temperature_devices[0].name == "temperature_fan SOC散热"
+    assert status.temperature_devices[0].temperature == 46.0

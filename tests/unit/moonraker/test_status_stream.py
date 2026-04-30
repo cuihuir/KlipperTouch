@@ -91,6 +91,21 @@ def test_build_websocket_request_includes_optional_api_key() -> None:
     assert bytes(request.rawHeader("x-api-key")).decode() == "secret"
 
 
+def test_temperature_fan_subscription_keeps_temperature_target_and_speed() -> None:
+    status = PrinterStatus(
+        objects=("temperature_fan SOC散热",),
+    )
+    client = MoonrakerClient(PrinterConfig(name="p", moonraker_host="host"))
+
+    message = json.loads(build_temperature_subscription_message(client, status))
+
+    assert message["params"]["objects"]["temperature_fan SOC散热"] == [
+        "temperature",
+        "target",
+        "speed",
+    ]
+
+
 def test_status_stream_schedules_read_only_reconnects() -> None:
     source = Path("src/klippertouch/moonraker/status_stream.py").read_text(encoding="utf-8")
 

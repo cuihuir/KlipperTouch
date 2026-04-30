@@ -17,6 +17,7 @@ EXCLUDE_OBJECT_OBJECTS = ("exclude_object",)
 WEBHOOKS_OBJECTS = ("webhooks",)
 CONFIG_STATUS_OBJECTS = ("configfile",)
 FILAMENT_SENSOR_PREFIXES = ("filament_switch_sensor ", "filament_motion_sensor ")
+FAN_PREFIXES = ("fan_generic ", "controller_fan ", "heater_fan ", "temperature_fan ")
 
 
 class ReadOnlyProbeClient(Protocol):
@@ -78,7 +79,7 @@ def build_status_from_client(client: ReadOnlyProbeClient) -> PrinterStatus:
         )
         object_status = _safe_future(object_status_future)
         mcu_status = _safe_future(mcu_status_future)
-        object_status = _with_non_ascii_temperature_status(client, object_names, object_status)
+        object_status = _with_non_ascii_status(client, object_names, object_status)
 
     return PrinterStatus.from_probe(
         server_info=server_info,
@@ -120,8 +121,17 @@ def _temperature_object_names(object_names: tuple[str, ...]) -> tuple[str, ...]:
     )
 
 
+def _fan_object_names(object_names: tuple[str, ...]) -> tuple[str, ...]:
+    return tuple(
+        name
+        for name in object_names
+        if name == "fan" or name.startswith(FAN_PREFIXES)
+    )
+
+
 def _read_only_status_object_names(object_names: tuple[str, ...]) -> tuple[str, ...]:
     wanted = set(_temperature_object_names(object_names))
+    wanted.update(_fan_object_names(object_names))
     wanted.update(name for name in PRINT_STATUS_OBJECTS if name in object_names)
     wanted.update(name for name in TOOLHEAD_STATUS_OBJECTS if name in object_names)
     wanted.update(name for name in EXCLUDE_OBJECT_OBJECTS if name in object_names)
@@ -131,31 +141,46 @@ def _read_only_status_object_names(object_names: tuple[str, ...]) -> tuple[str, 
     return tuple(name for name in object_names if name in wanted)
 
 
-def _with_non_ascii_temperature_status(
+def _with_non_ascii_status(
     client: ReadOnlyProbeClient,
     object_names: tuple[str, ...],
     object_status: dict[str, Any],
 ) -> dict[str, Any]:
-    non_ascii_temperature_names = tuple(
-        name for name in _temperature_object_names(object_names) if not name.isascii()
-    )
-    if not non_ascii_temperature_names:
+    fields_by_object = {
+        name: fields
+        for name in object_names
+        if not name.isascii()
+        for fields in (_non_ascii_status_fields(name),)
+        if fields
+    }
+    if not fields_by_object:
         return object_status
 
-    fallback = _safe_probe(
-        lambda: client.get_printer_objects_query_jsonrpc(
-            {name: ["temperature", "target"] for name in non_ascii_temperature_names}
-        )
-    )
+    fallback = _safe_probe(lambda: client.get_printer_objects_query_jsonrpc(fields_by_object))
     fallback_status = fallback.get("status", {})
     if not isinstance(fallback_status, dict):
         return object_status
 
     merged = dict(object_status)
     merged_status = dict(merged.get("status", {})) if isinstance(merged.get("status"), dict) else {}
-    for name in non_ascii_temperature_names:
+    for name in fields_by_object:
         values = fallback_status.get(name)
         if isinstance(values, dict):
-            merged_status[name] = values
+            previous = (
+                dict(merged_status.get(name, {}))
+                if isinstance(merged_status.get(name), dict)
+                else {}
+            )
+            previous.update(values)
+            merged_status[name] = previous
     merged["status"] = merged_status
     return merged
+
+
+def _non_ascii_status_fields(name: str) -> list[str]:
+    fields: list[str] = []
+    if name in _temperature_object_names((name,)):
+        fields.extend(["temperature", "target"])
+    if name in _fan_object_names((name,)):
+        fields.append("speed")
+    return fields

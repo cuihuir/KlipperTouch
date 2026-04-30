@@ -1,4 +1,5 @@
 import json
+from collections.abc import Iterable
 from typing import Any
 
 from PySide6.QtCore import QObject, QThread, QTimer, QUrl, Signal, Slot
@@ -299,7 +300,11 @@ def _subscription_objects(status: PrinterStatus) -> dict[str, list[str]]:
             if name.startswith(("filament_switch_sensor ", "filament_motion_sensor "))
         }
     )
-    objects.update({fan.name: FAN_FIELDS for fan in status.fan_devices})
+    for fan in status.fan_devices:
+        objects[fan.name] = _merged_subscription_fields(
+            objects.get(fan.name, ()),
+            FAN_FIELDS,
+        )
     return objects
 
 
@@ -307,3 +312,14 @@ def _temperature_subscription_fields(device_name: str) -> list[str]:
     if device_name == "extruder":
         return EXTRUDER_FIELDS
     return TEMPERATURE_FIELDS
+
+
+def _merged_subscription_fields(
+    first: Iterable[str],
+    second: Iterable[str],
+) -> list[str]:
+    fields: list[str] = []
+    for field in list(first) + list(second):
+        if field not in fields:
+            fields.append(field)
+    return fields
