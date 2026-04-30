@@ -509,6 +509,10 @@ Item {
                     iconName: modelData.iconName.length > 0 ? modelData.iconName : "placeholder"
                     placeholder: modelData.placeholder
                     fontSize: root.metrics.fontSize
+                    iconSize: Math.max(16, Math.round(root.metrics.fontSize * (root.metrics.portrait ? 0.95 : 1.25)))
+                    textFontScale: root.metrics.portrait ? 0.62 : 0.76
+                    hintFontScale: root.metrics.portrait ? 0.50 : 0.60
+                    textMaximumLineCount: 2
                     pressedFeedback: root.recoveryFeedbackAction === modelData.action
                     onClicked: root.triggerRecoveryAction(modelData.action)
                 }

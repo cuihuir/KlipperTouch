@@ -22,7 +22,10 @@ Rectangle {
         : fallbackTemperatureModel
     property int maxVisibleTemperatureItems: Math.max(
         2,
-        Math.floor(heaterStrip.width / Math.max(42, root.fontSize * 2.8))
+        Math.min(
+            root.width < 700 ? 2 : 4,
+            Math.floor(heaterStrip.width / Math.max(42, root.fontSize * 2.8))
+        )
     )
     signal notificationRequested()
 

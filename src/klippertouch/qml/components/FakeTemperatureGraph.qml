@@ -142,16 +142,20 @@ Rectangle {
                 font.pixelSize: Math.max(14, Math.round(root.fontSize))
             }
 
-            Item {
+            Flickable {
                 id: legendViewport
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
                 Layout.preferredHeight: Math.max(root.fontSize, legendRow.implicitHeight)
+                contentWidth: legendRow.implicitWidth
+                contentHeight: height
+                boundsBehavior: Flickable.StopAtBounds
+                flickableDirection: Flickable.HorizontalFlick
                 clip: true
 
                 Row {
                     id: legendRow
-                    anchors.right: parent.right
+                    anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: Math.max(8, Math.round(root.fontSize * 0.5))
 

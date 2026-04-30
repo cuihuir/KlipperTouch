@@ -112,8 +112,13 @@ Item {
 
                 width: fanList.width
                 height: Math.max(
-                    modelData.speed_settable ? 156 : 92,
-                    Math.round(root.metrics.fontSize * (modelData.speed_settable ? 9.8 : 5.9))
+                    modelData.speed_settable ? (root.metrics.portrait ? 156 : 144) : 92,
+                    Math.round(
+                        root.metrics.fontSize
+                            * (modelData.speed_settable
+                                ? (root.metrics.portrait ? 9.8 : 6.4)
+                                : (root.metrics.portrait ? 5.9 : 4.1))
+                    )
                 )
                 color: "#0d1415"
                 border.color: modelData.speed_settable ? "#536165" : "#344346"
@@ -181,7 +186,10 @@ Item {
 
                     RowLayout {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: Math.max(62, Math.round(root.metrics.fontSize * 3.9))
+                        Layout.preferredHeight: Math.max(
+                            root.metrics.portrait ? 62 : 54,
+                            Math.round(root.metrics.fontSize * (root.metrics.portrait ? 3.9 : 2.4))
+                        )
                         visible: modelData.speed_settable
                         spacing: Math.max(6, Math.round(root.metrics.gap * 0.6))
 

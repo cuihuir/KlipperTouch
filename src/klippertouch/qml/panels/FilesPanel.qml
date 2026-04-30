@@ -250,7 +250,21 @@ Item {
 
     function selectedPreviewSize() {
         var availableWidth = Math.max(96, root.width - root.metrics.margin * 4 - root.metrics.gap * 4)
-        var availableHeight = Math.max(96, root.height - root.metrics.margin * 4 - root.metrics.gap * 8 - 96)
+        var reservedActionHeight = root.pendingFileAction.length > 0
+            ? root.selectedActionPreviewHeight()
+            : Math.max(52, Math.round(root.metrics.fontSize * 3.6))
+        var reservedMetadataHeight = Math.max(
+            root.metrics.portrait ? 220 : 96,
+            Math.round(root.metrics.fontSize * (root.metrics.portrait ? 14.0 : 6.2))
+        )
+        var availableHeight = Math.max(
+            96,
+            root.height
+                - root.metrics.margin * 4
+                - root.metrics.gap * 10
+                - reservedActionHeight
+                - reservedMetadataHeight
+        )
         return Math.round(Math.max(96, Math.min(300, availableWidth, availableHeight)))
     }
 

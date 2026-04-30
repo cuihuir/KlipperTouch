@@ -289,6 +289,7 @@ def test_status_bar_matches_klipperscreen_titlebar_structure() -> None:
     assert "root.width < 520 ? 0.25 : 0.35" in qml
     assert "root.width < 520 ? 0.45 : 0.32" in qml
     assert "property int maxVisibleTemperatureItems" in qml
+    assert "root.width < 700 ? 2 : 4" in qml
     assert "index < root.maxVisibleTemperatureItems" in qml
     assert "TemperatureDeviceModel {" in qml
     assert "id: fallbackTemperatureModel" in qml
@@ -339,6 +340,10 @@ def test_fake_temperature_graph_matches_heater_graph_structure() -> None:
     assert "transformOrigin: Item.Left" not in qml
     assert "ctx.stroke()" in qml
     assert "id: legendViewport" in qml
+    assert "Flickable {" in qml
+    assert "contentWidth: legendRow.implicitWidth" in qml
+    assert "anchors.left: parent.left" in qml
+    assert "anchors.right: parent.right" not in qml
     assert "clip: true" in qml
     assert "elide: Text.ElideRight" in qml
     assert "modelData.legendVisible === false" in qml
@@ -543,6 +548,10 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "id: selectedPreviewFrame" in qml
     assert "function selectedPreviewSize()" in qml
     assert "Math.min(300" in qml
+    assert "var reservedActionHeight = root.pendingFileAction.length > 0" in qml
+    assert "var reservedMetadataHeight = Math.max" in qml
+    assert "root.metrics.portrait ? 220 : 96" in qml
+    assert "root.selectedActionPreviewHeight()" in qml
     assert "Layout.preferredWidth: root.selectedPreviewSize()" in qml
     assert "Layout.preferredHeight: root.selectedPreviewSize()" in qml
     assert "visible: !root.detailPage" in qml
@@ -1686,6 +1695,9 @@ def test_splash_panel_handles_system_fault_states() -> None:
         'iconName: modelData.iconName.length > 0 ? modelData.iconName : "placeholder"'
         in panel_qml
     )
+    assert "textFontScale: root.metrics.portrait ? 0.62 : 0.76" in panel_qml
+    assert "hintFontScale: root.metrics.portrait ? 0.50 : 0.60" in panel_qml
+    assert "iconSize: Math.max(16, Math.round(root.metrics.fontSize *" in panel_qml
     assert 'Theme.iconSource(root.iconName.length > 0 ? root.iconName : "placeholder")' in Path(
         "src/klippertouch/qml/components/IconTileButton.qml"
     ).read_text(encoding="utf-8")
@@ -2262,6 +2274,10 @@ def test_fan_panel_lists_read_only_and_settable_fans() -> None:
     assert "property var fanDevices" in qml
     assert "signal fanSpeedRequested(string deviceName, real percent)" in qml
     assert "modelData.speed_settable" in qml
+    assert "root.metrics.portrait ? 156 : 144" in qml
+    assert "root.metrics.portrait ? 9.8 : 6.4" in qml
+    assert "root.metrics.portrait ? 62 : 54" in qml
+    assert "root.metrics.portrait ? 3.9 : 2.4" in qml
     assert "Slider {" in qml
     assert "stepSize: 0" in qml
     assert "hasRpm" in qml
