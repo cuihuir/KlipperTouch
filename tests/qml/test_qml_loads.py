@@ -1558,6 +1558,8 @@ def test_temperature_device_pager_uses_page_based_navigation() -> None:
     assert "property var temperatureModel: null" in qml
     assert "property int pageIndex: 0" in qml
     assert "property int pageSize:" in qml
+    assert "property int pageCountValue:" in qml
+    assert "property int totalItemCount:" in qml
     assert "property int currentItemCount:" in qml
     assert "root.modelCount(root.modelRevision)" in qml
     assert "function pageCount()" in qml
@@ -1651,7 +1653,11 @@ def test_temperature_device_pager_uses_page_based_navigation() -> None:
     assert "property int pageControlReservedHeight:" in qml
     assert "anchors.bottomMargin: root.pageControlReservedHeight" in qml
     assert "enabled: root.pageIndex > 0" in qml
-    assert "enabled: root.pageIndex < root.pageCount() - 1" in qml
+    assert "enabled: root.pageIndex < root.pageCountValue - 1" in qml
+    assert "enabled: root.pageIndex < root.pageCount() - 1" not in qml
+    assert "visible: root.pageCountValue > 1" in qml
+    assert "text: (root.pageIndex + 1) + \" / \" + root.pageCountValue" in qml
+    assert "Math.floor(deviceGrid.height / rowHeight)" not in qml
     assert 'typeof root.activeTemperatureModel.toggleGraphDevice === "function"' in qml
     assert "root.activeTemperatureModel.toggleGraphDevice(deviceKey)" in qml
     assert "targetEditorPopup.open()" in qml

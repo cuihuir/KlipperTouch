@@ -24,17 +24,22 @@ Item {
         ? root.touchTargetSize
         : Math.max(root.touchTargetSize * 2, Math.round(root.fontSize * 7.9))
     property int pageControlSpacing: Math.max(6, Math.round(root.fontSize * 0.4))
+    property int totalItemCount: root.modelCount(root.modelRevision)
     property int rawAvailableRows: Math.max(1, Math.floor(root.height / rowHeight))
-    property bool needsPageControls: root.modelCount(root.modelRevision) > root.deviceColumns * root.rawAvailableRows
+    property bool needsPageControls: root.totalItemCount > root.deviceColumns * root.rawAvailableRows
     property int pageControlReservedHeight: root.needsPageControls
         ? root.touchTargetSize + root.pageControlSpacing
         : 0
-    property int availableRows: Math.max(1, Math.floor(deviceGrid.height / rowHeight))
+    property int availableRows: Math.max(
+        1,
+        Math.floor(Math.max(0, root.height - root.pageControlReservedHeight) / rowHeight)
+    )
     property int pageSize: Math.max(1, root.deviceColumns * root.availableRows)
+    property int pageCountValue: Math.max(1, Math.ceil(root.totalItemCount / root.pageSize))
     property int modelRevision: 0
     property int currentItemCount: Math.max(0, Math.min(
         root.pageSize,
-        root.modelCount(root.modelRevision) - root.pageIndex * root.pageSize
+        root.totalItemCount - root.pageIndex * root.pageSize
     ))
     property real targetColumnWidth: root.showTargets ? 0.27 : 0
     property real compactValueColumnWidth: root.showTargets ? 0.46 : 0.32
@@ -110,8 +115,7 @@ Item {
     }
 
     function pageCount() {
-        var total = root.modelCount(root.modelRevision)
-        return Math.max(1, Math.ceil(total / root.pageSize))
+        return root.pageCountValue
     }
 
     function pagedModel() {
@@ -166,7 +170,7 @@ Item {
     }
 
     function goToNextPage() {
-        if (root.pageIndex < root.pageCount() - 1) {
+        if (root.pageIndex < root.pageCountValue - 1) {
             root.pageIndex += 1
         }
     }
@@ -649,7 +653,7 @@ Item {
         anchors.bottom: parent.bottom
         anchors.margins: root.pageControlSpacing
         spacing: root.pageControlSpacing
-        visible: root.pageCount() > 1
+        visible: root.pageCountValue > 1
 
         PageControlButton {
             id: previousPageButton
@@ -660,7 +664,7 @@ Item {
 
         Label {
             color: Theme.mutedText
-            text: (root.pageIndex + 1) + " / " + root.pageCount()
+            text: (root.pageIndex + 1) + " / " + root.pageCountValue
             height: root.touchTargetSize
             verticalAlignment: Text.AlignVCenter
             font.pixelSize: Math.max(10, Math.round(root.fontSize * 0.72))
@@ -668,7 +672,7 @@ Item {
 
         PageControlButton {
             id: nextPageButton
-            enabled: root.pageIndex < root.pageCount() - 1
+            enabled: root.pageIndex < root.pageCountValue - 1
             text: ">"
             onClicked: root.goToNextPage()
         }
