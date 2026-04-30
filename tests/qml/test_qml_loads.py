@@ -1000,6 +1000,11 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert '"iconName": "tilt"' in qml
     assert "function visibleMoreActions()" in qml
     assert "function actionButtonColumns()" in qml
+    assert "function actionButtonPanelWidth(parentWidth, zPadRight)" in qml
+    assert "var desiredColumns = root.metrics.ultraWide ? 1 : 2" in qml
+    assert "return root.metrics.ultraWide ? 1 : 2" in qml
+    assert "Math.max(root.moveButtonSize * 3.05" in qml
+    assert "parentWidth - zPadRight - root.motionSectionGap" in qml
     assert "var moreAction = null" in qml
     assert 'action.action === "more"' in qml
     assert "actions.length % columns === 0" in qml

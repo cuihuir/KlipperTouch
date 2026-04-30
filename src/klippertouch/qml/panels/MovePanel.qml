@@ -144,7 +144,20 @@ Item {
     }
 
     function actionButtonColumns() {
-        return root.metrics.portrait || root.fiveAxisAvailable ? 2 : 1
+        return root.metrics.ultraWide ? 1 : 2
+    }
+
+    function actionButtonPanelWidth(parentWidth, zPadRight) {
+        var desiredColumns = root.metrics.ultraWide ? 1 : 2
+        var minimumButtonWidth = Math.max(root.moveButtonSize * 3.05, root.moveButtonSize * desiredColumns)
+        if (desiredColumns === 1) {
+            minimumButtonWidth = root.moveButtonSize * 1.28
+        }
+        var proportionalWidth = Math.round(
+            parentWidth * (root.metrics.ultraWide ? 0.15 : root.fiveAxisAvailable ? 0.38 : 0.35)
+        )
+        var availableWidth = Math.max(root.moveButtonSize, parentWidth - zPadRight - root.motionSectionGap)
+        return Math.min(availableWidth, Math.max(minimumButtonWidth, proportionalWidth))
     }
 
     function visibleMoreActions() {
@@ -1003,10 +1016,7 @@ Item {
                     id: motionActions
                     width: root.metrics.portrait
                         ? Math.round(parent.width * 0.50)
-                        : Math.max(
-                            Math.round(parent.width * (root.fiveAxisAvailable ? 0.32 : 0.24)),
-                            Math.round(root.moveButtonSize * (root.fiveAxisAvailable ? 3.2 : 2.2))
-                        )
+                        : root.actionButtonPanelWidth(parent.width, zMovePad.x + zMovePad.width)
                     height: root.metrics.portrait
                         ? Math.max(root.moveButtonSize, Math.round(root.moveButtonSize * (root.fiveAxisAvailable ? 2.05 : 1.62)))
                         : Math.max(
