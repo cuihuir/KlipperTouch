@@ -62,7 +62,14 @@ def test_build_temperature_subscription_message_uses_read_only_objects_method() 
                 "display_status": ["progress", "message"],
                 "exclude_object": ["objects", "excluded_objects", "current_object"],
                 "webhooks": ["state", "state_message"],
-                "toolhead": ["position", "homed_axes", "max_accel", "max_velocity"],
+                "toolhead": [
+                    "position",
+                    "homed_axes",
+                    "axis_minimum",
+                    "axis_maximum",
+                    "max_accel",
+                    "max_velocity",
+                ],
                 "gcode_move": [
                     "gcode_position",
                     "homing_origin",
@@ -415,7 +422,12 @@ def test_status_from_websocket_message_applies_subscription_snapshot() -> None:
                         "info": {"current_layer": 5, "total_layer": 30},
                     },
                     "display_status": {"progress": 0.25},
-                    "toolhead": {"max_accel": 3000.0, "max_velocity": 250.0},
+                    "toolhead": {
+                        "axis_minimum": [0.0, 0.0, -5.0],
+                        "axis_maximum": [235.0, 235.0, 250.0],
+                        "max_accel": 3000.0,
+                        "max_velocity": 250.0,
+                    },
                     "gcode_move": {
                         "gcode_position": [1.1, 2.2, 3.3, 4.4],
                         "speed": 7500.0,
@@ -460,6 +472,8 @@ def test_status_from_websocket_message_applies_subscription_snapshot() -> None:
     assert updated.speed_factor == 150.0
     assert updated.extrude_factor == 95.0
     assert updated.z_offset == -0.04
+    assert updated.bed_max_x == 235.0
+    assert updated.bed_max_y == 235.0
     assert updated.max_accel == 3000.0
     assert updated.max_velocity == 250.0
     assert updated.exclude_object_names == ("part_a", "part_b")

@@ -62,6 +62,8 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
         speed_factor=150.0,
         extrude_factor=95.0,
         z_offset=-0.04,
+        bed_max_x=235.0,
+        bed_max_y=235.0,
         max_accel=3000.0,
         max_velocity=250.0,
         extruder_can_extrude=True,
@@ -136,6 +138,8 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
     assert model.speedFactor == 150.0
     assert model.extrudeFactor == 95.0
     assert model.zOffset == -0.04
+    assert model.bedMaxX == 235.0
+    assert model.bedMaxY == 235.0
     assert model.maxAccel == 3000.0
     assert model.maxVelocity == 250.0
     assert model.extruderTemperature == 212.4

@@ -21,6 +21,10 @@ Item {
     property real speedFactor: 100
     property real extrudeFactor: 100
     property real zOffset: 0
+    property real bedMinX: 0
+    property real bedMinY: 0
+    property real bedMaxX: 0
+    property real bedMaxY: 0
     property real maxAccel: 0
     property real maxVelocity: 0
     property real positionX: 0
@@ -700,6 +704,15 @@ Item {
     }
 
     function objectMapBounds() {
+        if (root.bedMaxX > root.bedMinX && root.bedMaxY > root.bedMinY) {
+            return {
+                "valid": true,
+                "minX": root.bedMinX,
+                "minY": root.bedMinY,
+                "maxX": root.bedMaxX,
+                "maxY": root.bedMaxY
+            }
+        }
         var minX = Number.POSITIVE_INFINITY
         var minY = Number.POSITIVE_INFINITY
         var maxX = Number.NEGATIVE_INFINITY

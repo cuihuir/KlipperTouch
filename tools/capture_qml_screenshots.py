@@ -142,6 +142,8 @@ SAMPLE_STATUS = {
     "position_u": 0.02,
     "position_v": -0.04,
     "position_w": 0.01,
+    "bed_max_x": 180.0,
+    "bed_max_y": 120.0,
     "accelerator_level_available": True,
     "homed_axes": "xyz",
     "exclude_object_names": ("part_a", "part_b", "part_c"),

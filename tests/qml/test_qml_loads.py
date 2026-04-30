@@ -687,6 +687,8 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "property real zOffset" in qml
     assert "property real maxAccel" in qml
     assert "property real maxVelocity" in qml
+    assert "property real bedMaxX" in qml
+    assert "property real bedMaxY" in qml
     assert "property real positionX" in qml
     assert "property real positionY" in qml
     assert "property real positionZ" in qml
@@ -904,6 +906,8 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "id: objectMapCanvas" in qml
     assert "root.excludeObjects.length" in qml
     assert "function objectMapBounds()" in qml
+    assert "root.bedMaxX > root.bedMinX" in qml
+    assert "root.bedMaxY > root.bedMinY" in qml
     assert "function objectAtPoint(screenX, screenY)" in qml
     assert "function drawExcludeObjectMap(ctx)" in qml
     assert "id: selectedObjectSkipButton" in qml
@@ -1479,6 +1483,8 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "property var excludeObjectNames:" in main_qml
     assert "property var excludedObjectNames:" in main_qml
     assert "property var excludeObjects:" in main_qml
+    assert "property real bedMaxX:" in main_qml
+    assert "property real bedMaxY:" in main_qml
     assert "property string currentObject:" in main_qml
     assert "extruderTemperature: window.extruderTemperature" in main_qml
     assert "extruderTarget: window.extruderTarget" in main_qml
@@ -2215,6 +2221,8 @@ def test_main_keeps_files_and_job_status_as_separate_routes() -> None:
     assert "zOffset: window.zOffset" in main_qml
     assert "maxAccel: window.maxAccel" in main_qml
     assert "maxVelocity: window.maxVelocity" in main_qml
+    assert "bedMaxX: window.bedMaxX" in main_qml
+    assert "bedMaxY: window.bedMaxY" in main_qml
     assert "excludeObjectNames: window.excludeObjectNames" in main_qml
     assert "excludeObjects: window.excludeObjects" in main_qml
     assert "excludedObjectNames: window.excludedObjectNames" in main_qml

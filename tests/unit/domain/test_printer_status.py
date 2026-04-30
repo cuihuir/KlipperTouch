@@ -827,6 +827,8 @@ def test_printer_status_populates_read_only_toolhead_position() -> None:
                 "toolhead": {
                     "homed_axes": "xyz",
                     "position": [1.0, 2.0, 3.0, 4.0],
+                    "axis_minimum": [0.0, 0.0, -5.0],
+                    "axis_maximum": [235.0, 235.0, 250.0],
                     "max_accel": 3000.0,
                     "max_velocity": 250.0,
                 },
@@ -848,6 +850,10 @@ def test_printer_status_populates_read_only_toolhead_position() -> None:
     assert status.position_u == 50.5
     assert status.position_v == 60.6
     assert status.position_w == 70.7
+    assert status.bed_min_x == 0.0
+    assert status.bed_min_y == 0.0
+    assert status.bed_max_x == 235.0
+    assert status.bed_max_y == 235.0
     assert status.homed_axes == "xyz"
     assert status.requested_speed == 125.0
     assert status.speed_factor == 150.0
@@ -862,7 +868,13 @@ def test_printer_status_applies_read_only_toolhead_update() -> None:
 
     updated = status.with_status_update(
         {
-            "toolhead": {"homed_axes": "xy", "max_accel": 2400.0, "max_velocity": 180.0},
+            "toolhead": {
+                "homed_axes": "xy",
+                "axis_minimum": [-5.0, -10.0, 0.0],
+                "axis_maximum": [180.0, 200.0, 220.0],
+                "max_accel": 2400.0,
+                "max_velocity": 180.0,
+            },
             "gcode_move": {
                 "gcode_position": [11.0, 22.0, 33.0, 44.0, 55.0, 66.0, 77.0],
                 "speed": 5400.0,
@@ -880,6 +892,10 @@ def test_printer_status_applies_read_only_toolhead_update() -> None:
     assert updated.position_u == 55.0
     assert updated.position_v == 66.0
     assert updated.position_w == 77.0
+    assert updated.bed_min_x == -5.0
+    assert updated.bed_min_y == -10.0
+    assert updated.bed_max_x == 180.0
+    assert updated.bed_max_y == 200.0
     assert updated.homed_axes == "xy"
     assert updated.requested_speed == 90.0
     assert updated.speed_factor == 80.0

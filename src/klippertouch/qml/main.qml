@@ -63,6 +63,10 @@ ApplicationWindow {
     property real speedFactor: bridgeModel ? bridgeModel.speedFactor : 100
     property real extrudeFactor: bridgeModel ? bridgeModel.extrudeFactor : 100
     property real zOffset: bridgeModel ? bridgeModel.zOffset : 0
+    property real bedMinX: bridgeModel ? bridgeModel.bedMinX : 0
+    property real bedMinY: bridgeModel ? bridgeModel.bedMinY : 0
+    property real bedMaxX: bridgeModel ? bridgeModel.bedMaxX : 0
+    property real bedMaxY: bridgeModel ? bridgeModel.bedMaxY : 0
     property real maxAccel: bridgeModel ? bridgeModel.maxAccel : 0
     property real maxVelocity: bridgeModel ? bridgeModel.maxVelocity : 0
     property real extruderTemperature: bridgeModel ? bridgeModel.extruderTemperature : 0
@@ -569,6 +573,10 @@ ApplicationWindow {
                 speedFactor: window.speedFactor
                 extrudeFactor: window.extrudeFactor
                 zOffset: window.zOffset
+                bedMinX: window.bedMinX
+                bedMinY: window.bedMinY
+                bedMaxX: window.bedMaxX
+                bedMaxY: window.bedMaxY
                 maxAccel: window.maxAccel
                 maxVelocity: window.maxVelocity
                 excludeObjectNames: window.excludeObjectNames

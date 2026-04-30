@@ -28,7 +28,14 @@ PRINT_STATUS_FIELDS = {
     "virtual_sdcard": ["progress", "is_active", "file_path"],
 }
 TOOLHEAD_STATUS_FIELDS = {
-    "toolhead": ["position", "homed_axes", "max_accel", "max_velocity"],
+    "toolhead": [
+        "position",
+        "homed_axes",
+        "axis_minimum",
+        "axis_maximum",
+        "max_accel",
+        "max_velocity",
+    ],
     "gcode_move": [
         "gcode_position",
         "homing_origin",

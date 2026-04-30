@@ -27,6 +27,10 @@ class ToolheadStatusFields(TypedDict, total=False):
     speed_factor: float
     extrude_factor: float
     z_offset: float
+    bed_min_x: float
+    bed_min_y: float
+    bed_max_x: float
+    bed_max_y: float
     max_accel: float
     max_velocity: float
 
@@ -180,6 +184,10 @@ class PrinterStatus:
     speed_factor: float = 100.0
     extrude_factor: float = 100.0
     z_offset: float = 0.0
+    bed_min_x: float = 0.0
+    bed_min_y: float = 0.0
+    bed_max_x: float = 0.0
+    bed_max_y: float = 0.0
     max_accel: float = 0.0
     max_velocity: float = 0.0
     extruder_can_extrude: bool = False
@@ -290,6 +298,10 @@ class PrinterStatus:
         object.__setattr__(self, "speed_factor", _clamped_factor_percent(self.speed_factor))
         object.__setattr__(self, "extrude_factor", _clamped_factor_percent(self.extrude_factor))
         object.__setattr__(self, "z_offset", _optional_float(self.z_offset) or 0.0)
+        object.__setattr__(self, "bed_min_x", _optional_float(self.bed_min_x) or 0.0)
+        object.__setattr__(self, "bed_min_y", _optional_float(self.bed_min_y) or 0.0)
+        object.__setattr__(self, "bed_max_x", _optional_float(self.bed_max_x) or 0.0)
+        object.__setattr__(self, "bed_max_y", _optional_float(self.bed_max_y) or 0.0)
         object.__setattr__(self, "max_accel", _optional_float(self.max_accel) or 0.0)
         object.__setattr__(self, "max_velocity", _optional_float(self.max_velocity) or 0.0)
         object.__setattr__(self, "extruder_can_extrude", bool(self.extruder_can_extrude))
@@ -478,6 +490,10 @@ class PrinterStatus:
             "speed_factor": self.speed_factor,
             "extrude_factor": self.extrude_factor,
             "z_offset": self.z_offset,
+            "bed_min_x": self.bed_min_x,
+            "bed_min_y": self.bed_min_y,
+            "bed_max_x": self.bed_max_x,
+            "bed_max_y": self.bed_max_y,
             "max_accel": self.max_accel,
             "max_velocity": self.max_velocity,
         }
@@ -1118,6 +1134,14 @@ def _toolhead_fields_from_status(object_status: dict[str, Any]) -> ToolheadStatu
     homing_origin = gcode_move.get("homing_origin")
     if isinstance(homing_origin, list | tuple) and len(homing_origin) >= 3:
         fields["z_offset"] = _optional_float(homing_origin[2]) or 0.0
+    axis_minimum = toolhead.get("axis_minimum")
+    if isinstance(axis_minimum, list | tuple) and len(axis_minimum) >= 2:
+        fields["bed_min_x"] = _optional_float(axis_minimum[0]) or 0.0
+        fields["bed_min_y"] = _optional_float(axis_minimum[1]) or 0.0
+    axis_maximum = toolhead.get("axis_maximum")
+    if isinstance(axis_maximum, list | tuple) and len(axis_maximum) >= 2:
+        fields["bed_max_x"] = _optional_float(axis_maximum[0]) or 0.0
+        fields["bed_max_y"] = _optional_float(axis_maximum[1]) or 0.0
     if "max_accel" in toolhead:
         fields["max_accel"] = _optional_float(toolhead["max_accel"]) or 0.0
     if "max_velocity" in toolhead:

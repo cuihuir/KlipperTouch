@@ -800,6 +800,22 @@ class StatusModel(QObject):
         return self._status.z_offset
 
     @Property(float, notify=toolheadChanged)
+    def bedMinX(self) -> float:
+        return self._status.bed_min_x
+
+    @Property(float, notify=toolheadChanged)
+    def bedMinY(self) -> float:
+        return self._status.bed_min_y
+
+    @Property(float, notify=toolheadChanged)
+    def bedMaxX(self) -> float:
+        return self._status.bed_max_x
+
+    @Property(float, notify=toolheadChanged)
+    def bedMaxY(self) -> float:
+        return self._status.bed_max_y
+
+    @Property(float, notify=toolheadChanged)
     def maxAccel(self) -> float:
         return self._status.max_accel
 
@@ -941,6 +957,10 @@ def _toolhead_fields_changed(previous: PrinterStatus, current: PrinterStatus) ->
         previous.speed_factor,
         previous.extrude_factor,
         previous.z_offset,
+        previous.bed_min_x,
+        previous.bed_min_y,
+        previous.bed_max_x,
+        previous.bed_max_y,
         previous.max_accel,
         previous.max_velocity,
     ) != (
@@ -956,6 +976,10 @@ def _toolhead_fields_changed(previous: PrinterStatus, current: PrinterStatus) ->
         current.speed_factor,
         current.extrude_factor,
         current.z_offset,
+        current.bed_min_x,
+        current.bed_min_y,
+        current.bed_max_x,
+        current.bed_max_y,
         current.max_accel,
         current.max_velocity,
     )
