@@ -312,6 +312,7 @@ def test_files_panel_is_only_read_only_file_management() -> None:
 
     assert "property var fileModel" in qml
     assert 'objectName: "filesPanel"' in qml
+    assert "property string loadError" in qml
     assert 'text: "G-Code files"' not in qml
     assert 'property string rootPath: "gcodes"' in qml
     assert '"label": "Name"' in qml
@@ -319,6 +320,8 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert '"label": "Size"' in qml
     assert "No G-Code files found" in qml
     assert "Loading files..." in qml
+    assert "Unable to load files" in qml
+    assert "root.loadError.length > 0" in qml
     assert "function currentPathLabel" in qml
     assert "root.currentPathLabel()" in qml
     assert "function emptyTitle" in qml
@@ -1164,6 +1167,19 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "property var sensor: root.filamentSensors[index]" in qml
     assert "sensor.filament_detected" in qml
     assert "root.controlFeedbackText()" in qml
+
+    main_qml = Path("src/klippertouch/qml/main.qml").read_text(encoding="utf-8")
+
+    assert "property var fileRefreshBridgeModel:" in main_qml
+    assert 'typeof gcodeFileRefresh === "undefined" ? null : gcodeFileRefresh' in main_qml
+    assert (
+        "loading: window.fileRefreshBridgeModel ? window.fileRefreshBridgeModel.loading : false"
+        in main_qml
+    )
+    assert (
+        'loadError: window.fileRefreshBridgeModel ? window.fileRefreshBridgeModel.lastError : ""'
+        in main_qml
+    )
     assert "Theme.color3" not in qml
     assert (
         "root.extrudeActionRequested(modelData.action, parseFloat(root.selectedDistance), "

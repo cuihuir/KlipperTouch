@@ -276,6 +276,9 @@ def capture(
     sizes: tuple[tuple[int, int], ...],
     panels: tuple[str, ...],
     sample_files: bool = False,
+    sample_files_loading: bool = False,
+    sample_files_error: str = "",
+    file_current_path: str = "",
     sample_status: bool = False,
     sample_state: str = "printing",
     sample_many_sensors: bool = False,
@@ -344,6 +347,13 @@ def capture(
             root.setProperty("panelStack", [panel])
             root.setProperty("currentPanel", panel)
             _prepare_panel_capture(root, panel)
+            if panel == "print":
+                _prepare_files_panel(
+                    root,
+                    sample_files_loading=sample_files_loading,
+                    sample_files_error=sample_files_error,
+                    file_current_path=file_current_path,
+                )
             app.processEvents()
             for detail_page in _detail_pages_for_panel(
                 panel,
@@ -391,6 +401,26 @@ def _prepare_panel_capture(root: QObject, panel: str) -> None:
     root.setProperty("startupSplashHoldComplete", True)
     root.setProperty("startupSplashVisible", False)
     root.setProperty("systemFaultVisible", False)
+
+
+def _prepare_files_panel(
+    root: QObject,
+    *,
+    sample_files_loading: bool,
+    sample_files_error: str,
+    file_current_path: str,
+) -> None:
+    panel = root.findChild(QObject, "filesPanel")
+    if panel is None:
+        loader = root.findChild(QObject, "panelLoader")
+        panel = loader.property("item") if loader is not None else None
+    if panel is None:
+        return
+    panel.setProperty("loading", sample_files_loading)
+    panel.setProperty("loadError", sample_files_error)
+    active_model = panel.property("activeFileModel")
+    if file_current_path and hasattr(active_model, "setCurrentPath"):
+        active_model.setCurrentPath(file_current_path)
 
 
 def _detail_pages_for_panel(
@@ -559,6 +589,21 @@ def main(argv: list[str] | None = None) -> int:
         help="Inject sample G-Code files into the QML context before capturing.",
     )
     parser.add_argument(
+        "--sample-files-loading",
+        action="store_true",
+        help="Show the Print panel loading state in sample captures.",
+    )
+    parser.add_argument(
+        "--sample-files-error",
+        default="",
+        help="Show the Print panel file-load error state with this message.",
+    )
+    parser.add_argument(
+        "--file-current-path",
+        default="",
+        help="Set the sample Print panel current directory, for example calibration/flow.",
+    )
+    parser.add_argument(
         "--sample-status",
         action="store_true",
         help="Inject sample printer/job status into the QML context before capturing.",
@@ -634,6 +679,9 @@ def main(argv: list[str] | None = None) -> int:
         sizes=tuple(args.sizes),
         panels=tuple(args.panels),
         sample_files=args.sample_files,
+        sample_files_loading=args.sample_files_loading,
+        sample_files_error=args.sample_files_error,
+        file_current_path=args.file_current_path,
         sample_status=args.sample_status,
         sample_state=args.sample_state,
         sample_many_sensors=args.sample_many_sensors,

@@ -68,9 +68,16 @@ def run_app(
     notification_model = NotificationModel()
     startup_loader: StartupDataLoader | None = None
     file_refresh: GCodeFileRefresh | None = None
+    if file_refresh_client is not None:
+        file_refresh = GCodeFileRefresh(
+            file_refresh_client,
+            gcode_file_model,
+            status_model=status_model,
+        )
     engine.rootContext().setContextProperty("statusModel", status_model)
     engine.rootContext().setContextProperty("temperatureDeviceModel", temperature_device_model)
     engine.rootContext().setContextProperty("gcodeFileModel", gcode_file_model)
+    engine.rootContext().setContextProperty("gcodeFileRefresh", file_refresh)
     engine.rootContext().setContextProperty("jobControlModel", job_control_model)
     engine.rootContext().setContextProperty("notificationModel", notification_model)
     engine.rootContext().setContextProperty(
@@ -125,12 +132,7 @@ def run_app(
         status_model.statusRetryRequested.connect(startup_loader.start)
         startup_loader.start()
         engine.startup_loader = startup_loader  # type: ignore[attr-defined]
-    if file_refresh_client is not None:
-        file_refresh = GCodeFileRefresh(
-            file_refresh_client,
-            gcode_file_model,
-            status_model=status_model,
-        )
+    if file_refresh is not None:
         file_refresh.start()
         engine.gcode_file_refresh = file_refresh  # type: ignore[attr-defined]
     try:

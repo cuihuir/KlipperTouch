@@ -15,6 +15,7 @@ ApplicationWindow {
     property var bridgeModel: typeof statusModel === "undefined" ? null : statusModel
     property var temperatureBridgeModel: typeof temperatureDeviceModel === "undefined" ? null : temperatureDeviceModel
     property var gcodeFileBridgeModel: typeof gcodeFileModel === "undefined" ? null : gcodeFileModel
+    property var fileRefreshBridgeModel: typeof gcodeFileRefresh === "undefined" ? null : gcodeFileRefresh
     property var jobControlBridgeModel: typeof jobControlModel === "undefined" ? null : jobControlModel
     property var notificationBridgeModel: typeof notificationModel === "undefined" ? null : notificationModel
     property bool materialSystemEnabled: typeof configuredMaterialSystemEnabled === "undefined" ? false : configuredMaterialSystemEnabled
@@ -501,6 +502,8 @@ ApplicationWindow {
             FilesPanel {
                 metrics: appMetrics
                 fileModel: window.gcodeFileBridgeModel
+                loading: window.fileRefreshBridgeModel ? window.fileRefreshBridgeModel.loading : false
+                loadError: window.fileRefreshBridgeModel ? window.fileRefreshBridgeModel.lastError : ""
                 controlStatus: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastStatus : ""
                 controlError: window.jobControlBridgeModel ? window.jobControlBridgeModel.lastError : ""
                 onFileActionRequested: function(action, path) {

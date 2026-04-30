@@ -31,6 +31,7 @@ def test_app_wires_optional_read_only_file_refresh() -> None:
 
     assert "GCodeFileRefresh" in source
     assert "file_refresh_client" in source
+    assert 'setContextProperty("gcodeFileRefresh", file_refresh)' in source
     assert "file_refresh.start()" in source
     assert "engine.gcode_file_refresh = file_refresh" in source
 
@@ -110,6 +111,46 @@ def test_file_refresh_only_runs_while_files_panel_is_active(qtbot) -> None:
         pass
 
     assert client.calls == 1
+    assert model.rowCount() == 1
+
+
+def test_file_refresh_exposes_loading_and_file_list_errors(qtbot) -> None:
+    class FakeClient(MoonrakerClient):
+        def __init__(self) -> None:
+            super().__init__(PrinterConfig(name="p", moonraker_host="host"))
+            self.fail = True
+
+        def get_gcode_file_list(self) -> list[dict[str, object]]:
+            if self.fail:
+                raise RuntimeError("moonraker offline")
+            return [{"path": "cube.gcode", "size": 2048, "permissions": "rw"}]
+
+    client = FakeClient()
+    model = GCodeFileListModel()
+    refresh = GCodeFileRefresh(client, model)
+
+    assert refresh.loading is False
+    assert refresh.lastError == ""
+
+    refresh.refresh_once()
+    assert refresh.loading is True
+    with qtbot.waitSignal(refresh.refreshFinished, timeout=1000):
+        pass
+
+    assert refresh.loading is False
+    assert "moonraker offline" in refresh.lastError
+    assert model.rowCount() == 0
+
+    client.fail = False
+    refresh.refresh_once()
+    assert refresh.loading is True
+    with qtbot.waitSignal(model.modelReset, timeout=1000):
+        pass
+    with qtbot.waitSignal(refresh.refreshFinished, timeout=1000):
+        pass
+
+    assert refresh.loading is False
+    assert refresh.lastError == ""
     assert model.rowCount() == 1
 
 

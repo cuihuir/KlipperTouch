@@ -1,4 +1,4 @@
-from PySide6.QtCore import QObject, QThread, QTimer, Signal, Slot
+from PySide6.QtCore import Property, QObject, QThread, QTimer, Signal, Slot
 
 from klippertouch.domain.gcode_files import files_from_moonraker
 from klippertouch.moonraker.client import MoonrakerClient
@@ -8,6 +8,7 @@ from klippertouch.qt_models.status_model import StatusModel
 
 class _FileListWorker(QObject):
     completed = Signal(object)
+    failed = Signal(str)
     finished = Signal()
 
     def __init__(self, client: MoonrakerClient) -> None:
@@ -18,8 +19,8 @@ class _FileListWorker(QObject):
     def run(self) -> None:
         try:
             self.completed.emit(self._client.get_gcode_file_list())
-        except Exception:
-            pass
+        except Exception as exc:
+            self.failed.emit(str(exc))
         self.finished.emit()
 
 
@@ -47,6 +48,8 @@ class _MetadataWorker(QObject):
 class GCodeFileRefresh(QObject):
     refreshFinished = Signal()
     metadataRefreshFinished = Signal()
+    loadingChanged = Signal()
+    errorChanged = Signal()
 
     def __init__(
         self,
@@ -74,6 +77,8 @@ class GCodeFileRefresh(QObject):
         self._metadata_refresh_worker: _MetadataWorker | None = None
         self._retired_threads: list[QThread] = []
         self._retired_workers: list[QObject] = []
+        self._loading = False
+        self._last_error = ""
         self._model.metadataRequested.connect(self._queue_requested_metadata)
         if self._status_model is not None:
             self._status_model.activePanelChanged.connect(self._sync_active_panel)
@@ -85,6 +90,14 @@ class GCodeFileRefresh(QObject):
             return
         self.refresh_once()
         self._timer.start()
+
+    @Property(bool, notify=loadingChanged)
+    def loading(self) -> bool:
+        return self._loading
+
+    @Property(str, notify=errorChanged)
+    def lastError(self) -> str:  # noqa: N802
+        return self._last_error
 
     def stop(self, timeout_ms: int = 5000) -> None:
         self._timer.stop()
@@ -101,6 +114,7 @@ class GCodeFileRefresh(QObject):
             metadata_thread.wait(timeout_ms)
         self._metadata_refresh_thread = None
         self._metadata_refresh_worker = None
+        self._set_loading(False)
         self._release_retired_threads()
 
     @Slot()
@@ -110,10 +124,12 @@ class GCodeFileRefresh(QObject):
         if self._file_refresh_worker is not None:
             return
         thread = QThread()
+        self._set_loading(True)
         self._file_refresh_worker = _FileListWorker(self._client)
         self._file_refresh_worker.moveToThread(thread)
         thread.started.connect(self._file_refresh_worker.run)
         self._file_refresh_worker.completed.connect(self._apply_files)
+        self._file_refresh_worker.failed.connect(self._apply_file_error)
         self._file_refresh_worker.finished.connect(thread.quit)
         self._file_refresh_worker.finished.connect(self._file_refresh_worker.deleteLater)
         thread.finished.connect(self._clear_file_refresh_worker)
@@ -124,8 +140,13 @@ class GCodeFileRefresh(QObject):
     def _apply_files(self, value: object) -> None:
         if not self._is_active() or not isinstance(value, list):
             return
+        self._set_last_error("")
         files = [item for item in value if isinstance(item, dict)]
         self._model.set_files(files_from_moonraker(files))
+
+    @Slot(str)
+    def _apply_file_error(self, message: str) -> None:
+        self._set_last_error(message or "Failed to load files")
 
     @Slot()
     def refresh_metadata_once(self) -> None:
@@ -216,6 +237,7 @@ class GCodeFileRefresh(QObject):
         self._retire_thread(self._file_refresh_thread, self._file_refresh_worker)
         self._file_refresh_thread = None
         self._file_refresh_worker = None
+        self._set_loading(False)
         QTimer.singleShot(0, self._release_retired_threads)
         self.refreshFinished.emit()
 
@@ -239,3 +261,15 @@ class GCodeFileRefresh(QObject):
             thread.deleteLater()
         self._retired_threads.clear()
         self._retired_workers.clear()
+
+    def _set_loading(self, loading: bool) -> None:
+        if self._loading == loading:
+            return
+        self._loading = loading
+        self.loadingChanged.emit()
+
+    def _set_last_error(self, message: str) -> None:
+        if self._last_error == message:
+            return
+        self._last_error = message
+        self.errorChanged.emit()

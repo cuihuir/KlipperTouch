@@ -23,6 +23,9 @@ def test_screenshot_tool_captures_common_panels_and_sizes() -> None:
     assert "QT_QPA_PLATFORM" in source
     assert "artifacts/screenshots" in source
     assert "--sample-files" in source
+    assert "--sample-files-loading" in source
+    assert "--sample-files-error" in source
+    assert "--file-current-path" in source
     assert "--sample-status" in source
     assert "--sample-many-sensors" in source
     assert "--sample-state" in source
@@ -69,6 +72,10 @@ def test_screenshot_tool_captures_common_panels_and_sizes() -> None:
     assert "_set_job_status_detail_page" in source
     assert "_set_job_status_action_preview" in source
     assert "_set_files_detail_page" in source
+    assert "_prepare_files_panel" in source
+    assert 'panel.setProperty("loading", sample_files_loading)' in source
+    assert 'panel.setProperty("loadError", sample_files_error)' in source
+    assert "active_model.setCurrentPath(file_current_path)" in source
     assert "_set_move_detail_page" in source
     assert 'panel.setProperty("detailPage", page)' in source
     assert "_set_files_action_preview" in source

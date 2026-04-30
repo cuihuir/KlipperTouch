@@ -11,6 +11,7 @@ Item {
     property var activeFileModel: fileModel
     property string rootPath: "gcodes"
     property bool loading: false
+    property string loadError: ""
     property bool compactFileRows: root.metrics.portrait || width < 920
     property bool detailPage: false
     property string pendingFileAction: ""
@@ -108,6 +109,9 @@ Item {
     }
 
     function emptyTitle() {
+        if (root.loadError.length > 0) {
+            return "Unable to load files"
+        }
         if (root.loading) {
             return "Loading files..."
         }
@@ -422,7 +426,9 @@ Item {
 
                 Label {
                     color: Theme.mutedText
-                    text: root.loading ? "Loading files..." : fileList.count + " items"
+                    text: root.loadError.length > 0
+                        ? "load error"
+                        : root.loading ? "Loading files..." : fileList.count + " items"
                     horizontalAlignment: Text.AlignRight
                     font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.8))
                 }
@@ -854,7 +860,9 @@ Item {
                     Label {
                         Layout.fillWidth: true
                         color: Theme.mutedText
-                        text: "Read-only file browser; print actions stay out of this page."
+                        text: root.loadError.length > 0
+                            ? root.loadError
+                            : "Read-only file browser; print actions stay out of this page."
                         horizontalAlignment: Text.AlignHCenter
                         wrapMode: Text.WordWrap
                         font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
