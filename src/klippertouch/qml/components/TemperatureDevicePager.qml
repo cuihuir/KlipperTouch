@@ -37,6 +37,7 @@ Item {
     property int pageSize: Math.max(1, root.deviceColumns * root.availableRows)
     property int pageCountValue: 1
     property int modelRevision: 0
+    property bool modelCountRefreshPending: false
     property int currentItemCount: Math.max(0, Math.min(
         root.pageSize,
         root.totalItemCount - root.pageIndex * root.pageSize
@@ -118,10 +119,22 @@ Item {
         return root.pageCountValue
     }
 
-    function refreshModelCount() {
-        root.totalItemCount = root.modelCount(root.modelRevision)
+    function refreshPageMetrics() {
         root.pageCountValue = Math.max(1, Math.ceil(root.totalItemCount / root.pageSize))
         root.clampPageIndex()
+    }
+
+    function refreshModelCount() {
+        root.totalItemCount = root.modelCount(root.modelRevision)
+        root.refreshPageMetrics()
+    }
+
+    function scheduleModelCountRefresh() {
+        if (root.modelCountRefreshPending) {
+            return
+        }
+        root.modelCountRefreshPending = true
+        modelCountRefreshTimer.restart()
     }
 
     function pagedModel() {
@@ -140,7 +153,7 @@ Item {
         revision
         var source = root.activeTemperatureModel
         var row = root.pageIndex * root.pageSize + pageRow
-        if (!source || row < 0 || row >= root.modelCount(revision)) {
+        if (!source || row < 0 || row >= root.totalItemCount) {
             return {}
         }
         if (typeof source.rowData === "function") {
@@ -167,7 +180,7 @@ Item {
 
     function refreshVisibleItems() {
         root.modelRevision += 1
-        root.refreshModelCount()
+        root.scheduleModelCountRefresh()
     }
 
     function goToPreviousPage() {
@@ -318,9 +331,19 @@ Item {
         targetEditorPopup.close()
     }
 
-    onPageSizeChanged: root.refreshModelCount()
+    onPageSizeChanged: root.refreshPageMetrics()
     onActiveTemperatureModelChanged: root.refreshVisibleItems()
-    Component.onCompleted: root.refreshModelCount()
+    Component.onCompleted: root.scheduleModelCountRefresh()
+
+    Timer {
+        id: modelCountRefreshTimer
+        interval: 1
+        repeat: false
+        onTriggered: {
+            root.modelCountRefreshPending = false
+            root.refreshModelCount()
+        }
+    }
 
     TemperatureDeviceModel {
         id: fallbackTemperatureModel
