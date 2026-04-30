@@ -76,9 +76,16 @@ Item {
         }
         if (root.detailPage) {
             root.detailPage = false
+            root.restoreFileListScroll()
             return true
         }
         return false
+    }
+
+    function restoreFileListScroll() {
+        if (fileList) {
+            fileList.restoreScrollPosition()
+        }
     }
 
     function requestFileAction(action) {

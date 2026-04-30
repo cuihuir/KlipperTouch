@@ -400,6 +400,8 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "activeFileModel.setFilterText(text)" in qml
     assert "property real savedContentY" in qml
     assert "function restoreScrollPosition()" in qml
+    assert "function restoreFileListScroll()" in qml
+    assert "fileList.restoreScrollPosition()" in qml
     assert "onModelChanged: restoreScrollPosition()" in qml
     assert "onCountChanged: restoreScrollPosition()" in qml
     assert "footer: Item" in qml
