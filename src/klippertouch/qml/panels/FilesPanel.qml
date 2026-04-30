@@ -18,6 +18,7 @@ Item {
     property string controlStatus: ""
     property string controlError: ""
     signal fileActionRequested(string action, string path)
+    signal refreshRequested()
 
     function currentPathLabel() {
         if (root.activeFileModel && root.activeFileModel.currentPath.length > 0) {
@@ -431,6 +432,29 @@ Item {
                         : root.loading ? "Loading files..." : fileList.count + " items"
                     horizontalAlignment: Text.AlignRight
                     font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.8))
+                }
+
+                Button {
+                    visible: root.loadError.length > 0
+                    enabled: !root.loading
+                    text: "Retry"
+                    Layout.preferredWidth: Math.max(76, Math.round(root.metrics.fontSize * 5.4))
+                    Layout.preferredHeight: Math.max(30, Math.round(root.metrics.fontSize * 2.2))
+                    font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.8))
+                    onClicked: root.refreshRequested()
+                    contentItem: Label {
+                        color: parent.enabled ? Theme.text : Theme.mutedText
+                        text: parent.text
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.pixelSize: parent.font.pixelSize
+                    }
+                    background: Rectangle {
+                        color: parent.down ? "#1b2b2e" : "#101617"
+                        border.color: "#465456"
+                        border.width: 1
+                        radius: Math.round(root.metrics.fontSize * 0.32)
+                    }
                 }
 
                 Label {
@@ -866,6 +890,30 @@ Item {
                         horizontalAlignment: Text.AlignHCenter
                         wrapMode: Text.WordWrap
                         font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+                    }
+
+                    Button {
+                        visible: root.loadError.length > 0
+                        enabled: !root.loading
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.preferredWidth: Math.max(132, Math.round(root.metrics.fontSize * 8.8))
+                        Layout.preferredHeight: Math.max(44, Math.round(root.metrics.fontSize * 3.0))
+                        text: "Retry"
+                        font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.88))
+                        onClicked: root.refreshRequested()
+                        contentItem: Label {
+                            color: parent.enabled ? Theme.text : Theme.mutedText
+                            text: parent.text
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            font.pixelSize: parent.font.pixelSize
+                        }
+                        background: Rectangle {
+                            color: parent.down ? "#1b2b2e" : "#121b1d"
+                            border.color: "#465456"
+                            border.width: 1
+                            radius: Math.round(root.metrics.fontSize * 0.32)
+                        }
                     }
                 }
             }

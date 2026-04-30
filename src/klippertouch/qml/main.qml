@@ -536,6 +536,11 @@ ApplicationWindow {
                 onFileActionRequested: function(action, path) {
                     window.requestFileControl(action, path)
                 }
+                onRefreshRequested: function() {
+                    if (window.fileRefreshBridgeModel) {
+                        window.fileRefreshBridgeModel.refresh_once()
+                    }
+                }
             }
         }
 

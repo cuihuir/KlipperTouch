@@ -382,6 +382,10 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "function goBack()" in qml
     assert "function requestFileAction(action)" in qml
     assert "function clearFileAction()" in qml
+    assert "signal refreshRequested()" in qml
+    assert "root.refreshRequested()" in qml
+    assert 'text: "Retry"' in qml
+    assert "enabled: !root.loading" in qml
     assert "function handleFileDeleted(path)" in qml
     assert "function handleFilePrintStarted(path)" in qml
     assert "property bool detailPage" in qml
@@ -1916,6 +1920,8 @@ def test_main_keeps_files_and_job_status_as_separate_routes() -> None:
     )
     assert "onJobActionRequested: function(action, objectName)" in main_qml
     assert "onFileActionRequested: function(action, path)" in main_qml
+    assert "onRefreshRequested: function()" in main_qml
+    assert "window.fileRefreshBridgeModel.refresh_once()" in main_qml
     assert (
         "controlStatus: window.jobControlBridgeModel ? "
         'window.jobControlBridgeModel.lastStatus : ""'
