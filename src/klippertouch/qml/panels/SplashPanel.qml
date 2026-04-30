@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../components"
 import "../Theme.js" as Theme
 
 Item {
@@ -497,79 +498,19 @@ Item {
             Repeater {
                 model: root.activeRecoveryActions
 
-                Rectangle {
-                    required property string label
-                    required property string action
-                    required property bool placeholder
-                    required property string hint
-                    required property string iconName
-                    property bool feedbackActive: recoveryPressArea.pressed
-                        || root.recoveryFeedbackAction === action
+                IconTileButton {
+                    required property var modelData
 
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.minimumHeight: 0
-                    radius: Math.round(height * 0.18)
-                    color: feedbackActive ? "#182124" : placeholder ? "#141b1d" : "#1a2528"
-                    scale: feedbackActive ? 0.97 : 1.0
-                    border.color: feedbackActive ? Theme.text : placeholder ? "#3d474a" : "#667276"
-                    border.width: 1
-                    Behavior on scale { NumberAnimation { duration: 80; easing.type: Easing.OutQuad } }
-                    Behavior on color { ColorAnimation { duration: 80 } }
-                    Behavior on border.color { ColorAnimation { duration: 80 } }
-
-                    Rectangle {
-                        id: recoveryActionDepth
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.bottom: parent.bottom
-                        height: Math.max(3, Math.round(root.metrics.fontSize * 0.18))
-                        visible: !feedbackActive && !placeholder
-                        color: "#050808"
-                        opacity: 0.82
-                        radius: parent.radius
-                    }
-
-                    Column {
-                        anchors.centerIn: parent
-                        width: parent.width - root.metrics.gap
-                        spacing: 2
-
-                        Image {
-                            width: parent.width
-                            height: Math.max(18, Math.round(root.metrics.fontSize * 1.25))
-                            source: Theme.iconSource(iconName.length > 0 ? iconName : "placeholder")
-                            sourceSize.width: height
-                            sourceSize.height: height
-                            fillMode: Image.PreserveAspectFit
-                            opacity: placeholder ? 0.55 : 1.0
-                        }
-
-                        Label {
-                            width: parent.width
-                            text: label
-                            color: Theme.text
-                            font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.76))
-                            font.bold: !placeholder
-                            horizontalAlignment: Text.AlignHCenter
-                            elide: Text.ElideRight
-                        }
-
-                        Label {
-                            width: parent.width
-                            text: hint
-                            color: "#9aa7ad"
-                            font.pixelSize: Math.max(9, Math.round(root.metrics.fontSize * 0.6))
-                            horizontalAlignment: Text.AlignHCenter
-                            elide: Text.ElideRight
-                        }
-                    }
-
-                    MouseArea {
-                        id: recoveryPressArea
-                        anchors.fill: parent
-                        onClicked: root.triggerRecoveryAction(action)
-                    }
+                    text: modelData.label
+                    hint: modelData.hint
+                    iconName: modelData.iconName.length > 0 ? modelData.iconName : "placeholder"
+                    placeholder: modelData.placeholder
+                    fontSize: root.metrics.fontSize
+                    pressedFeedback: root.recoveryFeedbackAction === modelData.action
+                    onClicked: root.triggerRecoveryAction(modelData.action)
                 }
             }
         }

@@ -400,6 +400,7 @@ def test_responsive_layout_components_exist() -> None:
         qml_dir / "Metrics.qml",
         qml_dir / "components" / "BaseShell.qml",
         qml_dir / "components" / "TactileButton.qml",
+        qml_dir / "components" / "IconTileButton.qml",
         qml_dir / "panels" / "MainMenuPanel.qml",
         qml_dir / "panels" / "MoreMenuPanel.qml",
         qml_dir / "components" / "MenuTile.qml",
@@ -1663,16 +1664,24 @@ def test_splash_panel_handles_system_fault_states() -> None:
     assert '"iconName": "power"' in panel_qml
     assert '"iconName": "restart"' in panel_qml
     assert '"iconName": "settings"' not in panel_qml
-    assert 'Theme.iconSource(iconName.length > 0 ? iconName : "placeholder")' in panel_qml
+    assert "IconTileButton {" in panel_qml
+    assert (
+        'iconName: modelData.iconName.length > 0 ? modelData.iconName : "placeholder"'
+        in panel_qml
+    )
+    assert 'Theme.iconSource(root.iconName.length > 0 ? root.iconName : "placeholder")' in Path(
+        "src/klippertouch/qml/components/IconTileButton.qml"
+    ).read_text(encoding="utf-8")
     assert '"KlipperTouch Restart"' in panel_qml
     assert '"System Shutdown"' in panel_qml
     assert '"System Restart"' in panel_qml
-    assert "id: recoveryPressArea" in panel_qml
-    assert "property bool feedbackActive:" in panel_qml
-    assert "scale: feedbackActive ? 0.97 : 1.0" in panel_qml
-    assert "id: recoveryActionDepth" in panel_qml
-    assert 'color: feedbackActive ? "#182124"' in panel_qml
-    assert "onClicked: root.triggerRecoveryAction(action)" in panel_qml
+    assert "id: recoveryPressArea" not in panel_qml
+    assert "id: pressArea" in Path("src/klippertouch/qml/components/IconTileButton.qml").read_text(
+        encoding="utf-8"
+    )
+    assert "property bool feedbackActive:" not in panel_qml
+    assert "id: recoveryActionDepth" not in panel_qml
+    assert "onClicked: root.triggerRecoveryAction(modelData.action)" in panel_qml
     assert '"Retry"' in panel_qml
     assert '"Restart Moonraker"' not in panel_qml
     assert '"Emergency Stop"' not in panel_qml
