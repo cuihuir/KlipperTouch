@@ -232,7 +232,8 @@ def test_action_button_icon_contract_is_explicit() -> None:
     assert 'iconName: modelData.delta < 0 ? "back" : "confirm"' in job_qml
     assert 'text: "Skip"' in job_qml
     assert 'iconName: "object"' in job_qml
-    assert "property string iconName" in files_qml
+    assert "component FileActionButton: TactileButton" in files_qml
+    assert "component RetryButton: TactileButton" in files_qml
     assert "property string iconName" in tactile_qml
     assert "Theme.iconSource(control.iconName)" in tactile_qml
 
@@ -550,12 +551,8 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert 'actionRole: "print"' in qml
     assert 'actionRole: "delete"' in qml
     assert "root.requestFileAction(actionRole)" in qml
-    assert "property string iconName" in qml
-    assert 'source: control.iconName.length > 0 ? Theme.iconSource(control.iconName) : ""' in qml
-    assert (
-        'source: retryControl.iconName.length > 0 ? Theme.iconSource(retryControl.iconName) : ""'
-        in qml
-    )
+    assert 'import "../components"' in qml
+    assert "fontSize: root.metrics.fontSize" in qml
     assert 'iconName: "printer"' in qml
     assert 'iconName: "cancel"' in qml
     assert 'iconName: "confirm"' in qml
@@ -573,7 +570,8 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "id: selectedActionBar" in qml
     assert "visible: root.pendingFileAction.length === 0" in qml
     assert 'text: "Actions"' in qml
-    assert "component FileActionButton: Button" in qml
+    assert "component FileActionButton: TactileButton" in qml
+    assert "component RetryButton: TactileButton" in qml
     assert "if (actionRole.length > 0)" in qml
     assert "id: selectedActionPreview" in qml
     assert "visible: root.pendingFileAction.length > 0" in qml
@@ -597,19 +595,16 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "readonly property bool pressedFeedback" in qml
     assert "fileRowMouse.pressed" in qml
     assert "chipMouse.pressed" in qml
-    assert "scale: control.down ? 0.97 : 1.0" in qml
     assert "scale: chipMouse.pressed ? 0.96 : 1.0" in qml
     assert "scale: fileRowMouse.pressed ? 0.985 : 1.0" in qml
-    assert "id: fileActionDepth" in qml
     assert "id: sortChipDepth" in qml
     assert "id: fileRowDepth" in qml
-    assert "visible: !control.down && control.enabled" in qml
     assert "visible: !chipMouse.pressed && root.isChipEnabled(modelData.sortKey)" in qml
     assert "visible: !fileRowMouse.pressed" in qml
     assert "Behavior on scale" in qml
     assert "NumberAnimation { duration: 70" in qml
-    assert "contentItem: RowLayout" in qml
-    assert "color: enabled ? Theme.text : Theme.mutedText" in qml
+    assert 'baseColor: "#121b1d"' in qml
+    assert 'baseColor: "#101617"' in qml
     assert "printer.print.start" not in qml
     assert "server.files.delete" not in qml
     assert "server/files/delete" not in qml

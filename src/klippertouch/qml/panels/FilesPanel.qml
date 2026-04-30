@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../components"
 import "../Theme.js" as Theme
 
 Item {
@@ -317,152 +318,37 @@ Item {
         }
     }
 
-    component FileActionButton: Button {
-        id: control
+    component FileActionButton: TactileButton {
         property string actionRole: ""
-        property string iconName: ""
-        readonly property bool pressedFeedback: down
 
         Layout.preferredWidth: Math.max(126, Math.round(root.metrics.fontSize * 8.8))
         Layout.preferredHeight: Math.max(44, Math.round(root.metrics.fontSize * 3.0))
         enabled: root.activeFileModel && root.activeFileModel.selectedPath.length > 0
-        opacity: enabled ? 1.0 : 0.55
-        scale: control.down ? 0.97 : 1.0
-        transformOrigin: Item.Center
+        fontSize: root.metrics.fontSize
         font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
+        baseColor: "#121b1d"
+        pressedColor: "#172528"
+        accentColor: "#354346"
+        disabledAccentColor: "#263233"
+        iconSize: Math.max(18, Math.round(root.metrics.fontSize * 1.2))
+        disabledOpacity: 0.55
         onClicked: {
             if (actionRole.length > 0) {
                 root.requestFileAction(actionRole)
             }
         }
-        Behavior on scale {
-            NumberAnimation { duration: 70; easing.type: Easing.OutQuad }
-        }
-        contentItem: RowLayout {
-            y: control.down ? Math.max(1, Math.round(root.metrics.fontSize * 0.08)) : 0
-            spacing: control.iconName.length > 0 ? Math.max(4, Math.round(root.metrics.fontSize * 0.26)) : 0
-
-            Item {
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-            }
-
-            Image {
-                visible: control.iconName.length > 0
-                Layout.preferredWidth: Math.max(18, Math.round(root.metrics.fontSize * 1.2))
-                Layout.preferredHeight: Layout.preferredWidth
-                source: control.iconName.length > 0 ? Theme.iconSource(control.iconName) : ""
-                sourceSize.width: Layout.preferredWidth
-                sourceSize.height: Layout.preferredHeight
-                fillMode: Image.PreserveAspectFit
-                opacity: control.enabled ? 1.0 : 0.55
-            }
-
-            Label {
-                color: enabled ? Theme.text : Theme.mutedText
-                text: control.text
-                elide: Text.ElideRight
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                font.pixelSize: control.font.pixelSize
-            }
-
-            Item {
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-            }
-        }
-        background: Item {
-            Rectangle {
-                id: fileActionDepth
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                height: Math.max(3, Math.round(root.metrics.fontSize * 0.22))
-                visible: !control.down && control.enabled
-                color: "#050808"
-                radius: Math.round(root.metrics.fontSize * 0.28)
-            }
-
-            Rectangle {
-                id: fileActionSurface
-                anchors.fill: parent
-                anchors.topMargin: control.down ? Math.max(2, Math.round(root.metrics.fontSize * 0.14)) : 0
-                anchors.bottomMargin: control.down ? 0 : Math.max(3, Math.round(root.metrics.fontSize * 0.22))
-                color: control.down ? "#172528" : "#121b1d"
-                border.color: control.down ? "#8da0a5" : "#354346"
-                border.width: control.down ? 2 : 1
-                radius: Math.round(root.metrics.fontSize * 0.28)
-            }
-        }
     }
 
-    component RetryButton: Button {
-        id: retryControl
-        property string iconName: "update"
-
+    component RetryButton: TactileButton {
         enabled: !root.loading
-        opacity: enabled ? 1.0 : 0.55
-        scale: retryControl.down ? 0.97 : 1.0
-        transformOrigin: Item.Center
         text: "Retry"
-        Behavior on scale {
-            NumberAnimation { duration: 70; easing.type: Easing.OutQuad }
-        }
-        contentItem: RowLayout {
-            y: retryControl.down ? Math.max(1, Math.round(root.metrics.fontSize * 0.08)) : 0
-            spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.26))
-
-            Item {
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-            }
-
-            Image {
-                Layout.preferredWidth: Math.max(18, Math.round(root.metrics.fontSize * 1.2))
-                Layout.preferredHeight: Layout.preferredWidth
-                source: retryControl.iconName.length > 0 ? Theme.iconSource(retryControl.iconName) : ""
-                sourceSize.width: Layout.preferredWidth
-                sourceSize.height: Layout.preferredHeight
-                fillMode: Image.PreserveAspectFit
-                opacity: retryControl.enabled ? 1.0 : 0.55
-            }
-
-            Label {
-                color: parent.enabled ? Theme.text : Theme.mutedText
-                text: retryControl.text
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                font.pixelSize: retryControl.font.pixelSize
-            }
-
-            Item {
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-            }
-        }
-        background: Item {
-            Rectangle {
-                id: retryButtonDepth
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                height: Math.max(3, Math.round(root.metrics.fontSize * 0.20))
-                visible: !retryControl.down && retryControl.enabled
-                color: "#050808"
-                radius: Math.round(root.metrics.fontSize * 0.32)
-            }
-
-            Rectangle {
-                anchors.fill: parent
-                anchors.topMargin: retryControl.down ? Math.max(2, Math.round(root.metrics.fontSize * 0.12)) : 0
-                anchors.bottomMargin: retryControl.down ? 0 : Math.max(3, Math.round(root.metrics.fontSize * 0.20))
-                color: retryControl.down ? "#172528" : "#101617"
-                border.color: retryControl.down ? "#8da0a5" : "#465456"
-                border.width: retryControl.down ? 2 : 1
-                radius: Math.round(root.metrics.fontSize * 0.32)
-            }
-        }
+        iconName: "update"
+        fontSize: root.metrics.fontSize
+        baseColor: "#101617"
+        pressedColor: "#172528"
+        accentColor: "#465456"
+        iconSize: Math.max(18, Math.round(root.metrics.fontSize * 1.2))
+        disabledOpacity: 0.55
     }
 
     Rectangle {
