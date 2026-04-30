@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../components"
 import "../Theme.js" as Theme
 
 Item {
@@ -69,12 +70,17 @@ Item {
         property string iconName: ""
         property bool selected: false
         property bool primary: false
+        property bool pressed: false
 
         color: tileRoot.primary && tileRoot.enabled
-            ? "#162426"
-            : tileRoot.selected
-                ? "#1b2b2e"
-                : "#101819"
+            ? tileRoot.pressed ? "#24383c" : "#162426"
+            : tileRoot.pressed
+                ? "#182528"
+                : tileRoot.selected
+                    ? "#1b2b2e"
+                    : "#101819"
+        scale: tileRoot.pressed && tileRoot.enabled ? 0.97 : 1.0
+        transformOrigin: Item.Center
         border.color: tileRoot.primary && tileRoot.enabled
             ? root.selectedAccent
             : tileRoot.selected
@@ -83,6 +89,21 @@ Item {
         border.width: tileRoot.primary && tileRoot.enabled ? 2 : 1
         opacity: tileRoot.enabled ? 1.0 : 0.46
         radius: Math.round(root.metrics.fontSize * 0.38)
+        Behavior on scale {
+            NumberAnimation { duration: 70; easing.type: Easing.OutQuad }
+        }
+
+        Rectangle {
+            id: actionTileDepth
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: Math.max(2, Math.round(root.metrics.fontSize * 0.18))
+            visible: !tileRoot.pressed && tileRoot.enabled
+            color: "#050808"
+            opacity: 0.78
+            radius: parent.radius
+        }
 
         Rectangle {
             anchors.fill: parent
@@ -173,7 +194,7 @@ Item {
         }
     }
 
-    component KeypadButton: Button {
+    component KeypadButton: TactileButton {
         id: keyRoot
         property bool primary: false
 
@@ -181,21 +202,12 @@ Item {
         Layout.fillHeight: true
         Layout.minimumWidth: root.touchTargetSize
         Layout.minimumHeight: root.touchTargetSize
-
-        contentItem: Label {
-            color: keyRoot.enabled ? Theme.text : Theme.mutedText
-            text: keyRoot.text
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.1))
-        }
-
-        background: Rectangle {
-            color: keyRoot.primary && keyRoot.enabled ? "#1b2b2e" : "#101819"
-            border.color: keyRoot.primary && keyRoot.enabled ? root.selectedAccent : "#536165"
-            border.width: 1
-            radius: Math.round(root.metrics.fontSize * 0.28)
-        }
+        fontSize: root.metrics.fontSize
+        font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.1))
+        baseColor: keyRoot.primary && keyRoot.enabled ? "#1b2b2e" : "#101819"
+        pressedColor: keyRoot.primary && keyRoot.enabled ? "#24383c" : "#182528"
+        accentColor: keyRoot.primary && keyRoot.enabled ? root.selectedAccent : "#536165"
+        disabledOpacity: 0.45
     }
 
     component NozzleStage: Rectangle {
@@ -224,6 +236,7 @@ Item {
                 MouseArea {
                     anchors.fill: parent
                     enabled: root.extrusionAllowed()
+                    onPressedChanged: parent.pressed = pressed
                     onClicked: root.extrudeActionRequested("retract", parseFloat(root.selectedDistance), parseFloat(root.selectedSpeed))
                 }
             }
@@ -287,6 +300,7 @@ Item {
                 MouseArea {
                     anchors.fill: parent
                     enabled: root.extrusionAllowed()
+                    onPressedChanged: parent.pressed = pressed
                     onClicked: root.extrudeActionRequested("extrude", parseFloat(root.selectedDistance), parseFloat(root.selectedSpeed))
                 }
             }
@@ -617,12 +631,31 @@ Item {
 
                 Rectangle {
                     id: nozzleTemperatureArea
+                    property bool pressed: false
+
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    color: "#101819"
-                    border.color: "#536165"
+                    scale: nozzleTemperatureArea.pressed ? 0.97 : 1.0
+                    transformOrigin: Item.Center
+                    color: nozzleTemperatureArea.pressed ? "#182528" : "#101819"
+                    border.color: nozzleTemperatureArea.pressed ? Theme.text : "#536165"
                     border.width: 1
                     radius: Math.round(root.metrics.fontSize * 0.28)
+                    Behavior on scale {
+                        NumberAnimation { duration: 70; easing.type: Easing.OutQuad }
+                    }
+
+                    Rectangle {
+                        id: nozzleTemperatureDepth
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        height: Math.max(2, Math.round(root.metrics.fontSize * 0.18))
+                        visible: !nozzleTemperatureArea.pressed
+                        color: "#050808"
+                        opacity: 0.78
+                        radius: parent.radius
+                    }
 
                     ColumnLayout {
                         anchors.fill: parent
@@ -649,18 +682,38 @@ Item {
 
                     MouseArea {
                         anchors.fill: parent
+                        onPressedChanged: nozzleTemperatureArea.pressed = pressed
                         onClicked: root.openTargetEditor()
                     }
                 }
 
                 Rectangle {
                     id: pressureAdvanceArea
+                    property bool pressed: false
+
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    color: "#101819"
-                    border.color: "#536165"
+                    scale: pressureAdvanceArea.pressed ? 0.97 : 1.0
+                    transformOrigin: Item.Center
+                    color: pressureAdvanceArea.pressed ? "#182528" : "#101819"
+                    border.color: pressureAdvanceArea.pressed ? Theme.text : "#536165"
                     border.width: 1
                     radius: Math.round(root.metrics.fontSize * 0.28)
+                    Behavior on scale {
+                        NumberAnimation { duration: 70; easing.type: Easing.OutQuad }
+                    }
+
+                    Rectangle {
+                        id: pressureAdvanceDepth
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        height: Math.max(2, Math.round(root.metrics.fontSize * 0.18))
+                        visible: !pressureAdvanceArea.pressed
+                        color: "#050808"
+                        opacity: 0.78
+                        radius: parent.radius
+                    }
 
                     ColumnLayout {
                         anchors.fill: parent
@@ -717,6 +770,7 @@ Item {
 
                     MouseArea {
                         anchors.fill: parent
+                        onPressedChanged: pressureAdvanceArea.pressed = pressed
                         onClicked: root.openPressureAdvanceEditor()
                     }
                 }
@@ -782,6 +836,7 @@ Item {
 
                                 MouseArea {
                                     anchors.fill: parent
+                                    onPressedChanged: parent.pressed = pressed
                                     onClicked: root.selectDistance(modelData)
                                 }
                             }
@@ -813,6 +868,7 @@ Item {
 
                                 MouseArea {
                                     anchors.fill: parent
+                                    onPressedChanged: parent.pressed = pressed
                                     onClicked: root.selectSpeed(modelData)
                                 }
                             }
@@ -943,6 +999,7 @@ Item {
                                 MouseArea {
                                     anchors.fill: parent
                                     enabled: root.extrusionAllowed()
+                                    onPressedChanged: parent.pressed = pressed
                                     onClicked: root.extrudeActionRequested(modelData.action, parseFloat(root.selectedDistance), parseFloat(root.selectedSpeed))
                                 }
                             }
@@ -959,6 +1016,7 @@ Item {
 
                         MouseArea {
                             anchors.fill: parent
+                            onPressedChanged: parent.pressed = pressed
                             onClicked: root.openSettingsAction("materials")
                         }
                     }
@@ -988,12 +1046,31 @@ Item {
 
                 Rectangle {
                     id: nozzleTemperatureAreaPortrait
+                    property bool pressed: false
+
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    color: "#101819"
-                    border.color: "#536165"
+                    scale: nozzleTemperatureAreaPortrait.pressed ? 0.97 : 1.0
+                    transformOrigin: Item.Center
+                    color: nozzleTemperatureAreaPortrait.pressed ? "#182528" : "#101819"
+                    border.color: nozzleTemperatureAreaPortrait.pressed ? Theme.text : "#536165"
                     border.width: 1
                     radius: Math.round(root.metrics.fontSize * 0.28)
+                    Behavior on scale {
+                        NumberAnimation { duration: 70; easing.type: Easing.OutQuad }
+                    }
+
+                    Rectangle {
+                        id: nozzleTemperaturePortraitDepth
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        height: Math.max(2, Math.round(root.metrics.fontSize * 0.18))
+                        visible: !nozzleTemperatureAreaPortrait.pressed
+                        color: "#050808"
+                        opacity: 0.78
+                        radius: parent.radius
+                    }
 
                     ColumnLayout {
                         anchors.fill: parent
@@ -1020,18 +1097,38 @@ Item {
 
                     MouseArea {
                         anchors.fill: parent
+                        onPressedChanged: nozzleTemperatureAreaPortrait.pressed = pressed
                         onClicked: root.openTargetEditor()
                     }
                 }
 
                 Rectangle {
                     id: pressureAdvanceAreaPortrait
+                    property bool pressed: false
+
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    color: "#101819"
-                    border.color: "#536165"
+                    scale: pressureAdvanceAreaPortrait.pressed ? 0.97 : 1.0
+                    transformOrigin: Item.Center
+                    color: pressureAdvanceAreaPortrait.pressed ? "#182528" : "#101819"
+                    border.color: pressureAdvanceAreaPortrait.pressed ? Theme.text : "#536165"
                     border.width: 1
                     radius: Math.round(root.metrics.fontSize * 0.28)
+                    Behavior on scale {
+                        NumberAnimation { duration: 70; easing.type: Easing.OutQuad }
+                    }
+
+                    Rectangle {
+                        id: pressureAdvancePortraitDepth
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        height: Math.max(2, Math.round(root.metrics.fontSize * 0.18))
+                        visible: !pressureAdvanceAreaPortrait.pressed
+                        color: "#050808"
+                        opacity: 0.78
+                        radius: parent.radius
+                    }
 
                     ColumnLayout {
                         anchors.fill: parent
@@ -1074,6 +1171,7 @@ Item {
 
                     MouseArea {
                         anchors.fill: parent
+                        onPressedChanged: pressureAdvanceAreaPortrait.pressed = pressed
                         onClicked: root.openPressureAdvanceEditor()
                     }
                 }
@@ -1101,6 +1199,7 @@ Item {
 
                 MouseArea {
                     anchors.fill: parent
+                    onPressedChanged: parent.pressed = pressed
                     onClicked: root.openFeedSetup()
                 }
             }
@@ -1113,6 +1212,7 @@ Item {
 
                 MouseArea {
                     anchors.fill: parent
+                    onPressedChanged: parent.pressed = pressed
                     onClicked: root.openFeedSetup()
                 }
             }
@@ -1132,6 +1232,7 @@ Item {
                     MouseArea {
                         anchors.fill: parent
                         enabled: root.extrusionAllowed()
+                        onPressedChanged: parent.pressed = pressed
                         onClicked: root.extrudeActionRequested(modelData.action, parseFloat(root.selectedDistance), parseFloat(root.selectedSpeed))
                     }
                 }
@@ -1156,6 +1257,7 @@ Item {
 
                 MouseArea {
                     anchors.fill: parent
+                    onPressedChanged: parent.pressed = pressed
                     onClicked: root.openSettingsAction("materials")
                 }
             }
@@ -1215,6 +1317,7 @@ Item {
 
                         MouseArea {
                             anchors.fill: parent
+                            onPressedChanged: parent.pressed = pressed
                             onClicked: {
                                 root.selectDistance(modelData)
                                 root.closeFeedSetupAfterSelection()
@@ -1249,6 +1352,7 @@ Item {
 
                         MouseArea {
                             anchors.fill: parent
+                            onPressedChanged: parent.pressed = pressed
                             onClicked: {
                                 root.selectSpeed(modelData)
                                 root.closeFeedSetupAfterSelection()
@@ -1310,6 +1414,7 @@ Item {
 
                         MouseArea {
                             anchors.fill: parent
+                            onPressedChanged: parent.pressed = pressed
                             onClicked: root.selectMaterialSlot(modelData.label)
                         }
                     }

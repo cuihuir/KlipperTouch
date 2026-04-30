@@ -260,6 +260,10 @@ def test_status_bar_matches_klipperscreen_titlebar_structure() -> None:
     assert "model: root.activeTemperatureModel" in qml
     assert "id: titleLabel" in qml
     assert "id: clockLabel" in qml
+    assert "id: notificationArea" in qml
+    assert "id: notificationPressArea" in qml
+    assert "scale: notificationPressArea.pressed && root.interactionEnabled ? 0.97 : 1.0" in qml
+    assert "Behavior on scale" in qml
     assert 'text: root.printerName + " | " + root.panelTitle' in qml
     assert "♨" not in qml
     assert "▥" not in qml
@@ -1233,6 +1237,15 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "root.selectMaterialSlot(modelData.label)" in qml
     assert "id: filamentSensorTile" in qml
     assert "Layout.columnSpan: root.materialEntryVisible() ? 1 : 2" in qml
+    assert "property bool pressed: false" in qml
+    assert "scale: tileRoot.pressed && tileRoot.enabled ? 0.97 : 1.0" in qml
+    assert "id: actionTileDepth" in qml
+    assert "onPressedChanged: parent.pressed = pressed" in qml
+    assert "component KeypadButton: TactileButton" in qml
+    assert 'baseColor: keyRoot.primary && keyRoot.enabled ? "#1b2b2e" : "#101819"' in qml
+    assert 'pressedColor: keyRoot.primary && keyRoot.enabled ? "#24383c" : "#182528"' in qml
+    assert "id: nozzleTemperatureDepth" in qml
+    assert "id: pressureAdvanceDepth" in qml
     assert "root.selectedDistance === modelData" in qml
     assert "root.selectedSpeed === modelData" in qml
     assert "root.closeFeedSetupAfterSelection()" in qml
@@ -1861,9 +1874,11 @@ def test_temperature_device_pager_uses_page_based_navigation() -> None:
     assert "model: root.currentItemCount" in qml
     assert "id: previousPageButton" in qml
     assert "id: nextPageButton" in qml
-    assert "component PageControlButton: Button" in qml
-    assert "color: pageButton.enabled ? Theme.text : Theme.mutedText" in qml
-    assert "border.color: pageButton.enabled ? Theme.color4 : \"#465456\"" in qml
+    assert 'import "../components"' in qml
+    assert "component KeypadButton: TactileButton" in qml
+    assert "component PageControlButton: TactileButton" in qml
+    assert "textColor: Theme.text" in qml
+    assert "accentColor: pageButton.enabled ? Theme.color4 : \"#465456\"" in qml
     assert "property int pageControlReservedHeight:" in qml
     assert "anchors.bottomMargin: root.pageControlReservedHeight" in qml
     assert "enabled: root.pageIndex > 0" in qml

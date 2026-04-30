@@ -104,6 +104,11 @@ Rectangle {
             id: notificationArea
             width: parent.width * 0.22
             height: parent.height
+            scale: notificationPressArea.pressed && root.interactionEnabled ? 0.97 : 1.0
+            transformOrigin: Item.Center
+            Behavior on scale {
+                NumberAnimation { duration: 70; easing.type: Easing.OutQuad }
+            }
 
             Row {
                 anchors.right: parent.right
@@ -143,6 +148,7 @@ Rectangle {
             }
 
             MouseArea {
+                id: notificationPressArea
                 anchors.fill: parent
                 enabled: root.interactionEnabled
                 onClicked: root.notificationRequested()

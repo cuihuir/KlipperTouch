@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../components"
 import "../Theme.js" as Theme
 import "../models"
 
@@ -51,7 +52,7 @@ Item {
     property var targetEditorActual: null
     signal targetTemperatureRequested(string deviceName, real target)
 
-    component KeypadButton: Button {
+    component KeypadButton: TactileButton {
         id: keyRoot
         property bool primary: false
 
@@ -59,47 +60,29 @@ Item {
         Layout.fillHeight: true
         Layout.minimumWidth: root.touchTargetSize
         Layout.minimumHeight: root.touchTargetSize
+        fontSize: root.fontSize
         font.pixelSize: Math.max(16, Math.round(root.fontSize * 1.1))
-
-        contentItem: Label {
-            text: keyRoot.text
-            color: keyRoot.enabled ? Theme.text : Theme.mutedText
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            font: keyRoot.font
-        }
-
-        background: Rectangle {
-            color: keyRoot.primary ? "#1b2b2e" : "#101819"
-            border.color: keyRoot.primary ? Theme.color4 : "#536165"
-            border.width: 1
-            radius: Math.round(root.fontSize * 0.32)
-            opacity: keyRoot.enabled ? 1 : 0.45
-        }
+        baseColor: keyRoot.primary ? "#1b2b2e" : "#101819"
+        pressedColor: keyRoot.primary ? "#24383c" : "#182528"
+        accentColor: keyRoot.primary ? Theme.color4 : "#536165"
+        textColor: Theme.text
+        disabledTextColor: Theme.mutedText
+        disabledOpacity: 0.45
     }
 
-    component PageControlButton: Button {
+    component PageControlButton: TactileButton {
         id: pageButton
 
         width: root.touchTargetSize
         height: root.touchTargetSize
+        fontSize: root.fontSize
         font.pixelSize: Math.max(14, Math.round(root.fontSize))
-
-        contentItem: Label {
-            text: pageButton.text
-            color: pageButton.enabled ? Theme.text : Theme.mutedText
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            font: pageButton.font
-        }
-
-        background: Rectangle {
-            color: "#101819"
-            border.color: pageButton.enabled ? Theme.color4 : "#465456"
-            border.width: 1
-            radius: Math.round(root.fontSize * 0.3)
-            opacity: pageButton.enabled ? 1.0 : 0.42
-        }
+        baseColor: "#101819"
+        pressedColor: "#182528"
+        accentColor: pageButton.enabled ? Theme.color4 : "#465456"
+        textColor: Theme.text
+        disabledTextColor: Theme.mutedText
+        disabledOpacity: 0.42
     }
 
     function modelCount(revision) {
