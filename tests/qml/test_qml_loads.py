@@ -1620,7 +1620,11 @@ def test_temperature_device_pager_uses_page_based_navigation() -> None:
     assert "function refreshModelCount()" in qml
     assert "function refreshPageMetrics()" in qml
     assert "function scheduleModelCountRefresh()" in qml
+    assert "function refreshVisibleItemsImmediately()" in qml
+    assert "modelCountRefreshTimer.stop()" in qml
     assert "id: modelCountRefreshTimer" in qml
+    assert "interval: 80" in qml
+    assert "interval: 1" not in qml
     assert "property int currentItemCount:" in qml
     assert "root.modelCount(root.modelRevision)" in qml
     assert "function pageCount()" in qml
@@ -1633,7 +1637,8 @@ def test_temperature_device_pager_uses_page_based_navigation() -> None:
     assert "root.refreshModelCount()" in qml
     assert "onPageSizeChanged: root.refreshPageMetrics()" in qml
     assert "onPageSizeChanged: root.refreshModelCount()" not in qml
-    assert "onActiveTemperatureModelChanged: root.refreshVisibleItems()" in qml
+    assert "onActiveTemperatureModelChanged: root.refreshVisibleItemsImmediately()" in qml
+    assert "Component.onCompleted: root.refreshVisibleItemsImmediately()" in qml
     assert "function goToPreviousPage()" in qml
     assert "function goToNextPage()" in qml
     assert "function onDataChanged()" in qml

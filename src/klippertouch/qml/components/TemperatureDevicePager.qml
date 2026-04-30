@@ -183,6 +183,13 @@ Item {
         root.scheduleModelCountRefresh()
     }
 
+    function refreshVisibleItemsImmediately() {
+        root.modelRevision += 1
+        root.modelCountRefreshPending = false
+        modelCountRefreshTimer.stop()
+        root.refreshModelCount()
+    }
+
     function goToPreviousPage() {
         if (root.pageIndex > 0) {
             root.pageIndex -= 1
@@ -332,12 +339,12 @@ Item {
     }
 
     onPageSizeChanged: root.refreshPageMetrics()
-    onActiveTemperatureModelChanged: root.refreshVisibleItems()
-    Component.onCompleted: root.scheduleModelCountRefresh()
+    onActiveTemperatureModelChanged: root.refreshVisibleItemsImmediately()
+    Component.onCompleted: root.refreshVisibleItemsImmediately()
 
     Timer {
         id: modelCountRefreshTimer
-        interval: 1
+        interval: 80
         repeat: false
         onTriggered: {
             root.modelCountRefreshPending = false
