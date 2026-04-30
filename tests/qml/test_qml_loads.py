@@ -2020,8 +2020,11 @@ def test_fan_panel_lists_read_only_and_settable_fans() -> None:
     assert "property var fanDevices" in qml
     assert "signal fanSpeedRequested(string deviceName, real percent)" in qml
     assert "modelData.speed_settable" in qml
-    assert 'model: [0, 25, 50, 75, 100]' in qml
-    assert "root.fanSpeedRequested(fanCard.modelData.name, percent)" in qml
+    assert "Slider {" in qml
+    assert "stepSize: 0" in qml
+    assert "root.fanSpeedRequested(fanCard.modelData.name, fanCard.draftSpeed)" in qml
+    assert 'model: [0, 100]' in qml
+    assert 'model: [0, 25, 50, 75, 100]' not in qml
     assert '"auto"' in qml
     assert 'ListElement { tileLabel: "Fans"; tileIcon: "fan"' in model_qml
     assert 'panelName: "fans"' in model_qml

@@ -69,12 +69,20 @@ Item {
                 id: fanCard
                 required property var modelData
                 readonly property real speedValue: Number(modelData.speed || 0)
+                property real draftSpeed: speedValue
                 readonly property string modeText: modelData.speed_settable ? "manual" : "auto"
+                readonly property real displaySpeed: speedSlider.pressed ? draftSpeed : speedValue
+
+                onSpeedValueChanged: {
+                    if (!speedSlider.pressed) {
+                        draftSpeed = speedValue
+                    }
+                }
 
                 width: fanList.width
                 height: Math.max(
-                    modelData.speed_settable ? 136 : 92,
-                    Math.round(root.metrics.fontSize * (modelData.speed_settable ? 8.6 : 5.9))
+                    modelData.speed_settable ? 156 : 92,
+                    Math.round(root.metrics.fontSize * (modelData.speed_settable ? 9.8 : 5.9))
                 )
                 color: "#0d1415"
                 border.color: modelData.speed_settable ? "#536165" : "#344346"
@@ -114,7 +122,7 @@ Item {
 
                         Label {
                             color: Theme.text
-                            text: Math.round(fanCard.speedValue) + "%"
+                            text: Math.round(fanCard.displaySpeed) + "%"
                             horizontalAlignment: Text.AlignRight
                             font.bold: true
                             font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.2))
@@ -133,7 +141,7 @@ Item {
                             anchors.left: parent.left
                             anchors.top: parent.top
                             anchors.bottom: parent.bottom
-                            width: Math.max(parent.height, parent.width * Math.max(0, Math.min(100, fanCard.speedValue)) / 100)
+                            width: Math.max(parent.height, parent.width * Math.max(0, Math.min(100, fanCard.displaySpeed)) / 100)
                             color: "#7f9298"
                             radius: parent.radius
                         }
@@ -141,22 +149,22 @@ Item {
 
                     RowLayout {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: Math.max(44, Math.round(root.metrics.fontSize * 2.8))
+                        Layout.preferredHeight: Math.max(62, Math.round(root.metrics.fontSize * 3.9))
                         visible: modelData.speed_settable
                         spacing: Math.max(6, Math.round(root.metrics.gap * 0.6))
 
                         Repeater {
-                            model: [0, 25, 50, 75, 100]
+                            model: [0, 100]
 
                             Rectangle {
                                 required property int modelData
                                 readonly property int percent: modelData
 
-                                Layout.fillWidth: true
+                                Layout.preferredWidth: Math.max(76, Math.round(root.metrics.fontSize * 4.6))
                                 Layout.fillHeight: true
-                                color: Math.round(fanCard.speedValue) === percent ? "#1b2b2e" : "#101819"
-                                border.color: Math.round(fanCard.speedValue) === percent ? "#7f9298" : "#536165"
-                                border.width: Math.round(fanCard.speedValue) === percent ? 2 : 1
+                                color: fanShortcutMouse.pressed ? "#26373b" : "#101819"
+                                border.color: Math.round(fanCard.displaySpeed) === percent ? "#7f9298" : "#536165"
+                                border.width: Math.round(fanCard.displaySpeed) === percent ? 2 : 1
                                 radius: Math.round(root.metrics.fontSize * 0.28)
 
                                 Label {
@@ -168,9 +176,63 @@ Item {
                                 }
 
                                 MouseArea {
+                                    id: fanShortcutMouse
                                     anchors.fill: parent
-                                    onClicked: root.fanSpeedRequested(fanCard.modelData.name, percent)
+                                    onClicked: {
+                                        fanCard.draftSpeed = percent
+                                        root.fanSpeedRequested(fanCard.modelData.name, fanCard.draftSpeed)
+                                    }
                                 }
+                            }
+                        }
+
+                        Slider {
+                            id: speedSlider
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            from: 0
+                            to: 100
+                            stepSize: 0
+                            live: true
+                            value: fanCard.draftSpeed
+
+                            onMoved: fanCard.draftSpeed = Math.max(0, Math.min(100, value))
+                            onPressedChanged: {
+                                if (pressed) {
+                                    fanCard.draftSpeed = fanCard.speedValue
+                                } else {
+                                    fanCard.draftSpeed = Math.max(0, Math.min(100, value))
+                                    root.fanSpeedRequested(fanCard.modelData.name, fanCard.draftSpeed)
+                                }
+                            }
+
+                            background: Rectangle {
+                                x: speedSlider.leftPadding
+                                y: speedSlider.topPadding + speedSlider.availableHeight / 2 - height / 2
+                                width: speedSlider.availableWidth
+                                height: Math.max(12, Math.round(root.metrics.fontSize * 0.76))
+                                radius: height / 2
+                                color: "#101819"
+                                border.color: "#536165"
+                                border.width: 1
+
+                                Rectangle {
+                                    width: speedSlider.visualPosition * parent.width
+                                    height: parent.height
+                                    radius: parent.radius
+                                    color: "#7f9298"
+                                }
+                            }
+
+                            handle: Rectangle {
+                                x: speedSlider.leftPadding + speedSlider.visualPosition * (speedSlider.availableWidth - width)
+                                y: speedSlider.topPadding + speedSlider.availableHeight / 2 - height / 2
+                                width: Math.max(38, Math.round(root.metrics.fontSize * 2.45))
+                                height: width
+                                radius: width / 2
+                                color: speedSlider.pressed ? "#d4dde0" : "#aebdc2"
+                                border.color: "#0b1112"
+                                border.width: 2
                             }
                         }
                     }
