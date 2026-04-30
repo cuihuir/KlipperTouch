@@ -1290,6 +1290,9 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "id: actionTileDepth" in qml
     assert "onPressedChanged: parent.pressed = pressed" in qml
     assert "component KeypadButton: TactileButton" in qml
+    assert "implicitWidth: root.touchTargetSize" in qml
+    assert "implicitHeight: root.touchTargetSize" in qml
+    assert "padding: 0" in qml
     assert 'baseColor: keyRoot.primary && keyRoot.enabled ? "#1b2b2e" : "#101819"' in qml
     assert 'pressedColor: keyRoot.primary && keyRoot.enabled ? "#24383c" : "#182528"' in qml
     assert "id: nozzleTemperatureDepth" in qml
@@ -1929,6 +1932,9 @@ def test_temperature_device_pager_uses_page_based_navigation() -> None:
     assert "id: nextPageButton" in qml
     assert 'import "../components"' in qml
     assert "component KeypadButton: TactileButton" in qml
+    assert "implicitWidth: root.touchTargetSize" in qml
+    assert "implicitHeight: root.touchTargetSize" in qml
+    assert "padding: 0" in qml
     assert "component PageControlButton: TactileButton" in qml
     assert "textColor: Theme.text" in qml
     assert "accentColor: pageButton.enabled ? Theme.color4 : \"#465456\"" in qml

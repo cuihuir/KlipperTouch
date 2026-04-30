@@ -202,6 +202,11 @@ Item {
         Layout.fillHeight: true
         Layout.minimumWidth: root.touchTargetSize
         Layout.minimumHeight: root.touchTargetSize
+        Layout.preferredWidth: root.touchTargetSize
+        Layout.preferredHeight: root.touchTargetSize
+        implicitWidth: root.touchTargetSize
+        implicitHeight: root.touchTargetSize
+        padding: 0
         fontSize: root.metrics.fontSize
         font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.1))
         baseColor: keyRoot.primary && keyRoot.enabled ? "#1b2b2e" : "#101819"
