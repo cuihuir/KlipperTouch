@@ -163,6 +163,7 @@ SAMPLE_STATUS = {
             name="fan_generic chamber",
             display_name="Chamber",
             speed=25.0,
+            rpm=3180.0,
             speed_settable=True,
         ),
         FanStatus(

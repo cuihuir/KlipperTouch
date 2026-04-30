@@ -182,5 +182,5 @@ def _non_ascii_status_fields(name: str) -> list[str]:
     if name in _temperature_object_names((name,)):
         fields.extend(["temperature", "target"])
     if name in _fan_object_names((name,)):
-        fields.append("speed")
+        fields.extend(["speed", "rpm"])
     return fields

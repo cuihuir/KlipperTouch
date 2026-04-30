@@ -194,7 +194,7 @@ def test_printer_status_derives_fan_devices_from_status_query() -> None:
         object_status={
             "status": {
                 "fan": {"speed": 0.5},
-                "fan_generic chamber": {"speed": 0.25},
+                "fan_generic chamber": {"speed": 0.25, "rpm": 3180.0},
                 "controller_fan 驱动": {"speed": 1.0},
                 "heater_fan hotend_fan": {"speed": 0.0},
             }
@@ -207,6 +207,7 @@ def test_printer_status_derives_fan_devices_from_status_query() -> None:
             name="fan_generic chamber",
             display_name="Chamber",
             speed=25.0,
+            rpm=3180.0,
             speed_settable=True,
         ),
         FanStatus(
@@ -224,10 +225,16 @@ def test_printer_status_derives_fan_devices_from_status_query() -> None:
     )
     assert status.fan_device_count == 4
 
-    updated = status.with_status_update({"fan": {"speed": 0.2}})
+    updated = status.with_status_update(
+        {
+            "fan": {"speed": 0.2},
+            "fan_generic chamber": {"rpm": 3600.0},
+        }
+    )
 
     assert updated.fan_devices[0].speed == 20.0
     assert updated.fan_devices[1].speed == 25.0
+    assert updated.fan_devices[1].rpm == 3600.0
 
 
 def test_printer_status_derives_fan_devices_from_config_sections() -> None:

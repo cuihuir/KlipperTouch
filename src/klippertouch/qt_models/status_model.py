@@ -666,6 +666,7 @@ class StatusModel(QObject):
                 "name": fan.name,
                 "display_name": fan.display_name,
                 "speed": fan.speed,
+                "rpm": fan.rpm,
                 "speed_settable": fan.speed_settable,
             }
             for fan in self._status.fan_devices

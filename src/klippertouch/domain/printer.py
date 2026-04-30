@@ -85,12 +85,14 @@ class FanStatus:
     name: str
     display_name: str
     speed: float = 0.0
+    rpm: float | None = None
     speed_settable: bool = False
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "name", str(self.name))
         object.__setattr__(self, "display_name", str(self.display_name))
         object.__setattr__(self, "speed", _fan_speed_to_percent(self.speed))
+        object.__setattr__(self, "rpm", _optional_float(self.rpm))
         object.__setattr__(self, "speed_settable", bool(self.speed_settable))
 
 
@@ -401,8 +403,7 @@ class PrinterStatus:
             if "filament_detected" in values:
                 previous["filament_detected"] = values["filament_detected"]
         previous_fan_values: dict[str, dict[str, Any]] = {
-            fan.name: {"speed": fan.speed}
-            for fan in self.fan_devices
+            fan.name: {"speed": fan.speed, "rpm": fan.rpm} for fan in self.fan_devices
         }
         for name, values in status_update.items():
             if not isinstance(values, dict):
@@ -410,6 +411,8 @@ class PrinterStatus:
             previous = previous_fan_values.setdefault(str(name), {})
             if "speed" in values:
                 previous["speed"] = values["speed"]
+            if "rpm" in values:
+                previous["rpm"] = values["rpm"]
 
         print_fields: PrintStatusFields = {
             "print_state": self.print_state,
@@ -762,11 +765,13 @@ def _fan_from_object(
 ) -> FanStatus | None:
     values = values or {}
     speed = _fan_speed_to_percent(values.get("speed"))
+    rpm = _optional_float(values.get("rpm"))
     if name == "fan":
         return FanStatus(
             name=name,
             display_name="Part Fan",
             speed=speed,
+            rpm=rpm,
             speed_settable=True,
         )
     if name.startswith("fan_generic "):
@@ -774,6 +779,7 @@ def _fan_from_object(
             name=name,
             display_name=_prettify_name(name),
             speed=speed,
+            rpm=rpm,
             speed_settable=True,
         )
     if name.startswith(("controller_fan ", "heater_fan ")):
@@ -781,6 +787,7 @@ def _fan_from_object(
             name=name,
             display_name=_prettify_name(name),
             speed=speed,
+            rpm=rpm,
             speed_settable=False,
         )
     if name.startswith("temperature_fan "):
@@ -788,6 +795,7 @@ def _fan_from_object(
             name=name,
             display_name=_prettify_name(name),
             speed=speed,
+            rpm=rpm,
             speed_settable=False,
         )
     return None

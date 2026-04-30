@@ -43,7 +43,7 @@ WEBHOOKS_STATUS_FIELDS = {
     "webhooks": ["state", "state_message"],
 }
 FILAMENT_SENSOR_FIELDS = ["enabled", "filament_detected"]
-FAN_FIELDS = ["speed"]
+FAN_FIELDS = ["speed", "rpm"]
 
 
 def build_websocket_request(client: MoonrakerClient) -> QNetworkRequest:

@@ -48,7 +48,7 @@ def test_build_temperature_subscription_message_uses_read_only_objects_method() 
                     "pressure_advance",
                     "smooth_time",
                 ],
-                "fan": ["speed"],
+                "fan": ["speed", "rpm"],
                 "heater_bed": ["temperature", "target"],
                 "print_stats": [
                     "state",
@@ -103,6 +103,7 @@ def test_temperature_fan_subscription_keeps_temperature_target_and_speed() -> No
         "temperature",
         "target",
         "speed",
+        "rpm",
     ]
 
 

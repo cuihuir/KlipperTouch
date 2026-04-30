@@ -72,6 +72,8 @@ Item {
                 property real draftSpeed: speedValue
                 readonly property string modeText: modelData.speed_settable ? "manual" : "auto"
                 readonly property real displaySpeed: speedSlider.pressed ? draftSpeed : speedValue
+                readonly property bool hasRpm: modelData.rpm !== undefined && modelData.rpm !== null
+                readonly property real rpmValue: hasRpm ? Number(modelData.rpm) : 0
 
                 onSpeedValueChanged: {
                     if (!speedSlider.pressed) {
@@ -115,6 +117,7 @@ Item {
                                 Layout.fillWidth: true
                                 color: Theme.mutedText
                                 text: modelData.name + " · " + fanCard.modeText
+                                    + (fanCard.hasRpm ? " · " + Math.round(fanCard.rpmValue) + " RPM" : "")
                                 elide: Text.ElideRight
                                 font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.68))
                             }

@@ -2022,6 +2022,8 @@ def test_fan_panel_lists_read_only_and_settable_fans() -> None:
     assert "modelData.speed_settable" in qml
     assert "Slider {" in qml
     assert "stepSize: 0" in qml
+    assert "hasRpm" in qml
+    assert "Math.round(fanCard.rpmValue) + \" RPM\"" in qml
     assert "root.fanSpeedRequested(fanCard.modelData.name, fanCard.draftSpeed)" in qml
     assert 'model: [0, 100]' in qml
     assert 'model: [0, 25, 50, 75, 100]' not in qml

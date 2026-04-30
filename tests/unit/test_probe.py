@@ -286,8 +286,8 @@ def test_build_status_from_client_uses_jsonrpc_for_non_ascii_fan_status() -> Non
             self.queries.append(tuple(objects))
             return {
                 "status": {
-                    "fan": {"speed": 0.1},
-                    "fan_generic partfan": {"speed": 0.2},
+                    "fan": {"speed": 0.1, "rpm": None},
+                    "fan_generic partfan": {"speed": 0.2, "rpm": 1234.0},
                     "temperature_fan SOC散热": {"temperature": 45.0, "target": 40.0},
                     "configfile": {
                         "settings": {
@@ -303,16 +303,17 @@ def test_build_status_from_client_uses_jsonrpc_for_non_ascii_fan_status() -> Non
         def get_printer_objects_query_jsonrpc(self, objects):
             self.queries.append(tuple(objects))
             assert objects == {
-                "controller_fan 驱动散热": ["speed"],
-                "temperature_fan SOC散热": ["temperature", "target", "speed"],
+                "controller_fan 驱动散热": ["speed", "rpm"],
+                "temperature_fan SOC散热": ["temperature", "target", "speed", "rpm"],
             }
             return {
                 "status": {
-                    "controller_fan 驱动散热": {"speed": 0.6},
+                    "controller_fan 驱动散热": {"speed": 0.6, "rpm": None},
                     "temperature_fan SOC散热": {
                         "temperature": 46.0,
                         "target": 40.0,
                         "speed": 0.4,
+                        "rpm": None,
                     },
                 }
             }
@@ -328,6 +329,7 @@ def test_build_status_from_client_uses_jsonrpc_for_non_ascii_fan_status() -> Non
             name="fan_generic partfan",
             display_name="Partfan",
             speed=20.0,
+            rpm=1234.0,
             speed_settable=True,
         ),
         FanStatus(
