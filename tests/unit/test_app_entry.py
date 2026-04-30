@@ -111,5 +111,6 @@ def test_run_app_stops_background_loaders_when_app_exits() -> None:
 
     assert "try:\n        return app.exec()\n    finally:" in source
     assert "job_control_model.stop()" in source
+    assert "status_stream.stop()" in source
     assert "startup_loader.stop()" in source
     assert "file_refresh.stop()" in source

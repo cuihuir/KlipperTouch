@@ -137,6 +137,9 @@ def run_app(
         return app.exec()
     finally:
         job_control_model.stop()
+        status_stream = getattr(engine, "status_stream", None)
+        if status_stream is not None:
+            status_stream.stop()
         if startup_loader is not None:
             startup_loader.stop()
         if file_refresh is not None:

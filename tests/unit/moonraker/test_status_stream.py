@@ -1,16 +1,20 @@
 import json
+import time
 from pathlib import Path
 
 from klippertouch.config.models import PrinterConfig
 from klippertouch.domain.printer import PrinterStatus
+from klippertouch.moonraker import status_stream
 from klippertouch.moonraker.client import MoonrakerClient
 from klippertouch.moonraker.status_stream import (
+    MoonrakerStatusStream,
     build_temperature_subscription_message,
     build_websocket_request,
     gcode_response_from_websocket_message,
     status_from_websocket_message,
     status_needs_recovery_polling,
 )
+from klippertouch.qt_models.status_model import StatusModel
 
 
 def test_build_temperature_subscription_message_uses_read_only_objects_method() -> None:
@@ -90,6 +94,8 @@ def test_status_stream_schedules_read_only_reconnects() -> None:
     source = Path("src/klippertouch/moonraker/status_stream.py").read_text(encoding="utf-8")
 
     assert "QTimer" in source
+    assert "QThread" in source
+    assert "class _RecoveryPollWorker(QObject):" in source
     assert "reconnect_interval_ms: int = 2000" in source
     assert "self._reconnect_timer.setSingleShot(True)" in source
     assert "self._socket.disconnected.connect(self._schedule_reconnect)" in source
@@ -98,8 +104,10 @@ def test_status_stream_schedules_read_only_reconnects() -> None:
     assert "self._socket.connected.connect(self._poll_timer.stop)" in source
     assert "self._reconnect_timer.timeout.connect(self.start)" in source
     assert "self._poll_timer.setInterval(reconnect_interval_ms)" in source
-    assert "self._poll_timer.timeout.connect(self._poll_until_ready)" in source
-    assert "self._poll_until_ready()" in source
+    assert "self._poll_timer.timeout.connect(self._start_recovery_poll)" in source
+    assert "self._poll_timer.timeout.connect(self._poll_until_ready)" not in source
+    assert "thread.started.connect(worker.run)" in source
+    assert "worker.completed.connect(self._apply_recovery_poll_status)" in source
     assert "if status_needs_recovery_polling(self._status)" in source
     assert "return" in source
     assert "if status_needs_recovery_polling(status)" in source
@@ -111,6 +119,46 @@ def test_status_stream_schedules_read_only_reconnects() -> None:
     assert "printer.gcode.script" not in source
     assert '_set_webhooks_state("disconnected", "Moonraker disconnected")' in source
     assert '_set_webhooks_state("startup", "Klipper is attempting to start")' not in source
+
+
+def test_status_stream_recovery_polling_does_not_block_gui_thread(monkeypatch, qtbot) -> None:
+    calls = 0
+
+    def slow_probe(_client: MoonrakerClient) -> PrinterStatus:
+        nonlocal calls
+        calls += 1
+        time.sleep(0.2)
+        return PrinterStatus(
+            klippy_state="shutdown",
+            moonraker_version="v0.10.0",
+            objects=("webhooks",),
+            webhooks_state="shutdown",
+        )
+
+    monkeypatch.setattr(status_stream, "build_status_from_client", slow_probe)
+    client = MoonrakerClient(PrinterConfig(name="p", moonraker_host="host"))
+    model = StatusModel()
+    stream = MoonrakerStatusStream(
+        client,
+        model,
+        PrinterStatus(
+            klippy_state="shutdown",
+            moonraker_version="v0.10.0",
+            objects=("webhooks",),
+            webhooks_state="shutdown",
+        ),
+        reconnect_interval_ms=1000,
+    )
+
+    start = time.monotonic()
+    stream.start()
+    elapsed = time.monotonic() - start
+
+    try:
+        assert elapsed < 0.05
+        qtbot.waitUntil(lambda: calls == 1, timeout=1000)
+    finally:
+        stream.stop()
 
 
 def test_status_needs_recovery_polling_for_klippy_faults() -> None:
