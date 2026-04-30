@@ -588,6 +588,7 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "id: compactProgressBox" in qml
     assert "function jobHeroHeight()" in qml
     assert "function temperatureStripHeight()" in qml
+    assert "function summaryTemperatureStripVisible()" in qml
     assert "function groupedSummaryModel()" in qml
     assert "function summaryZoneRows(zone)" in qml
     assert "function detailTitle()" in qml
@@ -604,8 +605,13 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert 'root.detailPage = "motion"' in qml
     assert 'root.detailPage = "extrusion"' in qml
     assert "return Math.max(146" in qml
-    assert "root.metrics.portrait && root.height > 760" in qml
-    assert "&& root.temperatureModel" in qml
+    assert "|| !root.temperatureModel" in qml
+    assert "|| root.temperatureModel.rowCount() <= 0" in qml
+    assert "id: summaryTemperatureStrip" in qml
+    assert "visible: root.summaryTemperatureStripVisible()" in qml
+    assert "root.pendingJobAction.length > 0" in qml
+    assert "root.metrics.ultraWide" in qml
+    assert "return !root.metrics.portrait" in qml
     assert "Layout.maximumWidth: Math.max(160" in qml
     assert "id: progressRail" in qml
     assert "id: progressFill" in qml

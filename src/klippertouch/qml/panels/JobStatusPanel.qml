@@ -702,6 +702,17 @@ Item {
         )
     }
 
+    function summaryTemperatureStripVisible() {
+        if (root.detailPage !== "summary"
+                || root.pendingJobAction.length > 0
+                || !root.temperatureModel
+                || root.temperatureModel.rowCount() <= 0
+                || root.metrics.ultraWide) {
+            return false
+        }
+        return !root.metrics.portrait
+    }
+
     function summaryBottomSafeArea() {
         return root.metrics.portrait
             ? Math.max(root.metrics.gap * 2, Math.round(root.metrics.fontSize * 2.0))
@@ -1179,10 +1190,8 @@ Item {
             }
 
             Rectangle {
-                visible: root.detailPage === "summary"
-                    && root.metrics.portrait && root.height > 760
-                    && root.temperatureModel
-                    && root.temperatureModel.rowCount() > 0
+                id: summaryTemperatureStrip
+                visible: root.summaryTemperatureStripVisible()
                 Layout.fillWidth: true
                 Layout.preferredHeight: root.temperatureStripHeight()
                 color: "#101617"
