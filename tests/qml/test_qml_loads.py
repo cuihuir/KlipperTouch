@@ -399,9 +399,11 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "required property string thumbnailUrl" in qml
     assert "source: thumbnailUrl" in qml
     assert "activeFileModel.requestMetadata(path)" in qml
-    assert "asynchronous: true" in qml
+    assert 'asynchronous: thumbnailUrl.indexOf("file:") !== 0' in qml
     assert "cache: true" in qml
     assert "sourceSize.width" in qml
+    assert "thumbnailImage.status === Image.Ready" in qml
+    assert "thumbnailImage.status !== Image.Ready" in qml
     assert "root.activeFileModel.selectedPreviewThumbnailUrl" in qml
     assert "id: detailPageView" in qml
     assert "id: selectedPreviewAndMetadataLayout" in qml

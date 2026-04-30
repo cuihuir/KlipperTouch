@@ -488,13 +488,13 @@ Item {
                                 anchors.margins: 2
                                 source: thumbnailUrl
                                 fillMode: Image.PreserveAspectFit
-                                asynchronous: true
+                                asynchronous: thumbnailUrl.indexOf("file:") !== 0
                                 cache: true
                                 sourceSize.width: width
                                 sourceSize.height: height
                                 visible: !isDirectory
                                     && thumbnailUrl.length > 0
-                                    && status !== Image.Error
+                                    && thumbnailImage.status === Image.Ready
                             }
 
                             Label {
@@ -503,7 +503,7 @@ Item {
                                 text: isDirectory ? "DIR" : "G"
                                 visible: isDirectory
                                     || thumbnailUrl.length <= 0
-                                    || thumbnailImage.status === Image.Error
+                                    || thumbnailImage.status !== Image.Ready
                                 font.bold: true
                                 font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
                             }
