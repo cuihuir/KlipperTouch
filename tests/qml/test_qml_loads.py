@@ -898,6 +898,12 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "function advancedCardHeight()" in qml
     assert "Layout.preferredHeight: root.advancedCardHeight()" in qml
     assert "id: excludePage" in qml
+    assert "id: excludePageLayout" in qml
+    assert "columns: root.metrics.ultraWide ? 2 : 1" in qml
+    assert "rows: root.metrics.ultraWide ? 1 : 2" in qml
+    assert "id: excludeControlPanel" in qml
+    assert "Layout.preferredWidth: root.metrics.ultraWide" in qml
+    assert "columns: root.metrics.ultraWide ? 1 : 2" in qml
     assert "root.currentObject" in qml
     assert "property string selectedExcludeObject" in qml
     assert "function selectedExcludeObjectName()" in qml

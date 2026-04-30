@@ -1795,18 +1795,30 @@ Item {
 
             }
 
-            ColumnLayout {
+            GridLayout {
                 id: excludePage
                 visible: root.detailPage === "exclude"
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                spacing: root.metrics.gap
+                columns: root.metrics.ultraWide ? 2 : 1
+                rows: root.metrics.ultraWide ? 1 : 2
+                columnSpacing: root.metrics.gap
+                rowSpacing: root.metrics.gap
+                flow: GridLayout.LeftToRight
+
+                Item {
+                    id: excludePageLayout
+                    visible: false
+                }
 
                 Rectangle {
                     id: objectMapFrame
                     visible: root.objectMapHasPolygons()
                     Layout.fillWidth: true
                     Layout.fillHeight: true
+                    Layout.preferredWidth: root.metrics.ultraWide
+                        ? Math.max(720, Math.round(root.width * 0.72))
+                        : -1
                     Layout.preferredHeight: root.metrics.portrait
                         ? Math.max(320, Math.round(root.metrics.fontSize * 20.0))
                         : Math.max(260, Math.round(root.metrics.fontSize * 16.0))
@@ -1841,10 +1853,17 @@ Item {
                 }
 
                 Rectangle {
+                    id: excludeControlPanel
                     Layout.fillWidth: true
+                    Layout.fillHeight: root.metrics.ultraWide
+                    Layout.preferredWidth: root.metrics.ultraWide
+                        ? Math.max(220, Math.round(root.width * 0.22))
+                        : -1
                     Layout.preferredHeight: root.metrics.portrait
                         ? Math.max(104, Math.round(root.metrics.fontSize * 7.1))
-                        : Math.max(96, Math.round(root.metrics.fontSize * 6.2))
+                        : root.metrics.ultraWide
+                            ? -1
+                            : Math.max(96, Math.round(root.metrics.fontSize * 6.2))
                     color: "#101617"
                     border.color: root.activeExcludeObjectName().length > 0 ? root.neutralAccent : "#263233"
                     border.width: 1
@@ -1876,6 +1895,7 @@ Item {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             spacing: root.metrics.gap
+                            visible: !root.metrics.ultraWide
 
                             JobButton {
                                 id: selectedObjectSkipButton
@@ -1893,6 +1913,35 @@ Item {
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: root.jobButtonHeight
                                 Layout.alignment: Qt.AlignVCenter
+                                text: "Skip Current"
+                                iconName: "object"
+                                enabled: root.currentObject.length > 0
+                                    && root.excludedObjectNames.indexOf(root.currentObject) < 0
+                                onClicked: root.requestJobAction("skip_current", "")
+                            }
+                        }
+
+                        GridLayout {
+                            visible: root.metrics.ultraWide
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            columns: root.metrics.ultraWide ? 1 : 2
+                            rows: 2
+                            rowSpacing: root.metrics.gap
+                            columnSpacing: root.metrics.gap
+
+                            JobButton {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                text: "Skip Selected"
+                                iconName: "object"
+                                enabled: root.activeExcludeObjectName().length > 0
+                                onClicked: root.requestJobAction("skip", root.activeExcludeObjectName())
+                            }
+
+                            JobButton {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
                                 text: "Skip Current"
                                 iconName: "object"
                                 enabled: root.currentObject.length > 0
