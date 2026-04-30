@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../components"
 import "../Theme.js" as Theme
 
 Item {
@@ -120,7 +121,7 @@ Item {
         }
     }
 
-    component JobButton: Button {
+    component JobButton: TactileButton {
         id: controlRoot
         property color accent: root.neutralAccent
         property string buttonRole: "normal"
@@ -130,8 +131,19 @@ Item {
             : buttonRole === "primary" ? root.accentColor : accent
         implicitHeight: root.jobButtonHeight
         implicitWidth: root.jobButtonWidth
+        fontSize: root.metrics.fontSize
+        baseColor: "#263033"
+        pressedColor: "#172528"
+        disabledColor: "#151a1b"
+        accentColor: controlRoot.roleAccent
+        disabledAccentColor: "#263233"
+        disabledOpacity: 0.72
+        depthSize: Math.max(3, Math.round(root.metrics.fontSize * 0.20))
+        showLeadingAccent: true
+        leadingAccentWidth: controlRoot.enabled ? 3 : 1
 
         contentItem: RowLayout {
+            y: controlRoot.down && controlRoot.enabled ? Math.max(1, Math.round(root.metrics.fontSize * 0.08)) : 0
             spacing: Math.max(5, Math.round(root.metrics.fontSize * 0.32))
 
             Image {
@@ -154,34 +166,6 @@ Item {
                 verticalAlignment: Text.AlignVCenter
                 elide: Text.ElideRight
                 font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.82))
-            }
-        }
-
-        background: Rectangle {
-            color: controlRoot.enabled ? "#263033" : "#151a1b"
-            border.color: controlRoot.enabled ? controlRoot.roleAccent : "#263233"
-            border.width: controlRoot.enabled ? 2 : 1
-            radius: Math.round(root.metrics.fontSize * 0.32)
-            opacity: controlRoot.enabled ? 1.0 : 0.72
-            gradient: Gradient {
-                GradientStop {
-                    position: 0.0
-                    color: controlRoot.enabled ? "#142126" : "#151a1b"
-                }
-                GradientStop {
-                    position: 1.0
-                    color: controlRoot.enabled ? "#091112" : "#101415"
-                }
-            }
-
-            Rectangle {
-                anchors.left: parent.left
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                width: controlRoot.enabled ? 3 : 1
-                color: controlRoot.roleAccent
-                opacity: controlRoot.enabled ? 0.85 : 0.25
-                radius: parent.radius
             }
         }
     }

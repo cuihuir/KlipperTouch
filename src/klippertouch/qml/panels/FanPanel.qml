@@ -194,10 +194,27 @@ Item {
 
                                 Layout.preferredWidth: Math.max(76, Math.round(root.metrics.fontSize * 4.6))
                                 Layout.fillHeight: true
+                                scale: fanShortcutMouse.pressed ? 0.96 : 1.0
+                                transformOrigin: Item.Center
                                 color: fanShortcutMouse.pressed ? "#26373b" : "#101819"
                                 border.color: Math.round(fanCard.displaySpeed) === percent ? "#7f9298" : "#536165"
                                 border.width: Math.round(fanCard.displaySpeed) === percent ? 2 : 1
                                 radius: Math.round(root.metrics.fontSize * 0.28)
+                                Behavior on scale {
+                                    NumberAnimation { duration: 70; easing.type: Easing.OutQuad }
+                                }
+
+                                Rectangle {
+                                    id: fanShortcutDepth
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    anchors.bottom: parent.bottom
+                                    height: Math.max(2, Math.round(root.metrics.fontSize * 0.18))
+                                    visible: !fanShortcutMouse.pressed
+                                    color: "#050808"
+                                    opacity: 0.78
+                                    radius: parent.radius
+                                }
 
                                 Label {
                                     anchors.centerIn: parent

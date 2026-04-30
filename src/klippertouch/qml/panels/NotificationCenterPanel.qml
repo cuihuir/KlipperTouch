@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../components"
 import "../Theme.js" as Theme
 
 Item {
@@ -31,50 +32,30 @@ Item {
                 elide: Text.ElideRight
             }
 
-            Rectangle {
+            TactileButton {
                 Layout.preferredWidth: Math.max(110, Math.round(root.metrics.fontSize * 6.8))
                 Layout.preferredHeight: Math.max(44, Math.round(root.metrics.fontSize * 2.75))
-                radius: Math.round(height * 0.22)
-                color: "#182224"
-                border.color: "#465154"
-                border.width: 1
-                opacity: root.notificationModel ? 1.0 : 0.45
-
-                Label {
-                    anchors.centerIn: parent
-                    text: "Mark read"
-                    color: Theme.text
-                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.78))
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    enabled: root.notificationModel !== null
-                    onClicked: notificationModel.markAllRead()
-                }
+                enabled: root.notificationModel !== null
+                text: "Mark read"
+                fontSize: root.metrics.fontSize
+                baseColor: "#182224"
+                pressedColor: "#203236"
+                accentColor: "#465154"
+                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.78))
+                onClicked: notificationModel.markAllRead()
             }
 
-            Rectangle {
+            TactileButton {
                 Layout.preferredWidth: Math.max(88, Math.round(root.metrics.fontSize * 5.4))
                 Layout.preferredHeight: Math.max(44, Math.round(root.metrics.fontSize * 2.75))
-                radius: Math.round(height * 0.22)
-                color: "#182224"
-                border.color: "#465154"
-                border.width: 1
-                opacity: root.notificationModel ? 1.0 : 0.45
-
-                Label {
-                    anchors.centerIn: parent
-                    text: "Clear"
-                    color: Theme.text
-                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.78))
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    enabled: root.notificationModel !== null
-                    onClicked: notificationModel.clear()
-                }
+                enabled: root.notificationModel !== null
+                text: "Clear"
+                fontSize: root.metrics.fontSize
+                baseColor: "#182224"
+                pressedColor: "#203236"
+                accentColor: "#465154"
+                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.78))
+                onClicked: notificationModel.clear()
             }
         }
 

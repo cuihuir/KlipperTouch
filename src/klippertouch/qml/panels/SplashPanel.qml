@@ -384,9 +384,26 @@ Item {
                 height: Math.max(30, Math.round(root.metrics.fontSize * 1.8))
                 radius: Math.round(height * 0.28)
                 color: previousPageArea.pressed ? "#182124" : "#101819"
+                scale: previousPageArea.pressed ? 0.96 : 1.0
+                transformOrigin: Item.Center
                 border.color: root.detailPageIndex > 0 ? "#667276" : "#394346"
                 border.width: 1
                 opacity: root.detailPageIndex > 0 ? 1.0 : 0.42
+                Behavior on scale {
+                    NumberAnimation { duration: 70; easing.type: Easing.OutQuad }
+                }
+
+                Rectangle {
+                    id: previousPageDepth
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    height: Math.max(2, Math.round(root.metrics.fontSize * 0.14))
+                    visible: !previousPageArea.pressed && previousPageArea.enabled
+                    color: "#050808"
+                    opacity: 0.78
+                    radius: parent.radius
+                }
 
                 Label {
                     anchors.centerIn: parent
@@ -419,9 +436,26 @@ Item {
                 height: Math.max(30, Math.round(root.metrics.fontSize * 1.8))
                 radius: Math.round(height * 0.28)
                 color: nextPageArea.pressed ? "#182124" : "#101819"
+                scale: nextPageArea.pressed ? 0.96 : 1.0
+                transformOrigin: Item.Center
                 border.color: root.detailPageIndex < root.pagerPageCount() - 1 ? "#667276" : "#394346"
                 border.width: 1
                 opacity: root.detailPageIndex < root.pagerPageCount() - 1 ? 1.0 : 0.42
+                Behavior on scale {
+                    NumberAnimation { duration: 70; easing.type: Easing.OutQuad }
+                }
+
+                Rectangle {
+                    id: nextPageDepth
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    height: Math.max(2, Math.round(root.metrics.fontSize * 0.14))
+                    visible: !nextPageArea.pressed && nextPageArea.enabled
+                    color: "#050808"
+                    opacity: 0.78
+                    radius: parent.radius
+                }
 
                 Label {
                     anchors.centerIn: parent
@@ -482,6 +516,18 @@ Item {
                     Behavior on scale { NumberAnimation { duration: 80; easing.type: Easing.OutQuad } }
                     Behavior on color { ColorAnimation { duration: 80 } }
                     Behavior on border.color { ColorAnimation { duration: 80 } }
+
+                    Rectangle {
+                        id: recoveryActionDepth
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        height: Math.max(3, Math.round(root.metrics.fontSize * 0.18))
+                        visible: !feedbackActive && !placeholder
+                        color: "#050808"
+                        opacity: 0.82
+                        radius: parent.radius
+                    }
 
                     Column {
                         anchors.centerIn: parent

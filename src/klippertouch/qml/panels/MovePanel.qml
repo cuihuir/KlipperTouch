@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../components"
 import "../Theme.js" as Theme
 
 Item {
@@ -500,6 +501,18 @@ Item {
         Behavior on border.color { ColorAnimation { duration: 80 } }
 
         Rectangle {
+            id: tileDepth
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: Math.max(2, Math.round(root.metrics.fontSize * 0.18))
+            visible: !tileRoot.pressed && tileRoot.enabled
+            color: "#050808"
+            opacity: 0.8
+            radius: parent.radius
+        }
+
+        Rectangle {
             anchors.fill: parent
             anchors.margins: Math.max(4, Math.round(root.metrics.fontSize * 0.22))
             color: "transparent"
@@ -566,6 +579,18 @@ Item {
         Behavior on border.color { ColorAnimation { duration: 80 } }
 
         Rectangle {
+            id: directionDepth
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: Math.max(2, Math.round(root.metrics.fontSize * 0.18))
+            visible: !directionRoot.pressed && directionRoot.enabled
+            color: "#050808"
+            opacity: 0.8
+            radius: parent.radius
+        }
+
+        Rectangle {
             anchors.fill: parent
             anchors.margins: Math.max(4, Math.round(root.metrics.fontSize * 0.22))
             color: "transparent"
@@ -617,6 +642,18 @@ Item {
         Behavior on scale { NumberAnimation { duration: 80; easing.type: Easing.OutQuad } }
         Behavior on color { ColorAnimation { duration: 80 } }
         Behavior on border.color { ColorAnimation { duration: 80 } }
+
+        Rectangle {
+            id: actionDepth
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: Math.max(2, Math.round(root.metrics.fontSize * 0.18))
+            visible: !actionRoot.pressed && actionRoot.enabled
+            color: "#050808"
+            opacity: 0.8
+            radius: parent.radius
+        }
 
         Rectangle {
             anchors.fill: parent
@@ -682,6 +719,18 @@ Item {
         Behavior on scale { NumberAnimation { duration: 80; easing.type: Easing.OutQuad } }
         Behavior on color { ColorAnimation { duration: 80 } }
         Behavior on border.color { ColorAnimation { duration: 80 } }
+
+        Rectangle {
+            id: tiltDepth
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: Math.max(2, Math.round(root.metrics.fontSize * 0.18))
+            visible: !tiltRoot.pressed && tiltRoot.enabled
+            color: "#050808"
+            opacity: 0.8
+            radius: parent.radius
+        }
 
         ColumnLayout {
             anchors.fill: parent
@@ -1794,49 +1843,31 @@ Item {
                     Layout.preferredHeight: Math.max(46, Math.round(root.metrics.fontSize * 3.0))
                     spacing: root.metrics.gap
 
-                    Button {
+                    TactileButton {
                         id: cancelConfirmButton
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         text: "Cancel"
+                        fontSize: root.metrics.fontSize
+                        baseColor: "#0b1112"
+                        pressedColor: "#182528"
+                        accentColor: "#536165"
+                        font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.9))
                         onClicked: root.dismissConfirmAction()
-                        contentItem: Label {
-                            color: Theme.text
-                            text: cancelConfirmButton.text
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                            font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.9))
-                        }
-                        background: Rectangle {
-                            color: cancelConfirmButton.down ? "#182528" : "#0b1112"
-                            border.color: "#536165"
-                            border.width: 1
-                            radius: Math.round(root.metrics.fontSize * 0.28)
-                            Behavior on color { ColorAnimation { duration: 80 } }
-                        }
                     }
 
-                    Button {
+                    TactileButton {
                         id: confirmActionButton
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         text: "Confirm"
+                        fontSize: root.metrics.fontSize
+                        baseColor: "#1b2b2e"
+                        pressedColor: "#24383c"
+                        accentColor: root.selectedAccent
+                        font.bold: true
+                        font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.9))
                         onClicked: root.confirmPendingAction()
-                        contentItem: Label {
-                            color: Theme.text
-                            text: confirmActionButton.text
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                            font.bold: true
-                            font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.9))
-                        }
-                        background: Rectangle {
-                            color: confirmActionButton.down ? "#24383c" : "#1b2b2e"
-                            border.color: root.selectedAccent
-                            border.width: 1
-                            radius: Math.round(root.metrics.fontSize * 0.28)
-                            Behavior on color { ColorAnimation { duration: 80 } }
-                        }
                     }
                 }
             }

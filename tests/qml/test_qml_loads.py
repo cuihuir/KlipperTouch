@@ -131,6 +131,26 @@ def test_menu_tile_has_press_feedback() -> None:
     assert "ColorAnimation { duration: 80" in qml
 
 
+def test_tactile_button_centralizes_pressed_down_feedback() -> None:
+    qml = Path("src/klippertouch/qml/components/TactileButton.qml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "Button {" in qml
+    assert "property real fontSize" in qml
+    assert "property color baseColor" in qml
+    assert "property color pressedColor" in qml
+    assert "property color accentColor" in qml
+    assert "scale: control.down && control.enabled ? 0.97 : 1.0" in qml
+    assert "id: tactileDepth" in qml
+    assert "id: tactileSurface" in qml
+    assert "visible: !control.down && control.enabled" in qml
+    assert "anchors.topMargin: control.down" in qml
+    assert "anchors.bottomMargin: control.down ? 0" in qml
+    assert "Behavior on scale" in qml
+    assert "NumberAnimation { duration: 70" in qml
+
+
 def test_action_bar_buttons_fill_available_axis() -> None:
     qml = Path("src/klippertouch/qml/components/ActionBar.qml").read_text(encoding="utf-8")
 
@@ -336,6 +356,7 @@ def test_responsive_layout_components_exist() -> None:
     expected = [
         qml_dir / "Metrics.qml",
         qml_dir / "components" / "BaseShell.qml",
+        qml_dir / "components" / "TactileButton.qml",
         qml_dir / "panels" / "MainMenuPanel.qml",
         qml_dir / "panels" / "MoreMenuPanel.qml",
         qml_dir / "components" / "MenuTile.qml",
@@ -650,7 +671,8 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "id: jobActionGrid" in qml
     assert "component StatusCard: Rectangle" in qml
     assert "component MetricPill: Rectangle" in qml
-    assert "component JobButton: Button" in qml
+    assert 'import "../components"' in qml
+    assert "component JobButton: TactileButton" in qml
     assert "property int jobButtonHeight" in qml
     assert "property int jobButtonWidth" in qml
     assert 'readonly property color neutralAccent: "#8b9496"' in qml
@@ -703,8 +725,9 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert 'iconName: "object"' in qml
     assert 'iconName: "advanced"' in qml
     assert 'buttonRole: "danger"' in qml
-    assert "background: Rectangle" in qml
-    assert 'color: controlRoot.enabled ? "#263033" : "#151a1b"' in qml
+    assert 'baseColor: "#263033"' in qml
+    assert 'pressedColor: "#172528"' in qml
+    assert "accentColor: controlRoot.roleAccent" in qml
     assert "implicitHeight: root.jobButtonHeight" in qml
     assert "Layout.preferredHeight: root.jobActionGridHeight()" in qml
     assert "Layout.preferredWidth: root.jobActionGridWidth()" in qml
@@ -1007,14 +1030,22 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert "component LockedTile: Rectangle" in qml
     assert "component DirectionButton: Rectangle" in qml
     assert "property bool pressed: false" in qml
+    assert 'import "../components"' in qml
     assert "scale: tileRoot.pressed && tileRoot.enabled ? 0.97 : 1.0" in qml
     assert "scale: directionRoot.pressed && directionRoot.enabled ? 0.96 : 1.0" in qml
     assert "scale: actionRoot.pressed && actionRoot.enabled ? 0.97 : 1.0" in qml
     assert "scale: tiltRoot.pressed && tiltRoot.enabled ? 0.97 : 1.0" in qml
     assert "onPressedChanged: parent.pressed = pressed" in qml
     assert "onPressedChanged: tiltRoot.pressed = pressed" in qml
-    assert 'color: cancelConfirmButton.down ? "#182528" : "#0b1112"' in qml
-    assert 'color: confirmActionButton.down ? "#24383c" : "#1b2b2e"' in qml
+    assert "id: tileDepth" in qml
+    assert "id: directionDepth" in qml
+    assert "id: actionDepth" in qml
+    assert "id: tiltDepth" in qml
+    assert "TactileButton {" in qml
+    assert "id: cancelConfirmButton" in qml
+    assert "id: confirmActionButton" in qml
+    assert 'baseColor: "#0b1112"' in qml
+    assert 'baseColor: "#1b2b2e"' in qml
     assert "Behavior on scale" in qml
     assert "NumberAnimation { duration: 80" in qml
     assert "ColorAnimation { duration: 80" in qml
@@ -1392,6 +1423,10 @@ def test_notification_center_is_globally_routed() -> None:
     assert "notificationModel.markAllRead()" in panel_qml
     assert "notificationModel.clear()" in panel_qml
     assert "No notifications" in panel_qml
+    assert 'import "../components"' in panel_qml
+    assert "TactileButton {" in panel_qml
+    assert 'text: "Mark read"' in panel_qml
+    assert 'text: "Clear"' in panel_qml
 
 
 def test_job_control_events_are_forwarded_to_notifications() -> None:
@@ -1531,6 +1566,8 @@ def test_splash_panel_handles_system_fault_states() -> None:
     assert "function pagerPageCount()" in panel_qml
     assert "id: previousPageArea" in panel_qml
     assert "id: nextPageArea" in panel_qml
+    assert "id: previousPageDepth" in panel_qml
+    assert "id: nextPageDepth" in panel_qml
     assert "id: detailLabel" in panel_qml
     assert "root.detailPageText(pageIndex)" in panel_qml
     assert "clip: true" in panel_qml
@@ -1552,6 +1589,7 @@ def test_splash_panel_handles_system_fault_states() -> None:
     assert "id: recoveryPressArea" in panel_qml
     assert "property bool feedbackActive:" in panel_qml
     assert "scale: feedbackActive ? 0.97 : 1.0" in panel_qml
+    assert "id: recoveryActionDepth" in panel_qml
     assert 'color: feedbackActive ? "#182124"' in panel_qml
     assert "onClicked: root.triggerRecoveryAction(action)" in panel_qml
     assert '"Retry"' in panel_qml
@@ -2115,6 +2153,9 @@ def test_fan_panel_lists_read_only_and_settable_fans() -> None:
     assert "root.fanSpeedRequested(fanCard.modelData.name, fanCard.draftSpeed)" in qml
     assert 'model: [0, 100]' in qml
     assert 'model: [0, 25, 50, 75, 100]' not in qml
+    assert "scale: fanShortcutMouse.pressed ? 0.96 : 1.0" in qml
+    assert "id: fanShortcutDepth" in qml
+    assert "Behavior on scale" in qml
     assert '"auto"' in qml
     assert 'ListElement { tileLabel: "Fans"; tileIcon: "fan"' in model_qml
     assert 'panelName: "fans"' in model_qml
