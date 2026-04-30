@@ -39,7 +39,7 @@ if [ "${1:-}" = "--xclient" ]; then
     reset_output="${KLIPPERTOUCH_RESET_OUTPUT:-0}"
     touch_pattern="${KLIPPERTOUCH_TOUCH_HID_PATTERN:-}"
     log_file="${KLIPPERTOUCH_LOG:-/home/tope/printer_data/logs/klippertouch.log}"
-    xclient="${KLIPPERTOUCH_XCLIENT:-/home/tope/klippertouch/venv/bin/klippertouch --config /home/tope/printer_data/config/KlipperTouch.conf --debug --read-only --fullscreen}"
+    xclient="${KLIPPERTOUCH_XCLIENT:-/home/tope/klippertouch/venv/bin/klippertouch --config /home/tope/printer_data/config/KlipperTouch.conf --debug --allow-controls --fullscreen}"
     render_backend="${KLIPPERTOUCH_RENDER_BACKEND:-software}"
 
     export DISPLAY="$display"

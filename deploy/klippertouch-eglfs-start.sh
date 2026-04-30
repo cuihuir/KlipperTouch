@@ -2,7 +2,7 @@
 set -euo pipefail
 
 log_file="${KLIPPERTOUCH_LOG:-/home/tope/printer_data/logs/klippertouch-eglfs.log}"
-eglfs_client="${KLIPPERTOUCH_EGLFS_CLIENT:-/home/tope/klippertouch/venv/bin/klippertouch --config /home/tope/printer_data/config/KlipperTouch.conf --debug --read-only --fullscreen}"
+eglfs_client="${KLIPPERTOUCH_EGLFS_CLIENT:-/home/tope/klippertouch/venv/bin/klippertouch --config /home/tope/printer_data/config/KlipperTouch.conf --debug --allow-controls --fullscreen}"
 
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 export QT_QPA_PLATFORM="${QT_QPA_PLATFORM:-eglfs}"

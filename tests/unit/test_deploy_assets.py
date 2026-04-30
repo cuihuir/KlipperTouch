@@ -20,7 +20,8 @@ def test_klippertouch_service_is_independent_systemd_unit() -> None:
     assert "Environment=KLIPPERTOUCH_ROTATE=right" in service
     assert "Environment=KLIPPERTOUCH_LOG=/home/tope/printer_data/logs/klippertouch.log" in service
     assert "--config /home/tope/printer_data/config/KlipperTouch.conf" in service
-    assert "--read-only" in service
+    assert "--read-only" not in service
+    assert "--allow-controls" in service
     assert "--fullscreen" in service
     assert "device-gui.service" not in service
 
@@ -42,6 +43,8 @@ def test_klippertouch_start_script_uses_xinit_and_xrandr_rotation() -> None:
     assert 'unset QT_XCB_GL_INTEGRATION' in script
     assert 'unset QSG_RHI_BACKEND' in script
     assert 'export QSG_INFO="${QSG_INFO:-1}"' in script
+    assert "--read-only" not in script
+    assert "--allow-controls" in script
     assert 'exec /bin/bash -c "$xclient" >> "$log_file" 2>&1' in script
 
 
@@ -59,7 +62,8 @@ def test_klippertouch_eglfs_service_is_isolated_experiment() -> None:
         "/home/tope/printer_data/config/klippertouch-eglfs-kms.json"
     ) in service
     assert "Environment=QSG_RHI_BACKEND=opengl" in service
-    assert "--read-only" in service
+    assert "--read-only" not in service
+    assert "--allow-controls" in service
     assert "--fullscreen" in service
     assert "WantedBy=multi-user.target" not in service
     assert "xinit" not in service
@@ -77,6 +81,8 @@ def test_klippertouch_eglfs_start_script_runs_without_xorg() -> None:
     assert 'export QT_QPA_PLATFORM="${QT_QPA_PLATFORM:-eglfs}"' in script
     assert 'export QT_QPA_EGLFS_INTEGRATION="${QT_QPA_EGLFS_INTEGRATION:-eglfs_kms}"' in script
     assert 'export QSG_RHI_BACKEND="${QSG_RHI_BACKEND:-opengl}"' in script
+    assert "--read-only" not in script
+    assert "--allow-controls" in script
     assert 'exec /bin/bash -c "$eglfs_client" >> "$log_file" 2>&1' in script
 
 
@@ -88,11 +94,11 @@ def test_klippertouch_eglfs_kms_config_targets_rockchip_drm() -> None:
     assert '"mode": "preferred"' in config
 
 
-def test_deployment_config_keeps_real_printer_validation_read_only() -> None:
+def test_deployment_config_enables_real_printer_controls() -> None:
     config = Path("deploy/KlipperTouch.conf").read_text(encoding="utf-8")
 
     assert "[main]" in config
-    assert "read_only = true" in config
+    assert "read_only = false" in config
     assert "[printer LocalPrinter]" in config
     assert "moonraker_host = 127.0.0.1" in config
     assert "moonraker_port = 7125" in config

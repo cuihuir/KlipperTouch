@@ -33,11 +33,11 @@ The GUI starts with:
 /home/tope/klippertouch/venv/bin/klippertouch \
   --config /home/tope/printer_data/config/KlipperTouch.conf \
   --debug \
-  --read-only \
+  --allow-controls \
   --fullscreen
 ```
 
-Real-printer validation starts read-only. Remove `--read-only` or replace it with `--allow-controls` only after explicit control validation.
+The deployment now starts with controls enabled. Keep `read_only = false` in `/home/tope/printer_data/config/KlipperTouch.conf`, or keep the explicit `--allow-controls` service argument in place so the runtime policy does not fall back to read-only mode.
 
 The production X11 service intentionally uses the Qt Quick software renderer:
 

@@ -20,7 +20,7 @@ Environment=QSG_INFO=1
 Environment="QT_LOGGING_RULES=qt.qpa.egldeviceintegration=true;qt.qpa.eglfs.kms=true"
 Environment=KLIPPERTOUCH_DISPLAY_ROTATION=right
 Environment=KLIPPERTOUCH_LOG=/home/tope/printer_data/logs/klippertouch-eglfs.log
-Environment="KLIPPERTOUCH_EGLFS_CLIENT=/home/tope/klippertouch/venv/bin/klippertouch --config /home/tope/printer_data/config/KlipperTouch.conf --debug --read-only --fullscreen"
+Environment="KLIPPERTOUCH_EGLFS_CLIENT=/home/tope/klippertouch/venv/bin/klippertouch --config /home/tope/printer_data/config/KlipperTouch.conf --debug --allow-controls --fullscreen"
 ExecStart=/usr/local/bin/klippertouch-eglfs-start.sh
 PAMName=%u
 TTYPath=/dev/tty7

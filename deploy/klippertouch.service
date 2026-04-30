@@ -23,7 +23,7 @@ Environment=KLIPPERTOUCH_ROTATE=right
 Environment=KLIPPERTOUCH_LOG=/home/tope/printer_data/logs/klippertouch.log
 Environment=KLIPPERTOUCH_RESET_OUTPUT=1
 Environment=KLIPPERTOUCH_TOUCH_HID_PATTERN=1A86
-Environment="KLIPPERTOUCH_XCLIENT=/home/tope/klippertouch/venv/bin/klippertouch --config /home/tope/printer_data/config/KlipperTouch.conf --debug --read-only --fullscreen"
+Environment="KLIPPERTOUCH_XCLIENT=/home/tope/klippertouch/venv/bin/klippertouch --config /home/tope/printer_data/config/KlipperTouch.conf --debug --allow-controls --fullscreen"
 ExecStart=/usr/local/bin/klippertouch-start.sh
 PAMName=%u
 TTYPath=/dev/tty7
