@@ -295,9 +295,11 @@ def _query_fields_for_object(name: str) -> str:
     if name == "virtual_sdcard":
         return "progress,is_active,file_path"
     if name == "toolhead":
-        return "position,homed_axes,max_accel,max_velocity"
+        return "position,homed_axes,axis_minimum,axis_maximum,max_accel,max_velocity"
     if name == "gcode_move":
         return "gcode_position,homing_origin,speed,speed_factor,extrude_factor"
+    if name == "exclude_object":
+        return "objects,excluded_objects,current_object"
     if name == "webhooks":
         return "state,state_message"
     if name == "configfile":

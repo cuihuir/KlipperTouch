@@ -190,6 +190,37 @@ def test_client_queries_webhooks_state_fields(monkeypatch) -> None:
     assert captured["params"] == {"webhooks": "state,state_message"}
 
 
+def test_client_queries_toolhead_bed_bounds_and_exclude_object_fields(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            pass
+
+        def json(self) -> dict[str, object]:
+            return {"result": {"status": {}}}
+
+    def fake_get(
+        _url: str,
+        *,
+        headers: dict[str, str],
+        params: dict[str, str] | None,
+        timeout: float,
+    ) -> FakeResponse:
+        captured["params"] = params
+        return FakeResponse()
+
+    monkeypatch.setattr("klippertouch.moonraker.client.requests.get", fake_get)
+
+    client = MoonrakerClient(PrinterConfig(name="p", moonraker_host="host"))
+
+    assert client.get_printer_objects_query(("toolhead", "exclude_object")) == {"status": {}}
+    assert captured["params"] == {
+        "toolhead": "position,homed_axes,axis_minimum,axis_maximum,max_accel,max_velocity",
+        "exclude_object": "objects,excluded_objects,current_object",
+    }
+
+
 def test_client_queries_configfile_capability_and_warning_fields(monkeypatch) -> None:
     captured: dict[str, object] = {}
 
