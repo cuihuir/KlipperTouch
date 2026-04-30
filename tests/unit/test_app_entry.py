@@ -34,7 +34,11 @@ def test_app_registers_job_control_context() -> None:
     source = app.Path(app.__file__).read_text(encoding="utf-8")
 
     assert "JobControlModel" in source
-    assert "job_control_model = JobControlModel(job_control_client)" in source
+    assert (
+        "job_control_model = JobControlModel("
+        "job_control_client, status_model.extrusion_guard_status)"
+        in source
+    )
     assert 'setContextProperty("jobControlModel", job_control_model)' in source
 
 

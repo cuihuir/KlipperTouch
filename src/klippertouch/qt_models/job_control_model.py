@@ -70,9 +70,14 @@ class JobControlModel(QObject):
     requestedPrintStateChanged = Signal()
     fileDeleted = Signal(str)
 
-    def __init__(self, client: JobControlClient | None = None) -> None:
+    def __init__(
+        self,
+        client: JobControlClient | None = None,
+        extrusion_status_provider: Callable[[], tuple[str, str, bool]] | None = None,
+    ) -> None:
         super().__init__()
         self._client = client
+        self._extrusion_status_provider = extrusion_status_provider
         self._last_status = ""
         self._last_error = ""
         self._requested_print_state = ""
@@ -197,6 +202,10 @@ class JobControlModel(QObject):
 
     @Slot(str, float, float)
     def requestExtrudeFilament(self, action: str, distance: float, speed: float) -> None:  # noqa: N802
+        guard_error = self._extrusion_guard_error()
+        if guard_error:
+            self._set_error(guard_error)
+            return
         clean_action = action.strip().lower()
         if distance <= 0:
             self._set_error("Extrusion distance must be positive")
@@ -295,10 +304,26 @@ class JobControlModel(QObject):
         speed: float,
         command: Callable[[JobControlClient], Callable[[float], dict[str, object]]],
     ) -> None:
+        guard_error = self._extrusion_guard_error()
+        if guard_error:
+            self._set_error(guard_error)
+            return
         if speed <= 0:
             self._set_error("Filament speed must be positive")
             return
         self._run_control(label, lambda client: command(client)(float(speed)))
+
+    def _extrusion_guard_error(self) -> str:
+        if self._extrusion_status_provider is None:
+            return ""
+        klippy_state, webhooks_state, extruder_can_extrude = self._extrusion_status_provider()
+        klippy_state = klippy_state.strip().lower()
+        webhooks_state = webhooks_state.strip().lower()
+        if klippy_state != "ready" or webhooks_state != "ready":
+            return "Printer not ready"
+        if not extruder_can_extrude:
+            return "Heat nozzle first"
+        return ""
 
     def _run_control(
         self,

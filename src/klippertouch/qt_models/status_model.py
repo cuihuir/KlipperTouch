@@ -788,6 +788,13 @@ class StatusModel(QObject):
     def extruderCanExtrude(self) -> bool:  # noqa: N802
         return self._status.extruder_can_extrude
 
+    def extrusion_guard_status(self) -> tuple[str, str, bool]:
+        return (
+            self._status.klippy_state,
+            self._status.webhooks_state,
+            self._status.extruder_can_extrude,
+        )
+
     @Property(float, notify=extruderTemperatureChanged)
     def extruderPressureAdvance(self) -> float:  # noqa: N802
         return self._status.extruder_pressure_advance

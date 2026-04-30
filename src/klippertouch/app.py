@@ -64,7 +64,7 @@ def run_app(
         initial_temperature_store=initial_temperature_store,
     )
     gcode_file_model = create_gcode_file_model(initial_files)
-    job_control_model = JobControlModel(job_control_client)
+    job_control_model = JobControlModel(job_control_client, status_model.extrusion_guard_status)
     notification_model = NotificationModel()
     startup_loader: StartupDataLoader | None = None
     file_refresh: GCodeFileRefresh | None = None

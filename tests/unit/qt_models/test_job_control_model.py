@@ -118,6 +118,22 @@ class SlowClient(FakeClient):
         return super().start_print(filename)
 
 
+class FakeExtrusionStatusProvider:
+    def __init__(
+        self,
+        *,
+        klippy_state: str = "ready",
+        webhooks_state: str = "ready",
+        extruder_can_extrude: bool = True,
+    ) -> None:
+        self.klippyState = klippy_state
+        self.webhooksState = webhooks_state
+        self.extruderCanExtrude = extruder_can_extrude
+
+    def __call__(self) -> tuple[str, str, bool]:
+        return (self.klippyState, self.webhooksState, self.extruderCanExtrude)
+
+
 def wait_for_calls(qtbot, model: JobControlModel, client: FakeClient, count: int) -> None:
     qtbot.waitUntil(
         lambda: len(client.calls) >= count
@@ -382,7 +398,7 @@ def test_job_control_model_rejects_invalid_home_requests(qtbot) -> None:
 
 def test_job_control_model_sends_validated_extrude_requests(qtbot) -> None:
     client = FakeClient()
-    model = JobControlModel(client)
+    model = JobControlModel(client, FakeExtrusionStatusProvider())
 
     model.requestExtrudeFilament("extrude", 10, 5)
     model.requestExtrudeFilament("retract", 5, 2)
@@ -393,6 +409,17 @@ def test_job_control_model_sends_validated_extrude_requests(qtbot) -> None:
         ("extrude_filament", "-5.0:2.0"),
     ]
     assert model.lastStatus == "Retract sent"
+
+
+def test_job_control_model_blocks_cold_extrusion_with_status_context(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client, FakeExtrusionStatusProvider(extruder_can_extrude=False))
+
+    model.requestExtrudeFilament("extrude", 10, 5)
+    model.requestLoadFilament(5)
+
+    assert client.calls == []
+    assert model.lastError == "Heat nozzle first"
 
 
 def test_job_control_model_rejects_invalid_extrude_requests(qtbot) -> None:
