@@ -145,6 +145,23 @@ SAMPLE_STATUS = {
     "accelerator_level_available": True,
     "homed_axes": "xyz",
     "exclude_object_names": ("part_a", "part_b", "part_c"),
+    "exclude_objects": (
+        {
+            "name": "part_a",
+            "center": [40.0, 35.0],
+            "polygon": [[28.0, 25.0], [52.0, 25.0], [54.0, 45.0], [30.0, 47.0]],
+        },
+        {
+            "name": "part_b",
+            "center": [88.0, 58.0],
+            "polygon": [[76.0, 46.0], [100.0, 45.0], [104.0, 68.0], [82.0, 72.0]],
+        },
+        {
+            "name": "part_c",
+            "center": [132.0, 34.0],
+            "polygon": [[120.0, 24.0], [144.0, 24.0], [148.0, 44.0], [124.0, 48.0]],
+        },
+    ),
     "excluded_object_names": ("part_a",),
     "current_object": "part_b",
     "requested_speed": 125.0,

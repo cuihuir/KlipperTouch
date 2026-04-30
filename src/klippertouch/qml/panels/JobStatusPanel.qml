@@ -31,6 +31,7 @@ Item {
     property var temperatureModel: null
     property var fileModel: null
     property var excludeObjectNames: []
+    property var excludeObjects: []
     property var excludedObjectNames: []
     property string currentObject: ""
     property string detailPage: "summary"
@@ -49,6 +50,10 @@ Item {
     signal extrudeFactorAdjustRequested(real delta)
     signal objectExcludeRequested(string objectName)
     signal jobActionRequested(string action, string objectName)
+
+    onExcludeObjectsChanged: root.requestObjectMapRepaint()
+    onExcludedObjectNamesChanged: root.requestObjectMapRepaint()
+    onCurrentObjectChanged: root.requestObjectMapRepaint()
 
     component StatusCard: Rectangle {
         id: statusCard
@@ -626,17 +631,171 @@ Item {
     }
 
     function confirmationRequired() {
-        return root.pendingJobAction === "cancel" || root.pendingJobAction === "skip"
+        return root.pendingJobAction === "cancel"
+            || root.pendingJobAction === "skip"
+            || root.pendingJobAction === "skip_current"
     }
 
     function pendingJobActionLabel() {
         if (root.pendingJobAction === "cancel") {
             return "Cancel " + (root.printFilename.length > 0 ? root.printFilename : "current print")
         }
+        if (root.pendingJobAction === "skip_current") {
+            return "Skip current object " + (root.currentObject.length > 0 ? root.currentObject : "-")
+        }
         if (root.pendingJobAction === "skip") {
             return "Skip object " + (root.pendingJobObject.length > 0 ? root.pendingJobObject : "-")
         }
         return ""
+    }
+
+    function requestObjectMapRepaint() {
+        if (typeof objectMapCanvas !== "undefined") {
+            objectMapCanvas.requestPaint()
+        }
+    }
+
+    function excludeObjectHasPolygon(objectInfo) {
+        return objectInfo && objectInfo.polygon && objectInfo.polygon.length >= 3
+    }
+
+    function objectMapHasPolygons() {
+        for (var i = 0; i < root.excludeObjects.length; i += 1) {
+            if (root.excludeObjectHasPolygon(root.excludeObjects[i])) {
+                return true
+            }
+        }
+        return false
+    }
+
+    function objectMapBounds() {
+        var minX = Number.POSITIVE_INFINITY
+        var minY = Number.POSITIVE_INFINITY
+        var maxX = Number.NEGATIVE_INFINITY
+        var maxY = Number.NEGATIVE_INFINITY
+        for (var i = 0; i < root.excludeObjects.length; i += 1) {
+            var objectInfo = root.excludeObjects[i]
+            if (!root.excludeObjectHasPolygon(objectInfo)) {
+                continue
+            }
+            for (var j = 0; j < objectInfo.polygon.length; j += 1) {
+                var point = objectInfo.polygon[j]
+                minX = Math.min(minX, point[0])
+                minY = Math.min(minY, point[1])
+                maxX = Math.max(maxX, point[0])
+                maxY = Math.max(maxY, point[1])
+            }
+        }
+        if (!isFinite(minX) || !isFinite(minY) || maxX <= minX || maxY <= minY) {
+            return {"valid": false, "minX": 0, "minY": 0, "maxX": 1, "maxY": 1}
+        }
+        return {"valid": true, "minX": minX, "minY": minY, "maxX": maxX, "maxY": maxY}
+    }
+
+    function objectMapPadding() {
+        return Math.max(12, Math.round(root.metrics.fontSize * 0.85))
+    }
+
+    function objectMapXToCanvas(x, bounds, width) {
+        var padding = root.objectMapPadding()
+        return padding + ((x - bounds.minX) / Math.max(0.001, bounds.maxX - bounds.minX))
+            * Math.max(1, width - padding * 2)
+    }
+
+    function objectMapYToCanvas(y, bounds, height) {
+        var padding = root.objectMapPadding()
+        return height - padding - ((y - bounds.minY) / Math.max(0.001, bounds.maxY - bounds.minY))
+            * Math.max(1, height - padding * 2)
+    }
+
+    function objectMapCanvasToX(screenX, bounds, width) {
+        var padding = root.objectMapPadding()
+        return bounds.minX + ((screenX - padding) / Math.max(1, width - padding * 2))
+            * Math.max(0.001, bounds.maxX - bounds.minX)
+    }
+
+    function objectMapCanvasToY(screenY, bounds, height) {
+        var padding = root.objectMapPadding()
+        return bounds.minY + ((height - padding - screenY) / Math.max(1, height - padding * 2))
+            * Math.max(0.001, bounds.maxY - bounds.minY)
+    }
+
+    function objectAtPoint(screenX, screenY) {
+        var bounds = root.objectMapBounds()
+        if (!bounds.valid) {
+            return ""
+        }
+        var bedX = root.objectMapCanvasToX(screenX, bounds, objectMapCanvas.width)
+        var bedY = root.objectMapCanvasToY(screenY, bounds, objectMapCanvas.height)
+        for (var i = root.excludeObjects.length - 1; i >= 0; i -= 1) {
+            var objectInfo = root.excludeObjects[i]
+            if (!root.excludeObjectHasPolygon(objectInfo)
+                    || root.excludedObjectNames.indexOf(objectInfo.name) >= 0) {
+                continue
+            }
+            var minX = Number.POSITIVE_INFINITY
+            var minY = Number.POSITIVE_INFINITY
+            var maxX = Number.NEGATIVE_INFINITY
+            var maxY = Number.NEGATIVE_INFINITY
+            for (var j = 0; j < objectInfo.polygon.length; j += 1) {
+                var point = objectInfo.polygon[j]
+                minX = Math.min(minX, point[0])
+                minY = Math.min(minY, point[1])
+                maxX = Math.max(maxX, point[0])
+                maxY = Math.max(maxY, point[1])
+            }
+            if (bedX >= minX && bedX <= maxX && bedY >= minY && bedY <= maxY) {
+                return objectInfo.name
+            }
+        }
+        return ""
+    }
+
+    function drawExcludeObjectMap(ctx) {
+        var bounds = root.objectMapBounds()
+        ctx.clearRect(0, 0, objectMapCanvas.width, objectMapCanvas.height)
+        if (!bounds.valid) {
+            return
+        }
+        var padding = root.objectMapPadding()
+        ctx.strokeStyle = "#344044"
+        ctx.lineWidth = 1
+        ctx.strokeRect(padding, padding, objectMapCanvas.width - padding * 2, objectMapCanvas.height - padding * 2)
+        ctx.setLineDash([2, 4])
+        ctx.strokeStyle = "#263233"
+        ctx.beginPath()
+        ctx.moveTo(objectMapCanvas.width / 2, padding)
+        ctx.lineTo(objectMapCanvas.width / 2, objectMapCanvas.height - padding)
+        ctx.moveTo(padding, objectMapCanvas.height / 2)
+        ctx.lineTo(objectMapCanvas.width - padding, objectMapCanvas.height / 2)
+        ctx.stroke()
+        ctx.setLineDash([])
+
+        for (var i = 0; i < root.excludeObjects.length; i += 1) {
+            var objectInfo = root.excludeObjects[i]
+            if (!root.excludeObjectHasPolygon(objectInfo)) {
+                continue
+            }
+            var excluded = root.excludedObjectNames.indexOf(objectInfo.name) >= 0
+            var current = objectInfo.name === root.currentObject
+            ctx.beginPath()
+            for (var j = 0; j < objectInfo.polygon.length; j += 1) {
+                var point = objectInfo.polygon[j]
+                var x = root.objectMapXToCanvas(point[0], bounds, objectMapCanvas.width)
+                var y = root.objectMapYToCanvas(point[1], bounds, objectMapCanvas.height)
+                if (j === 0) {
+                    ctx.moveTo(x, y)
+                } else {
+                    ctx.lineTo(x, y)
+                }
+            }
+            ctx.closePath()
+            ctx.fillStyle = excluded ? "#202020" : current ? "#2d3d40" : "#141f21"
+            ctx.strokeStyle = current ? root.neutralAccent : "#4b5659"
+            ctx.lineWidth = current ? 2 : 1
+            ctx.fill()
+            ctx.stroke()
+        }
     }
 
     function jobActionGridHeight() {
@@ -1566,25 +1725,68 @@ Item {
                         GradientStop { position: 1.0; color: "#071011" }
                     }
 
-                    ColumnLayout {
+                    RowLayout {
                         anchors.fill: parent
                         anchors.margins: root.metrics.gap
-                        spacing: 0
+                        spacing: root.metrics.gap
 
                         Label {
                             Layout.fillWidth: true
-                            color: Theme.mutedText
-                            text: "Current object"
-                            font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
-                        }
-
-                        Label {
-                            Layout.fillWidth: true
+                            Layout.fillHeight: true
                             color: Theme.text
-                            text: root.currentObject.length > 0 ? root.currentObject : "-"
+                            text: root.currentObject.length > 0 ? root.currentObject : "No current object"
                             elide: Text.ElideMiddle
+                            verticalAlignment: Text.AlignVCenter
                             font.bold: true
                             font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.12))
+                        }
+
+                        JobButton {
+                            Layout.preferredWidth: root.jobButtonWidth
+                            Layout.preferredHeight: root.jobButtonHeight
+                            Layout.alignment: Qt.AlignVCenter
+                            text: "Skip Current"
+                            iconName: "object"
+                            enabled: root.currentObject.length > 0
+                                && root.excludedObjectNames.indexOf(root.currentObject) < 0
+                            onClicked: root.requestJobAction("skip_current", "")
+                        }
+                    }
+                }
+
+                Rectangle {
+                    id: objectMapFrame
+                    visible: root.objectMapHasPolygons()
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: root.metrics.portrait
+                        ? Math.max(180, Math.round(root.metrics.fontSize * 12.0))
+                        : Math.max(190, Math.round(root.metrics.fontSize * 12.6))
+                    color: "#081112"
+                    border.color: "#263233"
+                    border.width: 1
+                    radius: Math.round(root.metrics.fontSize * 0.32)
+                    clip: true
+
+                    Canvas {
+                        id: objectMapCanvas
+                        anchors.fill: parent
+                        anchors.margins: root.metrics.gap
+                        antialiasing: true
+                        renderStrategy: Canvas.Threaded
+                        onPaint: root.drawExcludeObjectMap(getContext("2d"))
+                        onWidthChanged: requestPaint()
+                        onHeightChanged: requestPaint()
+                        Component.onCompleted: requestPaint()
+                    }
+
+                    MouseArea {
+                        anchors.fill: objectMapCanvas
+                        enabled: root.objectMapHasPolygons()
+                        onClicked: {
+                            var objectName = root.objectAtPoint(mouse.x, mouse.y)
+                            if (objectName.length > 0) {
+                                root.requestJobAction("skip", objectName)
+                            }
                         }
                     }
                 }

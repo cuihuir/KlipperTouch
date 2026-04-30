@@ -26,6 +26,8 @@ class JobControlClient(Protocol):
 
     def exclude_object(self, object_name: str) -> dict[str, object]: ...
 
+    def exclude_current_object(self) -> dict[str, object]: ...
+
     def delete_gcode_file(self, filename: str) -> dict[str, object]: ...
 
     def clear_sdcard_file(self) -> dict[str, object]: ...
@@ -304,6 +306,10 @@ class JobControlModel(QObject):
             self._set_error("Object name is required")
             return
         self._run_control("Object skip", lambda client: client.exclude_object(clean_name))
+
+    @Slot()
+    def requestSkipCurrentObject(self) -> None:  # noqa: N802
+        self._run_control("Current object skip", lambda client: client.exclude_current_object())
 
     @Slot(float)
     def requestZOffsetAdjust(self, delta: float) -> None:  # noqa: N802

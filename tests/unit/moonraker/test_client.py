@@ -389,6 +389,7 @@ def test_client_sends_print_control_when_controls_enabled(
         ("set_speed_factor", 95.0, "M220 S95"),
         ("set_extrude_factor", 105.0, "M221 S105"),
         ("exclude_object", "part_a", "EXCLUDE_OBJECT NAME=part_a"),
+        ("exclude_current_object", None, "EXCLUDE_OBJECT CURRENT=1"),
         ("clear_sdcard_file", None, "SDCARD_RESET_FILE"),
         ("disable_motors", None, "M84"),
         (
@@ -541,6 +542,8 @@ def test_client_blocks_print_control_in_read_only_mode(monkeypatch) -> None:
         client.set_extrude_factor(105)
     with pytest.raises(UnsafeCommandError):
         client.exclude_object("part_a")
+    with pytest.raises(UnsafeCommandError):
+        client.exclude_current_object()
     with pytest.raises(UnsafeCommandError):
         client.delete_gcode_file("cube.gcode")
     with pytest.raises(UnsafeCommandError):

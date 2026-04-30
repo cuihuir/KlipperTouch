@@ -713,6 +713,17 @@ class StatusModel(QObject):
         return list(self._status.exclude_object_names)
 
     @Property(list, notify=excludeObjectChanged)
+    def excludeObjects(self) -> list[dict[str, object]]:
+        return [
+            {
+                "name": item.name,
+                "center": list(item.center) if item.center is not None else [],
+                "polygon": [list(point) for point in item.polygon],
+            }
+            for item in self._status.exclude_objects
+        ]
+
+    @Property(list, notify=excludeObjectChanged)
     def excludedObjectNames(self) -> list[str]:
         return list(self._status.excluded_object_names)
 
@@ -905,10 +916,12 @@ def _print_fields_changed(previous: PrinterStatus, current: PrinterStatus) -> bo
 def _exclude_object_fields_changed(previous: PrinterStatus, current: PrinterStatus) -> bool:
     return (
         previous.exclude_object_names,
+        previous.exclude_objects,
         previous.excluded_object_names,
         previous.current_object,
     ) != (
         current.exclude_object_names,
+        current.exclude_objects,
         current.excluded_object_names,
         current.current_object,
     )

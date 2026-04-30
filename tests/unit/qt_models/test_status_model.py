@@ -43,6 +43,14 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
         current_layer=3,
         total_layers=12,
         exclude_object_names=("part_a", "part_b"),
+        exclude_objects=(
+            {
+                "name": "part_a",
+                "center": [10.0, 20.0],
+                "polygon": [[8.0, 18.0], [12.0, 18.0], [12.0, 22.0], [8.0, 22.0]],
+            },
+            {"name": "part_b", "center": [30.0, 40.0], "polygon": []},
+        ),
         excluded_object_names=("part_a",),
         current_object="part_b",
         position_x=1.1,
@@ -107,6 +115,14 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
     assert model.currentLayer == 3
     assert model.totalLayers == 12
     assert model.excludeObjectNames == ["part_a", "part_b"]
+    assert model.excludeObjects == [
+        {
+            "name": "part_a",
+            "center": [10.0, 20.0],
+            "polygon": [[8.0, 18.0], [12.0, 18.0], [12.0, 22.0], [8.0, 22.0]],
+        },
+        {"name": "part_b", "center": [30.0, 40.0], "polygon": []},
+    ]
     assert model.excludedObjectNames == ["part_a"]
     assert model.currentObject == "part_b"
     assert model.excludeObjectCount == 2

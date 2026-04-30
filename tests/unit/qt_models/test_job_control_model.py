@@ -41,6 +41,10 @@ class FakeClient:
         self.calls.append(("exclude", object_name))
         return {"ok": True}
 
+    def exclude_current_object(self) -> dict[str, bool]:
+        self.calls.append(("exclude_current", ""))
+        return {"ok": True}
+
     def delete_gcode_file(self, filename: str) -> dict[str, bool]:
         self.calls.append(("delete", filename))
         return {"ok": True}
@@ -591,6 +595,17 @@ def test_job_control_model_sends_object_skip(qtbot) -> None:
 
     assert client.calls == [("exclude", "part_b")]
     assert model.lastStatus == "Object skip sent"
+
+
+def test_job_control_model_sends_current_object_skip(qtbot) -> None:
+    client = FakeClient()
+    model = JobControlModel(client)
+
+    model.requestSkipCurrentObject()
+    wait_for_calls(qtbot, model, client, 1)
+
+    assert client.calls == [("exclude_current", "")]
+    assert model.lastStatus == "Current object skip sent"
 
 
 def test_job_control_model_rejects_empty_object_skip(qtbot) -> None:

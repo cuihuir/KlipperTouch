@@ -697,6 +697,7 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "property var temperatureModel: null" in qml
     assert "property var fileModel: null" in qml
     assert "property var excludeObjectNames: []" in qml
+    assert "property var excludeObjects: []" in qml
     assert "property var excludedObjectNames: []" in qml
     assert "property string currentObject" in qml
     assert "signal objectExcludeRequested(string objectName)" in qml
@@ -895,6 +896,12 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "Layout.preferredHeight: root.advancedCardHeight()" in qml
     assert "id: excludePage" in qml
     assert "root.currentObject" in qml
+    assert "id: objectMapCanvas" in qml
+    assert "root.excludeObjects.length" in qml
+    assert "function objectMapBounds()" in qml
+    assert "function objectAtPoint(screenX, screenY)" in qml
+    assert "function drawExcludeObjectMap(ctx)" in qml
+    assert "root.requestJobAction(\"skip_current\", \"\")" in qml
     assert "model: root.excludeObjectNames" in qml
     assert "root.excludedObjectNames.indexOf(modelData) >= 0" in qml
     assert 'root.requestJobAction("skip", modelData)' in qml
@@ -1461,6 +1468,7 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "materialSystemEnabled: window.materialSystemEnabled" in main_qml
     assert "property var excludeObjectNames:" in main_qml
     assert "property var excludedObjectNames:" in main_qml
+    assert "property var excludeObjects:" in main_qml
     assert "property string currentObject:" in main_qml
     assert "extruderTemperature: window.extruderTemperature" in main_qml
     assert "extruderTarget: window.extruderTarget" in main_qml
@@ -2145,6 +2153,7 @@ def test_main_keeps_files_and_job_status_as_separate_routes() -> None:
     assert "jobControlBridgeModel.requestCancel()" in main_qml
     assert "jobControlBridgeModel.requestClearJob()" in main_qml
     assert "jobControlBridgeModel.requestSkipObject(objectName)" in main_qml
+    assert "jobControlBridgeModel.requestSkipCurrentObject()" in main_qml
     assert "function requestFileControl(action, path)" in main_qml
     assert "Qt.callLater(function() { jobControlBridgeModel.requestStartPrint(path) })" in main_qml
     assert "jobControlBridgeModel.requestStartPrint(path)" in main_qml
@@ -2197,6 +2206,7 @@ def test_main_keeps_files_and_job_status_as_separate_routes() -> None:
     assert "maxAccel: window.maxAccel" in main_qml
     assert "maxVelocity: window.maxVelocity" in main_qml
     assert "excludeObjectNames: window.excludeObjectNames" in main_qml
+    assert "excludeObjects: window.excludeObjects" in main_qml
     assert "excludedObjectNames: window.excludedObjectNames" in main_qml
     assert "currentObject: window.currentObject" in main_qml
     assert "temperatureModel: window.temperatureBridgeModel" in main_qml

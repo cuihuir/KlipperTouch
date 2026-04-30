@@ -73,6 +73,7 @@ ApplicationWindow {
     property var filamentSensors: bridgeModel ? bridgeModel.filamentSensors : []
     property var fanDevices: bridgeModel ? bridgeModel.fanDevices : []
     property var excludeObjectNames: bridgeModel ? bridgeModel.excludeObjectNames : []
+    property var excludeObjects: bridgeModel ? bridgeModel.excludeObjects : []
     property var excludedObjectNames: bridgeModel ? bridgeModel.excludedObjectNames : []
     property string currentObject: bridgeModel ? bridgeModel.currentObject : ""
     property bool toastVisible: false
@@ -241,6 +242,8 @@ ApplicationWindow {
             jobControlBridgeModel.requestCancel()
         } else if (action === "skip") {
             jobControlBridgeModel.requestSkipObject(objectName)
+        } else if (action === "skip_current") {
+            jobControlBridgeModel.requestSkipCurrentObject()
         } else if (action === "clear") {
             jobControlBridgeModel.requestClearJob()
         }
@@ -569,6 +572,7 @@ ApplicationWindow {
                 maxAccel: window.maxAccel
                 maxVelocity: window.maxVelocity
                 excludeObjectNames: window.excludeObjectNames
+                excludeObjects: window.excludeObjects
                 excludedObjectNames: window.excludedObjectNames
                 currentObject: window.currentObject
                 temperatureModel: window.temperatureBridgeModel

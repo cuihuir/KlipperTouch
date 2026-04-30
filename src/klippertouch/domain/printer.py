@@ -33,6 +33,7 @@ class ToolheadStatusFields(TypedDict, total=False):
 
 class ExcludeObjectStatusFields(TypedDict, total=False):
     exclude_object_names: tuple[str, ...]
+    exclude_objects: tuple["ExcludeObjectStatus", ...]
     excluded_object_names: tuple[str, ...]
     current_object: str
 
@@ -97,6 +98,26 @@ class FanStatus:
 
 
 @dataclass(frozen=True)
+class ExcludeObjectStatus:
+    name: str
+    center: tuple[float, float] | None = None
+    polygon: tuple[tuple[float, float], ...] = ()
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "name", str(self.name).strip())
+        object.__setattr__(self, "center", _point_pair(self.center))
+        object.__setattr__(
+            self,
+            "polygon",
+            tuple(
+                point
+                for point in (_point_pair(item) for item in self.polygon)
+                if point is not None
+            ),
+        )
+
+
+@dataclass(frozen=True)
 class McuStatus:
     name: str
     version: str = "unknown"
@@ -144,6 +165,7 @@ class PrinterStatus:
     current_layer: int = 0
     total_layers: int = 0
     exclude_object_names: tuple[str, ...] = ()
+    exclude_objects: tuple[ExcludeObjectStatus, ...] = ()
     excluded_object_names: tuple[str, ...] = ()
     current_object: str = ""
     position_x: float = 0.0
@@ -242,6 +264,14 @@ class PrinterStatus:
             "exclude_object_names",
             tuple(str(item) for item in self.exclude_object_names if str(item)),
         )
+        exclude_objects = _exclude_object_definitions(self.exclude_objects)
+        object.__setattr__(self, "exclude_objects", exclude_objects)
+        if exclude_objects and not self.exclude_object_names:
+            object.__setattr__(
+                self,
+                "exclude_object_names",
+                tuple(item.name for item in exclude_objects),
+            )
         object.__setattr__(
             self,
             "excluded_object_names",
@@ -430,6 +460,7 @@ class PrinterStatus:
             print_fields["print_progress"] = self.print_progress
         exclude_object_fields: ExcludeObjectStatusFields = {
             "exclude_object_names": self.exclude_object_names,
+            "exclude_objects": self.exclude_objects,
             "excluded_object_names": self.excluded_object_names,
             "current_object": self.current_object,
         }
@@ -915,6 +946,7 @@ def _exclude_object_fields_from_status(
     fields = ExcludeObjectStatusFields()
     if "objects" in exclude_object:
         fields["exclude_object_names"] = _exclude_object_names(exclude_object["objects"])
+        fields["exclude_objects"] = _exclude_object_definitions(exclude_object["objects"])
     if "excluded_objects" in exclude_object:
         fields["excluded_object_names"] = _string_tuple(exclude_object["excluded_objects"])
     if "current_object" in exclude_object:
@@ -938,18 +970,59 @@ def _webhooks_fields_from_status(object_status: dict[str, Any]) -> WebhooksStatu
     return fields
 
 
+def _exclude_object_definitions(objects: Any) -> tuple[ExcludeObjectStatus, ...]:
+    if not isinstance(objects, list | tuple):
+        return ()
+    definitions: list[ExcludeObjectStatus] = []
+    for item in objects:
+        if isinstance(item, ExcludeObjectStatus):
+            if item.name:
+                definitions.append(item)
+            continue
+        if isinstance(item, dict):
+            name = str(item.get("name", "")).strip()
+            if not name:
+                continue
+            definitions.append(
+                ExcludeObjectStatus(
+                    name=name,
+                    center=_point_pair(item.get("center")),
+                    polygon=tuple(
+                        point
+                        for point in (_point_pair(point) for point in item.get("polygon", ()))
+                        if point is not None
+                    ),
+                )
+            )
+            continue
+        name = str(item).strip()
+        if name:
+            definitions.append(ExcludeObjectStatus(name=name))
+    return tuple(definitions)
+
+
 def _exclude_object_names(objects: Any) -> tuple[str, ...]:
+    definitions = _exclude_object_definitions(objects)
+    if definitions:
+        return tuple(item.name for item in definitions)
     if not isinstance(objects, list | tuple):
         return ()
     names: list[str] = []
     for item in objects:
-        if isinstance(item, dict):
-            name = str(item.get("name", "")).strip()
-        else:
-            name = str(item).strip()
+        name = str(item).strip()
         if name:
             names.append(name)
     return tuple(names)
+
+
+def _point_pair(value: Any) -> tuple[float, float] | None:
+    if not isinstance(value, list | tuple) or len(value) < 2:
+        return None
+    x = _optional_float(value[0])
+    y = _optional_float(value[1])
+    if x is None or y is None:
+        return None
+    return (x, y)
 
 
 def _string_tuple(values: Any) -> tuple[str, ...]:

@@ -710,7 +710,14 @@ def test_printer_status_populates_read_only_exclude_object_state() -> None:
         object_status={
             "status": {
                 "exclude_object": {
-                    "objects": [{"name": "part_a"}, {"name": "part_b"}],
+                    "objects": [
+                        {
+                            "name": "part_a",
+                            "center": [10.0, 20.0],
+                            "polygon": [[8.0, 18.0], [12.0, 18.0], [12.0, 22.0], [8.0, 22.0]],
+                        },
+                        {"name": "part_b"},
+                    ],
                     "excluded_objects": ["part_a"],
                     "current_object": "part_b",
                 },
@@ -719,6 +726,14 @@ def test_printer_status_populates_read_only_exclude_object_state() -> None:
     )
 
     assert status.exclude_object_names == ("part_a", "part_b")
+    assert [item.name for item in status.exclude_objects] == ["part_a", "part_b"]
+    assert status.exclude_objects[0].center == (10.0, 20.0)
+    assert status.exclude_objects[0].polygon == (
+        (8.0, 18.0),
+        (12.0, 18.0),
+        (12.0, 22.0),
+        (8.0, 22.0),
+    )
     assert status.excluded_object_names == ("part_a",)
     assert status.current_object == "part_b"
     assert status.exclude_object_count == 2
@@ -729,6 +744,14 @@ def test_printer_status_applies_read_only_exclude_object_update() -> None:
     status = PrinterStatus(
         objects=("exclude_object",),
         exclude_object_names=("part_a", "part_b"),
+        exclude_objects=(
+            {
+                "name": "part_a",
+                "center": [10.0, 20.0],
+                "polygon": [[8.0, 18.0], [12.0, 18.0], [12.0, 22.0], [8.0, 22.0]],
+            },
+            {"name": "part_b"},
+        ),
         excluded_object_names=(),
         current_object="part_a",
     )
@@ -736,6 +759,14 @@ def test_printer_status_applies_read_only_exclude_object_update() -> None:
     updated = status.with_status_update(
         {
             "exclude_object": {
+                "objects": [
+                    {"name": "part_a"},
+                    {
+                        "name": "part_b",
+                        "center": [30.0, 40.0],
+                        "polygon": [[28.0, 38.0], [32.0, 38.0], [32.0, 42.0], [28.0, 42.0]],
+                    },
+                ],
                 "current_object": "part_b",
                 "excluded_objects": ["part_a"],
             }
@@ -743,6 +774,13 @@ def test_printer_status_applies_read_only_exclude_object_update() -> None:
     )
 
     assert updated.exclude_object_names == ("part_a", "part_b")
+    assert updated.exclude_objects[1].center == (30.0, 40.0)
+    assert updated.exclude_objects[1].polygon == (
+        (28.0, 38.0),
+        (32.0, 38.0),
+        (32.0, 42.0),
+        (28.0, 42.0),
+    )
     assert updated.excluded_object_names == ("part_a",)
     assert updated.current_object == "part_b"
 

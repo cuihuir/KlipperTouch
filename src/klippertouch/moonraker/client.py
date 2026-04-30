@@ -154,6 +154,9 @@ class MoonrakerClient:
     def exclude_object(self, object_name: str) -> dict[str, Any]:
         return self.run_gcode_script(f"EXCLUDE_OBJECT NAME={object_name}")
 
+    def exclude_current_object(self) -> dict[str, Any]:
+        return self.run_gcode_script("EXCLUDE_OBJECT CURRENT=1")
+
     def clear_sdcard_file(self) -> dict[str, Any]:
         return self.run_gcode_script("SDCARD_RESET_FILE")
 
