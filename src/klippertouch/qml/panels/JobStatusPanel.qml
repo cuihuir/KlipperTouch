@@ -795,6 +795,47 @@ Item {
         return ""
     }
 
+    function objectMapFillColor(excluded, current, selected) {
+        if (excluded) {
+            return "#202020"
+        }
+        if (selected) {
+            return "#344246"
+        }
+        if (current) {
+            return "#162a33"
+        }
+        return "#141f21"
+    }
+
+    function objectMapStrokeColor(current, selected) {
+        return selected ? "#e0e6e8" : current ? "#5ea1bd" : "#4b5659"
+    }
+
+    function drawCurrentObjectMarker(ctx, objectInfo, bounds) {
+        if (!root.excludeObjectHasPolygon(objectInfo)) {
+            return
+        }
+        ctx.save()
+        ctx.setLineDash([4, 3])
+        ctx.strokeStyle = "#5ea1bd"
+        ctx.lineWidth = 1
+        ctx.beginPath()
+        for (var j = 0; j < objectInfo.polygon.length; j += 1) {
+            var point = objectInfo.polygon[j]
+            var x = root.objectMapXToCanvas(point[0], bounds, objectMapCanvas.width)
+            var y = root.objectMapYToCanvas(point[1], bounds, objectMapCanvas.height)
+            if (j === 0) {
+                ctx.moveTo(x, y)
+            } else {
+                ctx.lineTo(x, y)
+            }
+        }
+        ctx.closePath()
+        ctx.stroke()
+        ctx.restore()
+    }
+
     function drawExcludeObjectMap(ctx) {
         var bounds = root.objectMapBounds()
         ctx.clearRect(0, 0, objectMapCanvas.width, objectMapCanvas.height)
@@ -835,11 +876,14 @@ Item {
                 }
             }
             ctx.closePath()
-            ctx.fillStyle = excluded ? "#202020" : selected ? "#33464a" : current ? "#243539" : "#141f21"
-            ctx.strokeStyle = selected ? root.neutralAccent : current ? "#6f7b7e" : "#4b5659"
+            ctx.fillStyle = root.objectMapFillColor(excluded, current, selected)
+            ctx.strokeStyle = root.objectMapStrokeColor(current, selected)
             ctx.lineWidth = selected ? 3 : current ? 2 : 1
             ctx.fill()
             ctx.stroke()
+            if (current && selected) {
+                root.drawCurrentObjectMarker(ctx, objectInfo, bounds)
+            }
         }
     }
 
