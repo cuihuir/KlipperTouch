@@ -205,6 +205,8 @@ Batch 5: Long-running read-only validation
 
 - Run websocket refresh against the real printer for reconnect and update behavior.
 - Record failures and Moonraker object gaps without sending state-changing commands.
+- Follow up the known stale-status issue in `docs/known-issues.md`: detect silent WebSocket
+  stalls, reconnect, poll recovery status, and resubscribe objects.
 
 ## Safety Rules
 

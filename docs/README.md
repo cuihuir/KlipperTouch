@@ -17,6 +17,7 @@ This documentation is organized for long-term maintenance rather than short-term
 ## Planning
 
 - `docs/roadmap.md` tracks the staged path from research to a production-ready PySide6/QML application.
+- `docs/known-issues.md` tracks confirmed runtime issues that need follow-up design or fixes.
 - `docs/safety-boundary.md` records the current runtime safety boundary, read-only allowlist, enabled commands, and verification commands.
 - `docs/deployment.md` describes direct venv launch and systemd user-service setup.
 
