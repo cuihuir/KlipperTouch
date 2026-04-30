@@ -726,10 +726,12 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert 'readonly property color neutralAccent: "#8b9496"' in qml
     assert 'readonly property color mutedDangerAccent: "#9a8582"' in qml
     assert "property string buttonRole" in qml
-    assert "property string iconName" in qml
+    assert "property string iconName: \"\"" not in qml
+    assert 'iconName: root.effectivePrintState() === "paused" ? "resume" : "pause"' in qml
     assert (
         'source: controlRoot.iconName.length > 0 ? Theme.iconSource(controlRoot.iconName) : ""'
-    ) in qml
+        not in qml
+    )
     assert "function jobActionGridHeight()" in qml
     assert "function jobActionGridWidth()" in qml
     assert "function jobActionButtonWidth()" in qml
@@ -1081,11 +1083,11 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert '"label": "Y-"' in qml
     assert '"label": "Z+"' in qml
     assert '"label": "Z-"' in qml
-    assert "component LockedTile: Rectangle" in qml
+    assert "component LockedTile: IconTileButton" in qml
     assert "component DirectionButton: Rectangle" in qml
     assert "property bool pressed: false" in qml
     assert 'import "../components"' in qml
-    assert "scale: tileRoot.pressed && tileRoot.enabled ? 0.97 : 1.0" in qml
+    assert "scale: tileRoot.pressed && tileRoot.enabled ? 0.97 : 1.0" not in qml
     assert "scale: directionRoot.pressed && directionRoot.enabled ? 0.96 : 1.0" in qml
     assert "component ActionIconButton: IconTileButton" in qml
     assert "pressedFeedback: pressed" in qml
@@ -1094,7 +1096,7 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert "scale: tiltRoot.pressed && tiltRoot.enabled ? 0.97 : 1.0" in qml
     assert "onPressedChanged: parent.pressed = pressed" in qml
     assert "onPressedChanged: tiltRoot.pressed = pressed" in qml
-    assert "id: tileDepth" in qml
+    assert "id: tileDepth" not in qml
     assert "id: directionDepth" in qml
     assert "id: actionDepth" not in qml
     assert "id: tiltDepth" in qml
@@ -1147,20 +1149,27 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert '"label": "More"' in qml
     assert '"action": "more"' in qml
     assert '"iconName": "settings"' in qml
-    assert "property string iconName" in qml
+    assert "iconName: \"home\"" in qml
     assert "readonly property int moveButtonSize" in qml
     assert "readonly property int moveHomeSize" in qml
     assert "readonly property int moveActionIconSize" in qml
     assert "readonly property real motionSectionGap" in qml
     assert "function fittedMoveButtonSize(padWidth, padHeight)" in qml
     assert "Math.floor(padHeight / 3.08)" in qml
-    assert 'source: tileRoot.iconName.length > 0 ? Theme.iconSource(tileRoot.iconName) : ""' in qml
+    assert (
+        'source: tileRoot.iconName.length > 0 ? Theme.iconSource(tileRoot.iconName) : ""'
+        not in qml
+    )
     assert "source: Theme.iconSource(actionRoot.iconName)" not in qml
     assert "selectedColor: \"#1b2b2e\"" in qml
     assert "selectedAccentColor: root.selectedAccent" in qml
     assert "id: moveMorePanel" in qml
     assert "id: moveMorePage" in qml
-    assert "source: Theme.iconSource(modelData.iconName)" in qml
+    assert "source: Theme.iconSource(modelData.iconName)" not in qml
+    assert "iconName: modelData.iconName" in qml
+    assert "visible: root.hint.length > 0" in Path(
+        "src/klippertouch/qml/components/IconTileButton.qml"
+    ).read_text(encoding="utf-8")
     assert "function showMore()" in qml
     assert 'root.detailPage = "more"' in qml
     assert "function goBack()" in qml
@@ -1267,10 +1276,13 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert 'iconName: "length"' in qml
     assert 'iconName: "speed"' in qml
     assert '"hint": "AFC / AMS"' in qml
-    assert "component ActionTile: Rectangle" in qml
+    assert "component ActionTile: IconTileButton" in qml
     assert (
         'source: tileRoot.iconName.length > 0 ? Theme.iconSource(tileRoot.iconName) : ""'
-    ) in qml
+        not in qml
+    )
+    assert "pressedFeedback: pressed" in qml
+    assert "textMaximumLineCount: 2" in qml
     assert "component PlaceholderTile: Rectangle" in qml
     assert "function selectDistance(distance)" in qml
     assert "function selectSpeed(speed)" in qml
@@ -1302,8 +1314,8 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "id: filamentSensorTile" in qml
     assert "Layout.columnSpan: root.materialEntryVisible() ? 1 : 2" in qml
     assert "property bool pressed: false" in qml
-    assert "scale: tileRoot.pressed && tileRoot.enabled ? 0.97 : 1.0" in qml
-    assert "id: actionTileDepth" in qml
+    assert "scale: tileRoot.pressed && tileRoot.enabled ? 0.97 : 1.0" not in qml
+    assert "id: actionTileDepth" not in qml
     assert "onPressedChanged: parent.pressed = pressed" in qml
     assert "component KeypadButton: TactileButton" in qml
     assert "implicitWidth: root.touchTargetSize" in qml
@@ -2296,7 +2308,7 @@ def test_move_panel_is_locked_and_responsive() -> None:
     assert "property string webhooksState" in qml
     assert "property var moveButtons" in qml
     assert "property var distances" in qml
-    assert "component LockedTile: Rectangle" in qml
+    assert "component LockedTile: IconTileButton" in qml
     assert "component DirectionButton: Rectangle" in qml
     assert "function arrowGlyph(direction)" in qml
     assert "id: bedRectCanvas" in qml
@@ -2361,7 +2373,7 @@ def test_extrude_panel_is_locked_and_responsive() -> None:
     assert "property var settingsButtons" in qml
     assert "property real actionFraction: 0.42" in qml
     assert "property real settingsFraction: 0.58" in qml
-    assert "component ActionTile: Rectangle" in qml
+    assert "component ActionTile: IconTileButton" in qml
     assert "component PlaceholderTile: Rectangle" in qml
     assert "component NozzleStage: Rectangle" in qml
     assert "Layout.preferredWidth: root.metrics.portrait" in qml

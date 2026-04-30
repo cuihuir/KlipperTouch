@@ -64,99 +64,24 @@ Item {
     signal temperatureTargetRequested(string deviceName, real target)
     signal pressureAdvanceRequested(real advance, real smoothTime)
 
-    component ActionTile: Rectangle {
-        id: tileRoot
+    component ActionTile: IconTileButton {
         property string title: ""
-        property string hint: ""
-        property string iconName: ""
-        property bool selected: false
         property bool primary: false
         property bool pressed: false
 
-        color: tileRoot.primary && tileRoot.enabled
-            ? tileRoot.pressed ? "#24383c" : "#162426"
-            : tileRoot.pressed
-                ? "#182528"
-                : tileRoot.selected
-                    ? "#1b2b2e"
-                    : "#101819"
-        scale: tileRoot.pressed && tileRoot.enabled ? 0.97 : 1.0
-        transformOrigin: Item.Center
-        border.color: tileRoot.primary && tileRoot.enabled
-            ? root.selectedAccent
-            : tileRoot.selected
-                ? root.selectedAccent
-                : "#536165"
-        border.width: tileRoot.primary && tileRoot.enabled ? 2 : 1
-        opacity: tileRoot.enabled ? 1.0 : 0.46
-        radius: Math.round(root.metrics.fontSize * 0.38)
-        Behavior on scale {
-            NumberAnimation { duration: 70; easing.type: Easing.OutQuad }
-        }
-
-        Rectangle {
-            id: actionTileDepth
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            height: Math.max(2, Math.round(root.metrics.fontSize * 0.18))
-            visible: !tileRoot.pressed && tileRoot.enabled
-            color: "#050808"
-            opacity: 0.78
-            radius: parent.radius
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: Math.max(3, Math.round(root.metrics.fontSize * 0.2))
-            color: "transparent"
-            border.color: "#1f2a2c"
-            border.width: 1
-            radius: Math.round(parent.radius * 0.72)
-        }
-
-        ColumnLayout {
-            anchors.centerIn: parent
-            width: parent.width - root.metrics.gap
-            spacing: Math.max(2, Math.round(root.metrics.fontSize * 0.12))
-
-            Image {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.preferredWidth: Math.max(20, Math.round(root.metrics.fontSize * 1.45))
-                Layout.preferredHeight: tileRoot.iconName.length > 0
-                    ? Math.max(20, Math.round(root.metrics.fontSize * 1.45))
-                    : 0
-                visible: tileRoot.iconName.length > 0
-                source: tileRoot.iconName.length > 0 ? Theme.iconSource(tileRoot.iconName) : ""
-                sourceSize.width: Layout.preferredWidth
-                sourceSize.height: Layout.preferredHeight
-                fillMode: Image.PreserveAspectFit
-                opacity: tileRoot.enabled ? 1.0 : 0.55
-            }
-
-            Label {
-                Layout.fillWidth: true
-                color: Theme.text
-                text: tileRoot.title
-                horizontalAlignment: Text.AlignHCenter
-                elide: Text.ElideRight
-                font.bold: true
-                font.pixelSize: Math.max(
-                    14,
-                    Math.round(root.metrics.fontSize * (tileRoot.primary ? root.actionEmphasis : 1.0))
-                )
-            }
-
-            Label {
-                Layout.fillWidth: true
-                color: Theme.mutedText
-                text: tileRoot.hint
-                visible: tileRoot.hint.length > 0
-                horizontalAlignment: Text.AlignHCenter
-                elide: Text.ElideRight
-                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.7))
-            }
-        }
+        text: title
+        fontSize: root.metrics.fontSize
+        iconSize: Math.max(20, Math.round(root.metrics.fontSize * 1.45))
+        textFontScale: primary ? root.actionEmphasis : 1.0
+        hintFontScale: 0.7
+        textMaximumLineCount: 2
+        pressedFeedback: pressed
+        baseColor: primary ? "#162426" : "#101819"
+        selectedColor: "#1b2b2e"
+        pressedColor: primary ? "#24383c" : "#182528"
+        accentColor: primary ? root.selectedAccent : "#536165"
+        selectedAccentColor: root.selectedAccent
+        hintColor: Theme.mutedText
     }
 
     component PlaceholderTile: Rectangle {

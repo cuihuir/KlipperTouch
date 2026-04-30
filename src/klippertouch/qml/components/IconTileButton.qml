@@ -25,10 +25,12 @@ Rectangle {
     property color pressedAccentColor: Theme.text
     property color placeholderAccentColor: "#3d474a"
     property color hintColor: "#9aa7ad"
+    property real disabledOpacity: 0.46
     readonly property bool feedbackActive: root.pressedFeedback || pressArea.pressed
 
     signal clicked()
 
+    opacity: root.enabled ? 1.0 : root.disabledOpacity
     radius: Math.round(height * 0.18)
     color: root.feedbackActive
         ? root.pressedColor
@@ -89,6 +91,7 @@ Rectangle {
         Label {
             width: parent.width
             text: root.hint
+            visible: root.hint.length > 0
             color: root.hintColor
             font.pixelSize: Math.max(8, Math.round(root.fontSize * root.hintFontScale))
             horizontalAlignment: Text.AlignHCenter

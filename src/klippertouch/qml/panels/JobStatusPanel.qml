@@ -125,7 +125,6 @@ Item {
         id: controlRoot
         property color accent: root.neutralAccent
         property string buttonRole: "normal"
-        property string iconName: ""
         readonly property color roleAccent: buttonRole === "danger"
             ? root.mutedDangerAccent
             : buttonRole === "primary" ? root.accentColor : accent
@@ -138,36 +137,10 @@ Item {
         accentColor: controlRoot.roleAccent
         disabledAccentColor: "#263233"
         disabledOpacity: 0.72
+        iconSize: Math.max(24, Math.round(root.metrics.fontSize * 1.55))
         depthSize: Math.max(3, Math.round(root.metrics.fontSize * 0.20))
         showLeadingAccent: true
         leadingAccentWidth: controlRoot.enabled ? 3 : 1
-
-        contentItem: RowLayout {
-            y: controlRoot.down && controlRoot.enabled ? Math.max(1, Math.round(root.metrics.fontSize * 0.08)) : 0
-            spacing: Math.max(5, Math.round(root.metrics.fontSize * 0.32))
-
-            Image {
-                visible: controlRoot.iconName.length > 0
-                Layout.preferredWidth: Math.max(24, Math.round(root.metrics.fontSize * 1.55))
-                Layout.fillHeight: true
-                source: controlRoot.iconName.length > 0 ? Theme.iconSource(controlRoot.iconName) : ""
-                sourceSize.width: Math.max(24, Math.round(root.metrics.fontSize * 1.55))
-                sourceSize.height: Math.max(24, Math.round(root.metrics.fontSize * 1.55))
-                fillMode: Image.PreserveAspectFit
-                opacity: controlRoot.enabled ? 1.0 : 0.55
-            }
-
-            Label {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                color: controlRoot.enabled ? Theme.text : Theme.mutedText
-                text: controlRoot.text
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                elide: Text.ElideRight
-                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.82))
-            }
-        }
     }
 
     component JobActionPreview: Rectangle {

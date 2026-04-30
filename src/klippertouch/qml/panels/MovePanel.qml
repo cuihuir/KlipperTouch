@@ -495,84 +495,24 @@ Item {
         return "▶"
     }
 
-    component LockedTile: Rectangle {
-        id: tileRoot
+    component LockedTile: IconTileButton {
         property string title: ""
         property string hint: "locked"
-        property string iconName: ""
-        property bool selected: false
         property bool pressed: false
 
-        color: tileRoot.pressed && tileRoot.enabled ? "#182528" : selected ? "#1b2b2e" : "#101718"
-        scale: tileRoot.pressed && tileRoot.enabled ? 0.97 : 1.0
-        opacity: tileRoot.enabled ? selected ? 1.0 : 0.9 : 0.46
-        border.color: tileRoot.pressed && tileRoot.enabled ? Theme.text : selected ? root.selectedAccent : "#48565a"
-        border.width: 1
-        radius: Math.round(Math.min(width, height) * 0.18)
-        Behavior on scale { NumberAnimation { duration: 80; easing.type: Easing.OutQuad } }
-        Behavior on color { ColorAnimation { duration: 80 } }
-        Behavior on border.color { ColorAnimation { duration: 80 } }
-
-        Rectangle {
-            id: tileDepth
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            height: Math.max(2, Math.round(root.metrics.fontSize * 0.18))
-            visible: !tileRoot.pressed && tileRoot.enabled
-            color: "#050808"
-            opacity: 0.8
-            radius: parent.radius
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: Math.max(4, Math.round(root.metrics.fontSize * 0.22))
-            color: "transparent"
-            border.color: "#263235"
-            border.width: 1
-            radius: Math.round(parent.radius * 0.72)
-        }
-
-        ColumnLayout {
-            anchors.centerIn: parent
-            width: parent.width - root.metrics.gap
-            spacing: 0
-
-            Image {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.preferredWidth: Math.max(19, Math.round(root.metrics.fontSize * 1.42))
-                Layout.preferredHeight: tileRoot.iconName.length > 0
-                    ? Math.max(19, Math.round(root.metrics.fontSize * 1.42))
-                    : 0
-                visible: tileRoot.iconName.length > 0
-                source: tileRoot.iconName.length > 0 ? Theme.iconSource(tileRoot.iconName) : ""
-                sourceSize.width: Layout.preferredWidth
-                sourceSize.height: Layout.preferredHeight
-                fillMode: Image.PreserveAspectFit
-                opacity: tileRoot.enabled ? 1.0 : 0.55
-            }
-
-            Label {
-                Layout.fillWidth: true
-                color: tileRoot.selected ? Theme.text : Theme.text
-                text: tileRoot.title
-                horizontalAlignment: Text.AlignHCenter
-                elide: Text.ElideRight
-                font.bold: tileRoot.selected
-                font.pixelSize: Math.max(15, Math.round(root.metrics.fontSize * 1.05))
-            }
-
-            Label {
-                Layout.fillWidth: true
-                color: Theme.mutedText
-                text: tileRoot.hint
-                visible: tileRoot.hint.length > 0
-                horizontalAlignment: Text.AlignHCenter
-                elide: Text.ElideRight
-                font.pixelSize: Math.max(9, Math.round(root.metrics.fontSize * 0.58))
-            }
-        }
+        text: title
+        fontSize: root.metrics.fontSize
+        iconSize: Math.max(19, Math.round(root.metrics.fontSize * 1.42))
+        textFontScale: 1.05
+        hintFontScale: 0.58
+        pressedFeedback: pressed
+        baseColor: "#101718"
+        selectedColor: "#1b2b2e"
+        pressedColor: "#182528"
+        accentColor: "#48565a"
+        selectedAccentColor: root.selectedAccent
+        hintColor: Theme.mutedText
+        disabledOpacity: 0.46
     }
 
     component DirectionButton: Rectangle {
@@ -1085,53 +1025,22 @@ Item {
                         Repeater {
                             model: root.visibleMoreActions()
 
-                            Rectangle {
+                            IconTileButton {
                                 required property var modelData
-                                property bool pressed: false
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
-                                color: pressed && root.actionAllowed(modelData.action) ? "#182528" : "#0b1112"
-                                scale: pressed && root.actionAllowed(modelData.action) ? 0.97 : 1.0
-                                opacity: root.actionAllowed(modelData.action) ? 1.0 : 0.46
-                                border.color: pressed && root.actionAllowed(modelData.action) ? Theme.text : "#263233"
-                                border.width: 1
-                                radius: Math.round(root.metrics.fontSize * 0.18)
-                                Behavior on scale { NumberAnimation { duration: 80; easing.type: Easing.OutQuad } }
-                                Behavior on color { ColorAnimation { duration: 80 } }
-                                Behavior on border.color { ColorAnimation { duration: 80 } }
-
-                                RowLayout {
-                                    anchors.fill: parent
-                                    anchors.margins: 4
-                                    spacing: 4
-
-                                    Image {
-                                        Layout.preferredWidth: Math.max(14, Math.round(root.metrics.fontSize * 0.9))
-                                        Layout.preferredHeight: Math.max(14, Math.round(root.metrics.fontSize * 0.9))
-                                        source: Theme.iconSource(modelData.iconName)
-                                        sourceSize.width: Layout.preferredWidth
-                                        sourceSize.height: Layout.preferredHeight
-                                        fillMode: Image.PreserveAspectFit
-                                        opacity: root.actionAllowed(modelData.action) ? 0.9 : 0.5
-                                    }
-
-                                    Label {
-                                        Layout.fillWidth: true
-                                        color: Theme.mutedText
-                                        text: modelData.label
-                                        horizontalAlignment: Text.AlignLeft
-                                        verticalAlignment: Text.AlignVCenter
-                                        elide: Text.ElideRight
-                                        font.pixelSize: Math.max(9, Math.round(root.metrics.fontSize * 0.62))
-                                    }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    enabled: root.actionAllowed(modelData.action)
-                                    onPressedChanged: parent.pressed = pressed
-                                    onClicked: root.handleMoreAction(modelData.action)
-                                }
+                                text: modelData.label
+                                iconName: modelData.iconName
+                                enabled: root.actionAllowed(modelData.action)
+                                fontSize: root.metrics.fontSize
+                                iconSize: Math.max(14, Math.round(root.metrics.fontSize * 0.9))
+                                textFontScale: 0.62
+                                baseColor: "#0b1112"
+                                pressedColor: "#182528"
+                                accentColor: "#263233"
+                                hintColor: Theme.mutedText
+                                disabledOpacity: 0.46
+                                onClicked: root.handleMoreAction(modelData.action)
                             }
                         }
                     }
@@ -1280,66 +1189,28 @@ Item {
                 Repeater {
                     model: root.visibleMoreActions()
 
-                    Rectangle {
+                    IconTileButton {
                         required property var modelData
-                        property bool pressed: false
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         Layout.minimumHeight: Math.max(54, Math.round(root.metrics.fontSize * 3.2))
-                        color: pressed && root.actionAllowed(modelData.action) ? "#182528" : "#101617"
-                        scale: pressed && root.actionAllowed(modelData.action) ? 0.97 : 1.0
-                        opacity: root.actionAllowed(modelData.action) ? 1.0 : 0.46
-                        border.color: pressed && root.actionAllowed(modelData.action) ? Theme.text : "#263233"
-                        border.width: 1
-                        radius: Math.round(root.metrics.fontSize * 0.28)
-                        Behavior on scale { NumberAnimation { duration: 80; easing.type: Easing.OutQuad } }
-                        Behavior on color { ColorAnimation { duration: 80 } }
-                        Behavior on border.color { ColorAnimation { duration: 80 } }
-
-                        ColumnLayout {
-                            anchors.centerIn: parent
-                            width: parent.width - root.metrics.gap
-                            spacing: 0
-
-                            Image {
-                                Layout.alignment: Qt.AlignHCenter
-                                Layout.preferredWidth: Math.max(28, Math.round(root.metrics.fontSize * 1.8))
-                                Layout.preferredHeight: Math.max(28, Math.round(root.metrics.fontSize * 1.8))
-                                source: Theme.iconSource(modelData.iconName)
-                                sourceSize.width: Layout.preferredWidth
-                                sourceSize.height: Layout.preferredHeight
-                                fillMode: Image.PreserveAspectFit
-                                opacity: root.actionAllowed(modelData.action) ? 1.0 : 0.55
-                            }
-
-                            Label {
-                                Layout.fillWidth: true
-                                color: Theme.text
-                                text: modelData.label
-                                horizontalAlignment: Text.AlignHCenter
-                                elide: Text.ElideRight
-                                font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 0.9))
-                            }
-
-                            Label {
-                                Layout.fillWidth: true
-                                color: Theme.mutedText
-                                text: root.actionHint(
-                                    modelData.action,
-                                    root.moreActionHint(modelData.action, modelData.hint)
-                                )
-                                horizontalAlignment: Text.AlignHCenter
-                                elide: Text.ElideRight
-                                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.62))
-                            }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            enabled: root.actionAllowed(modelData.action)
-                            onPressedChanged: parent.pressed = pressed
-                            onClicked: root.handleMoreAction(modelData.action)
-                        }
+                        text: modelData.label
+                        hint: root.actionHint(
+                            modelData.action,
+                            root.moreActionHint(modelData.action, modelData.hint)
+                        )
+                        iconName: modelData.iconName
+                        enabled: root.actionAllowed(modelData.action)
+                        fontSize: root.metrics.fontSize
+                        iconSize: Math.max(28, Math.round(root.metrics.fontSize * 1.8))
+                        textFontScale: 0.9
+                        hintFontScale: 0.62
+                        baseColor: "#101617"
+                        pressedColor: "#182528"
+                        accentColor: "#263233"
+                        hintColor: Theme.mutedText
+                        disabledOpacity: 0.46
+                        onClicked: root.handleMoreAction(modelData.action)
                     }
                 }
             }
