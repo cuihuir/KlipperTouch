@@ -16,6 +16,7 @@ Item {
     property bool connecting: false
     property bool ready: false
     property string activeDetailText: root.detail()
+    property int detailPageIndex: 0
     property bool compactVertical: root.height < 380
     property int recoveryColumns: root.width > 560 ? 3 : 1
     property int recoveryRows: root.recoveryColumns === 3 ? 1 : 3
@@ -23,7 +24,8 @@ Item {
         ? Math.max(72, Math.round(root.metrics.fontSize * 4.4))
         : Math.max(106, Math.round(root.metrics.fontSize * 6.2))
     signal recoveryActionRequested(string action)
-    onActiveDetailTextChanged: messagePager.currentIndex = 0
+    onActiveDetailTextChanged: root.setDetailPageIndex(0)
+    onDetailPageIndexChanged: messagePager.setCurrentIndex(root.detailPageIndex)
 
     function moonrakerOffline() {
         return root.moonrakerVersion.length <= 0 || root.moonrakerVersion === "unknown"
@@ -125,9 +127,17 @@ Item {
         return Math.max(1, Math.ceil(root.activeDetailText.length / root.detailPageSize()))
     }
 
+    function pagerPageCount() {
+        return root.detailPageCount() + 1
+    }
+
     function detailPageText(pageIndex) {
         var pageSize = root.detailPageSize()
         return root.activeDetailText.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize)
+    }
+
+    function setDetailPageIndex(pageIndex) {
+        root.detailPageIndex = Math.max(0, Math.min(pageIndex, root.pagerPageCount() - 1))
     }
 
     Rectangle {
@@ -151,14 +161,14 @@ Item {
 
         SwipeView {
             id: messagePager
-            currentIndex: 0
+            currentIndex: root.detailPageIndex
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
             anchors.bottom: pagerIndicator.top
             anchors.bottomMargin: Math.max(2, Math.round(root.metrics.gap * 0.25))
             clip: true
-            interactive: true
+            interactive: false
 
             Repeater {
                 model: root.detailPageCount()
@@ -315,13 +325,67 @@ Item {
             }
         }
 
-        PageIndicator {
-            id: pagerIndicator
+        Row {
+            id: pagerControls
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            count: messagePager.count
-            currentIndex: messagePager.currentIndex
-            visible: count > 1
+            spacing: Math.max(6, Math.round(root.metrics.gap * 0.5))
+            visible: root.pagerPageCount() > 1
+
+            Rectangle {
+                width: Math.max(38, Math.round(root.metrics.fontSize * 2.4))
+                height: Math.max(30, Math.round(root.metrics.fontSize * 1.8))
+                radius: Math.round(height * 0.28)
+                color: previousPageArea.pressed ? "#182124" : "#101819"
+                border.color: root.detailPageIndex > 0 ? "#667276" : "#394346"
+                border.width: 1
+                opacity: root.detailPageIndex > 0 ? 1.0 : 0.42
+
+                Label {
+                    anchors.centerIn: parent
+                    text: "<"
+                    color: Theme.text
+                    font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 0.95))
+                }
+
+                MouseArea {
+                    id: previousPageArea
+                    anchors.fill: parent
+                    enabled: root.detailPageIndex > 0
+                    onClicked: root.setDetailPageIndex(root.detailPageIndex - 1)
+                }
+            }
+
+            PageIndicator {
+                id: pagerIndicator
+                anchors.verticalCenter: parent.verticalCenter
+                count: root.pagerPageCount()
+                currentIndex: root.detailPageIndex
+            }
+
+            Rectangle {
+                width: Math.max(38, Math.round(root.metrics.fontSize * 2.4))
+                height: Math.max(30, Math.round(root.metrics.fontSize * 1.8))
+                radius: Math.round(height * 0.28)
+                color: nextPageArea.pressed ? "#182124" : "#101819"
+                border.color: root.detailPageIndex < root.pagerPageCount() - 1 ? "#667276" : "#394346"
+                border.width: 1
+                opacity: root.detailPageIndex < root.pagerPageCount() - 1 ? 1.0 : 0.42
+
+                Label {
+                    anchors.centerIn: parent
+                    text: ">"
+                    color: Theme.text
+                    font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 0.95))
+                }
+
+                MouseArea {
+                    id: nextPageArea
+                    anchors.fill: parent
+                    enabled: root.detailPageIndex < root.pagerPageCount() - 1
+                    onClicked: root.setDetailPageIndex(root.detailPageIndex + 1)
+                }
+            }
         }
     }
 

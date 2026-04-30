@@ -1318,7 +1318,14 @@ def test_splash_panel_handles_system_fault_states() -> None:
     assert "function detailPageText(pageIndex)" in panel_qml
     assert "Math.ceil(root.activeDetailText.length / root.detailPageSize())" in panel_qml
     assert "property string activeDetailText: root.detail()" in panel_qml
-    assert "onActiveDetailTextChanged: messagePager.currentIndex = 0" in panel_qml
+    assert "property int detailPageIndex: 0" in panel_qml
+    assert "function setDetailPageIndex(pageIndex)" in panel_qml
+    assert "onActiveDetailTextChanged: root.setDetailPageIndex(0)" in panel_qml
+    assert (
+        "onDetailPageIndexChanged: messagePager.setCurrentIndex(root.detailPageIndex)"
+        in panel_qml
+    )
+    assert "onCurrentIndexChanged:" not in panel_qml
     assert 'return ""' in panel_qml
     assert "return root.webhooksMessage\n" not in panel_qml
     assert "id: messagePager" in panel_qml
@@ -1326,7 +1333,12 @@ def test_splash_panel_handles_system_fault_states() -> None:
     assert "Repeater {" in panel_qml
     assert "model: root.detailPageCount()" in panel_qml
     assert "id: pagerIndicator" in panel_qml
-    assert "count: messagePager.count" in panel_qml
+    assert "function pagerPageCount()" in panel_qml
+    assert "count: root.pagerPageCount()" in panel_qml
+    assert "currentIndex: root.detailPageIndex" in panel_qml
+    assert "interactive: false" in panel_qml
+    assert "id: previousPageArea" in panel_qml
+    assert "id: nextPageArea" in panel_qml
     assert "id: detailLabel" in panel_qml
     assert "root.detailPageText(index)" in panel_qml
     assert "clip: true" in panel_qml
