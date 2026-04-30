@@ -16,6 +16,8 @@ Implemented:
 - Screenshot capture tooling for common target resolutions.
 - Real-printer read-only validation against the Orange Pi Moonraker endpoint, including
   warnings, five-axis capability flags, G-code file list, metadata, and thumbnail URLs.
+- Initial production launch guidance using direct venv console script and a user systemd
+  service template.
 
 ## Phase 1: Research and Safety Blueprint
 
@@ -138,7 +140,7 @@ Exit criteria:
 
 ## Phase 7: Controlled Command Enablement
 
-Status: planned
+Status: started
 
 Goal: enable real printer controls gradually, from lower risk to higher risk.
 
@@ -158,14 +160,14 @@ Exit criteria:
 
 ## Phase 8: Production Hardening
 
-Status: planned
+Status: started
 
 Goal: make the application deployable and maintainable on printer-attached hardware.
 
 Deliverables:
 
-- Installation and update docs.
-- systemd service or desktop autostart guidance.
+- Initial installation and update docs.
+- Initial systemd user-service guidance.
 - Runtime logs, crash recovery behavior, and user-visible error states.
 - Performance and memory checks on target hardware.
 - Theme consistency, localization readiness, and screen calibration notes.

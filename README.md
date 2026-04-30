@@ -16,6 +16,7 @@ The implementation is grounded in KlipperScreen source analysis, the previous ex
 - [Printer read-only probe](docs/research/printer-readonly-probe-2026-04-23.md)
 - [Current printer read-only probe](docs/research/printer-readonly-probe-2026-04-24.md)
 - [Runtime safety boundary](docs/safety-boundary.md)
+- [Deployment guide](docs/deployment.md)
 - [Roadmap](docs/roadmap.md)
 
 ## Development Commands
@@ -29,6 +30,10 @@ UV_INDEX_URL=https://pypi.org/simple uv run --locked --extra dev python -m klipp
 ```
 
 Use read-only probes for unknown printers. Enabled command groups must continue to route through the audited Moonraker client and Qt control model.
+
+For production on printer-attached hardware, install with `uv sync --locked` and
+launch `.venv/bin/klippertouch` directly. Do not keep the development launcher in
+the runtime process tree.
 
 ## Safety Boundary
 
