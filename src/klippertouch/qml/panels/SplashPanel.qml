@@ -21,15 +21,15 @@ Item {
     property string recoveryFeedbackAction: ""
     property var mainRecoveryActions: [
         {"label": "Firmware Restart", "action": "firmware_restart", "placeholder": false, "hint": "Send", "iconName": "update"},
-        {"label": "Restart Klipper", "action": "restart_klipper", "placeholder": false, "hint": "Send", "iconName": "update"},
+        {"label": "Restart Klipper", "action": "restart_klipper", "placeholder": false, "hint": "Send", "iconName": "restart"},
         {"label": "Retry", "action": "retry", "placeholder": false, "hint": "Send", "iconName": "update"},
-        {"label": "Shutdown", "action": "shutdown_menu", "placeholder": false, "hint": "Open", "iconName": "settings"}
+        {"label": "Shutdown", "action": "shutdown_menu", "placeholder": false, "hint": "Open", "iconName": "power"}
     ]
     property var shutdownRecoveryActions: [
         {"label": "Back", "action": "recovery_main", "placeholder": false, "hint": "Return", "iconName": "back"},
-        {"label": "KlipperTouch Restart", "action": "placeholder", "placeholder": true, "hint": "Soon", "iconName": "placeholder"},
-        {"label": "System Shutdown", "action": "placeholder", "placeholder": true, "hint": "Soon", "iconName": "placeholder"},
-        {"label": "System Restart", "action": "placeholder", "placeholder": true, "hint": "Soon", "iconName": "placeholder"}
+        {"label": "KlipperTouch Restart", "action": "placeholder", "placeholder": true, "hint": "Soon", "iconName": "restart"},
+        {"label": "System Shutdown", "action": "placeholder", "placeholder": true, "hint": "Soon", "iconName": "power"},
+        {"label": "System Restart", "action": "placeholder", "placeholder": true, "hint": "Soon", "iconName": "restart"}
     ]
     property var activeRecoveryActions: root.recoveryPage === "shutdown"
         ? root.shutdownRecoveryActions

@@ -195,7 +195,9 @@ def test_material_dark_svg_assets_are_vendored() -> None:
         "object.svg",
         "pause.svg",
         "placeholder.svg",
+        "power.svg",
         "printer.svg",
+        "restart.svg",
         "resume.svg",
         "settings.svg",
         "speed.svg",
@@ -1658,7 +1660,9 @@ def test_splash_panel_handles_system_fault_states() -> None:
     assert '"Restart Klipper"' in panel_qml
     assert '"Shutdown"' in panel_qml
     assert '"iconName": "update"' in panel_qml
-    assert '"iconName": "settings"' in panel_qml
+    assert '"iconName": "power"' in panel_qml
+    assert '"iconName": "restart"' in panel_qml
+    assert '"iconName": "settings"' not in panel_qml
     assert 'Theme.iconSource(iconName.length > 0 ? iconName : "placeholder")' in panel_qml
     assert '"KlipperTouch Restart"' in panel_qml
     assert '"System Shutdown"' in panel_qml
