@@ -523,6 +523,11 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "root.clearFileAction()" in qml
     assert 'text: "Dismiss"' in qml
     assert "onClicked: root.clearFileAction()" in qml
+    assert "readonly property bool pressedFeedback" in qml
+    assert "fileRowMouse.pressed" in qml
+    assert "chipMouse.pressed" in qml
+    assert "control.down ? \"#1b2b2e\"" in qml
+    assert "border.width: control.down ? 2 : 1" in qml
     assert "contentItem: Label" in qml
     assert "color: enabled ? Theme.text : Theme.mutedText" in qml
     assert "printer.print.start" not in qml

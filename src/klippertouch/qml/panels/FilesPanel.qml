@@ -318,12 +318,14 @@ Item {
     }
 
     component FileActionButton: Button {
+        id: control
         property string actionRole: ""
+        readonly property bool pressedFeedback: down
 
         Layout.preferredWidth: Math.max(126, Math.round(root.metrics.fontSize * 8.8))
         Layout.preferredHeight: Math.max(44, Math.round(root.metrics.fontSize * 3.0))
         enabled: root.activeFileModel && root.activeFileModel.selectedPath.length > 0
-        opacity: 0.9
+        opacity: enabled ? 1.0 : 0.55
         font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.82))
         onClicked: {
             if (actionRole.length > 0) {
@@ -339,9 +341,9 @@ Item {
             font.pixelSize: parent.font.pixelSize
         }
         background: Rectangle {
-            color: "#121b1d"
-            border.color: "#354346"
-            border.width: 1
+            color: control.down ? "#1b2b2e" : "#121b1d"
+            border.color: control.down ? "#7f9298" : "#354346"
+            border.width: control.down ? 2 : 1
             radius: Math.round(root.metrics.fontSize * 0.28)
         }
     }
@@ -377,10 +379,12 @@ Item {
                     Rectangle {
                         Layout.preferredWidth: chipText.implicitWidth + root.metrics.gap * 1.4
                         Layout.preferredHeight: Math.max(30, Math.round(root.metrics.fontSize * 2.2))
-                        color: root.isSortActive(modelData.sortKey) ? "#1b2b2e" : "#101617"
+                        color: chipMouse.pressed
+                            ? "#26373b"
+                            : root.isSortActive(modelData.sortKey) ? "#1b2b2e" : "#101617"
                         opacity: root.isChipEnabled(modelData.sortKey) ? 1.0 : 0.45
-                        border.color: "#263233"
-                        border.width: 1
+                        border.color: chipMouse.pressed ? "#7f9298" : "#263233"
+                        border.width: chipMouse.pressed ? 2 : 1
                         radius: Math.round(root.metrics.fontSize * 0.32)
 
                         Label {
@@ -392,6 +396,7 @@ Item {
                         }
 
                         MouseArea {
+                            id: chipMouse
                             anchors.fill: parent
                             enabled: root.isChipEnabled(modelData.sortKey)
                             onClicked: modelData.sortKey === "up" ? root.goUp() : root.setSort(modelData.sortKey)
@@ -529,13 +534,17 @@ Item {
 
                     width: fileList.width
                     height: Math.max(46, Math.round(root.metrics.fontSize * (root.metrics.portrait ? 4.2 : 3.3)))
-                    color: !isDirectory && root.activeFileModel && root.activeFileModel.selectedPath === path
+                    color: fileRowMouse.pressed
+                        ? "#203236"
+                        : !isDirectory && root.activeFileModel && root.activeFileModel.selectedPath === path
                         ? "#17282b"
                         : "#101617"
-                    border.color: !isDirectory && root.activeFileModel && root.activeFileModel.selectedPath === path
+                    border.color: fileRowMouse.pressed
+                        ? "#7f9298"
+                        : !isDirectory && root.activeFileModel && root.activeFileModel.selectedPath === path
                         ? Theme.color4
                         : "#263233"
-                    border.width: 1
+                    border.width: fileRowMouse.pressed ? 2 : 1
                     radius: Math.round(root.metrics.fontSize * 0.32)
 
                     GridLayout {
@@ -623,6 +632,7 @@ Item {
                     }
 
                     MouseArea {
+                        id: fileRowMouse
                         anchors.fill: parent
                         onClicked: root.enterPath(path, isDirectory)
                     }
