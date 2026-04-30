@@ -478,6 +478,7 @@ class StatusModel(QObject):
     toolheadChanged = Signal()
     extruderTemperatureChanged = Signal()
     filamentSensorChanged = Signal()
+    fanChanged = Signal()
     bootstrapChanged = Signal()
     statusRetryRequested = Signal()
 
@@ -518,6 +519,8 @@ class StatusModel(QObject):
             self.extruderTemperatureChanged.emit()
         if _filament_sensor_fields_changed(previous, status):
             self.filamentSensorChanged.emit()
+        if _fan_fields_changed(previous, status):
+            self.fanChanged.emit()
         if previous != status:
             self.statusChanged.emit()
         if not was_bootstrap_complete:
@@ -650,6 +653,22 @@ class StatusModel(QObject):
                 "filament_detected": sensor.filament_detected,
             }
             for sensor in self._status.filament_sensors
+        ]
+
+    @Property(int, notify=fanChanged)
+    def fanDeviceCount(self) -> int:  # noqa: N802
+        return self._status.fan_device_count
+
+    @Property(list, notify=fanChanged)
+    def fanDevices(self) -> list[dict[str, object]]:  # noqa: N802
+        return [
+            {
+                "name": fan.name,
+                "display_name": fan.display_name,
+                "speed": fan.speed,
+                "speed_settable": fan.speed_settable,
+            }
+            for fan in self._status.fan_devices
         ]
 
     @Property(str, notify=printChanged)
@@ -852,6 +871,10 @@ def _object_fields_changed(previous: PrinterStatus, current: PrinterStatus) -> b
 
 def _filament_sensor_fields_changed(previous: PrinterStatus, current: PrinterStatus) -> bool:
     return previous.filament_sensors != current.filament_sensors
+
+
+def _fan_fields_changed(previous: PrinterStatus, current: PrinterStatus) -> bool:
+    return previous.fan_devices != current.fan_devices
 
 
 def _print_fields_changed(previous: PrinterStatus, current: PrinterStatus) -> bool:

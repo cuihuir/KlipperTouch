@@ -78,6 +78,20 @@ class FilamentSensorStatus:
 
 
 @dataclass(frozen=True)
+class FanStatus:
+    name: str
+    display_name: str
+    speed: float = 0.0
+    speed_settable: bool = False
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "name", str(self.name))
+        object.__setattr__(self, "display_name", str(self.display_name))
+        object.__setattr__(self, "speed", _fan_speed_to_percent(self.speed))
+        object.__setattr__(self, "speed_settable", bool(self.speed_settable))
+
+
+@dataclass(frozen=True)
 class McuStatus:
     name: str
     version: str = "unknown"
@@ -114,6 +128,7 @@ class PrinterStatus:
     objects: tuple[str, ...] = ()
     temperature_devices: tuple[TemperatureDeviceStatus, ...] = ()
     filament_sensors: tuple[FilamentSensorStatus, ...] = ()
+    fan_devices: tuple[FanStatus, ...] = ()
     print_state: str = "standby"
     print_filename: str = ""
     print_progress: float = 0.0
@@ -198,6 +213,16 @@ class PrinterStatus:
                     derived_sensors.append(sensor)
             filament_sensors = tuple(sorted(derived_sensors, key=_filament_sensor_sort_key))
         object.__setattr__(self, "filament_sensors", filament_sensors)
+        if self.fan_devices:
+            fan_devices = tuple(self.fan_devices)
+        else:
+            derived_fans: list[FanStatus] = []
+            for item in objects:
+                fan = _fan_from_object(item)
+                if fan is not None:
+                    derived_fans.append(fan)
+            fan_devices = tuple(derived_fans)
+        object.__setattr__(self, "fan_devices", fan_devices)
         object.__setattr__(self, "print_state", str(self.print_state or "standby"))
         object.__setattr__(self, "print_filename", str(self.print_filename or ""))
         object.__setattr__(self, "print_message", str(self.print_message or ""))
@@ -267,6 +292,10 @@ class PrinterStatus:
         return len(self.filament_sensors)
 
     @property
+    def fan_device_count(self) -> int:
+        return len(self.fan_devices)
+
+    @property
     def exclude_object_count(self) -> int:
         return len(self.exclude_object_names)
 
@@ -328,6 +357,7 @@ class PrinterStatus:
             objects=object_names,
             temperature_devices=_temperature_devices_from_status(object_names, object_status or {}),
             filament_sensors=_filament_sensors_from_status(object_names, object_status or {}),
+            fan_devices=_fan_devices_from_status(object_names, object_status or {}),
             **_print_fields_from_status(object_status or {}),
             **_exclude_object_fields_from_status(object_status or {}),
             **_toolhead_fields_from_status(object_status or {}),
@@ -367,6 +397,16 @@ class PrinterStatus:
                 previous["enabled"] = values["enabled"]
             if "filament_detected" in values:
                 previous["filament_detected"] = values["filament_detected"]
+        previous_fan_values: dict[str, dict[str, Any]] = {
+            fan.name: {"speed": fan.speed}
+            for fan in self.fan_devices
+        }
+        for name, values in status_update.items():
+            if not isinstance(values, dict):
+                continue
+            previous = previous_fan_values.setdefault(str(name), {})
+            if "speed" in values:
+                previous["speed"] = values["speed"]
 
         print_fields: PrintStatusFields = {
             "print_state": self.print_state,
@@ -446,6 +486,10 @@ class PrinterStatus:
             filament_sensors=_filament_sensors_from_status(
                 self.objects,
                 {"status": previous_sensor_values},
+            ),
+            fan_devices=_fan_devices_from_status(
+                self.objects,
+                {"status": previous_fan_values},
             ),
             **print_fields,
             **exclude_object_fields,
@@ -536,6 +580,25 @@ def _filament_sensors_from_status(
         if sensor is not None:
             sensors.append(sensor)
     return tuple(sorted(sensors, key=_filament_sensor_sort_key))
+
+
+def _fan_devices_from_status(
+    object_names: tuple[str, ...],
+    object_status: dict[str, Any],
+) -> tuple[FanStatus, ...]:
+    status = object_status.get("status", {})
+    if not isinstance(status, dict):
+        status = {}
+
+    fans: list[FanStatus] = []
+    for name in object_names:
+        values = status.get(name, {})
+        if not isinstance(values, dict):
+            values = {}
+        fan = _fan_from_object(name, values)
+        if fan is not None:
+            fans.append(fan)
+    return tuple(fans)
 
 
 def _mcu_statuses_from_probe(mcu_status: dict[str, Any]) -> tuple[McuStatus, ...]:
@@ -667,6 +730,36 @@ def _filament_sensor_from_object(
     return None
 
 
+def _fan_from_object(
+    name: str,
+    values: dict[str, Any] | None = None,
+) -> FanStatus | None:
+    values = values or {}
+    speed = _fan_speed_to_percent(values.get("speed"))
+    if name == "fan":
+        return FanStatus(
+            name=name,
+            display_name="Part Fan",
+            speed=speed,
+            speed_settable=True,
+        )
+    if name.startswith("fan_generic "):
+        return FanStatus(
+            name=name,
+            display_name=_prettify_name(name),
+            speed=speed,
+            speed_settable=True,
+        )
+    if name.startswith(("controller_fan ", "heater_fan ")):
+        return FanStatus(
+            name=name,
+            display_name=_prettify_name(name),
+            speed=speed,
+            speed_settable=False,
+        )
+    return None
+
+
 def _extruder_fields_from_status(object_status: dict[str, Any]) -> dict[str, Any]:
     status = object_status.get("status", {})
     if not isinstance(status, dict):
@@ -694,12 +787,18 @@ def _prettify_name(name: str) -> str:
         ("temperature_fan ", " Fan"),
         ("filament_switch_sensor ", ""),
         ("filament_motion_sensor ", ""),
+        ("fan_generic ", ""),
+        ("controller_fan ", " Fan"),
+        ("heater_fan ", " Fan"),
     ):
         if name.startswith(prefix):
             name = name.removeprefix(prefix)
             suffix = type_suffix
             break
-    return _title_words(name.replace("_", " ").replace("  ", " ")) + suffix
+    display_name = _title_words(name.replace("_", " ").replace("  ", " "))
+    if suffix and display_name.endswith(suffix):
+        return display_name
+    return display_name + suffix
 
 
 def _title_words(name: str) -> str:
@@ -930,6 +1029,15 @@ def _clamped_percent(value: Any) -> float:
     if number is None:
         return 0.0
     return max(0.0, min(100.0, float(number)))
+
+
+def _fan_speed_to_percent(value: Any) -> float:
+    number = _optional_float(value)
+    if number is None:
+        return 0.0
+    if 0.0 <= number <= 1.0:
+        return round(number * 100.0, 1)
+    return round(_clamped_percent(number), 1)
 
 
 def _optional_float(value: Any) -> float | None:

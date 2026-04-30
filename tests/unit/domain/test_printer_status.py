@@ -1,4 +1,5 @@
 from klippertouch.domain.printer import (
+    FanStatus,
     FilamentSensorStatus,
     McuStatus,
     PrinterStatus,
@@ -176,6 +177,57 @@ def test_printer_status_derives_read_only_temperature_devices_from_objects() -> 
         "heat-up",
     )
     assert status.temperature_device_count == 3
+
+
+def test_printer_status_derives_fan_devices_from_status_query() -> None:
+    status = PrinterStatus.from_probe(
+        server_info={"moonraker_version": "v0.10.0", "klippy_state": "ready"},
+        printer_info={"state": "ready", "hostname": "orangepi3b", "software_version": "v0.13.0"},
+        objects={
+            "objects": [
+                "fan",
+                "fan_generic chamber",
+                "controller_fan 驱动",
+                "heater_fan hotend_fan",
+            ]
+        },
+        object_status={
+            "status": {
+                "fan": {"speed": 0.5},
+                "fan_generic chamber": {"speed": 0.25},
+                "controller_fan 驱动": {"speed": 1.0},
+                "heater_fan hotend_fan": {"speed": 0.0},
+            }
+        },
+    )
+
+    assert status.fan_devices == (
+        FanStatus(name="fan", display_name="Part Fan", speed=50.0, speed_settable=True),
+        FanStatus(
+            name="fan_generic chamber",
+            display_name="Chamber",
+            speed=25.0,
+            speed_settable=True,
+        ),
+        FanStatus(
+            name="controller_fan 驱动",
+            display_name="驱动 Fan",
+            speed=100.0,
+            speed_settable=False,
+        ),
+        FanStatus(
+            name="heater_fan hotend_fan",
+            display_name="Hotend Fan",
+            speed=0.0,
+            speed_settable=False,
+        ),
+    )
+    assert status.fan_device_count == 4
+
+    updated = status.with_status_update({"fan": {"speed": 0.2}})
+
+    assert updated.fan_devices[0].speed == 20.0
+    assert updated.fan_devices[1].speed == 25.0
 
 
 def test_temperature_device_display_names_remove_klipper_object_prefixes() -> None:

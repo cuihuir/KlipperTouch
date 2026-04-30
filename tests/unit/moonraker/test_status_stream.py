@@ -48,6 +48,7 @@ def test_build_temperature_subscription_message_uses_read_only_objects_method() 
                     "pressure_advance",
                     "smooth_time",
                 ],
+                "fan": ["speed"],
                 "heater_bed": ["temperature", "target"],
                 "print_stats": [
                     "state",

@@ -42,6 +42,7 @@ WEBHOOKS_STATUS_FIELDS = {
     "webhooks": ["state", "state_message"],
 }
 FILAMENT_SENSOR_FIELDS = ["enabled", "filament_detected"]
+FAN_FIELDS = ["speed"]
 
 
 def build_websocket_request(client: MoonrakerClient) -> QNetworkRequest:
@@ -298,6 +299,7 @@ def _subscription_objects(status: PrinterStatus) -> dict[str, list[str]]:
             if name.startswith(("filament_switch_sensor ", "filament_motion_sensor "))
         }
     )
+    objects.update({fan.name: FAN_FIELDS for fan in status.fan_devices})
     return objects
 
 

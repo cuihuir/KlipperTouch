@@ -1,6 +1,7 @@
 from PySide6.QtCore import QSettings, Qt
 
 from klippertouch.domain.printer import (
+    FanStatus,
     FilamentSensorStatus,
     McuStatus,
     PrinterStatus,
@@ -67,6 +68,15 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
                 filament_detected=False,
             ),
         ),
+        fan_devices=(
+            FanStatus(name="fan", display_name="Part Fan", speed=50.0, speed_settable=True),
+            FanStatus(
+                name="controller_fan 驱动",
+                display_name="驱动 Fan",
+                speed=100.0,
+                speed_settable=False,
+            ),
+        ),
     )
 
     with qtbot.waitSignal(model.statusChanged, timeout=1000):
@@ -125,6 +135,16 @@ def test_status_model_exposes_printer_status(qtbot) -> None:
             "enabled": True,
             "filament_detected": False,
         }
+    ]
+    assert model.fanDeviceCount == 2
+    assert model.fanDevices == [
+        {"name": "fan", "display_name": "Part Fan", "speed": 50.0, "speed_settable": True},
+        {
+            "name": "controller_fan 驱动",
+            "display_name": "驱动 Fan",
+            "speed": 100.0,
+            "speed_settable": False,
+        },
     ]
     assert model.bootstrapComplete is True
 
