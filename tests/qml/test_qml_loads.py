@@ -1103,6 +1103,11 @@ def test_extrude_panel_exposes_read_only_extruder_state_without_controls() -> No
     assert "root.extruderTarget.toFixed(1)" in qml
     assert "root.extruderPressureAdvance.toFixed(3)" in qml
     assert "root.extruderSmoothTime.toFixed(3)" in qml
+    assert "id: pressureAdvanceValueRow" in qml
+    assert "id: pressureAdvanceValueRowPortrait" in qml
+    assert 'text: "ADV " + root.extruderPressureAdvance.toFixed(3)' in qml
+    assert 'text: "SMT " + root.extruderSmoothTime.toFixed(3)' in qml
+    assert '+ " / SMT " + root.extruderSmoothTime.toFixed(3)' not in qml
     assert "root.positionE.toFixed(2)" in qml
     assert "function nozzleHeating()" in qml
     assert "function nozzleStateText()" in qml

@@ -688,14 +688,29 @@ Item {
                             }
                         }
 
-                        Label {
+                        RowLayout {
+                            id: pressureAdvanceValueRow
                             Layout.fillWidth: true
-                            color: Theme.text
-                            text: "ADV " + root.extruderPressureAdvance.toFixed(3)
-                                + " / SMT " + root.extruderSmoothTime.toFixed(3)
-                            elide: Text.ElideRight
-                            font.bold: true
-                            font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.05))
+                            spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.25))
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: Theme.text
+                                text: "ADV " + root.extruderPressureAdvance.toFixed(3)
+                                elide: Text.ElideRight
+                                font.bold: true
+                                font.pixelSize: Math.max(15, Math.round(root.metrics.fontSize * 0.98))
+                            }
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: Theme.text
+                                text: "SMT " + root.extruderSmoothTime.toFixed(3)
+                                elide: Text.ElideRight
+                                horizontalAlignment: Text.AlignRight
+                                font.bold: true
+                                font.pixelSize: Math.max(15, Math.round(root.metrics.fontSize * 0.98))
+                            }
                         }
                     }
 
@@ -1030,14 +1045,29 @@ Item {
                             font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.68))
                         }
 
-                        Label {
+                        RowLayout {
+                            id: pressureAdvanceValueRowPortrait
                             Layout.fillWidth: true
-                            color: Theme.text
-                            text: "ADV " + root.extruderPressureAdvance.toFixed(3)
-                                + " / SMT " + root.extruderSmoothTime.toFixed(3)
-                            elide: Text.ElideRight
-                            font.bold: true
-                            font.pixelSize: Math.max(15, Math.round(root.metrics.fontSize))
+                            spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.25))
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: Theme.text
+                                text: "ADV " + root.extruderPressureAdvance.toFixed(3)
+                                elide: Text.ElideRight
+                                font.bold: true
+                                font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.86))
+                            }
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: Theme.text
+                                text: "SMT " + root.extruderSmoothTime.toFixed(3)
+                                elide: Text.ElideRight
+                                horizontalAlignment: Text.AlignRight
+                                font.bold: true
+                                font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.86))
+                            }
                         }
                     }
 
