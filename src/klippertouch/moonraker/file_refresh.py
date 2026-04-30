@@ -89,12 +89,10 @@ class GCodeFileRefresh(QObject):
     def stop(self, timeout_ms: int = 5000) -> None:
         self._timer.stop()
         self._metadata_timer.stop()
-        thread = self._file_refresh_thread
-        if thread is None:
-            return
-        if thread.isRunning():
-            thread.quit()
-            thread.wait(timeout_ms)
+        file_thread = self._file_refresh_thread
+        if file_thread is not None and file_thread.isRunning():
+            file_thread.quit()
+            file_thread.wait(timeout_ms)
         self._file_refresh_thread = None
         self._file_refresh_worker = None
         metadata_thread = self._metadata_refresh_thread

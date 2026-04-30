@@ -167,6 +167,36 @@ def test_file_refresh_lazily_loads_requested_metadata_off_gui_thread(qtbot) -> N
     assert client.metadata_calls == ["a.gcode", "b.gcode"]
 
 
+def test_file_refresh_stop_cleans_metadata_thread_without_file_list_thread() -> None:
+    class FakeThread:
+        def __init__(self) -> None:
+            self.quit_called = False
+            self.wait_timeout_ms = -1
+
+        def isRunning(self) -> bool:  # noqa: N802
+            return True
+
+        def quit(self) -> None:
+            self.quit_called = True
+
+        def wait(self, timeout_ms: int) -> None:
+            self.wait_timeout_ms = timeout_ms
+
+    model = GCodeFileListModel()
+    refresh = GCodeFileRefresh(
+        MoonrakerClient(PrinterConfig(name="p", moonraker_host="host")),
+        model,
+    )
+    metadata_thread = FakeThread()
+    refresh._metadata_refresh_thread = metadata_thread  # noqa: SLF001
+
+    refresh.stop(timeout_ms=1234)
+
+    assert metadata_thread.quit_called is True
+    assert metadata_thread.wait_timeout_ms == 1234
+    assert refresh._metadata_refresh_thread is None  # noqa: SLF001
+
+
 def test_file_refresh_loads_metadata_while_print_or_job_status_is_active(qtbot) -> None:
     class FakeClient(MoonrakerClient):
         def __init__(self) -> None:
