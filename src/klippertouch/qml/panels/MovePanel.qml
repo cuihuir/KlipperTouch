@@ -1848,6 +1848,7 @@ Item {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         text: "Cancel"
+                        iconName: "cancel"
                         fontSize: root.metrics.fontSize
                         baseColor: "#0b1112"
                         pressedColor: "#182528"
@@ -1861,6 +1862,7 @@ Item {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         text: "Confirm"
+                        iconName: "confirm"
                         fontSize: root.metrics.fontSize
                         baseColor: "#1b2b2e"
                         pressedColor: "#24383c"

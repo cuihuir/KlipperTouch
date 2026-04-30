@@ -37,6 +37,7 @@ Item {
                 Layout.preferredHeight: Math.max(44, Math.round(root.metrics.fontSize * 2.75))
                 enabled: root.notificationModel !== null
                 text: "Mark read"
+                iconName: "notification"
                 fontSize: root.metrics.fontSize
                 baseColor: "#182224"
                 pressedColor: "#203236"
@@ -50,6 +51,7 @@ Item {
                 Layout.preferredHeight: Math.max(44, Math.round(root.metrics.fontSize * 2.75))
                 enabled: root.notificationModel !== null
                 text: "Clear"
+                iconName: "clear"
                 fontSize: root.metrics.fontSize
                 baseColor: "#182224"
                 pressedColor: "#203236"

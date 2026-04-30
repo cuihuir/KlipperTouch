@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 import "../Theme.js" as Theme
 
 Button {
@@ -13,6 +14,8 @@ Button {
     property color depthColor: "#050808"
     property color textColor: Theme.text
     property color disabledTextColor: Theme.mutedText
+    property string iconName: ""
+    property real iconSize: Math.max(18, Math.round(control.fontSize * 1.25))
     property real depthSize: Math.max(3, Math.round(control.fontSize * 0.20))
     property bool showLeadingAccent: false
     property real leadingAccentWidth: Math.max(2, Math.round(control.fontSize * 0.18))
@@ -25,15 +28,43 @@ Button {
         NumberAnimation { duration: 70; easing.type: Easing.OutQuad }
     }
 
-    contentItem: Label {
+    contentItem: RowLayout {
         y: control.down && control.enabled ? Math.max(1, Math.round(control.fontSize * 0.08)) : 0
-        color: control.enabled ? control.textColor : control.disabledTextColor
-        text: control.text
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
-        elide: Text.ElideRight
-        font.pixelSize: control.font.pixelSize > 0 ? control.font.pixelSize : Math.max(12, Math.round(control.fontSize * 0.82))
-        font.bold: control.font.bold
+        spacing: control.iconName.length > 0 ? Math.max(4, Math.round(control.fontSize * 0.28)) : 0
+
+        Item {
+            Layout.fillWidth: true
+            Layout.preferredWidth: 1
+        }
+
+        Image {
+            visible: control.iconName.length > 0
+            Layout.preferredWidth: control.iconSize
+            Layout.preferredHeight: control.iconSize
+            source: control.iconName.length > 0 ? Theme.iconSource(control.iconName) : ""
+            sourceSize.width: control.iconSize
+            sourceSize.height: control.iconSize
+            fillMode: Image.PreserveAspectFit
+            opacity: control.enabled ? 1.0 : 0.55
+        }
+
+        Label {
+            Layout.maximumWidth: control.iconName.length > 0
+                ? Math.max(24, control.width - control.iconSize - control.leftPadding - control.rightPadding - control.fontSize * 1.2)
+                : Math.max(24, control.width - control.leftPadding - control.rightPadding)
+            color: control.enabled ? control.textColor : control.disabledTextColor
+            text: control.text
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            elide: Text.ElideRight
+            font.pixelSize: control.font.pixelSize > 0 ? control.font.pixelSize : Math.max(12, Math.round(control.fontSize * 0.82))
+            font.bold: control.font.bold
+        }
+
+        Item {
+            Layout.fillWidth: true
+            Layout.preferredWidth: 1
+        }
     }
 
     background: Item {

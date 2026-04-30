@@ -228,6 +228,7 @@ Item {
                     Layout.fillWidth: root.metrics.portrait
                     visible: previewRoot.confirmButtonVisible
                     text: "Confirm"
+                    iconName: "confirm"
                     enabled: true
                     onClicked: {
                         root.jobActionRequested(root.pendingJobAction, root.pendingJobObject)
@@ -238,6 +239,7 @@ Item {
                 JobButton {
                     Layout.fillWidth: root.metrics.portrait
                     text: "Dismiss"
+                    iconName: "cancel"
                     onClicked: root.clearJobAction()
                 }
             }

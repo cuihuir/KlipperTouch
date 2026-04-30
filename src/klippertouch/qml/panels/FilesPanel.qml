@@ -320,6 +320,7 @@ Item {
     component FileActionButton: Button {
         id: control
         property string actionRole: ""
+        property string iconName: ""
         readonly property bool pressedFeedback: down
 
         Layout.preferredWidth: Math.max(126, Math.round(root.metrics.fontSize * 8.8))
@@ -337,14 +338,39 @@ Item {
         Behavior on scale {
             NumberAnimation { duration: 70; easing.type: Easing.OutQuad }
         }
-        contentItem: Label {
+        contentItem: RowLayout {
             y: control.down ? Math.max(1, Math.round(root.metrics.fontSize * 0.08)) : 0
-            color: enabled ? Theme.text : Theme.mutedText
-            text: parent.text
-            elide: Text.ElideRight
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            font.pixelSize: parent.font.pixelSize
+            spacing: control.iconName.length > 0 ? Math.max(4, Math.round(root.metrics.fontSize * 0.26)) : 0
+
+            Item {
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+            }
+
+            Image {
+                visible: control.iconName.length > 0
+                Layout.preferredWidth: Math.max(18, Math.round(root.metrics.fontSize * 1.2))
+                Layout.preferredHeight: Layout.preferredWidth
+                source: control.iconName.length > 0 ? Theme.iconSource(control.iconName) : ""
+                sourceSize.width: Layout.preferredWidth
+                sourceSize.height: Layout.preferredHeight
+                fillMode: Image.PreserveAspectFit
+                opacity: control.enabled ? 1.0 : 0.55
+            }
+
+            Label {
+                color: enabled ? Theme.text : Theme.mutedText
+                text: control.text
+                elide: Text.ElideRight
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                font.pixelSize: control.font.pixelSize
+            }
+
+            Item {
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+            }
         }
         background: Item {
             Rectangle {
@@ -373,6 +399,7 @@ Item {
 
     component RetryButton: Button {
         id: retryControl
+        property string iconName: "update"
 
         enabled: !root.loading
         opacity: enabled ? 1.0 : 0.55
@@ -382,13 +409,37 @@ Item {
         Behavior on scale {
             NumberAnimation { duration: 70; easing.type: Easing.OutQuad }
         }
-        contentItem: Label {
+        contentItem: RowLayout {
             y: retryControl.down ? Math.max(1, Math.round(root.metrics.fontSize * 0.08)) : 0
-            color: parent.enabled ? Theme.text : Theme.mutedText
-            text: parent.text
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            font.pixelSize: parent.font.pixelSize
+            spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.26))
+
+            Item {
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+            }
+
+            Image {
+                Layout.preferredWidth: Math.max(18, Math.round(root.metrics.fontSize * 1.2))
+                Layout.preferredHeight: Layout.preferredWidth
+                source: retryControl.iconName.length > 0 ? Theme.iconSource(retryControl.iconName) : ""
+                sourceSize.width: Layout.preferredWidth
+                sourceSize.height: Layout.preferredHeight
+                fillMode: Image.PreserveAspectFit
+                opacity: retryControl.enabled ? 1.0 : 0.55
+            }
+
+            Label {
+                color: parent.enabled ? Theme.text : Theme.mutedText
+                text: retryControl.text
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                font.pixelSize: retryControl.font.pixelSize
+            }
+
+            Item {
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+            }
         }
         background: Item {
             Rectangle {
@@ -888,11 +939,13 @@ Item {
                         FileActionButton {
                             actionRole: "print"
                             text: "Print"
+                            iconName: "printer"
                         }
 
                         FileActionButton {
                             actionRole: "delete"
                             text: "Delete"
+                            iconName: "cancel"
                         }
                     }
                 }
@@ -951,6 +1004,7 @@ Item {
                                 Layout.fillWidth: root.metrics.portrait
                                 text: "Confirm"
                                 enabled: true
+                                iconName: "confirm"
                                 onClicked: {
                                     root.fileActionRequested(
                                         root.pendingFileAction,
@@ -964,6 +1018,7 @@ Item {
                                 Layout.fillWidth: root.metrics.portrait
                                 text: "Dismiss"
                                 enabled: true
+                                iconName: "cancel"
                                 onClicked: root.clearFileAction()
                             }
                         }

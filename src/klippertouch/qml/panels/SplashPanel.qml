@@ -20,16 +20,16 @@ Item {
     property string recoveryPage: "main"
     property string recoveryFeedbackAction: ""
     property var mainRecoveryActions: [
-        {"label": "Firmware Restart", "action": "firmware_restart", "placeholder": false, "hint": "Send"},
-        {"label": "Restart Klipper", "action": "restart_klipper", "placeholder": false, "hint": "Send"},
-        {"label": "Retry", "action": "retry", "placeholder": false, "hint": "Send"},
-        {"label": "Shutdown", "action": "shutdown_menu", "placeholder": false, "hint": "Open"}
+        {"label": "Firmware Restart", "action": "firmware_restart", "placeholder": false, "hint": "Send", "iconName": "update"},
+        {"label": "Restart Klipper", "action": "restart_klipper", "placeholder": false, "hint": "Send", "iconName": "update"},
+        {"label": "Retry", "action": "retry", "placeholder": false, "hint": "Send", "iconName": "update"},
+        {"label": "Shutdown", "action": "shutdown_menu", "placeholder": false, "hint": "Open", "iconName": "settings"}
     ]
     property var shutdownRecoveryActions: [
-        {"label": "Back", "action": "recovery_main", "placeholder": false, "hint": "Return"},
-        {"label": "KlipperTouch Restart", "action": "placeholder", "placeholder": true, "hint": "Soon"},
-        {"label": "System Shutdown", "action": "placeholder", "placeholder": true, "hint": "Soon"},
-        {"label": "System Restart", "action": "placeholder", "placeholder": true, "hint": "Soon"}
+        {"label": "Back", "action": "recovery_main", "placeholder": false, "hint": "Return", "iconName": "back"},
+        {"label": "KlipperTouch Restart", "action": "placeholder", "placeholder": true, "hint": "Soon", "iconName": "placeholder"},
+        {"label": "System Shutdown", "action": "placeholder", "placeholder": true, "hint": "Soon", "iconName": "placeholder"},
+        {"label": "System Restart", "action": "placeholder", "placeholder": true, "hint": "Soon", "iconName": "placeholder"}
     ]
     property var activeRecoveryActions: root.recoveryPage === "shutdown"
         ? root.shutdownRecoveryActions
@@ -502,6 +502,7 @@ Item {
                     required property string action
                     required property bool placeholder
                     required property string hint
+                    required property string iconName
                     property bool feedbackActive: recoveryPressArea.pressed
                         || root.recoveryFeedbackAction === action
 
@@ -533,6 +534,16 @@ Item {
                         anchors.centerIn: parent
                         width: parent.width - root.metrics.gap
                         spacing: 2
+
+                        Image {
+                            width: parent.width
+                            height: Math.max(18, Math.round(root.metrics.fontSize * 1.25))
+                            source: Theme.iconSource(iconName.length > 0 ? iconName : "placeholder")
+                            sourceSize.width: height
+                            sourceSize.height: height
+                            fillMode: Image.PreserveAspectFit
+                            opacity: placeholder ? 0.55 : 1.0
+                        }
 
                         Label {
                             width: parent.width

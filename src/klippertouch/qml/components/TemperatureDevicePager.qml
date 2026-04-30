@@ -805,6 +805,7 @@ Item {
                     Layout.preferredWidth: Math.max(root.touchTargetSize, Math.round(root.fontSize * 4.6))
                     Layout.fillWidth: false
                     text: "←"
+                    iconName: "back"
                     onClicked: root.deleteTargetDigit()
                 }
             }
@@ -840,6 +841,7 @@ Item {
                     Layout.preferredWidth: Math.max(root.touchTargetSize, Math.round(root.fontSize * 5.0))
                     Layout.fillWidth: false
                     text: "Cancel"
+                    iconName: "cancel"
                     onClicked: targetEditorPopup.close()
                 }
             }
@@ -863,6 +865,7 @@ Item {
                 KeypadButton {
                     id: landscapeSetButton
                     text: "Set"
+                    iconName: "confirm"
                     enabled: root.targetEditorValue !== ""
                     primary: true
                     onClicked: root.confirmTargetEditor()
@@ -957,11 +960,13 @@ Item {
 
                 KeypadButton {
                     text: "Cancel"
+                    iconName: "cancel"
                     onClicked: targetEditorPopup.close()
                 }
 
                 KeypadButton {
                     text: "Set"
+                    iconName: "confirm"
                     enabled: root.targetEditorValue !== ""
                     primary: true
                     onClicked: root.confirmTargetEditor()

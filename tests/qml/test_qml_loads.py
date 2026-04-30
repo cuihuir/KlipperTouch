@@ -141,6 +141,9 @@ def test_tactile_button_centralizes_pressed_down_feedback() -> None:
     assert "property color baseColor" in qml
     assert "property color pressedColor" in qml
     assert "property color accentColor" in qml
+    assert "property string iconName" in qml
+    assert 'source: control.iconName.length > 0 ? Theme.iconSource(control.iconName) : ""' in qml
+    assert "visible: control.iconName.length > 0" in qml
     assert "scale: control.down && control.enabled ? 0.97 : 1.0" in qml
     assert "id: tactileDepth" in qml
     assert "id: tactileSurface" in qml
@@ -172,6 +175,7 @@ def test_material_dark_svg_assets_are_vendored() -> None:
         "bed.svg",
         "cancel.svg",
         "clear.svg",
+        "confirm.svg",
         "emergency.svg",
         "extruder.svg",
         "extrude.svg",
@@ -189,6 +193,7 @@ def test_material_dark_svg_assets_are_vendored() -> None:
         "notification.svg",
         "object.svg",
         "pause.svg",
+        "placeholder.svg",
         "printer.svg",
         "resume.svg",
         "settings.svg",
@@ -514,6 +519,16 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert 'actionRole: "print"' in qml
     assert 'actionRole: "delete"' in qml
     assert "root.requestFileAction(actionRole)" in qml
+    assert "property string iconName" in qml
+    assert 'source: control.iconName.length > 0 ? Theme.iconSource(control.iconName) : ""' in qml
+    assert (
+        'source: retryControl.iconName.length > 0 ? Theme.iconSource(retryControl.iconName) : ""'
+        in qml
+    )
+    assert 'iconName: "printer"' in qml
+    assert 'iconName: "cancel"' in qml
+    assert 'iconName: "confirm"' in qml
+    assert 'iconName: "update"' in qml
     assert "id: selectedMetadataFlickable" in qml
     assert "id: selectedMetadataGrid" in qml
     assert "component MetadataGroupCard: Rectangle" in qml
@@ -562,7 +577,7 @@ def test_files_panel_is_only_read_only_file_management() -> None:
     assert "visible: !fileRowMouse.pressed" in qml
     assert "Behavior on scale" in qml
     assert "NumberAnimation { duration: 70" in qml
-    assert "contentItem: Label" in qml
+    assert "contentItem: RowLayout" in qml
     assert "color: enabled ? Theme.text : Theme.mutedText" in qml
     assert "printer.print.start" not in qml
     assert "server.files.delete" not in qml
@@ -728,6 +743,7 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert 'iconName: "clear"' in qml
     assert 'iconName: "object"' in qml
     assert 'iconName: "advanced"' in qml
+    assert 'iconName: "confirm"' in qml
     assert 'buttonRole: "danger"' in qml
     assert 'baseColor: "#263033"' in qml
     assert 'pressedColor: "#172528"' in qml
@@ -1048,6 +1064,8 @@ def test_move_panel_exposes_read_only_position_without_controls() -> None:
     assert "TactileButton {" in qml
     assert "id: cancelConfirmButton" in qml
     assert "id: confirmActionButton" in qml
+    assert 'iconName: "cancel"' in qml
+    assert 'iconName: "confirm"' in qml
     assert 'baseColor: "#0b1112"' in qml
     assert 'baseColor: "#1b2b2e"' in qml
     assert "Behavior on scale" in qml
@@ -1440,6 +1458,8 @@ def test_notification_center_is_globally_routed() -> None:
     assert "TactileButton {" in panel_qml
     assert 'text: "Mark read"' in panel_qml
     assert 'text: "Clear"' in panel_qml
+    assert 'iconName: "notification"' in panel_qml
+    assert 'iconName: "clear"' in panel_qml
 
 
 def test_job_control_events_are_forwarded_to_notifications() -> None:
@@ -1596,6 +1616,9 @@ def test_splash_panel_handles_system_fault_states() -> None:
     assert '"Firmware Restart"' in panel_qml
     assert '"Restart Klipper"' in panel_qml
     assert '"Shutdown"' in panel_qml
+    assert '"iconName": "update"' in panel_qml
+    assert '"iconName": "settings"' in panel_qml
+    assert 'Theme.iconSource(iconName.length > 0 ? iconName : "placeholder")' in panel_qml
     assert '"KlipperTouch Restart"' in panel_qml
     assert '"System Shutdown"' in panel_qml
     assert '"System Restart"' in panel_qml

@@ -1606,6 +1606,7 @@ Item {
                     Layout.preferredWidth: Math.max(root.touchTargetSize, Math.round(root.metrics.fontSize * 4.6))
                     Layout.fillWidth: false
                     text: "←"
+                    iconName: "back"
                     onClicked: root.deletePressureAdvanceDigit()
                 }
             }
@@ -1655,6 +1656,7 @@ Item {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         text: "Cancel"
+                        iconName: "cancel"
                         onClicked: pressureAdvancePopup.close()
                     }
 
@@ -1662,6 +1664,7 @@ Item {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         text: "Set"
+                        iconName: "confirm"
                         enabled: root.pressureAdvanceEditorAdvanceValue !== ""
                             && root.pressureAdvanceEditorSmoothValue !== ""
                         primary: true
@@ -1779,6 +1782,7 @@ Item {
                     Layout.preferredWidth: Math.max(root.touchTargetSize, Math.round(root.metrics.fontSize * 4.6))
                     Layout.fillWidth: false
                     text: "←"
+                    iconName: "back"
                     onClicked: root.deleteTargetDigit()
                 }
             }
@@ -1816,6 +1820,7 @@ Item {
                     Layout.preferredWidth: Math.max(root.touchTargetSize, Math.round(root.metrics.fontSize * 5.0))
                     Layout.fillWidth: false
                     text: "Cancel"
+                    iconName: "cancel"
                     onClicked: targetEditorPopup.close()
                 }
             }
@@ -1843,6 +1848,7 @@ Item {
                     id: landscapeSetButton
                     Layout.fillWidth: true
                     text: "Set"
+                    iconName: "confirm"
                     enabled: root.targetEditorValue !== ""
                     primary: true
                     onClicked: root.confirmTargetEditor()
@@ -1941,12 +1947,14 @@ Item {
                 KeypadButton {
                     Layout.fillWidth: true
                     text: "Cancel"
+                    iconName: "cancel"
                     onClicked: targetEditorPopup.close()
                 }
 
                 KeypadButton {
                     Layout.fillWidth: true
                     text: "Set"
+                    iconName: "confirm"
                     enabled: root.targetEditorValue !== ""
                     primary: true
                     onClicked: root.confirmTargetEditor()
