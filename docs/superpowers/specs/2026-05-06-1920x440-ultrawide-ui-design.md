@@ -56,7 +56,15 @@ The files panel should use width to reduce mode switching. In ultrawide mode, th
 Rows should be compact but remain easy to tap. Metadata should be grouped into small sections, with preview thumbnail and file actions in the detail column.
 
 ### Job Status
-The job status panel should use a three-column summary: primary job/progress, object map or detail visualization, and print controls/tuning. Common values such as time, layer, speed factor, extrusion factor, and Z offset should be visible without opening multiple detail pages.
+The job status panel should use a spacious minimalist design instead of an information-dense dashboard. In ultrawide mode, the primary screen should show only the most important print information:
+
+- current layer / total layers
+- estimated remaining time
+- elapsed print time
+
+Secondary metrics such as speed factor, extrusion factor, Z offset, position, acceleration, velocity, file metadata, and object details should stay out of the primary ultrawide job screen unless the user opens a detail view.
+
+Print controls should use an icon-only, music-player-like control cluster. Buttons should rely on familiar icons such as pause, resume, cancel, skip, and clear instead of visible text labels. Touch targets must remain large enough for confident operation, and risky actions should still require confirmation.
 
 Pause/resume, cancel, skip object, and clear behavior must keep current staged or confirmed action flow.
 
@@ -80,6 +88,7 @@ The 1920x440 screenshots should be inspected for:
 
 - no overlapping text or controls
 - no primary panel requiring more than three vertical rows of controls
+- job status primary view showing only layer, remaining time, elapsed time, and player-style icon controls
 - touch targets matching the minimums above
 - left action bar and top status bar still usable
 - detail-heavy panels using width instead of forcing full-page drill-downs
