@@ -1094,7 +1094,7 @@ Item {
             {"label": "Total", "value": root.durationLabel(root.totalDuration)},
             {"label": "Layer", "value": root.layerLabel()},
             {"label": "Z offset", "value": root.zOffsetCompactLabel()},
-            {"label": "Speed", "value": root.percentLabel(root.speedFactor)}
+            {"label": "Speed", "value": root.speedLabel(root.requestedSpeed)}
         ]
     }
 
@@ -1815,7 +1815,7 @@ Item {
                                     Repeater {
                                         model: [
                                             {"label": "Z", "value": root.zOffsetCompactLabel()},
-                                            {"label": "S", "value": root.percentLabel(root.speedFactor)},
+                                            {"label": "S", "value": root.speedLabel(root.requestedSpeed)},
                                             {"label": "F", "value": root.percentLabel(root.extrudeFactor)}
                                         ]
 
@@ -1836,7 +1836,7 @@ Item {
                                     Repeater {
                                         model: [
                                             {"label": "Z", "value": root.zOffsetLabel()},
-                                            {"label": "Speed", "value": root.percentLabel(root.speedFactor)},
+                                            {"label": "Speed", "value": root.speedLabel(root.requestedSpeed)},
                                             {"label": "Flow", "value": root.percentLabel(root.extrudeFactor)}
                                         ]
 
