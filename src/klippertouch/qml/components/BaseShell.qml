@@ -28,6 +28,7 @@ Rectangle {
         anchors.left: parent.left
         anchors.top: root.metrics.portrait ? undefined : parent.top
         anchors.bottom: root.metrics.portrait ? parent.bottom : undefined
+        minimumTouchSize: root.metrics.minimumTouchSize
         navigationEnabled: root.navigationEnabled
         onActionRequested: function(actionName) {
             if (!root.navigationEnabled) {

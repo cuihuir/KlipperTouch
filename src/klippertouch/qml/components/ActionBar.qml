@@ -9,6 +9,7 @@ Rectangle {
     property var buttonActions: ["back", "home", "menu", "stop"]
     property bool navigationEnabled: true
     property int buttonCount: 4
+    property int minimumTouchSize: 48
     property int spacingSize: Math.max(4, Math.round((vertical ? width : height) * 0.06))
     signal actionRequested(string actionName)
 
@@ -20,11 +21,11 @@ Rectangle {
         anchors.margins: root.spacingSize
         property real spacing: root.spacingSize
         property real cellWidth: root.vertical
-            ? width
-            : (width - spacing * Math.max(0, root.buttonCount - 1)) / root.buttonCount
+            ? Math.max(root.minimumTouchSize, width)
+            : Math.max(root.minimumTouchSize, (width - spacing * Math.max(0, root.buttonCount - 1)) / root.buttonCount)
         property real cellHeight: root.vertical
-            ? (height - spacing * Math.max(0, root.buttonCount - 1)) / root.buttonCount
-            : height
+            ? Math.max(root.minimumTouchSize, (height - spacing * Math.max(0, root.buttonCount - 1)) / root.buttonCount)
+            : Math.max(root.minimumTouchSize, height)
 
         Repeater {
             model: root.buttonIcons

@@ -14,7 +14,12 @@ QtObject {
     )
     property int iconSize: Math.round(fontSize * 3)
     property int titlebarHeight: Math.max(28, Math.round(fontSize * 2))
-    property int actionBarWidth: portrait ? viewportWidth : Math.max(48, Math.round(viewportWidth * 0.10))
+    property int minimumTouchSize: Math.max(48, Math.round(fontSize * 2.9))
+    property int safeTouchSize: Math.max(56, Math.round(fontSize * 3.4))
+    property int compactRowHeight: Math.max(44, Math.round(fontSize * 2.7))
+    property int panelColumnGap: Math.max(gap, Math.round(fontSize * 0.75))
+    property int ultraWideActionBarWidth: Math.max(72, Math.min(96, Math.round(shortSide * 0.18)))
+    property int actionBarWidth: portrait ? viewportWidth : ultraWide ? ultraWideActionBarWidth : Math.max(48, Math.round(viewportWidth * 0.10))
     property int actionBarHeight: portrait ? Math.max(48, Math.round(viewportHeight * 0.10)) : viewportHeight
     property int contentWidth: portrait ? viewportWidth : viewportWidth - actionBarWidth
     property int contentHeight: viewportHeight - titlebarHeight - (portrait ? actionBarHeight : 0)

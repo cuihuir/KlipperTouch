@@ -407,6 +407,68 @@ def test_shell_has_responsive_orientation_hooks() -> None:
     assert "property bool vertical" in action_bar_qml
 
 
+def test_ultrawide_shell_metrics_bound_action_bar_and_touch_targets() -> None:
+    metrics_qml = Path("src/klippertouch/qml/Metrics.qml").read_text(encoding="utf-8")
+    shell_qml = Path("src/klippertouch/qml/components/BaseShell.qml").read_text(encoding="utf-8")
+    action_bar_qml = Path("src/klippertouch/qml/components/ActionBar.qml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "property int minimumTouchSize" in metrics_qml
+    assert "property int safeTouchSize" in metrics_qml
+    assert "property int compactRowHeight" in metrics_qml
+    assert "property int panelColumnGap" in metrics_qml
+    assert "property int ultraWideActionBarWidth" in metrics_qml
+    assert "ultraWide ? ultraWideActionBarWidth" in metrics_qml
+    assert "minimumTouchSize: root.metrics.minimumTouchSize" in shell_qml
+    assert "property int minimumTouchSize" in action_bar_qml
+    assert "Math.max(root.minimumTouchSize" in action_bar_qml
+
+
+def test_job_status_ultrawide_uses_minimal_player_layout() -> None:
+    qml = Path("src/klippertouch/qml/panels/JobStatusPanel.qml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "id: ultraWideCoverLayout" in qml
+    assert "id: ultraWideStageCard" in qml
+    assert "id: ultraWideSummaryCover" in qml
+    assert "id: ultraWideConfirmationCover" in qml
+    assert "id: ultraWideAdvancedCover" in qml
+    assert "function ultraWidePrimaryMetricModel()" in qml
+    assert "function ultraWideCoverThumbnailSize()" in qml
+    assert "function ultraWidePlayerButtonSize()" in qml
+    assert "id: ultraWideThumbnailFrame" in qml
+    assert "id: ultraWideThumbnailPlaceholder" in qml
+    assert "id: ultraWideCoverProgressBar" in qml
+    assert "id: ultraWideCoverMetricsRow" in qml
+    assert '"label": "Layer"' in qml
+    assert '"label": "Remaining"' in qml
+    assert '"label": "Elapsed"' in qml
+    assert "component PlayerJobButton: JobButton" in qml
+    assert "id: ultraWidePlayerControls" in qml
+    assert "id: ultraWideAdvancedButton" in qml
+    assert 'text: ""' in qml
+    assert "root.ultraWidePlayerButtonSize()" in qml
+    assert "root.ultraWidePlayerButtonSize() * 1.28" in qml
+    assert "Layout.preferredWidth: Math.max(390, Math.round(root.width * 0.22))" in qml
+    assert 'text: "..."' in qml
+    assert 'ToolTip.text: "Advanced"' in qml
+    assert "Player controls" not in qml
+    assert 'iconName: root.effectivePrintState() === "paused" ? "resume" : "pause"' in qml
+    minimal_section = qml.split("id: ultraWideSummaryCover", 1)[1].split(
+        "id: ultraWideConfirmationCover", 1
+    )[0]
+    assert '"Speed factor"' not in minimal_section
+    cover_section = qml.split("id: ultraWideCoverLayout", 1)[1].split(
+        "id: summaryFlickable", 1
+    )[0]
+    assert "root.requestJobAction(\"cancel\", \"\")" in cover_section
+    assert "root.requestJobAction(\"skip_current\", root.currentObject)" in cover_section
+    assert 'root.detailPage === "advanced" ? "summary" : "advanced"' in cover_section
+    assert "ultraWideInfoPageModel(root.ultraWideInfoPage)" not in qml
+
+
 def test_move_bed_tilt_preview_uses_rectangular_bed_geometry() -> None:
     qml = Path("src/klippertouch/qml/panels/MovePanel.qml").read_text(encoding="utf-8")
 
@@ -814,8 +876,6 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "function jobHeroHeight()" in qml
     assert "function temperatureStripHeight()" in qml
     assert "function summaryTemperatureStripVisible()" in qml
-    assert "function ultraWideThumbnailSize()" in qml
-    assert "function ultraWideActionButtonHeight()" in qml
     assert "function groupedSummaryModel()" in qml
     assert "function summaryZoneRows(zone)" in qml
     assert "function detailTitle()" in qml
@@ -1056,33 +1116,20 @@ def test_job_status_summary_scrolls_on_small_portrait_screens() -> None:
 
     assert "id: summaryFlickable" in qml
     assert "visible: root.detailPage === \"summary\"" in qml
-    assert 'visible: root.detailPage === "summary" && root.metrics.ultraWide' in qml
+    assert 'visible: root.metrics.ultraWide' in qml
     assert 'visible: root.detailPage === "summary" && !root.metrics.ultraWide' in qml
-    assert "id: ultraWideSummaryGrid" in qml
-    assert 'visible: !(root.detailPage === "summary" && root.metrics.ultraWide)' in qml
-    assert "id: ultraWideThumbnailFrame" in qml
-    assert "id: ultraWideProgressDialCard" in qml
-    assert "id: ultraWideProgressCanvas" in qml
-    assert "function drawUltraWideProgressDial(ctx)" in qml
-    assert "ctx.arc(center, center, radius" in qml
-    assert "id: ultraWideFileHeader" in qml
-    assert "id: ultraWideStatusPill" in qml
-    assert "id: ultraWideInfoCard" in qml
-    assert "Layout.preferredWidth: Math.max(560, Math.round(root.width * 0.34))" in qml
-    assert "property int ultraWideInfoPage" in qml
-    assert "function ultraWideInfoPageModel(page)" in qml
-    assert "id: ultraWideInfoTextList" in qml
-    assert "root.ultraWideInfoPageModel(root.ultraWideInfoPage)" in qml
-    assert "id: ultraWideInfoPageControls" in qml
-    assert "root.ultraWideInfoPage = Math.max(0, root.ultraWideInfoPage - 1)" in qml
-    assert "root.ultraWideInfoPage = Math.min(1, root.ultraWideInfoPage + 1)" in qml
+    assert "id: ultraWideCoverLayout" in qml
+    assert 'visible: !root.metrics.ultraWide' in qml
+    assert "id: ultraWideSummaryCover" in qml
+    assert "id: ultraWideCoverMetricsRow" in qml
+    assert "id: ultraWidePlayerPanel" in qml
+    assert "component PlayerJobButton: JobButton" in qml
     assert "id: ultraWideKeyInfoGrid" not in qml
-    ultra_wide_info_section = qml.split("id: ultraWideInfoCard", 1)[1].split(
-        "id: ultraWideActionPanel", 1
+    ultra_wide_minimal_section = qml.split("id: ultraWideCoverLayout", 1)[1].split(
+        "id: summaryFlickable", 1
     )[0]
-    assert "MetricPill" not in ultra_wide_info_section
-    assert "id: ultraWideActionGrid" in qml
-    assert "Layout.preferredHeight: root.ultraWideActionButtonHeight()" in qml
+    assert "MetricPill" not in ultra_wide_minimal_section
+    assert "id: ultraWideActionGrid" not in qml
     assert "contentHeight: summaryContent.implicitHeight + root.summaryBottomSafeArea()" in qml
     assert "id: summaryContent" in qml
     assert "id: summaryBottomSafeAreaItem" in qml

@@ -45,7 +45,6 @@ Item {
     property string controlStatus: ""
     property string controlError: ""
     property string requestedPrintState: ""
-    property int ultraWideInfoPage: 0
     readonly property color neutralAccent: "#8b9496"
     readonly property color mutedDangerAccent: "#9a8582"
     readonly property color accentColor: root.stateAccentColor()
@@ -158,6 +157,17 @@ Item {
         depthSize: Math.max(3, Math.round(root.metrics.fontSize * 0.20))
         showLeadingAccent: true
         leadingAccentWidth: controlRoot.enabled ? 3 : 1
+    }
+
+    component PlayerJobButton: JobButton {
+        Layout.preferredWidth: root.ultraWidePlayerButtonSize()
+        Layout.preferredHeight: root.ultraWidePlayerButtonSize()
+        Layout.minimumWidth: root.metrics.safeTouchSize
+        Layout.minimumHeight: root.metrics.safeTouchSize
+        text: ""
+        iconSize: Math.max(34, Math.round(width * 0.42))
+        showLeadingAccent: false
+        depthSize: Math.max(3, Math.round(root.metrics.fontSize * 0.18))
     }
 
     component JobActionPreview: Rectangle {
@@ -1045,57 +1055,20 @@ Item {
         return Math.max(96, Math.round(root.metrics.fontSize * 5.8))
     }
 
-    function ultraWideThumbnailSize() {
-        return Math.max(250, Math.min(340, Math.round(root.height - root.metrics.margin * 2 - root.metrics.gap * 8)))
-    }
-
-    function ultraWideActionButtonHeight() {
-        return Math.max(98, Math.min(132, Math.round((root.height - root.metrics.margin * 2 - root.metrics.gap * 8) / 2.7)))
-    }
-
-    function drawUltraWideProgressDial(ctx) {
-        var size = Math.min(ultraWideProgressCanvas.width, ultraWideProgressCanvas.height)
-        ctx.clearRect(0, 0, ultraWideProgressCanvas.width, ultraWideProgressCanvas.height)
-        if (size <= 0) {
-            return
-        }
-        var center = size / 2
-        var radius = Math.max(1, center - Math.max(12, Math.round(root.metrics.fontSize * 1.0)))
-        var lineWidth = Math.max(12, Math.round(root.metrics.fontSize * 0.9))
-        ctx.save()
-        ctx.translate((ultraWideProgressCanvas.width - size) / 2, (ultraWideProgressCanvas.height - size) / 2)
-        ctx.lineCap = "round"
-        ctx.lineWidth = lineWidth
-        ctx.strokeStyle = "#172426"
-        ctx.beginPath()
-        ctx.arc(center, center, radius, 0, Math.PI * 2)
-        ctx.stroke()
-        ctx.strokeStyle = root.accentColor
-        ctx.beginPath()
-        ctx.arc(center, center, radius, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * root.stateProgressValue())
-        ctx.stroke()
-        ctx.restore()
-    }
-
-    function ultraWideInfoPageModel(page) {
-        if (page === 1) {
-            return [
-                {"label": "Filament", "value": root.filamentLabel()},
-                {"label": "File total", "value": root.fileFilamentTotalLabel()},
-                {"label": "Flow", "value": root.percentLabel(root.extrudeFactor)},
-                {"label": "X", "value": root.positionX.toFixed(2) + " mm"},
-                {"label": "Y", "value": root.positionY.toFixed(2) + " mm"},
-                {"label": "Z", "value": root.positionZ.toFixed(2) + " mm"}
-            ]
-        }
+    function ultraWidePrimaryMetricModel() {
         return [
-            {"label": "Elapsed", "value": root.durationLabel(root.printDuration)},
-            {"label": "Remaining", "value": root.remainingLabel()},
-            {"label": "Total", "value": root.durationLabel(root.totalDuration)},
-            {"label": "Layer", "value": root.layerLabel()},
-            {"label": "Z offset", "value": root.zOffsetCompactLabel()},
-            {"label": "Speed", "value": root.speedLabel(root.requestedSpeed)}
+            {"label": "Layer", "value": root.layerLabel(), "hint": "current / total"},
+            {"label": "Remaining", "value": root.remainingLabel(), "hint": "estimate"},
+            {"label": "Elapsed", "value": root.durationLabel(root.printDuration), "hint": "printed"}
         ]
+    }
+
+    function ultraWideCoverThumbnailSize() {
+        return Math.max(148, Math.min(220, Math.round(root.height * 0.42)))
+    }
+
+    function ultraWidePlayerButtonSize() {
+        return Math.max(86, Math.min(110, Math.round(root.height * 0.22)))
     }
 
     function summaryZoneRows(zone) {
@@ -1234,7 +1207,7 @@ Item {
             spacing: root.metrics.gap
 
             RowLayout {
-                visible: !(root.detailPage === "summary" && root.metrics.ultraWide)
+                visible: !root.metrics.ultraWide
                 Layout.fillWidth: true
                 spacing: root.metrics.gap
 
@@ -1270,364 +1243,437 @@ Item {
             }
 
             GridLayout {
-                id: ultraWideSummaryGrid
-                visible: root.detailPage === "summary" && root.metrics.ultraWide
+                id: ultraWideCoverLayout
+                visible: root.metrics.ultraWide
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                columns: 4
+                columns: 2
                 rows: 1
-                columnSpacing: root.metrics.gap
-                rowSpacing: root.metrics.gap
+                columnSpacing: root.metrics.panelColumnGap
+                rowSpacing: root.metrics.panelColumnGap
 
                 Rectangle {
-                    id: ultraWideThumbnailCard
-                    Layout.preferredWidth: root.ultraWideThumbnailSize() + root.metrics.gap * 2
-                    Layout.fillHeight: true
-                    color: "#081112"
-                    border.color: "#263233"
-                    border.width: 1
-                    radius: Math.round(root.metrics.fontSize * 0.32)
-                    clip: true
-
-                    Rectangle {
-                        id: ultraWideThumbnailFrame
-                        width: root.ultraWideThumbnailSize()
-                        height: width
-                        anchors.centerIn: parent
-                        color: "#0b1112"
-                        border.color: "#3b4648"
-                        border.width: 1
-                        radius: Math.round(root.metrics.fontSize * 0.34)
-                        clip: true
-
-                        Image {
-                            id: ultraWideJobThumbnail
-                            anchors.fill: parent
-                            anchors.margins: 4
-                            source: root.fileModel && root.fileModel.thumbnailRevision >= 0
-                                ? root.fileModel.filePreviewThumbnailUrlFor(root.printFilename)
-                                : ""
-                            fillMode: Image.PreserveAspectFit
-                            asynchronous: source.toString().indexOf("file:") !== 0
-                            cache: true
-                            sourceSize.width: width
-                            sourceSize.height: height
-                            visible: source.toString().length > 0
-                                && ultraWideJobThumbnail.status === Image.Ready
-                        }
-
-                        ColumnLayout {
-                            id: ultraWideThumbnailPlaceholder
-                            visible: !ultraWideJobThumbnail.visible
-                            anchors.centerIn: parent
-                            width: parent.width - root.metrics.gap * 2
-                            spacing: 0
-
-                            Label {
-                                Layout.fillWidth: true
-                                color: root.neutralAccent
-                                text: "G"
-                                horizontalAlignment: Text.AlignHCenter
-                                font.bold: true
-                                font.pixelSize: Math.max(34, Math.round(root.metrics.fontSize * 2.6))
-                            }
-
-                            Label {
-                                Layout.fillWidth: true
-                                color: Theme.mutedText
-                                text: "G-code"
-                                horizontalAlignment: Text.AlignHCenter
-                                font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.78))
-                            }
-                        }
-                    }
-                }
-
-                Rectangle {
-                    id: ultraWideProgressDialCard
-                    Layout.preferredWidth: root.ultraWideThumbnailSize() + root.metrics.gap * 2
-                    Layout.fillHeight: true
-                    color: "#081112"
-                    border.color: "#263233"
-                    border.width: 1
-                    radius: Math.round(root.metrics.fontSize * 0.32)
-                    clip: true
-
-                    Canvas {
-                        id: ultraWideProgressCanvas
-                        width: root.ultraWideThumbnailSize()
-                        height: width
-                        anchors.centerIn: parent
-                        antialiasing: true
-                        renderStrategy: Canvas.Threaded
-                        onPaint: root.drawUltraWideProgressDial(getContext("2d"))
-                        onWidthChanged: requestPaint()
-                        onHeightChanged: requestPaint()
-                        Component.onCompleted: requestPaint()
-                    }
-
-                    ColumnLayout {
-                        anchors.centerIn: parent
-                        width: Math.max(120, Math.round(root.ultraWideThumbnailSize() * 0.62))
-                        spacing: Math.max(2, Math.round(root.metrics.fontSize * 0.16))
-
-                        Label {
-                            Layout.fillWidth: true
-                            color: Theme.text
-                            text: Math.round(root.stateProgressValue() * 100) + "%"
-                            horizontalAlignment: Text.AlignHCenter
-                            font.bold: true
-                            font.pixelSize: Math.max(44, Math.round(root.metrics.fontSize * 3.2))
-                        }
-
-                        Label {
-                            Layout.fillWidth: true
-                            color: Theme.mutedText
-                            text: root.timePrimaryLabel()
-                            horizontalAlignment: Text.AlignHCenter
-                            font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.86))
-                        }
-
-                        Label {
-                            Layout.fillWidth: true
-                            color: Theme.text
-                            text: root.timePrimaryValue()
-                            horizontalAlignment: Text.AlignHCenter
-                            elide: Text.ElideRight
-                            font.pixelSize: Math.max(24, Math.round(root.metrics.fontSize * 1.6))
-                        }
-                    }
-                }
-
-                StatusCard {
-                    id: ultraWideInfoCard
-                    Layout.preferredWidth: Math.max(560, Math.round(root.width * 0.34))
+                    id: ultraWideStageCard
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    accent: "#354346"
+                    color: "#081112"
+                    border.color: "#263233"
+                    border.width: 1
+                    radius: Math.round(root.metrics.fontSize * 0.34)
+                    clip: true
 
-                    RowLayout {
-                        id: ultraWideFileHeader
-                        Layout.fillWidth: true
-                        spacing: root.metrics.gap
-
-                        Label {
-                            Layout.fillWidth: true
-                            color: Theme.text
-                            text: root.printFilename.length > 0 ? root.printFilename : "No active file"
-                            elide: Text.ElideMiddle
-                            font.bold: true
-                            font.pixelSize: Math.max(22, Math.round(root.metrics.fontSize * 1.48))
-                        }
+                    Item {
+                        id: ultraWideSummaryCover
+                        anchors.fill: parent
+                        anchors.margins: Math.max(root.metrics.gap, Math.round(root.metrics.fontSize * 0.9))
+                        visible: root.detailPage === "summary" && root.pendingJobAction.length <= 0
 
                         Rectangle {
-                            id: ultraWideStatusPill
-                            Layout.preferredWidth: Math.max(92, Math.round(root.metrics.fontSize * 6.2))
-                            Layout.preferredHeight: Math.max(28, Math.round(root.metrics.fontSize * 1.85))
-                            color: "#101617"
-                            border.color: root.accentColor
+                            id: ultraWideThumbnailFrame
+                            width: root.ultraWideCoverThumbnailSize()
+                            height: root.ultraWideCoverThumbnailSize()
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: "#0b1112"
+                            border.color: "#3b4648"
                             border.width: 1
-                            radius: height / 2
+                            radius: Math.round(root.metrics.fontSize * 0.34)
+                            clip: true
 
-                            Label {
-                                anchors.centerIn: parent
-                                color: root.accentColor
-                                text: root.stateHeadline()
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                                font.bold: true
-                                font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.78))
+                            Image {
+                                id: ultraWideJobThumbnail
+                                anchors.fill: parent
+                                anchors.margins: 4
+                                source: root.fileModel && root.fileModel.thumbnailRevision >= 0
+                                    ? root.fileModel.filePreviewThumbnailUrlFor(root.printFilename)
+                                    : ""
+                                fillMode: Image.PreserveAspectFit
+                                asynchronous: source.toString().indexOf("file:") !== 0
+                                cache: true
+                                sourceSize.width: width
+                                sourceSize.height: height
+                                visible: source.toString().length > 0
+                                    && ultraWideJobThumbnail.status === Image.Ready
                             }
-                        }
-                    }
 
-                    Label {
-                        Layout.fillWidth: true
-                        color: Theme.mutedText
-                        text: root.stateMessage()
-                        elide: Text.ElideRight
-                        font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.94))
-                    }
-
-                    ColumnLayout {
-                        id: ultraWideInfoTextList
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        spacing: Math.max(7, Math.round(root.metrics.fontSize * 0.42))
-
-                        Repeater {
-                            model: root.ultraWideInfoPageModel(root.ultraWideInfoPage)
-
-                            delegate: RowLayout {
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: Math.max(28, Math.round(root.metrics.fontSize * 1.85))
-                                spacing: root.metrics.gap
+                            ColumnLayout {
+                                id: ultraWideThumbnailPlaceholder
+                                visible: !ultraWideJobThumbnail.visible
+                                anchors.centerIn: parent
+                                width: parent.width - root.metrics.gap * 2
+                                spacing: 0
 
                                 Label {
-                                    Layout.preferredWidth: Math.max(110, Math.round(root.metrics.fontSize * 7.0))
-                                    color: Theme.mutedText
-                                    text: modelData.label
-                                    elide: Text.ElideRight
-                                    verticalAlignment: Text.AlignVCenter
-                                    font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 0.96))
+                                    Layout.fillWidth: true
+                                    color: root.neutralAccent
+                                    text: "G"
+                                    horizontalAlignment: Text.AlignHCenter
+                                    font.bold: true
+                                    font.pixelSize: Math.max(34, Math.round(root.metrics.fontSize * 2.6))
                                 }
 
                                 Label {
                                     Layout.fillWidth: true
-                                    color: Theme.text
-                                    text: modelData.value
-                                    elide: Text.ElideRight
+                                    color: Theme.mutedText
+                                    text: "G-code"
+                                    horizontalAlignment: Text.AlignHCenter
+                                    font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.78))
+                                }
+                            }
+                        }
+
+                        ColumnLayout {
+                            id: ultraWideCoverTextColumn
+                            anchors.left: ultraWideThumbnailFrame.right
+                            anchors.leftMargin: root.metrics.panelColumnGap
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            spacing: Math.max(8, Math.round(root.metrics.fontSize * 0.5))
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: root.metrics.gap
+
+                                Rectangle {
+                                    Layout.preferredWidth: Math.max(96, Math.round(root.metrics.fontSize * 6.1))
+                                    Layout.preferredHeight: Math.max(34, Math.round(root.metrics.fontSize * 2.2))
+                                    color: "#101617"
+                                    border.color: root.accentColor
+                                    border.width: 1
+                                    radius: height / 2
+
+                                    Label {
+                                        anchors.centerIn: parent
+                                        color: root.accentColor
+                                        text: root.stateHeadline()
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                        font.bold: true
+                                        font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.82))
+                                    }
+                                }
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    color: Theme.mutedText
+                                    text: Math.round(root.stateProgressValue() * 100) + "%"
                                     horizontalAlignment: Text.AlignRight
                                     verticalAlignment: Text.AlignVCenter
-                                    font.bold: true
-                                    font.pixelSize: Math.max(19, Math.round(root.metrics.fontSize * 1.28))
+                                    font.pixelSize: Math.max(20, Math.round(root.metrics.fontSize * 1.35))
+                                }
+                            }
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: Theme.text
+                                text: root.printFilename.length > 0 ? root.printFilename : "No active file"
+                                elide: Text.ElideMiddle
+                                maximumLineCount: 2
+                                wrapMode: Text.Wrap
+                                font.bold: true
+                                font.pixelSize: Math.max(30, Math.round(root.metrics.fontSize * 1.95))
+                                minimumPixelSize: 18
+                                fontSizeMode: Text.Fit
+                            }
+
+                            ProgressBar {
+                                id: ultraWideCoverProgressBar
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: Math.max(24, Math.round(root.metrics.fontSize * 1.45))
+                                value: root.stateProgressValue()
+                                background: Rectangle {
+                                    color: "#172426"
+                                    radius: height / 2
+                                }
+                                contentItem: Item {
+                                    Rectangle {
+                                        anchors.left: parent.left
+                                        anchors.top: parent.top
+                                        anchors.bottom: parent.bottom
+                                        width: Math.max(height, ultraWideCoverProgressBar.visualPosition * parent.width)
+                                        radius: height / 2
+                                        color: root.accentColor
+                                    }
+                                }
+                            }
+
+                            RowLayout {
+                                id: ultraWideCoverMetricsRow
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                spacing: root.metrics.panelColumnGap
+
+                                Repeater {
+                                    model: root.ultraWidePrimaryMetricModel()
+
+                                    ColumnLayout {
+                                        required property var modelData
+
+                                        Layout.fillWidth: true
+                                        Layout.fillHeight: true
+                                        spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.25))
+
+                                        Rectangle {
+                                            Layout.fillWidth: true
+                                            Layout.preferredHeight: 1
+                                            color: "#263233"
+                                        }
+
+                                        Label {
+                                            Layout.fillWidth: true
+                                            color: Theme.mutedText
+                                            text: modelData.label
+                                            elide: Text.ElideRight
+                                            font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.86))
+                                        }
+
+                                        Label {
+                                            Layout.fillWidth: true
+                                            Layout.fillHeight: true
+                                            color: Theme.text
+                                            text: modelData.value
+                                            verticalAlignment: Text.AlignVCenter
+                                            elide: Text.ElideRight
+                                            font.bold: true
+                                            font.pixelSize: Math.max(36, Math.round(root.metrics.fontSize * 2.35))
+                                            minimumPixelSize: 20
+                                            fontSizeMode: Text.Fit
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
 
-                    RowLayout {
-                        id: ultraWideInfoPageControls
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: Math.max(34, Math.round(root.metrics.fontSize * 2.1))
-                        spacing: root.metrics.gap
+                    ColumnLayout {
+                        id: ultraWideConfirmationCover
+                        anchors.fill: parent
+                        anchors.margins: Math.max(root.metrics.gap * 2, Math.round(root.metrics.fontSize * 1.4))
+                        visible: root.pendingJobAction.length > 0
+                        spacing: root.metrics.panelColumnGap
 
-                        TactileButton {
-                            Layout.preferredWidth: Math.max(88, Math.round(root.metrics.fontSize * 5.4))
-                            Layout.fillHeight: true
-                            text: "Prev"
-                            enabled: root.ultraWideInfoPage > 0
-                            fontSize: root.metrics.fontSize
-                            iconName: "back"
-                            baseColor: "#1e292b"
-                            pressedColor: "#142022"
-                            disabledColor: "#111819"
-                            accentColor: root.neutralAccent
-                            disabledAccentColor: "#263233"
-                            iconSize: Math.max(18, Math.round(root.metrics.fontSize * 1.1))
-                            onClicked: root.ultraWideInfoPage = Math.max(0, root.ultraWideInfoPage - 1)
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.text
+                            text: root.confirmationRequired() ? "Confirm action" : "Action sent"
+                            font.bold: true
+                            font.pixelSize: Math.max(32, Math.round(root.metrics.fontSize * 2.0))
                         }
 
                         Label {
                             Layout.fillWidth: true
+                            Layout.fillHeight: true
                             color: Theme.mutedText
-                            text: (root.ultraWideInfoPage + 1) + " / 2"
-                            horizontalAlignment: Text.AlignHCenter
+                            text: root.pendingJobActionLabel()
+                            elide: Text.ElideMiddle
                             verticalAlignment: Text.AlignVCenter
-                            font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.9))
+                            font.pixelSize: Math.max(22, Math.round(root.metrics.fontSize * 1.35))
                         }
 
-                        TactileButton {
-                            Layout.preferredWidth: Math.max(88, Math.round(root.metrics.fontSize * 5.4))
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: Math.max(root.metrics.safeTouchSize, Math.round(root.metrics.fontSize * 4.0))
+                            spacing: root.metrics.panelColumnGap
+
+                            JobButton {
+                                Layout.preferredWidth: Math.max(180, Math.round(root.metrics.fontSize * 11.0))
+                                Layout.fillHeight: true
+                                visible: root.confirmationRequired()
+                                text: "Confirm"
+                                iconName: "confirm"
+                                buttonRole: "danger"
+                                onClicked: {
+                                    root.jobActionRequested(root.pendingJobAction, root.pendingJobObject)
+                                    root.clearJobAction()
+                                }
+                            }
+
+                            JobButton {
+                                Layout.preferredWidth: Math.max(180, Math.round(root.metrics.fontSize * 11.0))
+                                Layout.fillHeight: true
+                                text: "Dismiss"
+                                iconName: "cancel"
+                                onClicked: root.clearJobAction()
+                            }
+                        }
+                    }
+
+                    ColumnLayout {
+                        id: ultraWideAdvancedCover
+                        anchors.fill: parent
+                        anchors.margins: Math.max(root.metrics.gap, Math.round(root.metrics.fontSize * 0.9))
+                        visible: root.detailPage === "advanced" && root.pendingJobAction.length <= 0
+                        spacing: root.metrics.panelColumnGap
+
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.text
+                            text: "Advanced tuning"
+                            font.bold: true
+                            font.pixelSize: Math.max(28, Math.round(root.metrics.fontSize * 1.8))
+                        }
+
+                        GridLayout {
+                            Layout.fillWidth: true
                             Layout.fillHeight: true
-                            text: "Next"
-                            enabled: root.ultraWideInfoPage < 1
-                            fontSize: root.metrics.fontSize
-                            baseColor: "#1e292b"
-                            pressedColor: "#142022"
-                            disabledColor: "#111819"
-                            accentColor: root.neutralAccent
-                            disabledAccentColor: "#263233"
-                            iconSize: Math.max(18, Math.round(root.metrics.fontSize * 1.1))
-                            onClicked: root.ultraWideInfoPage = Math.min(1, root.ultraWideInfoPage + 1)
+                            columns: 3
+                            columnSpacing: root.metrics.panelColumnGap
+                            rowSpacing: root.metrics.panelColumnGap
+
+                            Repeater {
+                                model: [
+                                    {"label": "Z offset", "value": root.zOffsetLabel(), "minus": "-0.05", "plus": "+0.05", "negativeDelta": -0.05, "positiveDelta": 0.05, "target": "z"},
+                                    {"label": "Speed factor", "value": root.percentLabel(root.speedFactor), "minus": "-5%", "plus": "+5%", "negativeDelta": -5, "positiveDelta": 5, "target": "speed"},
+                                    {"label": "Extrude factor", "value": root.percentLabel(root.extrudeFactor), "minus": "-5%", "plus": "+5%", "negativeDelta": -5, "positiveDelta": 5, "target": "extrude"}
+                                ]
+
+                                Rectangle {
+                                    required property var modelData
+
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    color: "#101617"
+                                    border.color: "#263233"
+                                    border.width: 1
+                                    radius: Math.round(root.metrics.fontSize * 0.32)
+
+                                    ColumnLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: root.metrics.gap
+                                        spacing: root.metrics.gap
+
+                                        Label {
+                                            Layout.fillWidth: true
+                                            color: Theme.mutedText
+                                            text: modelData.label
+                                            elide: Text.ElideRight
+                                            font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.9))
+                                        }
+
+                                        Label {
+                                            Layout.fillWidth: true
+                                            Layout.fillHeight: true
+                                            color: Theme.text
+                                            text: modelData.value
+                                            verticalAlignment: Text.AlignVCenter
+                                            font.bold: true
+                                            font.pixelSize: Math.max(28, Math.round(root.metrics.fontSize * 1.8))
+                                        }
+
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            Layout.preferredHeight: root.metrics.safeTouchSize
+                                            spacing: root.metrics.gap
+
+                                            Repeater {
+                                                model: [
+                                                    {"text": modelData.minus, "delta": modelData.negativeDelta},
+                                                    {"text": modelData.plus, "delta": modelData.positiveDelta}
+                                                ]
+
+                                                JobButton {
+                                                    Layout.fillWidth: true
+                                                    Layout.fillHeight: true
+                                                    text: modelData.text
+                                                    iconName: modelData.delta < 0 ? "back" : "confirm"
+                                                    onClicked: {
+                                                        if (modelData.target === "z") {
+                                                            root.zOffsetAdjustRequested(modelData.delta)
+                                                        } else if (modelData.target === "speed") {
+                                                            root.speedFactorAdjustRequested(modelData.delta)
+                                                        } else if (modelData.target === "extrude") {
+                                                            root.extrudeFactorAdjustRequested(modelData.delta)
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
 
                 Rectangle {
-                    id: ultraWideActionPanel
-                    Layout.preferredWidth: Math.max(360, Math.round(root.width * 0.22))
+                    id: ultraWidePlayerPanel
+                    Layout.preferredWidth: Math.max(390, Math.round(root.width * 0.22))
                     Layout.fillHeight: true
                     color: "#081112"
                     border.color: "#263233"
                     border.width: 1
                     radius: Math.round(root.metrics.fontSize * 0.32)
 
-                    ColumnLayout {
-                        anchors.fill: parent
-                        anchors.margins: root.metrics.gap
-                        spacing: root.metrics.gap
+                    RowLayout {
+                        id: ultraWidePlayerControls
+                        anchors.centerIn: parent
+                        spacing: Math.max(10, root.metrics.gap)
 
-                        GridLayout {
-                            id: ultraWideActionGrid
-                            Layout.fillWidth: true
-                            Layout.fillHeight: root.pendingJobAction.length <= 0
-                            columns: 2
-                            rows: 2
-                            rowSpacing: root.metrics.gap
-                            columnSpacing: root.metrics.gap
+                        PlayerJobButton {
+                            visible: !root.terminalJobState()
+                            iconName: "cancel"
+                            buttonRole: "danger"
+                            accent: root.mutedDangerAccent
+                            enabled: !root.isTransitionalState(root.effectivePrintState())
+                            ToolTip.visible: hovered
+                            ToolTip.text: "Cancel"
+                            onClicked: root.requestJobAction("cancel", "")
+                        }
 
-                            JobButton {
-                                visible: !root.terminalJobState()
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: root.ultraWideActionButtonHeight()
-                                text: root.primaryActionLabel()
-                                iconName: root.effectivePrintState() === "paused" ? "resume" : "pause"
-                                buttonRole: "primary"
-                                enabled: !root.isTransitionalState(root.effectivePrintState())
-                                ToolTip.visible: hovered
-                                ToolTip.text: root.readonlyActionHint(text)
-                                onClicked: root.stageImmediateJobAction(root.effectivePrintState() === "paused" ? "resume" : "pause")
-                            }
+                        PlayerJobButton {
+                            visible: !root.terminalJobState()
+                            Layout.preferredWidth: root.ultraWidePlayerButtonSize() * 1.28
+                            Layout.preferredHeight: Layout.preferredWidth
+                            iconName: root.effectivePrintState() === "paused" ? "resume" : "pause"
+                            buttonRole: "primary"
+                            enabled: !root.isTransitionalState(root.effectivePrintState())
+                            ToolTip.visible: hovered
+                            ToolTip.text: root.primaryActionLabel()
+                            onClicked: root.stageImmediateJobAction(root.effectivePrintState() === "paused" ? "resume" : "pause")
+                        }
 
-                            JobButton {
-                                visible: !root.terminalJobState()
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: root.ultraWideActionButtonHeight()
-                                text: "Skip Object"
-                                iconName: "object"
-                                enabled: root.excludeObjectNames.length > 0
-                                    && !root.isTransitionalState(root.effectivePrintState())
-                                ToolTip.visible: hovered
-                                ToolTip.text: enabled ? "Open object exclusion list" : "No object data"
-                                onClicked: root.detailPage = "exclude"
-                            }
+                        PlayerJobButton {
+                            visible: !root.terminalJobState()
+                            iconName: "object"
+                            enabled: root.currentObject.length > 0
+                                && !root.isTransitionalState(root.effectivePrintState())
+                            ToolTip.visible: hovered
+                            ToolTip.text: enabled ? "Skip current object" : "No current object"
+                            onClicked: root.requestJobAction("skip_current", root.currentObject)
+                        }
 
-                            JobButton {
-                                visible: !root.terminalJobState()
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: root.ultraWideActionButtonHeight()
-                                text: "Cancel"
-                                iconName: "cancel"
-                                buttonRole: "danger"
-                                accent: root.mutedDangerAccent
-                                enabled: !root.isTransitionalState(root.effectivePrintState())
-                                ToolTip.visible: hovered
-                                ToolTip.text: root.readonlyActionHint(text)
-                                onClicked: root.requestJobAction("cancel", "")
-                            }
-
-                            JobButton {
-                                visible: !root.terminalJobState()
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: root.ultraWideActionButtonHeight()
-                                text: "Advanced"
-                                iconName: "advanced"
-                                enabled: !root.isTransitionalState(root.effectivePrintState())
-                                onClicked: root.detailPage = "advanced"
-                            }
-
-                            JobButton {
-                                visible: root.terminalJobState()
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                Layout.columnSpan: 2
-                                Layout.rowSpan: 2
-                                text: "Clear Status"
-                                iconName: "clear"
-                                buttonRole: "primary"
-                                enabled: !root.isTransitionalState(root.effectivePrintState())
-                                ToolTip.visible: hovered
-                                ToolTip.text: root.readonlyActionHint(text)
-                                onClicked: root.stageImmediateJobAction("clear")
+                        JobButton {
+                            id: ultraWideAdvancedButton
+                            visible: !root.terminalJobState()
+                            Layout.preferredWidth: Math.max(56, Math.round(root.ultraWidePlayerButtonSize() * 0.68))
+                            Layout.preferredHeight: Math.max(56, Math.round(root.ultraWidePlayerButtonSize() * 0.68))
+                            text: "..."
+                            fontSize: root.metrics.fontSize
+                            font.pixelSize: Math.max(22, Math.round(root.metrics.fontSize * 1.35))
+                            baseColor: "#1f292c"
+                            pressedColor: "#172528"
+                            accentColor: "#536165"
+                            showLeadingAccent: false
+                            enabled: !root.isTransitionalState(root.effectivePrintState())
+                            ToolTip.visible: hovered
+                            ToolTip.text: "Advanced"
+                            onClicked: {
+                                root.clearJobAction()
+                                root.detailPage = root.detailPage === "advanced" ? "summary" : "advanced"
                             }
                         }
 
-                        JobActionPreview {
-                            id: ultraWideJobActionPreview
-                            visible: root.detailPage === "summary"
-                                && root.metrics.ultraWide
-                                && root.pendingJobAction.length > 0
+                        PlayerJobButton {
+                            visible: root.terminalJobState()
+                            Layout.preferredWidth: root.ultraWidePlayerButtonSize() * 1.28
+                            Layout.preferredHeight: Layout.preferredWidth
+                            iconName: "clear"
+                            buttonRole: "primary"
+                            enabled: !root.isTransitionalState(root.effectivePrintState())
+                            ToolTip.visible: hovered
+                            ToolTip.text: "Clear status"
+                            onClicked: root.stageImmediateJobAction("clear")
                         }
                     }
                 }
@@ -2082,9 +2128,10 @@ Item {
 
             ColumnLayout {
                 id: detailInfoPage
-                visible: root.detailPage === "time"
+                visible: !root.metrics.ultraWide && (
+                    root.detailPage === "time"
                     || root.detailPage === "motion"
-                    || root.detailPage === "extrusion"
+                    || root.detailPage === "extrusion")
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 spacing: root.metrics.gap
@@ -2159,7 +2206,7 @@ Item {
 
             ColumnLayout {
                 id: advancedPage
-                visible: root.detailPage === "advanced"
+                visible: !root.metrics.ultraWide && root.detailPage === "advanced"
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 spacing: root.metrics.gap
@@ -2295,7 +2342,7 @@ Item {
 
             GridLayout {
                 id: excludePage
-                visible: root.detailPage === "exclude"
+                visible: !root.metrics.ultraWide && root.detailPage === "exclude"
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 columns: root.metrics.ultraWide ? 2 : 1
