@@ -10,7 +10,7 @@ Item {
     required property var metrics
     property Item popupParent: null
     property var temperatureModel: null
-    property int deviceColumns: root.metrics.portrait ? 1 : 2
+    property int deviceColumns: root.metrics.ultraWide ? 3 : (root.metrics.portrait ? 1 : 2)
     property bool hasExternalTemperatureModel: typeof temperatureModel !== "undefined"
         && temperatureModel !== null
     property var activeTemperatureModel: root.hasExternalTemperatureModel
@@ -34,7 +34,7 @@ Item {
             id: graph
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.preferredWidth: root.metrics.portrait ? parent.width : parent.width * 0.48
+            Layout.preferredWidth: root.metrics.portrait ? parent.width : (root.metrics.ultraWide ? parent.width * 0.38 : parent.width * 0.48)
             Layout.preferredHeight: root.metrics.portrait ? parent.height * 0.42 : parent.height
             Layout.minimumWidth: 0
             Layout.minimumHeight: 0
@@ -46,7 +46,7 @@ Item {
         Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.preferredWidth: root.metrics.portrait ? parent.width : parent.width * 0.52
+            Layout.preferredWidth: root.metrics.portrait ? parent.width : (root.metrics.ultraWide ? parent.width * 0.62 : parent.width * 0.52)
             Layout.preferredHeight: root.metrics.portrait ? parent.height * 0.58 : parent.height
             Layout.minimumWidth: 0
             Layout.minimumHeight: 0

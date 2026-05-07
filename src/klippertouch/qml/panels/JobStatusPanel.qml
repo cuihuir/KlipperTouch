@@ -1064,11 +1064,11 @@ Item {
     }
 
     function ultraWideCoverThumbnailSize() {
-        return Math.max(148, Math.min(220, Math.round(root.height * 0.42)))
+        return Math.max(200, Math.min(340, Math.round(root.height * 0.82)))
     }
 
     function ultraWidePlayerButtonSize() {
-        return Math.max(86, Math.min(110, Math.round(root.height * 0.22)))
+        return Math.max(86, Math.min(120, Math.round(root.height * 0.26)))
     }
 
     function summaryZoneRows(zone) {
@@ -1598,33 +1598,23 @@ Item {
 
                 Rectangle {
                     id: ultraWidePlayerPanel
-                    Layout.preferredWidth: Math.max(390, Math.round(root.width * 0.22))
+                    Layout.preferredWidth: Math.max(340, Math.round(root.width * 0.28))
                     Layout.fillHeight: true
                     color: "#081112"
                     border.color: "#263233"
                     border.width: 1
                     radius: Math.round(root.metrics.fontSize * 0.32)
 
-                    RowLayout {
+                    ColumnLayout {
                         id: ultraWidePlayerControls
                         anchors.centerIn: parent
-                        spacing: Math.max(10, root.metrics.gap)
+                        spacing: Math.max(8, Math.round(root.metrics.gap * 0.8))
 
                         PlayerJobButton {
                             visible: !root.terminalJobState()
-                            iconName: "cancel"
-                            buttonRole: "danger"
-                            accent: root.mutedDangerAccent
-                            enabled: !root.isTransitionalState(root.effectivePrintState())
-                            ToolTip.visible: hovered
-                            ToolTip.text: "Cancel"
-                            onClicked: root.requestJobAction("cancel", "")
-                        }
-
-                        PlayerJobButton {
-                            visible: !root.terminalJobState()
-                            Layout.preferredWidth: root.ultraWidePlayerButtonSize() * 1.28
+                            Layout.preferredWidth: root.ultraWidePlayerButtonSize() * 1.4
                             Layout.preferredHeight: Layout.preferredWidth
+                            Layout.alignment: Qt.AlignHCenter
                             iconName: root.effectivePrintState() === "paused" ? "resume" : "pause"
                             buttonRole: "primary"
                             enabled: !root.isTransitionalState(root.effectivePrintState())
@@ -1633,21 +1623,39 @@ Item {
                             onClicked: root.stageImmediateJobAction(root.effectivePrintState() === "paused" ? "resume" : "pause")
                         }
 
-                        PlayerJobButton {
-                            visible: !root.terminalJobState()
-                            iconName: "object"
-                            enabled: root.currentObject.length > 0
-                                && !root.isTransitionalState(root.effectivePrintState())
-                            ToolTip.visible: hovered
-                            ToolTip.text: enabled ? "Skip current object" : "No current object"
-                            onClicked: root.requestJobAction("skip_current", root.currentObject)
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignHCenter
+                            spacing: root.metrics.panelColumnGap
+
+                            PlayerJobButton {
+                                visible: !root.terminalJobState()
+                                iconName: "object"
+                                enabled: root.currentObject.length > 0
+                                    && !root.isTransitionalState(root.effectivePrintState())
+                                ToolTip.visible: hovered
+                                ToolTip.text: enabled ? "Skip current object" : "No current object"
+                                onClicked: root.requestJobAction("skip_current", root.currentObject)
+                            }
+
+                            PlayerJobButton {
+                                visible: !root.terminalJobState()
+                                iconName: "cancel"
+                                buttonRole: "danger"
+                                accent: root.mutedDangerAccent
+                                enabled: !root.isTransitionalState(root.effectivePrintState())
+                                ToolTip.visible: hovered
+                                ToolTip.text: "Cancel"
+                                onClicked: root.requestJobAction("cancel", "")
+                            }
                         }
 
                         JobButton {
                             id: ultraWideAdvancedButton
                             visible: !root.terminalJobState()
-                            Layout.preferredWidth: Math.max(56, Math.round(root.ultraWidePlayerButtonSize() * 0.68))
-                            Layout.preferredHeight: Math.max(56, Math.round(root.ultraWidePlayerButtonSize() * 0.68))
+                            Layout.preferredWidth: Math.max(56, Math.round(root.ultraWidePlayerButtonSize() * 0.6))
+                            Layout.preferredHeight: Math.max(56, Math.round(root.ultraWidePlayerButtonSize() * 0.6))
+                            Layout.alignment: Qt.AlignHCenter
                             text: "..."
                             fontSize: root.metrics.fontSize
                             font.pixelSize: Math.max(22, Math.round(root.metrics.fontSize * 1.35))
@@ -1666,8 +1674,9 @@ Item {
 
                         PlayerJobButton {
                             visible: root.terminalJobState()
-                            Layout.preferredWidth: root.ultraWidePlayerButtonSize() * 1.28
+                            Layout.preferredWidth: root.ultraWidePlayerButtonSize() * 1.4
                             Layout.preferredHeight: Layout.preferredWidth
+                            Layout.alignment: Qt.AlignHCenter
                             iconName: "clear"
                             buttonRole: "primary"
                             enabled: !root.isTransitionalState(root.effectivePrintState())

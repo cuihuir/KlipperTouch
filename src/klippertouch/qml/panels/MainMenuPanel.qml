@@ -14,7 +14,7 @@ Item {
     property int temperatureRows: 3
     property int menuRows: 2
     property int landscapeMenuRows: 3
-    property real landscapeTemperatureFraction: 0.5
+    property real landscapeTemperatureFraction: root.metrics.ultraWide ? 0.38 : 0.5
     property int temperaturePanelHeight: Math.round(height * temperatureRows / virtualRows)
     property int menuPanelHeight: height - temperaturePanelHeight
 
@@ -45,7 +45,7 @@ Item {
 
     GridLayout {
         id: menuGrid
-        columns: root.metrics.portrait ? 3 : 2
+        columns: root.metrics.ultraWide ? 3 : (root.metrics.portrait ? 3 : 2)
         rows: root.metrics.portrait ? root.menuRows : root.landscapeMenuRows
         rowSpacing: root.metrics.gap
         columnSpacing: root.metrics.gap

@@ -8,8 +8,8 @@ import "panels"
 
 ApplicationWindow {
     id: window
-    width: window.startFullScreen ? Screen.width : 1024
-    height: window.startFullScreen ? Screen.height : 600
+    width: window.startFullScreen ? Screen.width : 1920
+    height: window.startFullScreen ? Screen.height : 440
     visible: true
     title: "KlipperTouch"
     visibility: window.startFullScreen ? Window.FullScreen : Window.Windowed

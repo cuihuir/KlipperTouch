@@ -13,7 +13,7 @@ Item {
     }
 
     GridLayout {
-        columns: root.metrics.portrait ? 2 : 3
+        columns: root.metrics.ultraWide ? 4 : (root.metrics.portrait ? 2 : 3)
         rowSpacing: root.metrics.gap
         columnSpacing: root.metrics.gap
         anchors.fill: parent
