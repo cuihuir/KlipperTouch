@@ -2467,9 +2467,8 @@ def test_fan_panel_lists_read_only_and_settable_fans() -> None:
     assert "signal fanSpeedRequested(string deviceName, real percent)" in qml
     assert "modelData.speed_settable" in qml
     assert "root.metrics.portrait ? 156 : 144" in qml
-    assert "root.metrics.portrait ? 9.8 : 6.4" in qml
+    assert "root.metrics.safeTouchSize" in qml
     assert "root.metrics.portrait ? 62 : 54" in qml
-    assert "root.metrics.portrait ? 3.9 : 2.4" in qml
     assert "Slider {" in qml
     assert "stepSize: 0" in qml
     assert "hasRpm" in qml

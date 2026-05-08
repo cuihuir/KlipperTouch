@@ -21,6 +21,7 @@ Item {
         readonly property real displaySpeed: speedSlider.pressed ? draftSpeed : speedValue
         readonly property bool hasRpm: modelData.rpm !== undefined && modelData.rpm !== null
         readonly property real rpmValue: hasRpm ? Number(modelData.rpm) : 0
+        readonly property bool uw: root.metrics.ultraWide
 
         onSpeedValueChanged: {
             if (!speedSlider.pressed) {
@@ -28,15 +29,9 @@ Item {
             }
         }
 
-        height: Math.max(
-            modelData.speed_settable ? (root.metrics.portrait ? 156 : 144) : 92,
-            Math.round(
-                root.metrics.fontSize
-                    * (modelData.speed_settable
-                        ? (root.metrics.portrait ? 9.8 : 6.4)
-                        : (root.metrics.portrait ? 5.9 : 4.1))
-            )
-        )
+        height: modelData.speed_settable
+            ? Math.max(root.metrics.safeTouchSize * 3.2, uw ? 178 : (root.metrics.portrait ? 156 : 144))
+            : Math.max(root.metrics.safeTouchSize * 1.6, 92)
         color: "#0d1415"
         border.color: modelData.speed_settable ? "#536165" : "#344346"
         border.width: 1
@@ -45,7 +40,7 @@ Item {
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: root.metrics.gap
-            spacing: Math.max(6, Math.round(root.metrics.gap * 0.65))
+            spacing: Math.max(6, Math.round(root.metrics.gap * (uw ? 1.0 : 0.65)))
 
             RowLayout {
                 Layout.fillWidth: true
@@ -61,7 +56,7 @@ Item {
                         text: modelData.display_name
                         elide: Text.ElideRight
                         font.bold: true
-                        font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
+                        font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * (uw ? 1.2 : 1.0)))
                     }
 
                     Label {
@@ -70,7 +65,7 @@ Item {
                         text: modelData.name + " · " + fanCard.modeText
                             + (fanCard.hasRpm ? " · " + Math.round(fanCard.rpmValue) + " RPM" : "")
                         elide: Text.ElideRight
-                        font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.68))
+                        font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * (uw ? 0.88 : 0.68)))
                     }
                 }
 
@@ -79,13 +74,15 @@ Item {
                     text: Math.round(fanCard.displaySpeed) + "%"
                     horizontalAlignment: Text.AlignRight
                     font.bold: true
-                    font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.2))
+                    font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * (uw ? 1.6 : 1.2)))
                 }
             }
 
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: Math.max(12, Math.round(root.metrics.fontSize * 0.78))
+                Layout.preferredHeight: uw
+                    ? Math.max(18, Math.round(root.metrics.fontSize * 1.1))
+                    : Math.max(12, Math.round(root.metrics.fontSize * 0.78))
                 color: "#101819"
                 border.color: "#263233"
                 border.width: 1
@@ -103,10 +100,9 @@ Item {
 
             RowLayout {
                 Layout.fillWidth: true
-                Layout.preferredHeight: Math.max(
-                    root.metrics.portrait ? 62 : 54,
-                    Math.round(root.metrics.fontSize * (root.metrics.portrait ? 3.9 : 2.4))
-                )
+                Layout.preferredHeight: uw
+                    ? root.metrics.safeTouchSize * 1.2
+                    : Math.max(root.metrics.portrait ? 62 : 54, Math.round(root.metrics.fontSize * (root.metrics.portrait ? 3.9 : 2.4)))
                 visible: modelData.speed_settable
                 spacing: Math.max(6, Math.round(root.metrics.gap * 0.6))
 
@@ -117,7 +113,9 @@ Item {
                         required property int modelData
                         readonly property int percent: modelData
 
-                        Layout.preferredWidth: Math.max(76, Math.round(root.metrics.fontSize * 4.6))
+                        Layout.preferredWidth: uw
+                            ? root.metrics.safeTouchSize * 1.6
+                            : Math.max(76, Math.round(root.metrics.fontSize * 4.6))
                         Layout.fillHeight: true
                         scale: fanShortcutMouse.pressed ? 0.96 : 1.0
                         transformOrigin: Item.Center
@@ -146,7 +144,7 @@ Item {
                             color: Theme.text
                             text: percent === 0 ? "Off" : percent + "%"
                             font.bold: true
-                            font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.78))
+                            font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * (uw ? 1.0 : 0.78)))
                         }
 
                         MouseArea {
@@ -184,7 +182,9 @@ Item {
                         x: speedSlider.leftPadding
                         y: speedSlider.topPadding + speedSlider.availableHeight / 2 - height / 2
                         width: speedSlider.availableWidth
-                        height: Math.max(12, Math.round(root.metrics.fontSize * 0.76))
+                        height: uw
+                            ? Math.max(18, Math.round(root.metrics.fontSize * 1.1))
+                            : Math.max(12, Math.round(root.metrics.fontSize * 0.76))
                         radius: height / 2
                         color: "#101819"
                         border.color: "#536165"
@@ -201,7 +201,9 @@ Item {
                     handle: Rectangle {
                         x: speedSlider.leftPadding + speedSlider.visualPosition * (speedSlider.availableWidth - width)
                         y: speedSlider.topPadding + speedSlider.availableHeight / 2 - height / 2
-                        width: Math.max(38, Math.round(root.metrics.fontSize * 2.45))
+                        width: uw
+                            ? root.metrics.safeTouchSize
+                            : Math.max(38, Math.round(root.metrics.fontSize * 2.45))
                         height: width
                         radius: width / 2
                         color: speedSlider.pressed ? "#d4dde0" : "#aebdc2"
