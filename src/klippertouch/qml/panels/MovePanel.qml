@@ -51,6 +51,7 @@ Item {
         {"placeholder": true}
     ]
     property var distances: [".1", ".5", "1", "5", "10", "25", "50"]
+    property var ultraWideDistances: ["1", "5", "10", "50"]
     property var tiltDistances: [".01", ".05", ".1", ".5", "1"]
     property var xySpeeds: ["25", "50", "100", "150"]
     property var zSpeeds: ["2", "5", "10", "15"]
@@ -84,13 +85,13 @@ Item {
     readonly property int moveButtonSize: Math.max(
         72,
         Math.min(
-            root.metrics.ultraWide ? 104 : 96,
-            Math.round(Math.min(root.width, root.height) * (root.metrics.ultraWide ? 0.2 : 0.17))
+            root.metrics.ultraWide ? 120 : 96,
+            Math.round(Math.min(root.width, root.height) * (root.metrics.ultraWide ? 0.27 : 0.17))
         )
     )
     readonly property int moveHomeSize: Math.max(72, Math.round(root.moveButtonSize * 0.98))
     readonly property int moveActionIconSize: Math.max(30, Math.round(root.moveButtonSize * 0.42))
-    readonly property real motionSectionGap: Math.max(root.metrics.gap, Math.round(root.metrics.fontSize * 0.85))
+    readonly property real motionSectionGap: Math.max(root.metrics.gap, Math.round(root.metrics.fontSize * (root.metrics.ultraWide ? 1.4 : 0.85)))
     signal moveActionRequested(string action, real distance, real speed)
 
     function selectDistance(distance) {
@@ -144,17 +145,14 @@ Item {
     }
 
     function actionButtonColumns() {
-        return root.metrics.ultraWide ? 1 : 2
+        return 2
     }
 
     function actionButtonPanelWidth(parentWidth, zPadRight) {
-        var desiredColumns = root.metrics.ultraWide ? 1 : 2
-        var minimumButtonWidth = Math.max(root.moveButtonSize * 3.05, root.moveButtonSize * desiredColumns)
-        if (desiredColumns === 1) {
-            minimumButtonWidth = root.moveButtonSize * 1.28
-        }
+        var desiredColumns = 2
+        var minimumButtonWidth = Math.max(root.moveButtonSize * 2.6, root.moveButtonSize * desiredColumns)
         var proportionalWidth = Math.round(
-            parentWidth * (root.metrics.ultraWide ? 0.15 : root.fiveAxisAvailable ? 0.38 : 0.35)
+            parentWidth * (root.metrics.ultraWide ? 0.32 : root.fiveAxisAvailable ? 0.38 : 0.35)
         )
         var availableWidth = Math.max(root.moveButtonSize, parentWidth - zPadRight - root.motionSectionGap)
         return Math.min(availableWidth, Math.max(minimumButtonWidth, proportionalWidth))
@@ -224,6 +222,22 @@ Item {
             items.push({"label": "U", "value": root.positionU.toFixed(2)})
             items.push({"label": "V", "value": root.positionV.toFixed(2)})
             items.push({"label": "W", "value": root.positionW.toFixed(2)})
+        }
+        return items
+    }
+
+    function ultraWidePositionItems() {
+        var items = [
+            {"label": "X", "value": root.positionX.toFixed(2)},
+            {"label": "Y", "value": root.positionY.toFixed(2)},
+            {"label": "Z", "value": root.positionZ.toFixed(2)}
+        ]
+        if (root.fiveAxisAvailable) {
+            items.push({"label": "U", "value": root.positionU.toFixed(2)})
+            items.push({"label": "V", "value": root.positionV.toFixed(2)})
+            items.push({"label": "W", "value": root.positionW.toFixed(2)})
+        } else {
+            items.push({"label": "E", "value": root.positionE.toFixed(2)})
         }
         return items
     }
@@ -747,7 +761,7 @@ Item {
         visible: root.detailPage === "main" || root.metrics.ultraWide
         anchors.fill: parent
         anchors.margins: root.metrics.margin
-        columns: root.metrics.ultraWide ? 3 : 1
+        columns: root.metrics.ultraWide ? 2 : 1
         rows: root.metrics.ultraWide ? 1 : 3
         rowSpacing: root.metrics.gap
         columnSpacing: root.metrics.gap
@@ -756,7 +770,7 @@ Item {
             id: controlGroupGrid
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.preferredWidth: root.metrics.ultraWide ? Math.round(root.width * 0.48) : -1
+            Layout.preferredWidth: root.metrics.ultraWide ? Math.round(root.width * 0.65) : -1
             color: Theme.buttonsBg
             border.color: "#465456"
             border.width: 1
@@ -769,7 +783,7 @@ Item {
 
                 Item {
                     id: xyMovePad
-                    width: root.metrics.portrait ? parent.width : Math.round(parent.width * 0.42)
+                    width: root.metrics.portrait ? parent.width : Math.round(parent.width * 0.34)
                     height: root.metrics.portrait ? Math.round(parent.height * 0.48) : parent.height
                     anchors.left: parent.left
                     anchors.top: parent.top
@@ -823,7 +837,7 @@ Item {
 
                 Item {
                     id: zMovePad
-                    width: root.metrics.portrait ? Math.round(parent.width * 0.46) : Math.round(parent.width * 0.22)
+                    width: root.metrics.portrait ? Math.round(parent.width * 0.46) : Math.round(parent.width * 0.24)
                     height: root.metrics.portrait ? Math.round(parent.height * 0.46) : parent.height
                     anchors.right: undefined
                     anchors.horizontalCenter: undefined
@@ -903,8 +917,10 @@ Item {
                     height: root.metrics.portrait
                         ? Math.max(root.moveButtonSize, Math.round(root.moveButtonSize * (root.fiveAxisAvailable ? 2.05 : 1.62)))
                         : Math.max(
-                            Math.round(root.moveButtonSize * (root.fiveAxisAvailable ? 2.05 : 2.15)),
-                            Math.round(parent.height * 0.58)
+                            Math.round(root.moveButtonSize * (root.metrics.ultraWide
+                                ? (root.fiveAxisAvailable ? 1.45 : 1.15)
+                                : (root.fiveAxisAvailable ? 2.05 : 2.15))),
+                            Math.round(parent.height * (root.metrics.ultraWide ? 0.70 : 0.58))
                         )
                     y: root.metrics.portrait ? zMovePad.y : Math.round((parent.height - height) / 2)
                     anchors.right: parent.right
@@ -954,14 +970,140 @@ Item {
                         }
                     }
                 }
+
+                Label {
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    anchors.rightMargin: root.metrics.gap
+                    anchors.bottomMargin: Math.round(root.metrics.gap * 0.3)
+                    visible: root.metrics.ultraWide
+                    color: Theme.mutedText
+                    text: root.homedAxes.length > 0 ? "Homed: " + root.homedAxes : "Homed: unknown"
+                    elide: Text.ElideRight
+                    font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                }
+            }
+        }
+
+        Rectangle {
+            id: ultraWideInfoPanel
+            visible: root.metrics.ultraWide
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.preferredWidth: root.metrics.ultraWide ? Math.round(root.width * 0.35) : 0
+            color: "#0d1415"
+            border.color: "#344044"
+            border.width: 1
+            radius: Math.round(root.metrics.fontSize * 0.36)
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: root.metrics.gap
+                spacing: Math.round(root.metrics.gap * 0.4)
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: root.metrics.gap
+
+                    Label {
+                        Layout.fillWidth: true
+                        color: Theme.text
+                        text: "Position"
+                        font.bold: true
+                        font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.88))
+                    }
+
+                    Label {
+                        Layout.maximumWidth: Math.round(ultraWideInfoPanel.width * 0.40)
+                        color: root.controlFeedbackColor()
+                        text: root.controlFeedbackText()
+                        elide: Text.ElideRight
+                        maximumLineCount: 1
+                        wrapMode: Text.NoWrap
+                        font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.68))
+                    }
+                }
+
+                GridLayout {
+                    Layout.fillWidth: true
+                    Layout.maximumHeight: Math.round(ultraWideInfoPanel.height * 0.38)
+                    columns: 3
+                    rowSpacing: Math.round(root.metrics.gap * 1.8)
+                    columnSpacing: Math.round(root.metrics.gap * 0.8)
+
+                    Repeater {
+                        model: root.ultraWidePositionItems()
+
+                        Label {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: Math.round(root.metrics.fontSize * 1.72)
+                            color: Theme.text
+                            text: modelData.label + " " + modelData.value
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            elide: Text.ElideRight
+                            font.pixelSize: Math.max(21, Math.round(root.metrics.fontSize * 1.55))
+                        }
+                    }
+                }
+
+                Label {
+                    Layout.fillWidth: true
+                    color: Theme.text
+                    text: "Distance (mm)"
+                    font.bold: true
+                    font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.88))
+                }
+
+                GridLayout {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.leftMargin: Math.round(root.metrics.gap * 1.2)
+                    Layout.rightMargin: Math.round(root.metrics.gap * 1.2)
+                    columns: root.ultraWideDistances.length
+                    rowSpacing: Math.round(root.metrics.gap * 0.5)
+                    columnSpacing: Math.round(root.metrics.gap * 1.4)
+
+                    Repeater {
+                        model: root.ultraWideDistances
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            Layout.maximumHeight: width
+                            color: ultraDistMouse.pressed ? "#182528" : (root.selectedDistance === modelData ? "#1b2b2e" : "#101718")
+                            border.color: root.selectedDistance === modelData ? root.selectedAccent : "#536165"
+                            border.width: 1
+                            radius: Math.round(root.metrics.fontSize * 0.36)
+                            Behavior on color { ColorAnimation { duration: 80 } }
+
+                            Label {
+                                anchors.centerIn: parent
+                                color: Theme.text
+                                text: modelData
+                                font.bold: true
+                                font.pixelSize: Math.max(26, Math.round(root.metrics.fontSize * 2.0))
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+
+                            MouseArea {
+                                id: ultraDistMouse
+                                anchors.fill: parent
+                                onClicked: root.selectDistance(modelData)
+                            }
+                        }
+                    }
+                }
             }
         }
 
         Rectangle {
             id: positionPanel
+            visible: !root.metrics.ultraWide
             Layout.fillWidth: true
             Layout.fillHeight: root.metrics.ultraWide
-            Layout.preferredWidth: root.metrics.ultraWide ? Math.round(root.width * 0.27) : -1
+            Layout.preferredWidth: root.metrics.ultraWide ? Math.round(root.width * 0.22) : -1
             Layout.preferredHeight: root.metrics.ultraWide
                 ? -1
                 : root.moreVisible
@@ -1050,7 +1192,7 @@ Item {
                     id: positionGrid
                     Layout.fillWidth: true
                     Layout.fillHeight: root.metrics.ultraWide
-                    columns: root.metrics.ultraWide ? 1 : root.fiveAxisAvailable ? 4 : 4
+                    columns: root.metrics.ultraWide ? 2 : 4
                     rowSpacing: Math.max(5, Math.round(root.metrics.gap * 0.5))
                     columnSpacing: Math.max(5, Math.round(root.metrics.fontSize * 0.35))
 
@@ -1090,9 +1232,10 @@ Item {
 
         Rectangle {
             id: distancePanel
+            visible: !root.metrics.ultraWide
             Layout.fillWidth: true
             Layout.fillHeight: root.metrics.ultraWide
-            Layout.preferredWidth: root.metrics.ultraWide ? Math.round(root.width * 0.22) : -1
+            Layout.preferredWidth: root.metrics.ultraWide ? Math.round(root.width * 0.23) : -1
             Layout.preferredHeight: root.metrics.ultraWide ? -1 : Math.max(70, Math.round(root.metrics.fontSize * 4.2))
             color: "#0d1415"
             border.color: "#344044"
@@ -1117,7 +1260,7 @@ Item {
                     Layout.fillWidth: true
                     Layout.fillHeight: root.metrics.ultraWide
                     Layout.preferredHeight: Math.max(30, Math.round(root.metrics.fontSize * 1.9))
-                    columns: root.metrics.ultraWide ? 1 : 7
+                    columns: root.metrics.ultraWide ? 2 : 7
                     rowSpacing: Math.max(5, Math.round(root.metrics.gap * 0.5))
                     columnSpacing: Math.max(5, Math.round(root.metrics.gap * 0.5))
 
