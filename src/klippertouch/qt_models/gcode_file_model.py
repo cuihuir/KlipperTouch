@@ -305,6 +305,11 @@ class GCodeFileListModel(QAbstractListModel):
         file = self._file_for_name(filename)
         return file.object_height_label if file is not None else "-"
 
+    @Slot(str, result=float)
+    def fileObjectHeightFor(self, filename: str) -> float:  # noqa: N802
+        file = self._file_for_name(filename)
+        return file.object_height if file is not None else 0.0
+
     @Slot(str, result=str)
     def fileLayerHeightLabelFor(self, filename: str) -> str:  # noqa: N802
         file = self._file_for_name(filename)

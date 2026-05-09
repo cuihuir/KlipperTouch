@@ -1031,8 +1031,8 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert "root.clearJobAction()" in qml
     assert "root.jobActionRequested(root.pendingJobAction, root.pendingJobObject)" in qml
     assert "root.zOffsetLabel()" in qml
-    assert "function zOffsetCompactLabel()" in qml
-    assert "root.zOffsetCompactLabel()" in qml
+    assert "function zHeightLabel()" in qml
+    assert "root.zHeightLabel()" in qml
     assert "root.percentLabel(root.speedFactor)" in qml
     assert "root.percentLabel(root.extrudeFactor)" in qml
     assert "signal zOffsetAdjustRequested(real delta)" in qml
@@ -1064,7 +1064,7 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert '"label": "Max acceleration"' in qml
     assert '"label": "X position"' in qml
     assert '"label": "Y position"' in qml
-    assert '"label": "Z position"' in qml
+    assert '"label": "Z height"' in qml
     assert '"label": "Homed axes"' in qml
     assert '"label": "Filament used"' in qml
     assert '"label": "Flow factor"' in qml

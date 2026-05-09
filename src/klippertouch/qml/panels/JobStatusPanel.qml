@@ -430,8 +430,21 @@ Item {
         return root.zOffset.toFixed(2) + " mm"
     }
 
-    function zOffsetCompactLabel() {
-        return root.zOffset.toFixed(2)
+    function zHeightLabel() {
+        var current = root.positionZ.toFixed(2)
+        var total = root.totalZHeight()
+        if (total > 0) {
+            return current + " / " + total.toFixed(2) + " mm"
+        }
+        return current + " mm"
+    }
+
+    function totalZHeight() {
+        if (!root.fileModel) {
+            return 0
+        }
+        root.fileModel.metadataRevision
+        return root.fileModel.fileObjectHeightFor(root.printFilename)
     }
 
     function positionLabel() {
@@ -1058,6 +1071,7 @@ Item {
     function ultraWidePrimaryMetricModel() {
         return [
             {"label": "Layer", "value": root.layerLabel(), "hint": "current / total"},
+            {"label": "Z height", "value": root.zHeightLabel(), "hint": "current / total"},
             {"label": "Remaining", "value": root.remainingLabel(), "hint": "estimate"},
             {"label": "Elapsed", "value": root.durationLabel(root.printDuration), "hint": "printed"}
         ]
@@ -1081,7 +1095,7 @@ Item {
         if (zone === "motion") {
             return [
                 {"label": "Speed", "value": root.speedLabel(root.requestedSpeed)},
-                {"label": "Z offset", "value": root.zOffsetLabel()}
+                {"label": "Z height", "value": root.zHeightLabel()}
             ]
         }
         if (zone === "extrusion") {
@@ -1155,11 +1169,10 @@ Item {
                 {"label": "Max velocity", "value": root.speedLabel(root.maxVelocity)},
                 {"label": "X position", "value": root.positionX.toFixed(2) + " mm"},
                 {"label": "Y position", "value": root.positionY.toFixed(2) + " mm"},
-                {"label": "Z position", "value": root.positionZ.toFixed(2) + " mm"},
+                {"label": "Z height", "value": root.zHeightLabel()},
                 {"label": "Homed axes", "value": root.homedAxes.length > 0 ? root.homedAxes : "-"},
                 {"label": "Z offset", "value": root.zOffsetLabel()},
                 {"label": "Layer", "value": root.layerLabel()},
-                {"label": "Object height", "value": root.fileObjectHeightLabel()},
                 {"label": "Layer height", "value": root.fileLayerHeightLabel()}
             ]
         }
@@ -1869,7 +1882,7 @@ Item {
 
                                     Repeater {
                                         model: [
-                                            {"label": "Z", "value": root.zOffsetCompactLabel()},
+                                            {"label": "Z", "value": root.positionZ.toFixed(1)},
                                             {"label": "S", "value": root.speedLabel(root.requestedSpeed)},
                                             {"label": "F", "value": root.percentLabel(root.extrudeFactor)}
                                         ]
@@ -1890,7 +1903,7 @@ Item {
 
                                     Repeater {
                                         model: [
-                                            {"label": "Z", "value": root.zOffsetLabel()},
+                                            {"label": "Z", "value": root.zHeightLabel()},
                                             {"label": "Speed", "value": root.speedLabel(root.requestedSpeed)},
                                             {"label": "Flow", "value": root.percentLabel(root.extrudeFactor)}
                                         ]
