@@ -12,209 +12,6 @@ Item {
     property string controlError: ""
     signal fanSpeedRequested(string deviceName, real percent)
 
-    component FanCard: Rectangle {
-        id: fanCard
-        required property var modelData
-        readonly property real speedValue: Number(modelData.speed || 0)
-        property real draftSpeed: speedValue
-        readonly property string modeText: modelData.speed_settable ? "manual" : "auto"
-        readonly property real displaySpeed: speedSlider.pressed ? draftSpeed : speedValue
-        readonly property bool hasRpm: modelData.rpm !== undefined && modelData.rpm !== null
-        readonly property real rpmValue: hasRpm ? Number(modelData.rpm) : 0
-        readonly property bool uw: root.metrics.ultraWide
-
-        onSpeedValueChanged: {
-            if (!speedSlider.pressed) {
-                draftSpeed = speedValue
-            }
-        }
-
-        height: modelData.speed_settable
-            ? Math.max(root.metrics.safeTouchSize * 3.2, uw ? 178 : (root.metrics.portrait ? 156 : 144))
-            : Math.max(root.metrics.safeTouchSize * 1.6, 92)
-        color: "#0d1415"
-        border.color: modelData.speed_settable ? "#536165" : "#344346"
-        border.width: 1
-        radius: Math.round(root.metrics.fontSize * 0.38)
-
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: root.metrics.gap
-            spacing: Math.max(6, Math.round(root.metrics.gap * (uw ? 1.0 : 0.65)))
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: root.metrics.gap
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 1
-
-                    Label {
-                        Layout.fillWidth: true
-                        color: Theme.text
-                        text: modelData.display_name
-                        elide: Text.ElideRight
-                        font.bold: true
-                        font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * (uw ? 1.2 : 1.0)))
-                    }
-
-                    Label {
-                        Layout.fillWidth: true
-                        color: Theme.mutedText
-                        text: modelData.name + " · " + fanCard.modeText
-                            + (fanCard.hasRpm ? " · " + Math.round(fanCard.rpmValue) + " RPM" : "")
-                        elide: Text.ElideRight
-                        font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * (uw ? 0.88 : 0.68)))
-                    }
-                }
-
-                Label {
-                    color: Theme.text
-                    text: Math.round(fanCard.displaySpeed) + "%"
-                    horizontalAlignment: Text.AlignRight
-                    font.bold: true
-                    font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * (uw ? 1.6 : 1.2)))
-                }
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: uw
-                    ? Math.max(18, Math.round(root.metrics.fontSize * 1.1))
-                    : Math.max(12, Math.round(root.metrics.fontSize * 0.78))
-                color: "#101819"
-                border.color: "#263233"
-                border.width: 1
-                radius: height / 2
-
-                Rectangle {
-                    anchors.left: parent.left
-                    anchors.top: parent.top
-                    anchors.bottom: parent.bottom
-                    width: Math.max(parent.height, parent.width * Math.max(0, Math.min(100, fanCard.displaySpeed)) / 100)
-                    color: "#7f9298"
-                    radius: parent.radius
-                }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.preferredHeight: uw
-                    ? root.metrics.safeTouchSize * 1.2
-                    : Math.max(root.metrics.portrait ? 62 : 54, Math.round(root.metrics.fontSize * (root.metrics.portrait ? 3.9 : 2.4)))
-                visible: modelData.speed_settable
-                spacing: Math.max(6, Math.round(root.metrics.gap * 0.6))
-
-                Repeater {
-                    model: [0, 100]
-
-                    Rectangle {
-                        required property int modelData
-                        readonly property int percent: modelData
-
-                        Layout.preferredWidth: uw
-                            ? root.metrics.safeTouchSize * 1.6
-                            : Math.max(76, Math.round(root.metrics.fontSize * 4.6))
-                        Layout.fillHeight: true
-                        scale: fanShortcutMouse.pressed ? 0.96 : 1.0
-                        transformOrigin: Item.Center
-                        color: fanShortcutMouse.pressed ? "#26373b" : "#101819"
-                        border.color: Math.round(fanCard.displaySpeed) === percent ? "#7f9298" : "#536165"
-                        border.width: Math.round(fanCard.displaySpeed) === percent ? 2 : 1
-                        radius: Math.round(root.metrics.fontSize * 0.28)
-                        Behavior on scale {
-                            NumberAnimation { duration: 70; easing.type: Easing.OutQuad }
-                        }
-
-                        Rectangle {
-                            id: fanShortcutDepth
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.bottom: parent.bottom
-                            height: Math.max(2, Math.round(root.metrics.fontSize * 0.18))
-                            visible: !fanShortcutMouse.pressed
-                            color: "#050808"
-                            opacity: 0.78
-                            radius: parent.radius
-                        }
-
-                        Label {
-                            anchors.centerIn: parent
-                            color: Theme.text
-                            text: percent === 0 ? "Off" : percent + "%"
-                            font.bold: true
-                            font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * (uw ? 1.0 : 0.78)))
-                        }
-
-                        MouseArea {
-                            id: fanShortcutMouse
-                            anchors.fill: parent
-                            onClicked: {
-                                fanCard.draftSpeed = percent
-                                root.fanSpeedRequested(fanCard.modelData.name, fanCard.draftSpeed)
-                            }
-                        }
-                    }
-                }
-
-                Slider {
-                    id: speedSlider
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    from: 0
-                    to: 100
-                    stepSize: 0
-                    live: true
-                    value: fanCard.draftSpeed
-
-                    onMoved: fanCard.draftSpeed = Math.max(0, Math.min(100, value))
-                    onPressedChanged: {
-                        if (pressed) {
-                            fanCard.draftSpeed = fanCard.speedValue
-                        } else {
-                            fanCard.draftSpeed = Math.max(0, Math.min(100, value))
-                            root.fanSpeedRequested(fanCard.modelData.name, fanCard.draftSpeed)
-                        }
-                    }
-
-                    background: Rectangle {
-                        x: speedSlider.leftPadding
-                        y: speedSlider.topPadding + speedSlider.availableHeight / 2 - height / 2
-                        width: speedSlider.availableWidth
-                        height: uw
-                            ? Math.max(18, Math.round(root.metrics.fontSize * 1.1))
-                            : Math.max(12, Math.round(root.metrics.fontSize * 0.76))
-                        radius: height / 2
-                        color: "#101819"
-                        border.color: "#536165"
-                        border.width: 1
-
-                        Rectangle {
-                            width: speedSlider.visualPosition * parent.width
-                            height: parent.height
-                            radius: parent.radius
-                            color: "#7f9298"
-                        }
-                    }
-
-                    handle: Rectangle {
-                        x: speedSlider.leftPadding + speedSlider.visualPosition * (speedSlider.availableWidth - width)
-                        y: speedSlider.topPadding + speedSlider.availableHeight / 2 - height / 2
-                        width: uw
-                            ? root.metrics.safeTouchSize
-                            : Math.max(38, Math.round(root.metrics.fontSize * 2.45))
-                        height: width
-                        radius: width / 2
-                        color: speedSlider.pressed ? "#d4dde0" : "#aebdc2"
-                        border.color: "#0b1112"
-                        border.width: 2
-                    }
-                }
-            }
-        }
-    }
-
     Rectangle {
         anchors.fill: parent
         color: "#071112"
@@ -227,6 +24,7 @@ Item {
 
         RowLayout {
             Layout.fillWidth: true
+            visible: !root.metrics.ultraWide
             spacing: root.metrics.gap
 
             Label {
@@ -258,25 +56,238 @@ Item {
             font.pixelSize: root.metrics.fontSize
         }
 
-        Flickable {
+        GridView {
+            id: fanGrid
             Layout.fillWidth: true
             Layout.fillHeight: true
             visible: root.metrics.ultraWide && root.fanDevices.length > 0
             clip: true
-            contentHeight: ultraWideFanGrid.implicitHeight
             boundsBehavior: Flickable.StopAtBounds
+            model: root.fanDevices
+            readonly property int gridCols: 3
+            readonly property int gridRows: 2
+            readonly property int cellGap: root.metrics.gap
+            cellWidth: Math.floor(width / gridCols)
+            cellHeight: Math.floor(height / gridRows)
 
-            GridLayout {
-                id: ultraWideFanGrid
-                width: parent.width
-                columns: 2
-                rowSpacing: root.metrics.gap
-                columnSpacing: root.metrics.gap
+            delegate: Rectangle {
+                id: gridFanCard
+                required property var modelData
+                readonly property real speedValue: Number(modelData.speed || 0)
+                property real draftSpeed: speedValue
+                readonly property real displaySpeed: gridSlider.pressed ? draftSpeed : speedValue
+                readonly property bool hasRpm: modelData.rpm !== undefined && modelData.rpm !== null
+                readonly property real rpmValue: hasRpm ? Number(modelData.rpm) : 0
+                readonly property int gaugeSize: Math.min(
+                    Math.round(fanGrid.cellHeight - fanGrid.cellGap * 3),
+                    Math.round(root.metrics.safeTouchSize * 1.8)
+                )
 
-                Repeater {
-                    model: root.fanDevices
+                width: fanGrid.cellWidth - fanGrid.cellGap
+                height: fanGrid.cellHeight - fanGrid.cellGap
+                x: Math.round(fanGrid.cellGap / 2)
+                y: Math.round(fanGrid.cellGap / 2)
+                color: "#0d1415"
+                border.color: modelData.speed_settable ? "#536165" : "#344346"
+                border.width: 1
+                radius: Math.round(root.metrics.fontSize * 0.45)
 
-                    FanCard {}
+                onSpeedValueChanged: {
+                    if (!gridSlider.pressed) {
+                        draftSpeed = speedValue
+                    }
+                }
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.margins: root.metrics.gap
+                    spacing: Math.max(8, Math.round(root.metrics.gap * 0.9))
+
+                    ColumnLayout {
+                        Layout.fillHeight: true
+                        Layout.maximumWidth: Math.round(gridFanCard.width * 0.20)
+                        Layout.alignment: Qt.AlignVCenter
+                        spacing: 2
+
+                        Label {
+                            Layout.fillWidth: true
+                            color: Theme.text
+                            text: gridFanCard.modelData.display_name
+                            elide: Text.ElideRight
+                            font.bold: true
+                            font.pixelSize: Math.max(15, Math.round(root.metrics.fontSize * 1.0))
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            visible: gridFanCard.hasRpm
+                            color: Theme.mutedText
+                            text: Math.round(gridFanCard.rpmValue) + " RPM"
+                            elide: Text.ElideRight
+                            font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.68))
+                        }
+                    }
+
+                    Canvas {
+                        id: gridGauge
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.preferredWidth: gridFanCard.gaugeSize
+                        Layout.preferredHeight: gridFanCard.gaugeSize
+
+                        onPaint: {
+                            var ctx = getContext("2d")
+                            ctx.reset()
+                            var s = gridFanCard.gaugeSize
+                            var cx = s / 2
+                            var cy = s / 2
+                            var stroke = Math.max(3, Math.round(s * 0.07))
+                            var r = Math.max(4, (s - stroke * 2) / 2 - 2)
+
+                            ctx.strokeStyle = "#263233"
+                            ctx.lineWidth = stroke
+                            ctx.lineCap = "round"
+                            ctx.beginPath()
+                            ctx.arc(cx, cy, r, 0, Math.PI * 2)
+                            ctx.stroke()
+
+                            var pct = Math.max(0, Math.min(100, gridFanCard.displaySpeed)) / 100
+                            if (pct > 0.005) {
+                                ctx.strokeStyle = "#7f9298"
+                                ctx.lineWidth = stroke
+                                ctx.beginPath()
+                                ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * pct)
+                                ctx.stroke()
+                            }
+
+                            ctx.fillStyle = Theme.text
+                            ctx.font = "bold " + Math.max(11, Math.round(s * 0.26)) + "px sans-serif"
+                            ctx.textAlign = "center"
+                            ctx.textBaseline = "middle"
+                            ctx.fillText(Math.round(gridFanCard.displaySpeed) + "%", cx, cy)
+                        }
+
+                        Connections {
+                            target: gridFanCard
+                            function onDisplaySpeedChanged() { gridGauge.requestPaint() }
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.preferredWidth: root.metrics.safeTouchSize
+                        Layout.preferredHeight: Layout.preferredWidth
+                        Layout.maximumHeight: width
+                        visible: gridFanCard.modelData.speed_settable
+                        scale: gridOffMouse.pressed ? 0.96 : 1.0
+                        transformOrigin: Item.Center
+                        color: gridOffMouse.pressed ? "#26373b" : "#101819"
+                        border.color: Math.round(gridFanCard.displaySpeed) === 0 ? "#7f9298" : "#536165"
+                        border.width: Math.round(gridFanCard.displaySpeed) === 0 ? 2 : 1
+                        radius: Math.round(root.metrics.fontSize * 0.32)
+                        Behavior on scale { NumberAnimation { duration: 70; easing.type: Easing.OutQuad } }
+
+                        Label {
+                            anchors.centerIn: parent
+                            color: Theme.text
+                            text: "Off"
+                            font.bold: true
+                            font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.85))
+                        }
+
+                        MouseArea {
+                            id: gridOffMouse
+                            anchors.fill: parent
+                            onClicked: {
+                                gridFanCard.draftSpeed = 0
+                                root.fanSpeedRequested(gridFanCard.modelData.name, 0)
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.preferredWidth: root.metrics.safeTouchSize
+                        Layout.preferredHeight: Layout.preferredWidth
+                        Layout.maximumHeight: width
+                        visible: gridFanCard.modelData.speed_settable
+                        scale: gridFullMouse.pressed ? 0.96 : 1.0
+                        transformOrigin: Item.Center
+                        color: gridFullMouse.pressed ? "#26373b" : "#101819"
+                        border.color: Math.round(gridFanCard.displaySpeed) === 100 ? "#7f9298" : "#536165"
+                        border.width: Math.round(gridFanCard.displaySpeed) === 100 ? 2 : 1
+                        radius: Math.round(root.metrics.fontSize * 0.32)
+                        Behavior on scale { NumberAnimation { duration: 70; easing.type: Easing.OutQuad } }
+
+                        Label {
+                            anchors.centerIn: parent
+                            color: Theme.text
+                            text: "100%"
+                            font.bold: true
+                            font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.85))
+                        }
+
+                        MouseArea {
+                            id: gridFullMouse
+                            anchors.fill: parent
+                            onClicked: {
+                                gridFanCard.draftSpeed = 100
+                                root.fanSpeedRequested(gridFanCard.modelData.name, 100)
+                            }
+                        }
+                    }
+
+                    Slider {
+                        id: gridSlider
+                        visible: gridFanCard.modelData.speed_settable
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: root.metrics.minimumTouchSize
+                        Layout.alignment: Qt.AlignVCenter
+                        from: 0
+                        to: 100
+                        stepSize: 0
+                        live: true
+                        value: gridFanCard.draftSpeed
+
+                        onMoved: gridFanCard.draftSpeed = Math.max(0, Math.min(100, value))
+                        onPressedChanged: {
+                            if (pressed) {
+                                gridFanCard.draftSpeed = gridFanCard.speedValue
+                            } else {
+                                gridFanCard.draftSpeed = Math.max(0, Math.min(100, value))
+                                root.fanSpeedRequested(gridFanCard.modelData.name, gridFanCard.draftSpeed)
+                            }
+                        }
+
+                        background: Rectangle {
+                            x: gridSlider.leftPadding
+                            y: gridSlider.topPadding + gridSlider.availableHeight / 2 - height / 2
+                            width: gridSlider.availableWidth
+                            height: Math.max(14, Math.round(root.metrics.fontSize * 0.85))
+                            radius: height / 2
+                            color: "#101819"
+                            border.color: "#536165"
+                            border.width: 1
+
+                            Rectangle {
+                                width: gridSlider.visualPosition * parent.width
+                                height: parent.height
+                                radius: parent.radius
+                                color: "#7f9298"
+                            }
+                        }
+
+                        handle: Rectangle {
+                            x: gridSlider.leftPadding + gridSlider.visualPosition * (gridSlider.availableWidth - width)
+                            y: gridSlider.topPadding + gridSlider.availableHeight / 2 - height / 2
+                            width: root.metrics.minimumTouchSize
+                            height: width
+                            radius: width / 2
+                            color: gridSlider.pressed ? "#d4dde0" : "#aebdc2"
+                            border.color: "#0b1112"
+                            border.width: 2
+                        }
+                    }
                 }
             }
         }
@@ -320,8 +331,206 @@ Item {
                 height: root.metrics.gap
             }
 
-            delegate: FanCard {
+            delegate: Rectangle {
+                id: fanCard
+                required property var modelData
+                readonly property real speedValue: Number(modelData.speed || 0)
+                property real draftSpeed: speedValue
+                readonly property string modeText: modelData.speed_settable ? "manual" : "auto"
+                readonly property real displaySpeed: speedSlider.pressed ? draftSpeed : speedValue
+                readonly property bool hasRpm: modelData.rpm !== undefined && modelData.rpm !== null
+                readonly property real rpmValue: hasRpm ? Number(modelData.rpm) : 0
+
+                onSpeedValueChanged: {
+                    if (!speedSlider.pressed) {
+                        draftSpeed = speedValue
+                    }
+                }
+
                 width: fanList.width
+                height: Math.max(
+                    modelData.speed_settable ? (root.metrics.portrait ? 156 : 144) : 92,
+                    Math.round(
+                        root.metrics.fontSize
+                            * (modelData.speed_settable
+                                ? (root.metrics.portrait ? 9.8 : 6.4)
+                                : (root.metrics.portrait ? 5.9 : 4.1))
+                    )
+                )
+                color: "#0d1415"
+                border.color: modelData.speed_settable ? "#536165" : "#344346"
+                border.width: 1
+                radius: Math.round(root.metrics.fontSize * 0.38)
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: root.metrics.gap
+                    spacing: Math.max(6, Math.round(root.metrics.gap * 0.65))
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: root.metrics.gap
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 1
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: Theme.text
+                                text: modelData.display_name
+                                elide: Text.ElideRight
+                                font.bold: true
+                                font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize))
+                            }
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: Theme.mutedText
+                                text: modelData.name + " · " + fanCard.modeText
+                                    + (fanCard.hasRpm ? " · " + Math.round(fanCard.rpmValue) + " RPM" : "")
+                                elide: Text.ElideRight
+                                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.68))
+                            }
+                        }
+
+                        Label {
+                            color: Theme.text
+                            text: Math.round(fanCard.displaySpeed) + "%"
+                            horizontalAlignment: Text.AlignRight
+                            font.bold: true
+                            font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.2))
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: Math.max(12, Math.round(root.metrics.fontSize * 0.78))
+                        color: "#101819"
+                        border.color: "#263233"
+                        border.width: 1
+                        radius: height / 2
+
+                        Rectangle {
+                            anchors.left: parent.left
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            width: Math.max(parent.height, parent.width * Math.max(0, Math.min(100, fanCard.displaySpeed)) / 100)
+                            color: "#7f9298"
+                            radius: parent.radius
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: Math.max(
+                            root.metrics.portrait ? 62 : 54,
+                            Math.round(root.metrics.fontSize * (root.metrics.portrait ? 3.9 : 2.4))
+                        )
+                        visible: modelData.speed_settable
+                        spacing: Math.max(6, Math.round(root.metrics.gap * 0.6))
+
+                        Repeater {
+                            model: [0, 100]
+
+                            Rectangle {
+                                required property int modelData
+                                readonly property int percent: modelData
+
+                                Layout.preferredWidth: Math.max(76, Math.round(root.metrics.fontSize * 4.6))
+                                Layout.fillHeight: true
+                                scale: fanShortcutMouse.pressed ? 0.96 : 1.0
+                                transformOrigin: Item.Center
+                                color: fanShortcutMouse.pressed ? "#26373b" : "#101819"
+                                border.color: Math.round(fanCard.displaySpeed) === percent ? "#7f9298" : "#536165"
+                                border.width: Math.round(fanCard.displaySpeed) === percent ? 2 : 1
+                                radius: Math.round(root.metrics.fontSize * 0.28)
+                                Behavior on scale {
+                                    NumberAnimation { duration: 70; easing.type: Easing.OutQuad }
+                                }
+
+                                Rectangle {
+                                    id: fanShortcutDepth
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    anchors.bottom: parent.bottom
+                                    height: Math.max(2, Math.round(root.metrics.fontSize * 0.18))
+                                    visible: !fanShortcutMouse.pressed
+                                    color: "#050808"
+                                    opacity: 0.78
+                                    radius: parent.radius
+                                }
+
+                                Label {
+                                    anchors.centerIn: parent
+                                    color: Theme.text
+                                    text: percent === 0 ? "Off" : percent + "%"
+                                    font.bold: true
+                                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.78))
+                                }
+
+                                MouseArea {
+                                    id: fanShortcutMouse
+                                    anchors.fill: parent
+                                    onClicked: {
+                                        fanCard.draftSpeed = percent
+                                        root.fanSpeedRequested(fanCard.modelData.name, fanCard.draftSpeed)
+                                    }
+                                }
+                            }
+                        }
+
+                        Slider {
+                            id: speedSlider
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            from: 0
+                            to: 100
+                            stepSize: 0
+                            live: true
+                            value: fanCard.draftSpeed
+
+                            onMoved: fanCard.draftSpeed = Math.max(0, Math.min(100, value))
+                            onPressedChanged: {
+                                if (pressed) {
+                                    fanCard.draftSpeed = fanCard.speedValue
+                                } else {
+                                    fanCard.draftSpeed = Math.max(0, Math.min(100, value))
+                                    root.fanSpeedRequested(fanCard.modelData.name, fanCard.draftSpeed)
+                                }
+                            }
+
+                            background: Rectangle {
+                                x: speedSlider.leftPadding
+                                y: speedSlider.topPadding + speedSlider.availableHeight / 2 - height / 2
+                                width: speedSlider.availableWidth
+                                height: Math.max(12, Math.round(root.metrics.fontSize * 0.76))
+                                radius: height / 2
+                                color: "#101819"
+                                border.color: "#536165"
+                                border.width: 1
+
+                                Rectangle {
+                                    width: speedSlider.visualPosition * parent.width
+                                    height: parent.height
+                                    radius: parent.radius
+                                    color: "#7f9298"
+                                }
+                            }
+
+                            handle: Rectangle {
+                                x: speedSlider.leftPadding + speedSlider.visualPosition * (speedSlider.availableWidth - width)
+                                y: speedSlider.topPadding + speedSlider.availableHeight / 2 - height / 2
+                                width: Math.max(38, Math.round(root.metrics.fontSize * 2.45))
+                                height: width
+                                radius: width / 2
+                                color: speedSlider.pressed ? "#d4dde0" : "#aebdc2"
+                                border.color: "#0b1112"
+                                border.width: 2
+                            }
+                        }
+                    }
+                }
             }
         }
     }
