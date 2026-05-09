@@ -436,7 +436,7 @@ Item {
         if (total > 0) {
             return current + " / " + total.toFixed(2) + " mm"
         }
-        return current + " / -"
+        return current + " / - mm"
     }
 
     function totalZHeight() {
