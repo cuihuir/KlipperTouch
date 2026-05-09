@@ -407,9 +407,6 @@ ApplicationWindow {
         target: window.jobControlBridgeModel
 
         function onStatusChanged() {
-            if (window.jobControlBridgeModel && window.jobControlBridgeModel.lastStatus.length > 0) {
-                window.notify("info", "Command sent", window.jobControlBridgeModel.lastStatus, "job", false, window.currentPanel)
-            }
         }
 
         function onErrorChanged() {
@@ -773,9 +770,10 @@ ApplicationWindow {
 
         MouseArea {
             anchors.fill: parent
-            onClicked: {
+            onPressed: function(mouse) {
                 window.toastVisible = false
                 toastTimer.stop()
+                mouse.accepted = false
             }
         }
     }

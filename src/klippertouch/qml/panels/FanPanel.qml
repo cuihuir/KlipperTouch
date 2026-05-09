@@ -83,6 +83,12 @@ Item {
                     Math.round(root.metrics.safeTouchSize * 1.8)
                 )
 
+                onSpeedValueChanged: {
+                    if (!gridSlider.pressed && !releaseGuard.running) {
+                        draftSpeed = speedValue
+                    }
+                }
+
                 width: fanGrid.cellWidth - fanGrid.cellGap
                 height: fanGrid.cellHeight - fanGrid.cellGap
                 x: Math.round(fanGrid.cellGap / 2)
@@ -91,12 +97,6 @@ Item {
                 border.color: modelData.speed_settable ? "#536165" : "#344346"
                 border.width: 1
                 radius: Math.round(root.metrics.fontSize * 0.45)
-
-                onSpeedValueChanged: {
-                    if (!gridSlider.pressed) {
-                        draftSpeed = speedValue
-                    }
-                }
 
                 RowLayout {
                     anchors.fill: parent
@@ -128,47 +128,51 @@ Item {
                         }
                     }
 
-                    Canvas {
-                        id: gridGauge
+                    Item {
+                        id: gauge
                         Layout.alignment: Qt.AlignVCenter
                         Layout.preferredWidth: gridFanCard.gaugeSize
                         Layout.preferredHeight: gridFanCard.gaugeSize
+                        readonly property real value: gridFanCard.displaySpeed
+                        readonly property int bw: Math.max(4, Math.round(width * 0.08))
+                        readonly property real ringR: (width - bw * 2) / 2
 
-                        onPaint: {
-                            var ctx = getContext("2d")
-                            ctx.reset()
-                            var s = gridFanCard.gaugeSize
-                            var cx = s / 2
-                            var cy = s / 2
-                            var stroke = Math.max(3, Math.round(s * 0.07))
-                            var r = Math.max(4, (s - stroke * 2) / 2 - 2)
-
-                            ctx.strokeStyle = "#263233"
-                            ctx.lineWidth = stroke
-                            ctx.lineCap = "round"
-                            ctx.beginPath()
-                            ctx.arc(cx, cy, r, 0, Math.PI * 2)
-                            ctx.stroke()
-
-                            var pct = Math.max(0, Math.min(100, gridFanCard.displaySpeed)) / 100
-                            if (pct > 0.005) {
-                                ctx.strokeStyle = "#7f9298"
-                                ctx.lineWidth = stroke
-                                ctx.beginPath()
-                                ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * pct)
-                                ctx.stroke()
-                            }
-
-                            ctx.fillStyle = Theme.text
-                            ctx.font = "bold " + Math.max(11, Math.round(s * 0.26)) + "px sans-serif"
-                            ctx.textAlign = "center"
-                            ctx.textBaseline = "middle"
-                            ctx.fillText(Math.round(gridFanCard.displaySpeed) + "%", cx, cy)
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: width / 2
+                            color: "transparent"
+                            border.color: "#263233"
+                            border.width: gauge.bw
                         }
 
-                        Connections {
-                            target: gridFanCard
-                            function onDisplaySpeedChanged() { gridGauge.requestPaint() }
+                        Repeater {
+                            model: 24
+
+                            Rectangle {
+                                readonly property real angle: (index / 24) * 2 * Math.PI - Math.PI / 2
+                                x: gauge.width / 2 + gauge.ringR * Math.cos(angle) - width / 2
+                                y: gauge.height / 2 + gauge.ringR * Math.sin(angle) - height / 2
+                                width: gauge.bw
+                                height: gauge.bw
+                                radius: width / 2
+                                color: (index / 24 * 100) < gauge.value ? "#7f9298" : "transparent"
+                            }
+                        }
+
+                        Rectangle {
+                            anchors.centerIn: parent
+                            width: parent.width - gauge.bw * 4 - 2
+                            height: parent.height - gauge.bw * 4 - 2
+                            radius: width / 2
+                            color: "#0d1415"
+                        }
+
+                        Label {
+                            anchors.centerIn: parent
+                            color: Theme.text
+                            text: Math.round(gauge.value) + "%"
+                            font.bold: true
+                            font.pixelSize: Math.max(11, Math.round(parent.width * 0.24))
                         }
                     }
 
@@ -253,10 +257,17 @@ Item {
                         onPressedChanged: {
                             if (pressed) {
                                 gridFanCard.draftSpeed = gridFanCard.speedValue
+                                releaseGuard.stop()
                             } else {
                                 gridFanCard.draftSpeed = Math.max(0, Math.min(100, value))
                                 root.fanSpeedRequested(gridFanCard.modelData.name, gridFanCard.draftSpeed)
+                                releaseGuard.start()
                             }
+                        }
+
+                        Timer {
+                            id: releaseGuard
+                            interval: 1500
                         }
 
                         background: Rectangle {
