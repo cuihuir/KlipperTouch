@@ -1349,65 +1349,65 @@ Item {
                                 spacing: root.metrics.gap
 
                                 Rectangle {
-                                    Layout.preferredWidth: Math.max(96, Math.round(root.metrics.fontSize * 6.1))
-                                    Layout.preferredHeight: Math.max(34, Math.round(root.metrics.fontSize * 2.2))
-                                    color: "#101617"
+                                    Layout.preferredWidth: Math.max(110, Math.round(root.metrics.fontSize * 7.2))
+                                    Layout.preferredHeight: Math.max(38, Math.round(root.metrics.fontSize * 2.5))
+                                    color: root.effectivePrintState() === "printing" ? Qt.rgba(0.15, 0.55, 0.35, 0.9) : "#101617"
                                     border.color: root.accentColor
-                                    border.width: 1
+                                    border.width: root.effectivePrintState() === "printing" ? 2 : 1
                                     radius: height / 2
 
                                     Label {
                                         anchors.centerIn: parent
-                                        color: root.accentColor
+                                        color: root.effectivePrintState() === "printing" ? "#66ffb2" : root.accentColor
                                         text: root.stateHeadline()
                                         horizontalAlignment: Text.AlignHCenter
                                         verticalAlignment: Text.AlignVCenter
                                         font.bold: true
-                                        font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.82))
+                                        font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 0.95))
                                     }
                                 }
 
                                 Label {
                                     Layout.fillWidth: true
-                                    color: Theme.mutedText
-                                    text: Math.round(root.stateProgressValue() * 100) + "%"
-                                    horizontalAlignment: Text.AlignRight
+                                    color: Theme.text
+                                    text: root.printFilename.length > 0 ? root.printFilename : "No active file"
+                                    elide: Text.ElideMiddle
+                                    font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.15))
                                     verticalAlignment: Text.AlignVCenter
-                                    font.pixelSize: Math.max(20, Math.round(root.metrics.fontSize * 1.35))
                                 }
                             }
 
-                            Label {
+                            RowLayout {
                                 Layout.fillWidth: true
-                                color: Theme.text
-                                text: root.printFilename.length > 0 ? root.printFilename : "No active file"
-                                elide: Text.ElideMiddle
-                                maximumLineCount: 2
-                                wrapMode: Text.Wrap
-                                font.bold: true
-                                font.pixelSize: Math.max(30, Math.round(root.metrics.fontSize * 1.95))
-                                minimumPixelSize: 18
-                                fontSizeMode: Text.Fit
-                            }
+                                spacing: Math.max(8, Math.round(root.metrics.gap * 0.8))
 
-                            ProgressBar {
-                                id: ultraWideCoverProgressBar
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: Math.max(24, Math.round(root.metrics.fontSize * 1.45))
-                                value: root.stateProgressValue()
-                                background: Rectangle {
-                                    color: "#172426"
-                                    radius: height / 2
-                                }
-                                contentItem: Item {
-                                    Rectangle {
-                                        anchors.left: parent.left
-                                        anchors.top: parent.top
-                                        anchors.bottom: parent.bottom
-                                        width: Math.max(height, ultraWideCoverProgressBar.visualPosition * parent.width)
+                                ProgressBar {
+                                    id: ultraWideCoverProgressBar
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: Math.max(24, Math.round(root.metrics.fontSize * 1.45))
+                                    value: root.stateProgressValue()
+                                    background: Rectangle {
+                                        color: "#172426"
                                         radius: height / 2
-                                        color: root.accentColor
                                     }
+                                    contentItem: Item {
+                                        Rectangle {
+                                            anchors.left: parent.left
+                                            anchors.top: parent.top
+                                            anchors.bottom: parent.bottom
+                                            width: Math.max(height, ultraWideCoverProgressBar.visualPosition * parent.width)
+                                            radius: height / 2
+                                            color: root.accentColor
+                                        }
+                                    }
+                                }
+
+                                Label {
+                                    color: Theme.text
+                                    text: Math.round(root.stateProgressValue() * 100) + "%"
+                                    font.bold: true
+                                    font.pixelSize: Math.max(22, Math.round(root.metrics.fontSize * 1.5))
+                                    verticalAlignment: Text.AlignVCenter
                                 }
                             }
 
@@ -1438,7 +1438,7 @@ Item {
                                             color: Theme.mutedText
                                             text: modelData.label
                                             elide: Text.ElideRight
-                                            font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.86))
+                                            font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 1.0))
                                         }
 
                                         Label {
@@ -1621,14 +1621,14 @@ Item {
                     JobButton {
                         id: ultraWideAdvancedButton
                         visible: !root.terminalJobState()
-                        anchors.right: parent.right
-                        anchors.bottom: parent.bottom
-                        anchors.margins: Math.max(12, Math.round(root.metrics.gap * 1.2))
-                        width: Math.max(56, Math.round(root.ultraWidePlayerButtonSize() * 0.6))
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        anchors.margins: Math.max(10, Math.round(root.metrics.gap * 1.0))
+                        width: Math.max(52, Math.round(root.ultraWidePlayerButtonSize() * 0.55))
                         height: width
                         text: "..."
                         fontSize: root.metrics.fontSize
-                        font.pixelSize: Math.max(22, Math.round(root.metrics.fontSize * 1.35))
+                        font.pixelSize: Math.max(20, Math.round(root.metrics.fontSize * 1.25))
                         baseColor: "#1f292c"
                         pressedColor: "#172528"
                         accentColor: "#536165"
@@ -1645,12 +1645,16 @@ Item {
 
                     ColumnLayout {
                         id: ultraWidePlayerControls
-                        anchors.centerIn: parent
-                        spacing: Math.max(8, Math.round(root.metrics.gap * 0.8))
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.leftMargin: Math.max(16, Math.round(root.metrics.gap * 1.5))
+                        anchors.rightMargin: Math.max(16, Math.round(root.metrics.gap * 1.5))
+                        spacing: Math.max(10, Math.round(root.metrics.gap * 1.0))
 
                         PlayerJobButton {
                             visible: !root.terminalJobState()
-                            Layout.preferredWidth: root.ultraWidePlayerButtonSize() * 1.4
+                            Layout.preferredWidth: root.ultraWidePlayerButtonSize() * 1.5
                             Layout.preferredHeight: Layout.preferredWidth
                             Layout.alignment: Qt.AlignHCenter
                             iconName: root.effectivePrintState() === "paused" ? "resume" : "pause"
@@ -1664,7 +1668,7 @@ Item {
                         RowLayout {
                             Layout.fillWidth: true
                             Layout.alignment: Qt.AlignHCenter
-                            spacing: root.metrics.panelColumnGap
+                            spacing: Math.max(20, Math.round(root.metrics.panelColumnGap * 1.5))
 
                             PlayerJobButton {
                                 visible: !root.terminalJobState()
@@ -1690,7 +1694,7 @@ Item {
 
                         PlayerJobButton {
                             visible: root.terminalJobState()
-                            Layout.preferredWidth: root.ultraWidePlayerButtonSize() * 1.4
+                            Layout.preferredWidth: root.ultraWidePlayerButtonSize() * 1.5
                             Layout.preferredHeight: Layout.preferredWidth
                             Layout.alignment: Qt.AlignHCenter
                             iconName: "clear"
