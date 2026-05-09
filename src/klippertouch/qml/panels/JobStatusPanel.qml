@@ -1070,8 +1070,8 @@ Item {
 
     function ultraWidePrimaryMetricModel() {
         return [
-            {"label": "Layer", "value": root.layerLabel(), "hint": "current / total"},
-            {"label": "Z height", "value": root.zHeightLabel(), "hint": "current / total"},
+            {"label": "Layer / Total layer", "value": root.layerLabel(), "hint": "current / total"},
+            {"label": "Z height / Total Z height", "value": root.zHeightLabel(), "hint": "current / total"},
             {"label": "Remaining", "value": root.remainingLabel(), "hint": "estimate"},
             {"label": "Elapsed", "value": root.durationLabel(root.printDuration), "hint": "printed"}
         ]
@@ -1095,7 +1095,7 @@ Item {
         if (zone === "motion") {
             return [
                 {"label": "Speed", "value": root.speedLabel(root.requestedSpeed)},
-                {"label": "Z height", "value": root.zHeightLabel()}
+                {"label": "Z height / Total Z height", "value": root.zHeightLabel()}
             ]
         }
         if (zone === "extrusion") {
@@ -1117,7 +1117,7 @@ Item {
             },
             {
                 "title": "Motion",
-                "primaryLabel": "Layer",
+                "primaryLabel": "Layer / Total layer",
                 "primaryValue": root.layerLabel(),
                 "rows": root.summaryZoneRows("motion")
             },
@@ -1169,10 +1169,10 @@ Item {
                 {"label": "Max velocity", "value": root.speedLabel(root.maxVelocity)},
                 {"label": "X position", "value": root.positionX.toFixed(2) + " mm"},
                 {"label": "Y position", "value": root.positionY.toFixed(2) + " mm"},
-                {"label": "Z height", "value": root.zHeightLabel()},
+                {"label": "Z height / Total Z height", "value": root.zHeightLabel()},
                 {"label": "Homed axes", "value": root.homedAxes.length > 0 ? root.homedAxes : "-"},
                 {"label": "Z offset", "value": root.zOffsetLabel()},
-                {"label": "Layer", "value": root.layerLabel()},
+                {"label": "Layer / Total layer", "value": root.layerLabel()},
                 {"label": "Layer height", "value": root.fileLayerHeightLabel()}
             ]
         }
@@ -1182,7 +1182,7 @@ Item {
                 {"label": "Filament total", "value": root.fileFilamentTotalLabel()},
                 {"label": "Flow factor", "value": root.percentLabel(root.extrudeFactor)},
                 {"label": "Extruder position", "value": root.positionE.toFixed(2) + " mm"},
-                {"label": "Layer", "value": root.layerLabel()}
+                {"label": "Layer / Total layer", "value": root.layerLabel()}
             ]
         }
         return []
@@ -1618,6 +1618,31 @@ Item {
                     border.width: 1
                     radius: Math.round(root.metrics.fontSize * 0.32)
 
+                    JobButton {
+                        id: ultraWideAdvancedButton
+                        visible: !root.terminalJobState()
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        anchors.margins: Math.max(12, Math.round(root.metrics.gap * 1.2))
+                        width: Math.max(56, Math.round(root.ultraWidePlayerButtonSize() * 0.6))
+                        height: width
+                        text: "..."
+                        fontSize: root.metrics.fontSize
+                        font.pixelSize: Math.max(22, Math.round(root.metrics.fontSize * 1.35))
+                        baseColor: "#1f292c"
+                        pressedColor: "#172528"
+                        accentColor: "#536165"
+                        showLeadingAccent: false
+                        enabled: !root.isTransitionalState(root.effectivePrintState())
+                        ToolTip.visible: hovered
+                        ToolTip.text: "Advanced"
+                        z: 1
+                        onClicked: {
+                            root.clearJobAction()
+                            root.detailPage = root.detailPage === "advanced" ? "summary" : "advanced"
+                        }
+                    }
+
                     ColumnLayout {
                         id: ultraWidePlayerControls
                         anchors.centerIn: parent
@@ -1660,28 +1685,6 @@ Item {
                                 ToolTip.visible: hovered
                                 ToolTip.text: "Cancel"
                                 onClicked: root.requestJobAction("cancel", "")
-                            }
-                        }
-
-                        JobButton {
-                            id: ultraWideAdvancedButton
-                            visible: !root.terminalJobState()
-                            Layout.preferredWidth: Math.max(56, Math.round(root.ultraWidePlayerButtonSize() * 0.6))
-                            Layout.preferredHeight: Math.max(56, Math.round(root.ultraWidePlayerButtonSize() * 0.6))
-                            Layout.alignment: Qt.AlignHCenter
-                            text: "..."
-                            fontSize: root.metrics.fontSize
-                            font.pixelSize: Math.max(22, Math.round(root.metrics.fontSize * 1.35))
-                            baseColor: "#1f292c"
-                            pressedColor: "#172528"
-                            accentColor: "#536165"
-                            showLeadingAccent: false
-                            enabled: !root.isTransitionalState(root.effectivePrintState())
-                            ToolTip.visible: hovered
-                            ToolTip.text: "Advanced"
-                            onClicked: {
-                                root.clearJobAction()
-                                root.detailPage = root.detailPage === "advanced" ? "summary" : "advanced"
                             }
                         }
 

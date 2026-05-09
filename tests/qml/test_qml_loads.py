@@ -442,7 +442,7 @@ def test_job_status_ultrawide_uses_minimal_player_layout() -> None:
     assert "id: ultraWideThumbnailPlaceholder" in qml
     assert "id: ultraWideCoverProgressBar" in qml
     assert "id: ultraWideCoverMetricsRow" in qml
-    assert '"label": "Layer"' in qml
+    assert '"label": "Layer / Total layer"' in qml
     assert '"label": "Remaining"' in qml
     assert '"label": "Elapsed"' in qml
     assert "component PlayerJobButton: JobButton" in qml
@@ -1064,7 +1064,7 @@ def test_job_status_panel_is_separate_from_files_panel_and_read_only() -> None:
     assert '"label": "Max acceleration"' in qml
     assert '"label": "X position"' in qml
     assert '"label": "Y position"' in qml
-    assert '"label": "Z height"' in qml
+    assert '"label": "Z height / Total Z height"' in qml
     assert '"label": "Homed axes"' in qml
     assert '"label": "Filament used"' in qml
     assert '"label": "Flow factor"' in qml
