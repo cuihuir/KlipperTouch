@@ -450,7 +450,7 @@ def test_job_status_ultrawide_uses_minimal_player_layout() -> None:
     assert "id: ultraWideAdvancedButton" in qml
     assert 'text: ""' in qml
     assert "root.ultraWidePlayerButtonSize()" in qml
-    assert "root.ultraWidePlayerButtonSize() * 1.5" in qml
+    assert "root.ultraWidePlayerButtonSize() * 1.6" in qml
     assert "Layout.preferredWidth: Math.max(340, Math.round(root.width * 0.28))" in qml
     assert 'text: "..."' in qml
     assert 'ToolTip.text: "Advanced"' in qml

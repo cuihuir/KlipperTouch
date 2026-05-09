@@ -1349,21 +1349,45 @@ Item {
                                 spacing: root.metrics.gap
 
                                 Rectangle {
-                                    Layout.preferredWidth: Math.max(110, Math.round(root.metrics.fontSize * 7.2))
-                                    Layout.preferredHeight: Math.max(38, Math.round(root.metrics.fontSize * 2.5))
-                                    color: root.effectivePrintState() === "printing" ? Qt.rgba(0.15, 0.55, 0.35, 0.9) : "#101617"
-                                    border.color: root.accentColor
-                                    border.width: root.effectivePrintState() === "printing" ? 2 : 1
+                                    Layout.preferredWidth: Math.max(120, Math.round(root.metrics.fontSize * 8.0))
+                                    Layout.preferredHeight: Math.max(40, Math.round(root.metrics.fontSize * 2.7))
+                                    color: {
+                                        var s = root.effectivePrintState()
+                                        if (s === "printing") return Qt.rgba(0.12, 0.50, 0.32, 0.95)
+                                        if (s === "paused") return Qt.rgba(0.55, 0.45, 0.20, 0.9)
+                                        if (s === "complete") return Qt.rgba(0.15, 0.45, 0.55, 0.9)
+                                        if (s === "cancelled") return Qt.rgba(0.50, 0.25, 0.20, 0.9)
+                                        if (s === "error") return Qt.rgba(0.60, 0.18, 0.15, 0.95)
+                                        return "#101617"
+                                    }
+                                    border.color: {
+                                        var s = root.effectivePrintState()
+                                        if (s === "printing") return "#66ffb2"
+                                        if (s === "paused") return "#ffd54f"
+                                        if (s === "complete") return "#4dd0e1"
+                                        if (s === "cancelled") return "#ff8a65"
+                                        if (s === "error") return "#ff5252"
+                                        return root.accentColor
+                                    }
+                                    border.width: 2
                                     radius: height / 2
 
                                     Label {
                                         anchors.centerIn: parent
-                                        color: root.effectivePrintState() === "printing" ? "#66ffb2" : root.accentColor
+                                        color: {
+                                            var s = root.effectivePrintState()
+                                            if (s === "printing") return "#66ffb2"
+                                            if (s === "paused") return "#ffd54f"
+                                            if (s === "complete") return "#4dd0e1"
+                                            if (s === "cancelled") return "#ff8a65"
+                                            if (s === "error") return "#ff5252"
+                                            return root.accentColor
+                                        }
                                         text: root.stateHeadline()
                                         horizontalAlignment: Text.AlignHCenter
                                         verticalAlignment: Text.AlignVCenter
                                         font.bold: true
-                                        font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 0.95))
+                                        font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 1.0))
                                     }
                                 }
 
@@ -1379,12 +1403,12 @@ Item {
 
                             RowLayout {
                                 Layout.fillWidth: true
-                                spacing: Math.max(8, Math.round(root.metrics.gap * 0.8))
+                                spacing: Math.max(10, Math.round(root.metrics.gap))
 
                                 ProgressBar {
                                     id: ultraWideCoverProgressBar
                                     Layout.fillWidth: true
-                                    Layout.preferredHeight: Math.max(24, Math.round(root.metrics.fontSize * 1.45))
+                                    Layout.preferredHeight: Math.max(26, Math.round(root.metrics.fontSize * 1.6))
                                     value: root.stateProgressValue()
                                     background: Rectangle {
                                         color: "#172426"
@@ -1406,8 +1430,10 @@ Item {
                                     color: Theme.text
                                     text: Math.round(root.stateProgressValue() * 100) + "%"
                                     font.bold: true
-                                    font.pixelSize: Math.max(22, Math.round(root.metrics.fontSize * 1.5))
+                                    font.pixelSize: Math.max(28, Math.round(root.metrics.fontSize * 2.0))
                                     verticalAlignment: Text.AlignVCenter
+                                    Layout.preferredWidth: Math.max(70, Math.round(root.metrics.fontSize * 4.5))
+                                    horizontalAlignment: Text.AlignRight
                                 }
                             }
 
@@ -1621,8 +1647,8 @@ Item {
                     JobButton {
                         id: ultraWideAdvancedButton
                         visible: !root.terminalJobState()
-                        anchors.left: parent.left
-                        anchors.top: parent.top
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
                         anchors.margins: Math.max(10, Math.round(root.metrics.gap * 1.0))
                         width: Math.max(52, Math.round(root.ultraWidePlayerButtonSize() * 0.55))
                         height: width
@@ -1643,20 +1669,17 @@ Item {
                         }
                     }
 
-                    ColumnLayout {
+                    Item {
                         id: ultraWidePlayerControls
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.leftMargin: Math.max(16, Math.round(root.metrics.gap * 1.5))
-                        anchors.rightMargin: Math.max(16, Math.round(root.metrics.gap * 1.5))
-                        spacing: Math.max(10, Math.round(root.metrics.gap * 1.0))
+                        anchors.fill: parent
+                        visible: !root.terminalJobState()
 
                         PlayerJobButton {
-                            visible: !root.terminalJobState()
-                            Layout.preferredWidth: root.ultraWidePlayerButtonSize() * 1.5
-                            Layout.preferredHeight: Layout.preferredWidth
-                            Layout.alignment: Qt.AlignHCenter
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.verticalCenterOffset: -Math.round(parent.height * 0.18)
+                            width: root.ultraWidePlayerButtonSize() * 1.6
+                            height: width
                             iconName: root.effectivePrintState() === "paused" ? "resume" : "pause"
                             buttonRole: "primary"
                             enabled: !root.isTransitionalState(root.effectivePrintState())
@@ -1665,45 +1688,50 @@ Item {
                             onClicked: root.stageImmediateJobAction(root.effectivePrintState() === "paused" ? "resume" : "pause")
                         }
 
-                        RowLayout {
-                            Layout.fillWidth: true
-                            Layout.alignment: Qt.AlignHCenter
-                            spacing: Math.max(20, Math.round(root.metrics.panelColumnGap * 1.5))
-
-                            PlayerJobButton {
-                                visible: !root.terminalJobState()
-                                iconName: "object"
-                                enabled: root.currentObject.length > 0
-                                    && !root.isTransitionalState(root.effectivePrintState())
-                                ToolTip.visible: hovered
-                                ToolTip.text: enabled ? "Skip current object" : "No current object"
-                                onClicked: root.requestJobAction("skip_current", root.currentObject)
-                            }
-
-                            PlayerJobButton {
-                                visible: !root.terminalJobState()
-                                iconName: "cancel"
-                                buttonRole: "danger"
-                                accent: root.mutedDangerAccent
-                                enabled: !root.isTransitionalState(root.effectivePrintState())
-                                ToolTip.visible: hovered
-                                ToolTip.text: "Cancel"
-                                onClicked: root.requestJobAction("cancel", "")
-                            }
+                        PlayerJobButton {
+                            anchors.left: parent.left
+                            anchors.leftMargin: Math.max(20, Math.round(parent.width * 0.12))
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.verticalCenterOffset: Math.round(parent.height * 0.18)
+                            width: root.ultraWidePlayerButtonSize()
+                            height: width
+                            iconName: "object"
+                            enabled: root.currentObject.length > 0
+                                && !root.isTransitionalState(root.effectivePrintState())
+                            ToolTip.visible: hovered
+                            ToolTip.text: enabled ? "Skip current object" : "No current object"
+                            onClicked: root.requestJobAction("skip_current", root.currentObject)
                         }
 
                         PlayerJobButton {
-                            visible: root.terminalJobState()
-                            Layout.preferredWidth: root.ultraWidePlayerButtonSize() * 1.5
-                            Layout.preferredHeight: Layout.preferredWidth
-                            Layout.alignment: Qt.AlignHCenter
-                            iconName: "clear"
-                            buttonRole: "primary"
+                            anchors.right: parent.right
+                            anchors.rightMargin: Math.max(20, Math.round(parent.width * 0.12))
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.verticalCenterOffset: Math.round(parent.height * 0.18)
+                            width: root.ultraWidePlayerButtonSize()
+                            height: width
+                            iconName: "cancel"
+                            buttonRole: "danger"
+                            accent: root.mutedDangerAccent
                             enabled: !root.isTransitionalState(root.effectivePrintState())
                             ToolTip.visible: hovered
-                            ToolTip.text: "Clear status"
-                            onClicked: root.stageImmediateJobAction("clear")
+                            ToolTip.text: "Cancel"
+                            onClicked: root.requestJobAction("cancel", "")
                         }
+                    }
+
+                    PlayerJobButton {
+                        visible: root.terminalJobState()
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: root.ultraWidePlayerButtonSize() * 1.6
+                        height: width
+                        iconName: "clear"
+                        buttonRole: "primary"
+                        enabled: !root.isTransitionalState(root.effectivePrintState())
+                        ToolTip.visible: hovered
+                        ToolTip.text: "Clear status"
+                        onClicked: root.stageImmediateJobAction("clear")
                     }
                 }
             }
