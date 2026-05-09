@@ -1885,7 +1885,7 @@ Item {
 
                                     Repeater {
                                         model: [
-                                            {"label": "Z", "value": root.positionZ.toFixed(1)},
+                                            {"label": "Z", "value": root.zHeightLabel()},
                                             {"label": "S", "value": root.speedLabel(root.requestedSpeed)},
                                             {"label": "F", "value": root.percentLabel(root.extrudeFactor)}
                                         ]
