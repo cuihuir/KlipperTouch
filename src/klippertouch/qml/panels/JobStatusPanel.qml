@@ -1648,16 +1648,17 @@ Item {
                         id: ultraWideAdvancedButton
                         visible: !root.terminalJobState()
                         anchors.right: parent.right
-                        anchors.bottom: parent.bottom
-                        anchors.margins: Math.max(10, Math.round(root.metrics.gap * 1.0))
-                        width: Math.max(52, Math.round(root.ultraWidePlayerButtonSize() * 0.55))
+                        anchors.top: parent.top
+                        anchors.rightMargin: Math.max(20, Math.round(parent.width * 0.06))
+                        anchors.topMargin: Math.max(20, Math.round(parent.height * 0.05))
+                        width: Math.max(54, Math.round(root.ultraWidePlayerButtonSize() * 0.65))
                         height: width
                         text: "..."
                         fontSize: root.metrics.fontSize
-                        font.pixelSize: Math.max(20, Math.round(root.metrics.fontSize * 1.25))
-                        baseColor: "#1f292c"
-                        pressedColor: "#172528"
-                        accentColor: "#536165"
+                        font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.15))
+                        baseColor: "#1a2225"
+                        pressedColor: "#131a1c"
+                        accentColor: "#434e51"
                         showLeadingAccent: false
                         enabled: !root.isTransitionalState(root.effectivePrintState())
                         ToolTip.visible: hovered
@@ -1677,8 +1678,8 @@ Item {
                         PlayerJobButton {
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.verticalCenter: parent.verticalCenter
-                            anchors.verticalCenterOffset: -Math.round(parent.height * 0.18)
-                            width: root.ultraWidePlayerButtonSize() * 1.6
+                            anchors.verticalCenterOffset: -Math.round(parent.height * 0.20)
+                            width: root.ultraWidePlayerButtonSize() * 1.35
                             height: width
                             iconName: root.effectivePrintState() === "paused" ? "resume" : "pause"
                             buttonRole: "primary"
@@ -1690,9 +1691,9 @@ Item {
 
                         PlayerJobButton {
                             anchors.left: parent.left
-                            anchors.leftMargin: Math.max(20, Math.round(parent.width * 0.12))
+                            anchors.leftMargin: Math.max(24, Math.round(parent.width * 0.14))
                             anchors.verticalCenter: parent.verticalCenter
-                            anchors.verticalCenterOffset: Math.round(parent.height * 0.18)
+                            anchors.verticalCenterOffset: Math.round(parent.height * 0.20)
                             width: root.ultraWidePlayerButtonSize()
                             height: width
                             iconName: "object"
@@ -1705,9 +1706,9 @@ Item {
 
                         PlayerJobButton {
                             anchors.right: parent.right
-                            anchors.rightMargin: Math.max(20, Math.round(parent.width * 0.12))
+                            anchors.rightMargin: Math.max(24, Math.round(parent.width * 0.14))
                             anchors.verticalCenter: parent.verticalCenter
-                            anchors.verticalCenterOffset: Math.round(parent.height * 0.18)
+                            anchors.verticalCenterOffset: Math.round(parent.height * 0.20)
                             width: root.ultraWidePlayerButtonSize()
                             height: width
                             iconName: "cancel"
