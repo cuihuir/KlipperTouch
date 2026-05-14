@@ -45,8 +45,8 @@ class GCodeFileListModel(QAbstractListModel):
         self._files: tuple[GCodeFile, ...] = ()
         self._entries: tuple[GCodeFileEntry, ...] = ()
         self._current_path = ""
-        self._sort_key = "name"
-        self._sort_descending = False
+        self._sort_key = "date"
+        self._sort_descending = True
         self._filter_text = ""
         self._selected_path = ""
         self._thumbnail_revision = 0
