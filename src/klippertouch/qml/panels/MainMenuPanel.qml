@@ -19,6 +19,8 @@ Item {
     signal pauseRequested()
     signal resumeRequested()
     signal cancelRequested()
+    signal clearRequested()
+    signal reprintRequested()
     property int virtualRows: 5
     property int temperatureRows: 3
     property int menuRows: 2
@@ -121,6 +123,8 @@ Item {
                 onPauseRequested: root.pauseRequested()
                 onResumeRequested: root.resumeRequested()
                 onCancelRequested: root.cancelRequested()
+                onClearRequested: root.clearRequested()
+                onReprintRequested: root.reprintRequested()
                 onTapped: root.panelRequested("job_status")
             }
         }

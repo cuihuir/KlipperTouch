@@ -55,6 +55,7 @@ Item {
     signal extrudeFactorAdjustRequested(real delta)
     signal objectExcludeRequested(string objectName)
     signal jobActionRequested(string action, string objectName)
+    signal reprintRequested()
 
     onExcludeObjectsChanged: root.requestObjectMapRepaint()
     onExcludedObjectNamesChanged: root.requestObjectMapRepaint()
@@ -1725,9 +1726,10 @@ Item {
 
                     PlayerJobButton {
                         visible: root.terminalJobState()
-                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.left: parent.left
+                        anchors.leftMargin: Math.max(24, Math.round(parent.width * 0.14))
                         anchors.verticalCenter: parent.verticalCenter
-                        width: root.ultraWidePlayerButtonSize() * 1.6
+                        width: root.ultraWidePlayerButtonSize()
                         height: width
                         iconName: "clear"
                         buttonRole: "primary"
@@ -1735,6 +1737,21 @@ Item {
                         ToolTip.visible: hovered
                         ToolTip.text: "Clear status"
                         onClicked: root.stageImmediateJobAction("clear")
+                    }
+
+                    PlayerJobButton {
+                        visible: root.terminalJobState()
+                        anchors.right: parent.right
+                        anchors.rightMargin: Math.max(24, Math.round(parent.width * 0.14))
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: root.ultraWidePlayerButtonSize()
+                        height: width
+                        iconName: "printer"
+                        buttonRole: "primary"
+                        enabled: !root.isTransitionalState(root.effectivePrintState())
+                        ToolTip.visible: hovered
+                        ToolTip.text: "Reprint"
+                        onClicked: root.reprintRequested()
                     }
                 }
             }
@@ -2006,6 +2023,19 @@ Item {
                     ToolTip.visible: hovered
                     ToolTip.text: root.readonlyActionHint(text)
                     onClicked: root.stageImmediateJobAction("clear")
+                }
+
+                JobButton {
+                    visible: root.terminalJobState()
+                    Layout.preferredWidth: root.clearActionButtonWidth()
+                    Layout.preferredHeight: root.jobButtonHeight
+                    text: "Reprint"
+                    iconName: "printer"
+                    buttonRole: "primary"
+                    enabled: !root.isTransitionalState(root.effectivePrintState())
+                    ToolTip.visible: hovered
+                    ToolTip.text: root.readonlyActionHint(text)
+                    onClicked: root.reprintRequested()
                 }
 
                 JobButton {

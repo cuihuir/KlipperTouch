@@ -144,6 +144,10 @@ ApplicationWindow {
                 window.panelStack = ["job_status"]
                 window.currentPanel = "job_status"
             }
+        } else if (window.printState === "complete" || window.printState === "cancelled") {
+            if (jobControlBridgeModel && window.requestedPrintState !== "standby") {
+                jobControlBridgeModel.requestClearJob()
+            }
         } else if (!window.shouldKeepJobStatusVisible() && window.currentPanel === "job_status") {
             if (window.requestedPrintState === "standby" && window.printState === "standby") {
                 window.panelStack = ["main", "print"]
@@ -250,6 +254,28 @@ ApplicationWindow {
             jobControlBridgeModel.requestSkipCurrentObject()
         } else if (action === "clear") {
             jobControlBridgeModel.requestClearJob()
+        } else if (action === "reprint") {
+            window.requestReprint(window.printFilename)
+        }
+    }
+
+    function requestReprint(path) {
+        if (!jobControlBridgeModel || path.length <= 0) {
+            return
+        }
+        jobControlBridgeModel.requestClearJob()
+        reprintTimer.start()
+    }
+
+    Timer {
+        id: reprintTimer
+        interval: 500
+        repeat: false
+        onTriggered: {
+            var path = window.printFilename
+            if (path.length > 0) {
+                window.requestFileControl("print", path)
+            }
         }
     }
 
@@ -492,6 +518,8 @@ ApplicationWindow {
                 onPauseRequested: window.requestJobControl("pause", "")
                 onResumeRequested: window.requestJobControl("resume", "")
                 onCancelRequested: window.requestJobControl("cancel", "")
+                onClearRequested: window.requestJobControl("clear", "")
+                onReprintRequested: window.requestJobControl("reprint", "")
             }
         }
 
@@ -616,6 +644,7 @@ ApplicationWindow {
                         window.jobControlBridgeModel.requestExtrudeFactor(window.clampControlPercent(window.extrudeFactor + delta))
                     }
                 }
+                onReprintRequested: window.requestJobControl("reprint", "")
             }
         }
 

@@ -14,6 +14,8 @@ Rectangle {
     signal pauseRequested()
     signal resumeRequested()
     signal cancelRequested()
+    signal clearRequested()
+    signal reprintRequested()
     signal tapped()
 
     color: tileMouseArea.pressed ? "#182124" : Theme.buttonsBg
@@ -48,6 +50,10 @@ Rectangle {
             return root.printState
         }
         return root.requestedPrintState.length > 0 ? root.requestedPrintState : root.printState
+    }
+
+    function isTerminalState(state) {
+        return state === "complete" || state === "cancelled" || state === "error"
     }
 
     function isTransitionalState(state) {
@@ -357,6 +363,96 @@ Rectangle {
                         anchors.fill: parent
                         enabled: parent.enabled
                         onClicked: root.cancelRequested()
+                    }
+                }
+
+                // Clear button — visible only in terminal states
+                Rectangle {
+                    id: clearButton
+                    Layout.preferredWidth: root.buttonWidth()
+                    Layout.preferredHeight: root.buttonHeight()
+                    Layout.alignment: Qt.AlignVCenter
+                    radius: Math.round(root.metrics.fontSize * 0.5)
+                    color: clearMouseArea.pressed ? Qt.darker(Qt.rgba(0.12, 0.50, 0.32, 0.95), 1.3) : Qt.rgba(0.12, 0.50, 0.32, 0.95)
+                    border.color: "#66ffb2"
+                    border.width: 2
+                    visible: root.isTerminalState(root.printState)
+                    enabled: !root.isTransitionalState(root.effectivePrintState())
+                    opacity: enabled ? 1.0 : 0.4
+
+                    RowLayout {
+                        anchors.centerIn: parent
+                        spacing: Math.max(4, Math.round(root.metrics.gap * 0.5))
+
+                        Image {
+                            Layout.preferredWidth: Math.round(clearButton.height * 0.45)
+                            Layout.preferredHeight: Layout.preferredWidth
+                            source: Theme.iconSource("clear")
+                            fillMode: Image.PreserveAspectFit
+                            sourceSize.width: width
+                            sourceSize.height: height
+                            opacity: clearButton.enabled ? 1.0 : 0.4
+                        }
+
+                        Label {
+                            color: Theme.text
+                            text: "Clear"
+                            font.bold: true
+                            font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 1.0))
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                    }
+
+                    MouseArea {
+                        id: clearMouseArea
+                        anchors.fill: parent
+                        enabled: parent.enabled
+                        onClicked: root.clearRequested()
+                    }
+                }
+
+                // Reprint button — visible only in terminal states
+                Rectangle {
+                    id: reprintButton
+                    Layout.preferredWidth: root.buttonWidth()
+                    Layout.preferredHeight: root.buttonHeight()
+                    Layout.alignment: Qt.AlignVCenter
+                    radius: Math.round(root.metrics.fontSize * 0.5)
+                    color: reprintMouseArea.pressed ? Qt.darker("#007db4", 1.3) : "#007db4"
+                    border.color: "#4dd0e1"
+                    border.width: 2
+                    visible: root.isTerminalState(root.printState)
+                    enabled: !root.isTransitionalState(root.effectivePrintState())
+                    opacity: enabled ? 1.0 : 0.4
+
+                    RowLayout {
+                        anchors.centerIn: parent
+                        spacing: Math.max(4, Math.round(root.metrics.gap * 0.5))
+
+                        Image {
+                            Layout.preferredWidth: Math.round(reprintButton.height * 0.45)
+                            Layout.preferredHeight: Layout.preferredWidth
+                            source: Theme.iconSource("printer")
+                            fillMode: Image.PreserveAspectFit
+                            sourceSize.width: width
+                            sourceSize.height: height
+                            opacity: reprintButton.enabled ? 1.0 : 0.4
+                        }
+
+                        Label {
+                            color: Theme.text
+                            text: "Reprint"
+                            font.bold: true
+                            font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 1.0))
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                    }
+
+                    MouseArea {
+                        id: reprintMouseArea
+                        anchors.fill: parent
+                        enabled: parent.enabled
+                        onClicked: root.reprintRequested()
                     }
                 }
 
