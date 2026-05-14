@@ -331,7 +331,7 @@ Item {
                 "section": "Print",
                 "items": [
                     {
-                        "label": "Est. time",
+                        "label": "Time",
                         "value": root.activeFileModel.fileEstimatedTimeLabelFor(root.activeFileModel.selectedPath)
                     },
                     {
@@ -339,8 +339,38 @@ Item {
                         "value": root.activeFileModel.fileLayerHeightLabelFor(root.activeFileModel.selectedPath)
                     },
                     {
-                        "label": "Filament",
+                        "label": "Height",
+                        "value": root.activeFileModel.fileObjectHeightLabelFor(root.activeFileModel.selectedPath)
+                    }
+                ]
+            },
+            {
+                "section": "Filament",
+                "items": [
+                    {
+                        "label": "Type",
                         "value": root.activeFileModel.fileFilamentTypeLabelFor(root.activeFileModel.selectedPath)
+                    },
+                    {
+                        "label": "Name",
+                        "value": root.activeFileModel.fileFilamentNameLabelFor(root.activeFileModel.selectedPath)
+                    },
+                    {
+                        "label": "Weight",
+                        "value": root.activeFileModel.fileFilamentWeightTotalLabelFor(root.activeFileModel.selectedPath)
+                    }
+                ]
+            },
+            {
+                "section": "Access",
+                "items": [
+                    {
+                        "label": "Slicer",
+                        "value": root.activeFileModel.fileSlicerLabelFor(root.activeFileModel.selectedPath)
+                    },
+                    {
+                        "label": "Nozzle",
+                        "value": root.activeFileModel.fileNozzleDiameterLabelFor(root.activeFileModel.selectedPath)
                     }
                 ]
             }
@@ -414,32 +444,32 @@ Item {
             id: wideRow
             visible: !metadataGroupCard.compactLayout
             anchors.fill: parent
-            anchors.margins: Math.max(6, Math.round(root.metrics.fontSize * 0.45))
-            spacing: root.metrics.gap * 1.5
+            anchors.margins: Math.max(8, Math.round(root.metrics.fontSize * 0.55))
+            spacing: root.metrics.gap * 2
 
             Label {
                 color: Theme.mutedText
                 text: metadataGroupCard.sectionTitle
                 font.bold: true
-                font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.95))
+                font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.15))
             }
 
             Repeater {
                 model: metadataGroupCard.sectionItems
 
                 RowLayout {
-                    spacing: Math.max(3, Math.round(root.metrics.fontSize * 0.2))
+                    spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.28))
 
                     Label {
                         color: Theme.mutedText
                         text: modelData.label + ":"
-                        font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
+                        font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 1.0))
                     }
 
                     Label {
                         color: Theme.text
                         text: modelData.value.length > 0 ? modelData.value : "-"
-                        font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 1.05))
+                        font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.2))
                     }
                 }
             }
