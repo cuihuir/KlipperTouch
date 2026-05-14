@@ -475,7 +475,8 @@ ApplicationWindow {
         objectCount: window.objectCount
         temperatureModel: window.temperatureBridgeModel
         navigationEnabled: !(window.startupSplashVisible || window.systemFaultVisible)
-        backEnabled: !(window.currentPanel === "job_status" && window.shouldAutoEnterJobStatus())
+        backEnabled: !(window.currentPanel === "job_status" && window.shouldAutoEnterJobStatus()
+            && panelLoader.item && panelLoader.item.detailPage === "summary")
         notificationUnreadCount: window.notificationBridgeModel
             ? window.notificationBridgeModel.unreadCount
             : 0
