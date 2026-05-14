@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -131,9 +132,33 @@ def run_app(
         if not status.objects:
             return
         status_stream = MoonrakerStatusStream(status_stream_client, status_model, status)
-        status_stream.gcodeResponseReceived.connect(
-            lambda message: notification_model.showToast("info", "Printer message", message)
-        )
+        _TEMP_REPORT_RE = re.compile(r"^(?:ok\s+)?(?:B|C|T\d*):")
+
+        def _handle_gcode_response(message: str) -> None:
+            if _TEMP_REPORT_RE.match(message):
+                return
+            if message.startswith("// action:"):
+                return
+            if message.startswith("echo: "):
+                notification_model.showToast("info", "Printer", message[6:])
+                return
+            if "!! Extrude below minimum temp" in message:
+                notification_model.showToast("error", "Temperature", "Too low to extrude")
+                return
+            if message.startswith("!! "):
+                notification_model.showToast("error", "Error", message[3:])
+                notification_model.addNotification("error", "Printer error", message[3:], "klipper", True)
+                return
+            if "unknown" in message.lower():
+                notification_model.showToast("warning", "Unknown command", message)
+                notification_model.addNotification("warning", "Unknown command", message, "klipper", True)
+                return
+            if "SAVE_CONFIG" in message:
+                notification_model.showToast("info", "Config", "SAVE_CONFIG requested")
+                return
+            notification_model.showToast("info", "Printer", message)
+
+        status_stream.gcodeResponseReceived.connect(_handle_gcode_response)
         status_stream.start()
         engine.status_stream = status_stream  # type: ignore[attr-defined]
 
