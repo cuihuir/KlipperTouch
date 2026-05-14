@@ -886,7 +886,7 @@ Item {
                     Layout.fillHeight: true
                     clip: true
                     model: root.activeFileModel
-                    cellWidth: Math.floor(width / 3)
+                    cellWidth: root.detailPage ? Math.floor(width / 2) : Math.floor(width / 3)
                     cellHeight: Math.max(100, Math.round((height - root.metrics.gap) / 2))
                     boundsBehavior: Flickable.StopAtBounds
                     flickDeceleration: 2600
