@@ -449,6 +449,7 @@ ApplicationWindow {
         objectCount: window.objectCount
         temperatureModel: window.temperatureBridgeModel
         navigationEnabled: !(window.startupSplashVisible || window.systemFaultVisible)
+        backEnabled: !(window.currentPanel === "job_status" && window.shouldAutoEnterJobStatus())
         notificationUnreadCount: window.notificationBridgeModel
             ? window.notificationBridgeModel.unreadCount
             : 0
@@ -475,10 +476,22 @@ ApplicationWindow {
                 metrics: appMetrics
                 popupParent: scenePopupLayer
                 temperatureModel: window.temperatureBridgeModel
+                isPrinting: window.shouldAutoEnterJobStatus()
+                    || window.printState === "complete"
+                    || window.printState === "cancelled"
+                    || window.printState === "error"
+                printState: window.printState
+                printFilename: window.printFilename
+                printProgress: window.printProgress
+                requestedPrintState: window.requestedPrintState
+                fileModel: window.gcodeFileBridgeModel
                 onPanelRequested: function(panelName) { window.showPanel(panelName) }
                 onTargetTemperatureRequested: function(deviceName, target) {
                     window.requestTemperatureTarget(deviceName, target)
                 }
+                onPauseRequested: window.requestJobControl("pause", "")
+                onResumeRequested: window.requestJobControl("resume", "")
+                onCancelRequested: window.requestJobControl("cancel", "")
             }
         }
 

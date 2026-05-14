@@ -104,12 +104,12 @@ def test_action_bar_uses_material_dark_icon_tiles() -> None:
     assert "signal actionRequested(string actionName)" in qml
     assert "id: iconButton" in qml
     assert (
-        'color: root.navigationEnabled && actionPressArea.pressed ? "#182124"'
+        'color: iconButton.buttonEnabled && actionPressArea.pressed ? "#182124"'
         " : Theme.buttonsBg"
     ) in qml
     assert "radius: Math.round(Math.min(width, height) * 0.18)" in qml
     assert (
-        "border.color: root.navigationEnabled && actionPressArea.pressed"
+        "border.color: iconButton.buttonEnabled && actionPressArea.pressed"
         " ? Theme.text : Theme.actionBarBg"
     ) in qml
     assert "anchors.centerIn: parent" in qml
@@ -120,13 +120,13 @@ def test_action_bar_buttons_have_press_feedback() -> None:
     qml = Path("src/klippertouch/qml/components/ActionBar.qml").read_text(encoding="utf-8")
 
     assert "id: actionPressArea" in qml
-    assert "scale: root.navigationEnabled && actionPressArea.pressed ? 0.96 : 1.0" in qml
+    assert "scale: iconButton.buttonEnabled && actionPressArea.pressed ? 0.96 : 1.0" in qml
     assert (
-        'color: root.navigationEnabled && actionPressArea.pressed ? "#182124"'
+        'color: iconButton.buttonEnabled && actionPressArea.pressed ? "#182124"'
         " : Theme.buttonsBg"
     ) in qml
     assert (
-        "border.color: root.navigationEnabled && actionPressArea.pressed"
+        "border.color: iconButton.buttonEnabled && actionPressArea.pressed"
         " ? Theme.text : Theme.actionBarBg"
     ) in qml
     assert "Behavior on scale" in qml
@@ -1792,7 +1792,7 @@ def test_splash_panel_handles_system_fault_states() -> None:
     assert "navigationEnabled: root.navigationEnabled" in shell_qml
     assert "interactionEnabled: root.navigationEnabled" in shell_qml
     assert "property bool navigationEnabled: true" in action_bar_qml
-    assert "enabled: root.navigationEnabled" in action_bar_qml
+    assert "enabled: iconButton.buttonEnabled" in action_bar_qml
     status_bar_qml = Path("src/klippertouch/qml/components/StatusBar.qml").read_text(
         encoding="utf-8"
     )
@@ -1935,12 +1935,13 @@ def test_main_menu_uses_klipperscreen_default_top_level_items() -> None:
     ) in qml
     assert 'tileLabel: "Extrude"; tileIcon: "extrude"; tileAccent: "#849900"' in qml
     assert 'tileLabel: "More"; tileIcon: "settings"; tileAccent: "#007db4"' in qml
-    assert 'tileLabel: "Print"; tileIcon: "printer"; tileAccent: "#d46900"' in qml
     assert 'panelName: "move"' in qml
     assert 'panelName: "temperature"' in qml
     assert 'panelName: "extrude"' in qml
     assert 'panelName: "more"' in qml
-    assert 'panelName: "print"' in qml
+    assert 'label: "Print"' in panel_qml
+    assert 'iconText: "printer"' in panel_qml
+    assert 'accent: "#d46900"' in panel_qml
     assert 'import "../models"' in panel_qml
     assert "MainMenuModel {" in panel_qml
     assert "ListElement { tileLabel:" not in panel_qml

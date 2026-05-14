@@ -8,6 +8,7 @@ Rectangle {
     property var buttonIcons: ["back", "main", "settings", "emergency"]
     property var buttonActions: ["back", "home", "menu", "stop"]
     property bool navigationEnabled: true
+    property bool backEnabled: true
     property int buttonCount: 4
     property int minimumTouchSize: 48
     property int spacingSize: Math.max(4, Math.round((vertical ? width : height) * 0.06))
@@ -33,16 +34,21 @@ Rectangle {
             Rectangle {
                 id: iconButton
                 property int actionIconSize: Math.round(Math.min(width, height) * 0.58)
+                property bool buttonEnabled: {
+                    if (!root.navigationEnabled) return false
+                    if (root.buttonActions[index] === "back") return root.backEnabled
+                    return true
+                }
 
                 x: root.vertical ? 0 : index * (buttonGrid.cellWidth + buttonGrid.spacing)
                 y: root.vertical ? index * (buttonGrid.cellHeight + buttonGrid.spacing) : 0
                 height: buttonGrid.cellHeight
                 width: buttonGrid.cellWidth
-                color: root.navigationEnabled && actionPressArea.pressed ? "#182124" : Theme.buttonsBg
-                scale: root.navigationEnabled && actionPressArea.pressed ? 0.96 : 1.0
-                opacity: root.navigationEnabled ? 1.0 : 0.34
+                color: iconButton.buttonEnabled && actionPressArea.pressed ? "#182124" : Theme.buttonsBg
+                scale: iconButton.buttonEnabled && actionPressArea.pressed ? 0.96 : 1.0
+                opacity: iconButton.buttonEnabled ? 1.0 : 0.34
                 radius: Math.round(Math.min(width, height) * 0.18)
-                border.color: root.navigationEnabled && actionPressArea.pressed ? Theme.text : Theme.actionBarBg
+                border.color: iconButton.buttonEnabled && actionPressArea.pressed ? Theme.text : Theme.actionBarBg
                 border.width: Math.max(1, Math.round(Math.min(width, height) * 0.035))
                 Behavior on scale { NumberAnimation { duration: 80; easing.type: Easing.OutQuad } }
                 Behavior on color { ColorAnimation { duration: 80 } }
@@ -61,7 +67,7 @@ Rectangle {
                 MouseArea {
                     id: actionPressArea
                     anchors.fill: parent
-                    enabled: root.navigationEnabled
+                    enabled: iconButton.buttonEnabled
                     onClicked: root.actionRequested(root.buttonActions[index])
                 }
             }

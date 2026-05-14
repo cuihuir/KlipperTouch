@@ -8,8 +8,17 @@ Item {
     required property var metrics
     property Item popupParent: null
     property var temperatureModel: null
+    property bool isPrinting: false
+    property string printState: "standby"
+    property string printFilename: ""
+    property real printProgress: 0
+    property string requestedPrintState: ""
+    property var fileModel: null
     signal panelRequested(string panelName)
     signal targetTemperatureRequested(string deviceName, real target)
+    signal pauseRequested()
+    signal resumeRequested()
+    signal cancelRequested()
     property int virtualRows: 5
     property int temperatureRows: 3
     property int menuRows: 2
@@ -75,6 +84,44 @@ Item {
                 Layout.columnSpan: root.shouldExpandLastTile(index) ? 2 : 1
                 Layout.minimumHeight: Math.max(72, Math.round(root.metrics.fontSize * 5.8))
                 onActivated: root.panelRequested(panelName)
+            }
+        }
+
+        Loader {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.columnSpan: 2
+            Layout.minimumHeight: Math.max(72, Math.round(root.metrics.fontSize * 5.8))
+            active: true
+            sourceComponent: root.isPrinting ? jobStatusLiteComponent : printTileComponent
+        }
+
+        Component {
+            id: printTileComponent
+
+            MenuTile {
+                label: "Print"
+                iconText: "printer"
+                accent: "#d46900"
+                fontSize: root.metrics.fontSize
+                onActivated: root.panelRequested("print")
+            }
+        }
+
+        Component {
+            id: jobStatusLiteComponent
+
+            JobStatusLite {
+                metrics: root.metrics
+                printState: root.printState
+                printFilename: root.printFilename
+                printProgress: root.printProgress
+                requestedPrintState: root.requestedPrintState
+                fileModel: root.fileModel
+                onPauseRequested: root.pauseRequested()
+                onResumeRequested: root.resumeRequested()
+                onCancelRequested: root.cancelRequested()
+                onTapped: root.panelRequested("job_status")
             }
         }
     }

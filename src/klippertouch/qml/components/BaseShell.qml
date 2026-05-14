@@ -11,6 +11,7 @@ Rectangle {
     property string panelTitle: "Home"
     property int notificationUnreadCount: 0
     property bool navigationEnabled: true
+    property bool backEnabled: true
     default property alias panelContent: contentLayer.data
     signal backRequested()
     signal homeRequested()
@@ -30,6 +31,7 @@ Rectangle {
         anchors.bottom: root.metrics.portrait ? parent.bottom : undefined
         minimumTouchSize: root.metrics.minimumTouchSize
         navigationEnabled: root.navigationEnabled
+        backEnabled: root.backEnabled
         onActionRequested: function(actionName) {
             if (!root.navigationEnabled) {
                 return
