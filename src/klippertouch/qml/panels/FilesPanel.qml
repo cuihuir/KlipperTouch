@@ -816,10 +816,8 @@ Item {
                     Layout.fillHeight: true
                     clip: true
                     model: root.activeFileModel
-                    cellWidth: Math.floor(width / 2)
-                    cellHeight: root.detailPage
-                        ? Math.max(100, Math.round((height - root.metrics.gap) / 2))
-                        : Math.max(80, Math.round((height - root.metrics.gap * 3) / 4))
+                    cellWidth: Math.floor(width / 3)
+                    cellHeight: Math.max(100, Math.round((height - root.metrics.gap) / 2))
                     boundsBehavior: Flickable.StopAtBounds
                     flickDeceleration: 2600
                     onCountChanged: if (count > 0 && root.metrics.ultraWide) root.autoSelectFirstFile()
@@ -844,8 +842,8 @@ Item {
                             }
                         }
 
-                        width: uwFileGrid.cellWidth - root.metrics.gap * 1.5
-                        height: uwFileGrid.cellHeight - root.metrics.gap
+                        width: uwFileGrid.cellWidth - root.metrics.gap * 2
+                        height: uwFileGrid.cellHeight - root.metrics.gap * 1.5
                         scale: uwGridMouse.pressed ? 0.97 : 1.0
                         transformOrigin: Item.Center
                         color: uwGridMouse.pressed
