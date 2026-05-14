@@ -1568,7 +1568,9 @@ Item {
                                 ]
 
                                 Rectangle {
+                                    id: ultrawideAdjustmentCard
                                     required property var modelData
+                                    property string adjustmentTarget: modelData.target
 
                                     Layout.fillWidth: true
                                     Layout.fillHeight: true
@@ -1617,11 +1619,11 @@ Item {
                                                     text: modelData.text
                                                     iconName: modelData.delta < 0 ? "back" : "confirm"
                                                     onClicked: {
-                                                        if (modelData.target === "z") {
+                                                        if (ultrawideAdjustmentCard.adjustmentTarget === "z") {
                                                             root.zOffsetAdjustRequested(modelData.delta)
-                                                        } else if (modelData.target === "speed") {
+                                                        } else if (ultrawideAdjustmentCard.adjustmentTarget === "speed") {
                                                             root.speedFactorAdjustRequested(modelData.delta)
-                                                        } else if (modelData.target === "extrude") {
+                                                        } else if (ultrawideAdjustmentCard.adjustmentTarget === "extrude") {
                                                             root.extrudeFactorAdjustRequested(modelData.delta)
                                                         }
                                                     }
