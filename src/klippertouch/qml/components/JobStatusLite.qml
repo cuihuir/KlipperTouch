@@ -87,11 +87,11 @@ Rectangle {
     }
 
     function buttonWidth() {
-        return Math.max(180, Math.round(root.metrics.fontSize * 14))
+        return Math.max(140, Math.round(root.metrics.fontSize * 11))
     }
 
     function buttonHeight() {
-        return Math.max(44, Math.round(root.metrics.fontSize * 2.8))
+        return Math.max(66, Math.round(root.metrics.fontSize * 4.2))
     }
 
     // Navigation MouseArea — covers the whole component
