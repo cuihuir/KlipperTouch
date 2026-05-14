@@ -14,8 +14,9 @@ Item {
     property bool loading: false
     property string loadError: ""
     property bool readOnlyMode: true
-    property bool compactFileRows: root.metrics.portrait || width < 920
+    property bool compactFileRows: root.metrics.portrait || root.metrics.ultraWide || width < 920
     property bool detailPage: false
+    property bool autoSelected: false
     property string pendingFileAction: ""
     property string controlStatus: ""
     property string controlError: ""
@@ -68,6 +69,16 @@ Item {
             root.activeFileModel.requestMetadata(path)
             root.detailPage = true
             root.pendingFileAction = ""
+        }
+    }
+
+    function autoSelectFirstFile() {
+        if (!root.activeFileModel || root.detailPage || root.autoSelected) return
+        root.autoSelected = true
+        var path = root.activeFileModel.selectFirstFile()
+        if (path.length > 0) {
+            root.activeFileModel.requestMetadata(path)
+            root.detailPage = true
         }
     }
 
@@ -280,6 +291,29 @@ Item {
         return width >= previewAndGap ? 2 : 1
     }
 
+    function ultraWidePreviewSize() {
+        var panelWidth = root.width * 0.5 - root.metrics.margin * 4 - root.metrics.gap * 4
+        var availableWidth = Math.max(64, panelWidth)
+        var reservedActionHeight = root.pendingFileAction.length > 0
+            ? root.selectedActionPreviewHeight()
+            : Math.max(52, Math.round(root.metrics.fontSize * 3.6))
+        var reservedMetadataHeight = Math.max(80, Math.round(root.metrics.fontSize * 5.0))
+        var availableHeight = Math.max(
+            64,
+            root.height
+                - root.metrics.margin * 4
+                - root.metrics.gap * 8
+                - reservedActionHeight
+                - reservedMetadataHeight
+        )
+        return Math.round(Math.max(64, Math.min(240, availableWidth, availableHeight)))
+    }
+
+    function ultraWidePreviewColumns() {
+        var previewAndGap = root.ultraWidePreviewSize() + root.metrics.gap + Math.max(200, root.metrics.fontSize * 12)
+        return (root.width * 0.5 - root.metrics.margin * 4) >= previewAndGap ? 2 : 1
+    }
+
     function selectedActionPreviewHeight() {
         return root.metrics.portrait
             ? Math.max(92, Math.round(root.metrics.fontSize * 5.7))
@@ -300,15 +334,15 @@ Item {
         ColumnLayout {
             id: metadataGroupColumn
             anchors.fill: parent
-            anchors.margins: Math.max(5, Math.round(root.metrics.fontSize * 0.38))
-            spacing: Math.max(3, Math.round(root.metrics.fontSize * 0.22))
+            anchors.margins: Math.max(6, Math.round(root.metrics.fontSize * 0.45))
+            spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.28))
 
             Label {
                 Layout.fillWidth: true
                 color: Theme.mutedText
                 text: metadataGroupCard.sectionTitle
                 font.bold: true
-                font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
             }
 
             Repeater {
@@ -319,11 +353,11 @@ Item {
                     spacing: root.metrics.gap
 
                     Label {
-                        Layout.preferredWidth: Math.max(82, Math.round(root.metrics.fontSize * 6.0))
+                        Layout.preferredWidth: Math.max(96, Math.round(root.metrics.fontSize * 7.0))
                         color: Theme.mutedText
                         text: modelData.label
                         elide: Text.ElideRight
-                        font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                        font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
                     }
 
                     Label {
@@ -332,7 +366,7 @@ Item {
                         text: modelData.value.length > 0 ? modelData.value : "-"
                         elide: Text.ElideRight
                         horizontalAlignment: Text.AlignRight
-                        font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.9))
+                        font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 1.05))
                     }
                 }
             }
@@ -389,7 +423,7 @@ Item {
 
             RowLayout {
                 id: compactControlRow
-                visible: !root.detailPage
+                visible: !root.detailPage || root.metrics.ultraWide
                 Layout.fillWidth: true
                 Layout.preferredHeight: Math.max(34, Math.round(root.metrics.fontSize * 2.45))
                 spacing: Math.max(6, Math.round(root.metrics.fontSize * 0.45))
@@ -450,7 +484,8 @@ Item {
                 }
 
                 TextField {
-                    Layout.fillWidth: true
+                    Layout.fillWidth: !root.metrics.ultraWide
+                    Layout.preferredWidth: root.metrics.ultraWide ? Math.max(180, Math.round(root.metrics.fontSize * 12)) : 0
                     Layout.preferredHeight: Math.max(34, Math.round(root.metrics.fontSize * 2.45))
                     placeholderText: "Search files"
                     color: Theme.text
@@ -464,11 +499,38 @@ Item {
                     }
                     onTextChanged: if (root.activeFileModel) root.activeFileModel.setFilterText(text)
                 }
+
+                Label {
+                    visible: root.metrics.ultraWide
+                    Layout.fillWidth: true
+                    color: Theme.mutedText
+                    text: root.currentPathLabel()
+                    elide: Text.ElideMiddle
+                    font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.78))
+                }
+
+                Label {
+                    visible: root.metrics.ultraWide
+                    color: Theme.mutedText
+                    text: root.loadError.length > 0
+                        ? "load error"
+                        : root.loading ? "Loading..." : fileList.count + " items"
+                    horizontalAlignment: Text.AlignRight
+                    font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.78))
+                }
+
+                RetryButton {
+                    visible: root.metrics.ultraWide && root.loadError.length > 0
+                    Layout.preferredWidth: Math.max(66, Math.round(root.metrics.fontSize * 4.6))
+                    Layout.preferredHeight: Math.max(28, Math.round(root.metrics.fontSize * 2.0))
+                    font.pixelSize: Math.max(10, Math.round(root.metrics.fontSize * 0.72))
+                    onClicked: root.refreshRequested()
+                }
             }
 
             RowLayout {
                 id: compactMetaRow
-                visible: !root.detailPage
+                visible: !root.detailPage && !root.metrics.ultraWide
                 Layout.fillWidth: true
                 Layout.preferredHeight: Math.max(24, Math.round(root.metrics.fontSize * 1.7))
                 spacing: root.metrics.gap
@@ -507,12 +569,21 @@ Item {
                 }
             }
 
-            ListView {
-                id: fileList
-                visible: !root.detailPage && fileList.count > 0
+            GridLayout {
+                visible: !root.detailPage || root.metrics.ultraWide
+                columns: root.metrics.ultraWide ? 2 : 1
+                rows: 1
+                columnSpacing: root.metrics.gap
+                rowSpacing: root.metrics.gap
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.minimumWidth: 0
+
+                ListView {
+                    id: fileList
+                    visible: !root.metrics.ultraWide && fileList.count > 0
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Layout.minimumWidth: 0
                 clip: true
                 spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.35))
                 model: root.activeFileModel
@@ -572,7 +643,9 @@ Item {
                     }
 
                     width: fileList.width
-                    height: Math.max(46, Math.round(root.metrics.fontSize * (root.metrics.portrait ? 4.2 : 3.3)))
+                    height: root.metrics.ultraWide && root.detailPage
+                        ? Math.max(80, Math.round((fileList.height - root.metrics.gap * 2) / 3))
+                        : Math.max(46, Math.round(root.metrics.fontSize * (root.metrics.portrait ? 4.2 : 3.3)))
                     scale: fileRowMouse.pressed ? 0.985 : 1.0
                     transformOrigin: Item.Center
                     color: fileRowMouse.pressed
@@ -619,6 +692,7 @@ Item {
                             border.color: "#263233"
                             border.width: 1
                             radius: Math.round(root.metrics.fontSize * 0.22)
+                            visible: !(root.metrics.ultraWide && root.detailPage)
 
                             Image {
                                 id: thumbnailImage
@@ -652,7 +726,9 @@ Item {
                             color: Theme.text
                             text: isDirectory ? "Folder  " + displayName : displayName
                             elide: Text.ElideMiddle
-                            font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize))
+                            font.pixelSize: root.metrics.ultraWide && root.detailPage
+                                ? Math.max(16, Math.round(root.metrics.fontSize * 1.25))
+                                : Math.max(13, Math.round(root.metrics.fontSize))
                         }
 
                         Label {
@@ -696,11 +772,324 @@ Item {
                     Component.onCompleted: ensureThumbnailMetadata()
                     onPathChanged: ensureThumbnailMetadata()
                 }
+                }
+
+                GridView {
+                    id: uwFileGrid
+                    visible: root.metrics.ultraWide && uwFileGrid.count > 0
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    model: root.activeFileModel
+                    cellWidth: Math.floor(width / 2)
+                    cellHeight: Math.max(80, Math.round((height - root.metrics.gap * 2) / 3))
+                    boundsBehavior: Flickable.StopAtBounds
+                    flickDeceleration: 2600
+                    onCountChanged: if (count > 0 && root.metrics.ultraWide) root.autoSelectFirstFile()
+
+                    ScrollBar.vertical: ScrollBar {
+                        policy: ScrollBar.AsNeeded
+                    }
+
+                    delegate: Rectangle {
+                        required property string path
+                        required property string displayName
+                        required property string sizeLabel
+                        required property real modified
+                        required property bool isDirectory
+                        required property string modifiedLabel
+                        required property string permissions
+                        required property string thumbnailUrl
+
+                        width: uwFileGrid.cellWidth - root.metrics.gap
+                        height: uwFileGrid.cellHeight - root.metrics.gap
+                        scale: uwGridMouse.pressed ? 0.97 : 1.0
+                        transformOrigin: Item.Center
+                        color: uwGridMouse.pressed
+                            ? "#203236"
+                            : !isDirectory && root.activeFileModel && root.activeFileModel.selectedPath === path
+                            ? "#17282b"
+                            : "#101617"
+                        border.color: uwGridMouse.pressed
+                            ? "#7f9298"
+                            : !isDirectory && root.activeFileModel && root.activeFileModel.selectedPath === path
+                            ? Theme.color4
+                            : "#263233"
+                        border.width: uwGridMouse.pressed ? 2 : 1
+                        radius: Math.round(root.metrics.fontSize * 0.32)
+                        Behavior on scale {
+                            NumberAnimation { duration: 70; easing.type: Easing.OutQuad }
+                        }
+
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.margins: root.metrics.gap
+                            spacing: Math.max(2, Math.round(root.metrics.fontSize * 0.15))
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: Theme.text
+                                text: isDirectory ? "Folder  " + displayName : displayName
+                                elide: Text.ElideMiddle
+                                font.bold: true
+                                font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.35))
+                            }
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: Theme.mutedText
+                                text: sizeLabel + "  |  " + modifiedLabel
+                                elide: Text.ElideMiddle
+                                font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 1.0))
+                            }
+                        }
+
+                        MouseArea {
+                            id: uwGridMouse
+                            anchors.fill: parent
+                            onClicked: root.enterPath(path, isDirectory)
+                        }
+                    }
+                }
+
+                ColumnLayout {
+                    id: ultraWideDetailPanel
+                    visible: root.metrics.ultraWide && root.detailPage
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    spacing: root.metrics.gap
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        color: "#101617"
+                        border.color: "#263233"
+                        border.width: 1
+                        radius: Math.round(root.metrics.fontSize * 0.32)
+
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.margins: root.metrics.gap
+                            spacing: Math.max(8, Math.round(root.metrics.fontSize * 0.55))
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: Theme.text
+                                text: root.activeFileModel && root.activeFileModel.selectedDisplayName.length > 0
+                                    ? root.activeFileModel.selectedDisplayName
+                                    : "Read-only file details"
+                                elide: Text.ElideMiddle
+                                font.bold: true
+                                font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.3))
+                            }
+
+                            Label {
+                                Layout.fillWidth: true
+                                color: Theme.mutedText
+                                text: root.activeFileModel && root.activeFileModel.selectedPath.length > 0
+                                    ? root.activeFileModel.selectedPath
+                                    : ""
+                                wrapMode: Text.WordWrap
+                                font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.95))
+                                visible: text.length > 0
+                            }
+
+                            GridLayout {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                columns: root.ultraWidePreviewColumns()
+                                rowSpacing: root.metrics.gap
+                                columnSpacing: root.metrics.gap
+
+                                Rectangle {
+                                    Layout.preferredWidth: root.ultraWidePreviewSize()
+                                    Layout.preferredHeight: root.ultraWidePreviewSize()
+                                    Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                                    visible: root.activeFileModel
+                                        && root.activeFileModel.selectedPreviewThumbnailUrl.length > 0
+                                    color: "#0b1112"
+                                    border.color: "#263233"
+                                    border.width: 1
+                                    radius: Math.round(root.metrics.fontSize * 0.25)
+
+                                    Image {
+                                        anchors.fill: parent
+                                        anchors.margins: root.metrics.gap
+                                        source: root.activeFileModel
+                                            ? root.activeFileModel.selectedPreviewThumbnailUrl
+                                            : ""
+                                        fillMode: Image.PreserveAspectFit
+                                        asynchronous: true
+                                        cache: true
+                                        sourceSize.width: width
+                                        sourceSize.height: height
+                                    }
+                                }
+
+                                Flickable {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    Layout.minimumWidth: 0
+                                    clip: true
+                                    boundsBehavior: Flickable.StopAtBounds
+                                    contentWidth: width
+                                    contentHeight: uwMetadataGrid.implicitHeight
+
+                                    ScrollBar.vertical: ScrollBar {
+                                        policy: ScrollBar.AsNeeded
+                                    }
+
+                                    GridLayout {
+                                        id: uwMetadataGrid
+                                        width: parent.width
+                                        columns: 1
+                                        rowSpacing: Math.max(8, Math.round(root.metrics.fontSize * 0.55))
+                                        columnSpacing: root.metrics.gap
+
+                                        Repeater {
+                                            model: root.selectedMetadataSections()
+
+                                            MetadataGroupCard {
+                                                Layout.fillWidth: true
+                                                Layout.preferredHeight: implicitHeight
+                                                sectionTitle: modelData.section
+                                                sectionItems: modelData.items
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        visible: root.pendingFileAction.length === 0
+                            && root.activeFileModel
+                            && root.activeFileModel.selectedPath.length > 0
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: visible ? Math.max(64, Math.round(root.metrics.fontSize * 4.5)) : 0
+                        Layout.maximumHeight: Layout.preferredHeight
+                        Layout.fillHeight: false
+                        color: "#0b1112"
+                        border.color: "#263233"
+                        border.width: 1
+                        radius: Math.round(root.metrics.fontSize * 0.32)
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.margins: Math.max(5, Math.round(root.metrics.fontSize * 0.35))
+                            spacing: root.metrics.gap
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 0
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    color: Theme.text
+                                    text: "Actions"
+                                    font.bold: true
+                                    font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 1.05))
+                                }
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    color: Theme.mutedText
+                                    text: "File actions"
+                                    elide: Text.ElideRight
+                                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
+                                }
+                            }
+
+                            FileActionButton {
+                                actionRole: "print"
+                                text: "Print"
+                                iconName: "printer"
+                            }
+
+                            FileActionButton {
+                                actionRole: "delete"
+                                text: "Delete"
+                                iconName: "cancel"
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        visible: root.pendingFileAction.length > 0
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: visible ? Math.max(64, Math.round(root.metrics.fontSize * 4.5)) : 0
+                        Layout.maximumHeight: Layout.preferredHeight
+                        Layout.fillHeight: false
+                        color: root.pendingFileAction === "delete" ? "#181311" : "#111819"
+                        border.color: root.pendingFileAction === "delete" ? "#4a3430" : "#354346"
+                        border.width: 1
+                        radius: Math.round(root.metrics.fontSize * 0.32)
+
+                        GridLayout {
+                            anchors.fill: parent
+                            anchors.margins: root.metrics.gap
+                            columns: 2
+                            rowSpacing: Math.max(4, Math.round(root.metrics.fontSize * 0.28))
+                            columnSpacing: root.metrics.gap
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                spacing: 0
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    color: Theme.text
+                                    text: "Confirm file action"
+                                    font.bold: true
+                                    font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 1.05))
+                                }
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    color: Theme.mutedText
+                                    text: (root.pendingFileAction === "delete" ? "Delete " : "Print ")
+                                        + (root.activeFileModel ? root.activeFileModel.selectedDisplayName : "")
+                                    elide: Text.ElideMiddle
+                                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
+                                }
+                            }
+
+                            RowLayout {
+                                Layout.alignment: Qt.AlignVCenter
+                                Layout.preferredHeight: Math.max(52, Math.round(root.metrics.fontSize * 3.6))
+                                spacing: root.metrics.gap
+
+                                FileActionButton {
+                                    text: "Confirm"
+                                    enabled: true
+                                    iconName: "confirm"
+                                    onClicked: {
+                                        root.fileActionRequested(
+                                            root.pendingFileAction,
+                                            root.activeFileModel ? root.activeFileModel.selectedPath : ""
+                                        )
+                                        root.clearFileAction()
+                                    }
+                                }
+
+                                FileActionButton {
+                                    text: "Dismiss"
+                                    enabled: true
+                                    iconName: "cancel"
+                                    onClicked: root.clearFileAction()
+                                }
+                            }
+                        }
+                    }
+
+                }
             }
 
             ColumnLayout {
                 id: detailPageView
-                visible: root.detailPage
+                visible: root.detailPage && !root.metrics.ultraWide
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 spacing: root.metrics.gap
@@ -965,7 +1354,7 @@ Item {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                visible: !root.detailPage && fileList.count === 0
+                visible: (!root.detailPage || root.metrics.ultraWide) && fileList.count === 0
                 color: "#101617"
                 border.color: "#263233"
                 border.width: 1

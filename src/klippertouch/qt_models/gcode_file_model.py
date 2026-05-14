@@ -201,6 +201,14 @@ class GCodeFileListModel(QAbstractListModel):
         self._selected_path = ""
         self.selectedPathChanged.emit()
 
+    @Slot(result=str)
+    def selectFirstFile(self) -> str:  # noqa: N802
+        for entry in self._entries:
+            if not entry.is_directory:
+                self.selectPath(entry.path, False)
+                return entry.path
+        return ""
+
     @Slot(str)
     def requestMetadata(self, path: str) -> None:  # noqa: N802
         clean = _normalize_gcode_request_path(path)
