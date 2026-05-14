@@ -782,7 +782,7 @@ Item {
                     clip: true
                     model: root.activeFileModel
                     cellWidth: Math.floor(width / 2)
-                    cellHeight: Math.max(80, Math.round((height - root.metrics.gap * 2) / 3))
+                    cellHeight: Math.max(100, Math.round((height - root.metrics.gap) / 2))
                     boundsBehavior: Flickable.StopAtBounds
                     flickDeceleration: 2600
                     onCountChanged: if (count > 0 && root.metrics.ultraWide) root.autoSelectFirstFile()
@@ -877,20 +877,10 @@ Item {
                                 color: Theme.text
                                 text: root.activeFileModel && root.activeFileModel.selectedDisplayName.length > 0
                                     ? root.activeFileModel.selectedDisplayName
-                                    : "Read-only file details"
+                                    : ""
                                 elide: Text.ElideMiddle
                                 font.bold: true
-                                font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.3))
-                            }
-
-                            Label {
-                                Layout.fillWidth: true
-                                color: Theme.mutedText
-                                text: root.activeFileModel && root.activeFileModel.selectedPath.length > 0
-                                    ? root.activeFileModel.selectedPath
-                                    : ""
-                                wrapMode: Text.WordWrap
-                                font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.95))
+                                font.pixelSize: Math.max(20, Math.round(root.metrics.fontSize * 1.5))
                                 visible: text.length > 0
                             }
 
@@ -1005,12 +995,18 @@ Item {
                                 actionRole: "print"
                                 text: "Print"
                                 iconName: "printer"
+                                Layout.preferredWidth: Math.max(160, Math.round(root.metrics.fontSize * 11))
+                                Layout.preferredHeight: Math.max(56, Math.round(root.metrics.fontSize * 3.8))
+                                font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 1.05))
                             }
 
                             FileActionButton {
                                 actionRole: "delete"
                                 text: "Delete"
                                 iconName: "cancel"
+                                Layout.preferredWidth: Math.max(160, Math.round(root.metrics.fontSize * 11))
+                                Layout.preferredHeight: Math.max(56, Math.round(root.metrics.fontSize * 3.8))
+                                font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 1.05))
                             }
                         }
                     }
