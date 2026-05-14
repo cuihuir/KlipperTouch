@@ -894,6 +894,7 @@ Item {
 
                     ScrollBar.vertical: ScrollBar {
                         policy: ScrollBar.AsNeeded
+                        implicitWidth: 40
                     }
 
                     delegate: Rectangle {
