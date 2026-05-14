@@ -87,7 +87,7 @@ Rectangle {
     }
 
     function buttonWidth() {
-        return Math.max(140, Math.round(root.metrics.fontSize * 11))
+        return Math.max(180, Math.round(root.metrics.fontSize * 14))
     }
 
     function buttonHeight() {
