@@ -390,11 +390,11 @@ Item {
         property bool compactLayout: false
 
         implicitHeight: compactLayout ? compactColumn.implicitHeight + root.metrics.gap * 1.2
-            : wideRow.implicitHeight + root.metrics.gap * 0.8
-        color: "#0b1112"
-        border.color: "#263233"
-        border.width: 1
-        radius: Math.round(root.metrics.fontSize * 0.25)
+            : wideRow.implicitHeight + root.metrics.gap * 0.5
+        color: compactLayout ? "#0b1112" : "transparent"
+        border.color: compactLayout ? "#263233" : "transparent"
+        border.width: compactLayout ? 1 : 0
+        radius: compactLayout ? Math.round(root.metrics.fontSize * 0.25) : 0
 
         // Compact vertical layout (normal detail page)
         ColumnLayout {
@@ -448,10 +448,10 @@ Item {
             spacing: root.metrics.gap * 2
 
             Label {
-                color: Theme.mutedText
+                color: Theme.color4
                 text: metadataGroupCard.sectionTitle
                 font.bold: true
-                font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.15))
+                font.pixelSize: Math.max(20, Math.round(root.metrics.fontSize * 1.4))
             }
 
             Repeater {
@@ -463,13 +463,13 @@ Item {
                     Label {
                         color: Theme.mutedText
                         text: modelData.label + ":"
-                        font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 1.0))
+                        font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.2))
                     }
 
                     Label {
                         color: Theme.text
                         text: modelData.value.length > 0 ? modelData.value : "-"
-                        font.pixelSize: Math.max(16, Math.round(root.metrics.fontSize * 1.2))
+                        font.pixelSize: Math.max(20, Math.round(root.metrics.fontSize * 1.4))
                     }
                 }
             }
@@ -1034,7 +1034,7 @@ Item {
                                     : ""
                                 elide: Text.ElideMiddle
                                 font.bold: true
-                                font.pixelSize: Math.max(20, Math.round(root.metrics.fontSize * 1.5))
+                                font.pixelSize: Math.max(24, Math.round(root.metrics.fontSize * 1.8))
                                 visible: text.length > 0
                             }
 
@@ -1087,7 +1087,7 @@ Item {
                                         id: uwMetadataGrid
                                         width: parent.width
                                         columns: 1
-                                        rowSpacing: Math.max(10, Math.round(root.metrics.fontSize * 0.7))
+                                        rowSpacing: Math.max(14, Math.round(root.metrics.fontSize * 1.0))
                                         columnSpacing: root.metrics.gap
 
                                         Repeater {
