@@ -893,8 +893,17 @@ Item {
                     onCountChanged: if (count > 0 && root.metrics.ultraWide) root.autoSelectFirstFile()
 
                     ScrollBar.vertical: ScrollBar {
-                        policy: ScrollBar.AsNeeded
+                        policy: ScrollBar.AlwaysOn
                         implicitWidth: 40
+                        contentItem: Rectangle {
+                            implicitWidth: 40
+                            radius: 8
+                            color: parent.pressed ? "#7f9298" : "#4a5a5e"
+                        }
+                        background: Rectangle {
+                            implicitWidth: 40
+                            color: "#0b1112"
+                        }
                     }
 
                     delegate: Rectangle {
