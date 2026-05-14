@@ -357,6 +357,7 @@ Item {
         id: metadataGroupCard
         property string sectionTitle: ""
         property var sectionItems: []
+        property bool compactLayout: false
 
         implicitHeight: metadataGroupColumn.implicitHeight + root.metrics.gap * 1.2
         color: "#0b1112"
@@ -368,7 +369,9 @@ Item {
             id: metadataGroupColumn
             anchors.fill: parent
             anchors.margins: Math.max(6, Math.round(root.metrics.fontSize * 0.45))
-            spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.28))
+            spacing: metadataGroupCard.compactLayout
+                ? Math.max(4, Math.round(root.metrics.fontSize * 0.28))
+                : Math.max(8, Math.round(root.metrics.fontSize * 0.55))
 
             Label {
                 Layout.fillWidth: true
@@ -381,25 +384,24 @@ Item {
             Repeater {
                 model: metadataGroupCard.sectionItems
 
-                RowLayout {
+                ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: root.metrics.gap
+                    spacing: Math.max(1, Math.round(root.metrics.fontSize * 0.1))
 
                     Label {
-                        Layout.preferredWidth: Math.max(96, Math.round(root.metrics.fontSize * 7.0))
+                        Layout.fillWidth: true
                         color: Theme.mutedText
                         text: modelData.label
-                        elide: Text.ElideRight
-                        font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
+                        font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.78))
                     }
 
                     Label {
                         Layout.fillWidth: true
                         color: Theme.text
                         text: modelData.value.length > 0 ? modelData.value : "-"
-                        elide: Text.ElideRight
-                        horizontalAlignment: Text.AlignRight
-                        font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 1.05))
+                        font.pixelSize: metadataGroupCard.compactLayout
+                            ? Math.max(14, Math.round(root.metrics.fontSize * 1.05))
+                            : Math.max(16, Math.round(root.metrics.fontSize * 1.2))
                     }
                 }
             }
@@ -815,7 +817,9 @@ Item {
                     clip: true
                     model: root.activeFileModel
                     cellWidth: Math.floor(width / 2)
-                    cellHeight: Math.max(100, Math.round((height - root.metrics.gap) / 2))
+                    cellHeight: root.detailPage
+                        ? Math.max(100, Math.round((height - root.metrics.gap) / 2))
+                        : Math.max(80, Math.round((height - root.metrics.gap * 3) / 4))
                     boundsBehavior: Flickable.StopAtBounds
                     flickDeceleration: 2600
                     onCountChanged: if (count > 0 && root.metrics.ultraWide) root.autoSelectFirstFile()
@@ -841,7 +845,7 @@ Item {
                         }
 
                         width: uwFileGrid.cellWidth - root.metrics.gap * 1.5
-                        height: uwFileGrid.cellHeight - root.metrics.gap * 1.5
+                        height: uwFileGrid.cellHeight - root.metrics.gap
                         scale: uwGridMouse.pressed ? 0.97 : 1.0
                         transformOrigin: Item.Center
                         color: uwGridMouse.pressed
@@ -1270,6 +1274,7 @@ Item {
                                             Layout.preferredHeight: implicitHeight
                                             sectionTitle: modelData.section
                                             sectionItems: modelData.items
+                                            compactLayout: true
                                         }
                                     }
                                 }
