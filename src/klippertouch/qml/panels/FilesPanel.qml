@@ -359,19 +359,20 @@ Item {
         property var sectionItems: []
         property bool compactLayout: false
 
-        implicitHeight: metadataGroupColumn.implicitHeight + root.metrics.gap * 1.2
+        implicitHeight: compactLayout ? compactColumn.implicitHeight + root.metrics.gap * 1.2
+            : wideRow.implicitHeight + root.metrics.gap * 0.8
         color: "#0b1112"
         border.color: "#263233"
         border.width: 1
         radius: Math.round(root.metrics.fontSize * 0.25)
 
+        // Compact vertical layout (normal detail page)
         ColumnLayout {
-            id: metadataGroupColumn
+            id: compactColumn
+            visible: metadataGroupCard.compactLayout
             anchors.fill: parent
             anchors.margins: Math.max(6, Math.round(root.metrics.fontSize * 0.45))
-            spacing: metadataGroupCard.compactLayout
-                ? Math.max(4, Math.round(root.metrics.fontSize * 0.28))
-                : Math.max(8, Math.round(root.metrics.fontSize * 0.55))
+            spacing: Math.max(4, Math.round(root.metrics.fontSize * 0.28))
 
             Label {
                 Layout.fillWidth: true
@@ -384,27 +385,66 @@ Item {
             Repeater {
                 model: metadataGroupCard.sectionItems
 
-                ColumnLayout {
+                RowLayout {
                     Layout.fillWidth: true
-                    spacing: Math.max(1, Math.round(root.metrics.fontSize * 0.1))
+                    spacing: root.metrics.gap
 
                     Label {
-                        Layout.fillWidth: true
+                        Layout.preferredWidth: Math.max(82, Math.round(root.metrics.fontSize * 6.0))
                         color: Theme.mutedText
                         text: modelData.label
-                        font.pixelSize: Math.max(11, Math.round(root.metrics.fontSize * 0.78))
+                        elide: Text.ElideRight
+                        font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
                     }
 
                     Label {
                         Layout.fillWidth: true
                         color: Theme.text
                         text: modelData.value.length > 0 ? modelData.value : "-"
-                        font.pixelSize: metadataGroupCard.compactLayout
-                            ? Math.max(14, Math.round(root.metrics.fontSize * 1.05))
-                            : Math.max(16, Math.round(root.metrics.fontSize * 1.2))
+                        elide: Text.ElideRight
+                        horizontalAlignment: Text.AlignRight
+                        font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 1.05))
                     }
                 }
             }
+        }
+
+        // Wide horizontal layout (ultrawide detail panel)
+        RowLayout {
+            id: wideRow
+            visible: !metadataGroupCard.compactLayout
+            anchors.fill: parent
+            anchors.margins: Math.max(6, Math.round(root.metrics.fontSize * 0.45))
+            spacing: root.metrics.gap * 1.5
+
+            Label {
+                color: Theme.mutedText
+                text: metadataGroupCard.sectionTitle
+                font.bold: true
+                font.pixelSize: Math.max(13, Math.round(root.metrics.fontSize * 0.95))
+            }
+
+            Repeater {
+                model: metadataGroupCard.sectionItems
+
+                RowLayout {
+                    spacing: Math.max(3, Math.round(root.metrics.fontSize * 0.2))
+
+                    Label {
+                        color: Theme.mutedText
+                        text: modelData.label + ":"
+                        font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
+                    }
+
+                    Label {
+                        color: Theme.text
+                        text: modelData.value.length > 0 ? modelData.value : "-"
+                        font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 1.05))
+                    }
+                }
+            }
+
+            Item { Layout.fillWidth: true }
         }
     }
 
