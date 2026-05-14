@@ -594,11 +594,8 @@ ApplicationWindow {
                     }
                 }
                 onSpeedFactorAdjustRequested: function(delta) {
-                    console.log("SPEED FACTOR SIGNAL: delta=" + delta + " current=" + window.speedFactor + " bridge=" + !!window.jobControlBridgeModel)
                     if (window.jobControlBridgeModel) {
-                        var newPercent = window.clampControlPercent(window.speedFactor + delta)
-                        console.log("SPEED FACTOR CALLING requestSpeedFactor(" + newPercent + ")")
-                        window.jobControlBridgeModel.requestSpeedFactor(newPercent)
+                        window.jobControlBridgeModel.requestSpeedFactor(window.clampControlPercent(window.speedFactor + delta))
                     }
                 }
                 onExtrudeFactorAdjustRequested: function(delta) {
