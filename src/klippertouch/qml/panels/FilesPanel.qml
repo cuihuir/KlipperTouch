@@ -314,6 +314,39 @@ Item {
         return (root.width * 0.5 - root.metrics.margin * 4) >= previewAndGap ? 2 : 1
     }
 
+    function ultraWideMetadataSections() {
+        if (!root.activeFileModel || root.activeFileModel.selectedPath.length <= 0) {
+            return []
+        }
+        root.activeFileModel.metadataRevision
+        return [
+            {
+                "section": "File",
+                "items": [
+                    {"label": "Size", "value": root.activeFileModel.selectedSizeLabel},
+                    {"label": "Modified", "value": root.activeFileModel.selectedModifiedLabel}
+                ]
+            },
+            {
+                "section": "Print",
+                "items": [
+                    {
+                        "label": "Est. time",
+                        "value": root.activeFileModel.fileEstimatedTimeLabelFor(root.activeFileModel.selectedPath)
+                    },
+                    {
+                        "label": "Layer",
+                        "value": root.activeFileModel.fileLayerHeightLabelFor(root.activeFileModel.selectedPath)
+                    },
+                    {
+                        "label": "Filament",
+                        "value": root.activeFileModel.fileFilamentTypeLabelFor(root.activeFileModel.selectedPath)
+                    }
+                ]
+            }
+        ]
+    }
+
     function selectedActionPreviewHeight() {
         return root.metrics.portrait
             ? Math.max(92, Math.round(root.metrics.fontSize * 5.7))
@@ -801,8 +834,14 @@ Item {
                         required property string permissions
                         required property string thumbnailUrl
 
-                        width: uwFileGrid.cellWidth - root.metrics.gap
-                        height: uwFileGrid.cellHeight - root.metrics.gap
+                        function ensureGridThumbnail() {
+                            if (!isDirectory && thumbnailUrl.length <= 0 && root.activeFileModel) {
+                                root.activeFileModel.requestMetadata(path)
+                            }
+                        }
+
+                        width: uwFileGrid.cellWidth - root.metrics.gap * 1.5
+                        height: uwFileGrid.cellHeight - root.metrics.gap * 1.5
                         scale: uwGridMouse.pressed ? 0.97 : 1.0
                         transformOrigin: Item.Center
                         color: uwGridMouse.pressed
@@ -821,28 +860,71 @@ Item {
                             NumberAnimation { duration: 70; easing.type: Easing.OutQuad }
                         }
 
-                        ColumnLayout {
+                        RowLayout {
                             anchors.fill: parent
                             anchors.margins: root.metrics.gap
-                            spacing: Math.max(2, Math.round(root.metrics.fontSize * 0.15))
+                            spacing: root.metrics.gap
 
-                            Label {
-                                Layout.fillWidth: true
-                                color: Theme.text
-                                text: isDirectory ? "Folder  " + displayName : displayName
-                                elide: Text.ElideMiddle
-                                font.bold: true
-                                font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.35))
+                            Rectangle {
+                                Layout.preferredWidth: Math.max(48, Math.round(root.metrics.fontSize * 3.4))
+                                Layout.preferredHeight: Layout.preferredWidth
+                                Layout.alignment: Qt.AlignVCenter
+                                color: "#0b1112"
+                                border.color: "#263233"
+                                border.width: 1
+                                radius: Math.round(root.metrics.fontSize * 0.22)
+
+                                Image {
+                                    id: uwThumbImg
+                                    anchors.fill: parent
+                                    anchors.margins: 2
+                                    source: thumbnailUrl
+                                    fillMode: Image.PreserveAspectFit
+                                    asynchronous: thumbnailUrl.indexOf("file:") !== 0
+                                    cache: true
+                                    sourceSize.width: width
+                                    sourceSize.height: height
+                                    visible: !isDirectory && thumbnailUrl.length > 0 && uwThumbImg.status === Image.Ready
+                                }
+
+                                Label {
+                                    anchors.centerIn: parent
+                                    color: Theme.mutedText
+                                    text: isDirectory ? "DIR" : "G"
+                                    visible: isDirectory || thumbnailUrl.length <= 0 || uwThumbImg.status === Image.Error
+                                    font.bold: true
+                                    font.pixelSize: Math.max(12, Math.round(root.metrics.fontSize * 0.85))
+                                }
                             }
 
-                            Label {
+                            ColumnLayout {
                                 Layout.fillWidth: true
-                                color: Theme.mutedText
-                                text: sizeLabel + "  |  " + modifiedLabel
-                                elide: Text.ElideMiddle
-                                font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 1.0))
+                                Layout.fillHeight: true
+                                spacing: Math.max(2, Math.round(root.metrics.fontSize * 0.15))
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    Layout.alignment: Qt.AlignBottom
+                                    color: Theme.text
+                                    text: isDirectory ? "Folder  " + displayName : displayName
+                                    elide: Text.ElideMiddle
+                                    font.bold: true
+                                    font.pixelSize: Math.max(18, Math.round(root.metrics.fontSize * 1.35))
+                                }
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    Layout.alignment: Qt.AlignTop
+                                    color: Theme.mutedText
+                                    text: sizeLabel + "  |  " + modifiedLabel
+                                    elide: Text.ElideMiddle
+                                    font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 1.0))
+                                }
                             }
                         }
+
+                        Component.onCompleted: ensureGridThumbnail()
+                        onPathChanged: ensureGridThumbnail()
 
                         MouseArea {
                             id: uwGridMouse
@@ -933,11 +1015,11 @@ Item {
                                         id: uwMetadataGrid
                                         width: parent.width
                                         columns: 1
-                                        rowSpacing: Math.max(8, Math.round(root.metrics.fontSize * 0.55))
+                                        rowSpacing: Math.max(10, Math.round(root.metrics.fontSize * 0.7))
                                         columnSpacing: root.metrics.gap
 
                                         Repeater {
-                                            model: root.selectedMetadataSections()
+                                            model: root.ultraWideMetadataSections()
 
                                             MetadataGroupCard {
                                                 Layout.fillWidth: true
