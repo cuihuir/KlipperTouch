@@ -86,8 +86,12 @@ Rectangle {
         return Math.max(0, Math.min(1, root.printProgress / 100))
     }
 
-    function buttonSize() {
-        return Math.max(52, Math.round(root.metrics.fontSize * 3.2))
+    function buttonWidth() {
+        return Math.max(140, Math.round(root.metrics.fontSize * 11))
+    }
+
+    function buttonHeight() {
+        return Math.max(44, Math.round(root.metrics.fontSize * 2.8))
     }
 
     // Navigation MouseArea — covers the whole component
@@ -243,17 +247,17 @@ Rectangle {
             RowLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                spacing: Math.max(6, Math.round(root.metrics.gap * 0.7))
+                spacing: Math.max(8, Math.round(root.metrics.gap))
 
                 Item { Layout.fillWidth: true }
 
                 // Pause/Resume button
                 Rectangle {
                     id: pauseResumeButton
-                    Layout.preferredWidth: root.buttonSize()
-                    Layout.preferredHeight: root.buttonSize()
+                    Layout.preferredWidth: root.buttonWidth()
+                    Layout.preferredHeight: root.buttonHeight()
                     Layout.alignment: Qt.AlignVCenter
-                    radius: width / 2
+                    radius: Math.round(root.metrics.fontSize * 0.5)
                     color: pauseMouseArea.pressed ? Qt.darker(pauseButtonColor, 1.3) : pauseButtonColor
                     border.color: Qt.lighter(pauseButtonColor, 1.4)
                     border.width: 2
@@ -267,18 +271,33 @@ Rectangle {
                         return Qt.rgba(0.55, 0.45, 0.20, 0.9)
                     }
 
-                    Image {
+                    RowLayout {
                         anchors.centerIn: parent
-                        width: Math.round(parent.width * 0.55)
-                        height: width
-                        source: {
-                            var s = root.effectivePrintState()
-                            return Theme.iconSource(s === "paused" || s === "resuming" ? "resume" : "pause")
+                        spacing: Math.max(4, Math.round(root.metrics.gap * 0.5))
+
+                        Image {
+                            Layout.preferredWidth: Math.round(pauseResumeButton.height * 0.45)
+                            Layout.preferredHeight: Layout.preferredWidth
+                            source: {
+                                var s = root.effectivePrintState()
+                                return Theme.iconSource(s === "paused" || s === "resuming" ? "resume" : "pause")
+                            }
+                            fillMode: Image.PreserveAspectFit
+                            sourceSize.width: width
+                            sourceSize.height: height
+                            opacity: pauseResumeButton.enabled ? 1.0 : 0.4
                         }
-                        fillMode: Image.PreserveAspectFit
-                        sourceSize.width: width
-                        sourceSize.height: height
-                        opacity: parent.enabled ? 1.0 : 0.4
+
+                        Label {
+                            color: Theme.text
+                            text: {
+                                var s = root.effectivePrintState()
+                                return (s === "paused" || s === "resuming") ? "Resume" : "Pause"
+                            }
+                            font.bold: true
+                            font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 1.0))
+                            verticalAlignment: Text.AlignVCenter
+                        }
                     }
 
                     MouseArea {
@@ -299,10 +318,10 @@ Rectangle {
                 // Cancel button — only visible when paused
                 Rectangle {
                     id: cancelButton
-                    Layout.preferredWidth: root.buttonSize()
-                    Layout.preferredHeight: root.buttonSize()
+                    Layout.preferredWidth: root.buttonWidth()
+                    Layout.preferredHeight: root.buttonHeight()
                     Layout.alignment: Qt.AlignVCenter
-                    radius: width / 2
+                    radius: Math.round(root.metrics.fontSize * 0.5)
                     color: cancelMouseArea.pressed ? Qt.darker(Qt.rgba(0.50, 0.25, 0.20, 0.9), 1.3) : Qt.rgba(0.50, 0.25, 0.20, 0.9)
                     border.color: "#ff8a65"
                     border.width: 2
@@ -310,15 +329,27 @@ Rectangle {
                     enabled: !root.isTransitionalState(root.effectivePrintState())
                     opacity: enabled ? 1.0 : 0.4
 
-                    Image {
+                    RowLayout {
                         anchors.centerIn: parent
-                        width: Math.round(parent.width * 0.55)
-                        height: width
-                        source: Theme.iconSource("cancel")
-                        fillMode: Image.PreserveAspectFit
-                        sourceSize.width: width
-                        sourceSize.height: height
-                        opacity: parent.enabled ? 1.0 : 0.4
+                        spacing: Math.max(4, Math.round(root.metrics.gap * 0.5))
+
+                        Image {
+                            Layout.preferredWidth: Math.round(cancelButton.height * 0.45)
+                            Layout.preferredHeight: Layout.preferredWidth
+                            source: Theme.iconSource("cancel")
+                            fillMode: Image.PreserveAspectFit
+                            sourceSize.width: width
+                            sourceSize.height: height
+                            opacity: cancelButton.enabled ? 1.0 : 0.4
+                        }
+
+                        Label {
+                            color: Theme.text
+                            text: "Cancel"
+                            font.bold: true
+                            font.pixelSize: Math.max(14, Math.round(root.metrics.fontSize * 1.0))
+                            verticalAlignment: Text.AlignVCenter
+                        }
                     }
 
                     MouseArea {
