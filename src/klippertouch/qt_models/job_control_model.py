@@ -423,6 +423,13 @@ class JobControlModel(QObject):
         self._requested_print_state = value
         self.requestedPrintStateChanged.emit()
 
+    @Slot(str)
+    def reconcilePrintState(self, print_state: str) -> None:  # noqa: N802
+        if not self._requested_print_state:
+            return
+        if print_state == self._requested_print_state:
+            self._set_requested_print_state("")
+
     @Slot()
     def _poll_command_future(self) -> None:
         future = self._command_future

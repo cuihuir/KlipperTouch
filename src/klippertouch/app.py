@@ -98,6 +98,9 @@ def run_app(
     )
     gcode_file_model = create_gcode_file_model(initial_files)
     job_control_model = JobControlModel(job_control_client, status_model.extrusion_guard_status)
+    status_model.printChanged.connect(
+        lambda: job_control_model.reconcilePrintState(status_model.printState)
+    )
     notification_model = NotificationModel()
     startup_loader: StartupDataLoader | None = None
     file_refresh: GCodeFileRefresh | None = None
